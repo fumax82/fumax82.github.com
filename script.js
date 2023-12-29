@@ -1,150 +1,99 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById("container");
+    const centeredObject = document.getElementById("centered-object");
 
-// Modification 1: Visualizzazione Limitata ai Soli Rettangoli Chiusi
-
-// Add a state attribute to each rectangle
-document.querySelectorAll('.rectangle').forEach(rect => {
-    rect.setAttribute('data-state', 'closed'); // default state is closed
-});
-
-// Modify resetAllRectangles function to only reset closed rectangles
-function resetAllRectangles() {
-    document.querySelectorAll('.rectangle[data-state="closed"]').forEach(rect => {
-        rect.style.width = '100px';
-        rect.style.display = ''; // Show the rectangle if it was hidden
-    });
-}
-
-// Add logic to hide rectangles that are not active
-function hideInactiveRectangles() {
-    document.querySelectorAll('.rectangle[data-state="closed"]').forEach(rect => {
-        rect.style.display = 'none'; // Hide the rectangle
-    });
-}
-
-// Modification 2: Scrolling Orizzontale per Singola Riga
-
-// Function to enable horizontal drag scrolling for each row
-function enableHorizontalScrolling() {
-    document.querySelectorAll('.row').forEach(row => {
-        let isDown = false;
+    // Funzione per inizializzare gli eventi di trascinamento
+    function initializeDragEvents(row) {
+        let selectedRow = null;
         let startX;
-        let scrollLeft;
 
-        row.addEventListener('mousedown', (e) => {
-            isDown = true;
-            row.classList.add('active');
-            startX = e.pageX - row.offsetLeft;
-            scrollLeft = row.scrollLeft;
+        row.addEventListener('mousedown', e => {
+            selectedRow = row;
+            startX = e.pageX;
+            row.classList.add('dragging');
+            row.querySelectorAll('.tile').forEach(tile => tile.classList.add('pulsating'));
         });
 
-        row.addEventListener('mouseleave', () => {
-            isDown = false;
-            row.classList.remove('active');
+        row.addEventListener('mousemove', e => {
+            if (!selectedRow) return;
+            const dx = e.pageX - startX;
+            selectedRow.style.transform = `translateX(${dx}px)`;
         });
 
         row.addEventListener('mouseup', () => {
-            isDown = false;
-            row.classList.remove('active');
+            if (!selectedRow) return;
+            selectedRow.classList.remove('dragging');
+            selectedRow.querySelectorAll('.tile').forEach(tile => tile.classList.remove('pulsating'));
+            setTimeout(() => selectedRow.style.transform = '', 500); // Resetta la trasformazione dopo 0.5 secondi
+            selectedRow = null;
         });
-
-        row.addEventListener('mousemove', (e) => {
-            if (!isDown) return;
-            e.preventDefault();
-            const x = e.pageX - row.offsetLeft;
-            const walk = (x - startX) * 3; // scroll-fast
-            row.scrollLeft = scrollLeft - walk;
-        });
-    });
-}
-
-// Call the function to enable horizontal scrolling on rows
-enableHorizontalScrolling();
-
-// Modification 3: Comportamento Dinamico dei Clic sui Rettangoli
-
-// Function to toggle the size of a rectangle
-function toggleRectangleSize(rectangle) {
-    const currentState = rectangle.getAttribute('data-state');
-    const newState = currentState === 'closed' ? 'open' : 'closed';
-    rectangle.setAttribute('data-state', newState);
-
-    if (newState === 'open') {
-        rectangle.style.width = '400px'; // Example expanded size
-    } else {
-        rectangle.style.width = '100px'; // Original size
     }
-}
 
-// Add click event to each rectangle
-document.querySelectorAll('.rectangle').forEach(rectangle => {
-    rectangle.addEventListener('click', (e) => {
-        toggleRectangleSize(rectangle);
-        e.stopPropagation(); // Prevent event from bubbling up to the row
-    });
-});
+    // Funzione per creare una settimana di tiles
+    const createWeek = (week = undefined) => {
+        let row = document.createElement("div");
+        row.classList.add("row");
 
-// Add click event on the body to reset all rectangles in a row if clicked outside
-document.body.addEventListener('click', (e) => {
-    const clickedElement = e.target;
-    
-    if (!clickedElement.classList.contains('rectangle')) {
-        document.querySelectorAll('.row').forEach(row => {
-            row.querySelectorAll('.rectangle').forEach(rectangle => {
-                if (rectangle.getAttribute('data-state') === 'open') {
-                    toggleRectangleSize(rectangle);
+        for (let i = 0; i < 7; i++) {
+            let tile = document.createElement("div");
+            tile.classList.add("tile");
+            tile.innerHTML = `Giorno ${i} \n sett. ${week}`;
+
+            tile.addEventListener("mouseup", (ev) => {
+                if (ev.button == 0) {
+                    tile.classList.toggle("open");
+                } else if (ev.button == 1) {
+                    let row = tile.parentElement;
+                    let allTiles = row.querySelectorAll('.tile');
+                    allTiles.forEach(t => {
+                        t.classList.toggle("extended");
+                        t.style.backgroundColor = t.classList.contains("extended") ? "lime" : "bisque";
+                    });
                 }
             });
+
+            row.append(tile);
+        }
+
+        container.append(row);
+        initializeDragEvents(row); // Inizializza gli eventi di trascinamento per la nuova riga
+    };
+
+    // Creazione delle settimane
+    createWeek("A");
+    createWeek("B");
+    createWeek("C");
+    createWeek("D");
+
+    // Funzione per aggiustare le dimensioni di #centered-object
+    const adjustCenteredObjectSize = () => {
+        let totalWidth = 0;
+        let totalHeight = 0;
+
+        const rows = container.querySelectorAll(".row");
+        rows.forEach(row => {
+            totalHeight += row.offsetHeight; // Altezza di ogni riga
+
+            let rowWidth = 0;
+            row.querySelectorAll(".tile").forEach(tile => {
+                rowWidth += tile.offsetWidth; // Larghezza di ogni tile
+            });
+
+            if (rowWidth > totalWidth) {
+                totalWidth = rowWidth; // Aggiorna la larghezza massima se necessario
+            }
         });
-    }
+
+        // Imposta le dimensioni di #centered-object in base alle dimensioni totali
+        centeredObject.style.width = `${totalWidth}px`;
+        centeredObject.style.height = `${totalHeight}px`;
+    };
+
+    // Aspetta che tutti gli elementi vengano caricati (ad esempio, immagini)
+    window.onload = () => {
+        adjustCenteredObjectSize();
+    };
+
+    // Prevenire il comportamento di trascinamento predefinito del browser
+    document.addEventListener('dragstart', e => e.preventDefault());
 });
-
-// Ensuring that the new functionalities do not interfere with existing graphic effects
-
-// Keep existing functionalities related to graphic effects intact
-// For example, functions like applyFilterToAll and clearAllFilters remain unchanged
-
-// Ensure that the new functionalities are integrated smoothly with existing ones
-// This includes checking that the state changes of rectangles do not conflict with graphic effects
-
-// Pseudocode for final integration check:
-/*
-function checkGraphicEffectsIntegrity() {
-    // Check if the new state changes (open/close) of rectangles interfere with existing graphic effects
-    // Ensure that functions like applyFilterToAll and clearAllFilters work as expected with the new functionalities
-    // Perform tests to confirm that graphic effects are applied correctly even when rectangles change state
-}
-*/
-
-// Call the check function (this is a placeholder, actual implementation may vary)
-// checkGraphicEffectsIntegrity();
-
-// Calcola la larghezza totale della riga considerando i rettangoli e i gap
-function calculateRowWidth() {
-    let rowWidth = 0;
-    document.querySelectorAll('.row').forEach(row => {
-        let rectangles = row.querySelectorAll('.rectangle');
-        rowWidth = (rectangles.length * 100) + ((rectangles.length - 1) * 5); // larghezza rettangolo + gap
-        row.style.width = rowWidth + 'px';
-    });
-}
-
-// Aggiorna la funzione di scorrimento per limitare il movimento a destra/sinistra
-function updateScrolling() {
-    // Aggiungi qui la logica per limitare lo scorrimento
-    // ...
-}
-
-// Chiamata alla funzione per calcolare la larghezza iniziale della riga
-calculateRowWidth();
-
-// Aggiornamento della funzione di scorrimento per consentire il movimento in entrambe le direzioni
-// e limitare il movimento per evitare spazi vuoti all'inizio e alla fine della riga
-
-// Assumiamo che una funzione di scorrimento esista già e la modifichiamo
-function updateFlexibleScrollingLogic() {
-    // Qui si aggiunge la logica per gestire lo scorrimento flessibile
-    // ...
-}
-
-// Chiamata alla funzione aggiornata per il controllo dello scorrimento flessibile
-updateFlexibleScrollingLogic();

@@ -1,49 +1,98 @@
-body, html {
+*{
+    margin:0;
+    padding:0;
+}
+
+body{
+    position:relative;
+    width:100vw;
+    height: 100vh;
+}
+
+#container{
+    position: relative;
+    width: 100%;
     height: 100%;
-    margin: 0;
+
     display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.row{
+    position:relative;
+    width:100%;
+
+    display:flex;
+    flex-direction: row;
     justify-content: center;
-    align-items: start;
+
+    padding:.25em;
+    margin: .1em 0;
+}
+
+.tile{
+    position:relative;
+    width: 4em;
+    height:6em;
+
+    margin:.0833em;
+    padding:.5em;
+    box-sizing: border-box;
+
+    background-color: bisque;
+    border-radius: 1em;
+
+    color:gray;
+    text-align: center;
+
+    transition: width .5s,height .5s, background-color .5s;
+}
+.tile.open{
+    width:16em;
+    height: 6em;    /* Altezza ridotta per mantenere la stessa area */
+    background-color: bisque;
+}
+.tile.extended{
+    height:12em;
+    background-color: lime;
+}
+
+/* Stile per la trasparenza durante il trascinamento */
+.row.dragging * {
+    opacity: 0.7; /* Imposta la trasparenza al 70% */
+}
+
+/* Stile per l'effetto di pulsazione */
+.tile.pulsating {
+    animation: pulsate 1s infinite;
+}
+
+/* Keyframes per l'animazione di pulsazione */
+@keyframes pulsate {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+#centered-object {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white; /* o qualsiasi altro colore */
+    overflow: hidden;
+    z-index: 10; /* per assicurarsi che sia sopra gli altri elementi */
+    /* Dimensioni iniziali, saranno impostate dinamicamente */
+    width: 1000px; /* valore temporaneo */
+    height: 2000px; /* valore temporaneo */
 }
 
 #container {
-    padding-top: 20px;
+    /* Assicurarsi che sia all'interno di #centered-object e centrato */
+    width: 100%; /* o una larghezza specifica se necessario */
+    height: auto; /* o un'altezza specifica se necessario */
+    margin: auto;
 }
-
-.row {
-    display: flex;
-    gap: 5px;
-    margin-bottom: 10px;
-}
-
-.rectangle {
-    width: 100px;
-    height: 250px;
-    background-color: #d7cec7;
-    border-radius: 15px;
-    box-shadow: 5px 5px 10px #aaa;
-    transition: width 2s;
-}
-
-.filtered1 { filter: hue-rotate(30deg); }
-.filtered2 { filter: hue-rotate(60deg); }
-.filtered3 { filter: hue-rotate(90deg); }
-.filtered4 { filter: hue-rotate(120deg); }
-.filtered5 { filter: hue-rotate(150deg); }
-
-@keyframes dynamicDistortion {
-    0% { filter: blur(0px); }
-    50% { filter: blur(2px); }
-    100% { filter: blur(0px); }
-}
-
-#container {
-    width: 730px;
-    overflow-x: scroll; /* Permette lo scorrimento orizzontale */
-}
-
-.row {
-    display: flex; /* Allineamento flessibile dei rettangoli */
-    flex-wrap: nowrap; /* Impedisce l'involucro dei rettangoli */
-    min-width: fit-content; /* Assicura che la riga si estenda per adattarsi al suo contenuto */
+.tile{
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
 }
