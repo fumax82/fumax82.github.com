@@ -7,54 +7,22 @@ body, html {
 }
 
 #container {
-    width: 730px;
     padding-top: 20px;
-    overflow-x: hidden;
 }
 
 .row {
     display: flex;
     gap: 5px;
     margin-bottom: 10px;
-    flex-wrap: nowrap;
-    min-width: fit-content;
-    overflow-x: auto;
-}
-
-/* Nascondere la barra di scorrimento per Chrome, Safari e Opera */
-.row::-webkit-scrollbar {
-    display: none;
-}
-
-/* Nascondere la barra di scorrimento per IE, Edge e Firefox */
-.row {
-    -ms-overflow-style: none;  /* IE e Edge */
-    scrollbar-width: none;  /* Firefox */
 }
 
 .rectangle {
     width: 100px;
-    height: 200px;
+    height: 250px;
     background-color: #d7cec7;
-    border-radius: 10px;
+    border-radius: 15px;
     box-shadow: 5px 5px 10px #aaa;
     transition: width 2s;
-}
-}
-.rectangle .day-info {
-    color: #a3968e; /* Un colore più scuro rispetto al colore del rettangolo */
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); /* Effetto 3D con ombra */
-    font-weight: bold; /* Rende il testo in grassetto */
-    text-align: center; /* Allinea il testo al centro */
-    margin-top: 10px; /* Distanza dal bordo superiore del rettangolo */
-}
-
-/* Stili aggiuntivi per i rettangoli per assicurare una corretta visualizzazione del testo */
-.rectangle {
-    position: relative; /* Necessario per posizionare correttamente il testo */
-    display: flex;
-    justify-content: center;
-    align-items: start;
 }
 
 .filtered1 { filter: hue-rotate(30deg); }
@@ -65,16 +33,17 @@ body, html {
 
 @keyframes dynamicDistortion {
     0% { filter: blur(0px); }
-    50% { filter: blur(3px); }
+    50% { filter: blur(2px); }
     100% { filter: blur(0px); }
 }
 
-.row.dragging {
-    transition: transform 0.2s, opacity 0.2s;
-    transform-origin: center center;
+#container {
+    width: 730px;
+    overflow-x: scroll; /* Permette lo scorrimento orizzontale */
 }
 
-.row.dragging:hover {
-    transform: scaleY(1.05);
-    opacity: 0.5;
+.row {
+    display: flex; /* Allineamento flessibile dei rettangoli */
+    flex-wrap: nowrap; /* Impedisce l'involucro dei rettangoli */
+    min-width: fit-content; /* Assicura che la riga si estenda per adattarsi al suo contenuto */
 }
