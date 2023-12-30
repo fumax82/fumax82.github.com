@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     createWeek("B");
     createWeek("C");
     createWeek("D");
-
+    createWeek("E");
     // Funzione per aggiustare le dimensioni di #centered-object
     const adjustCenteredObjectSize = () => {
         let totalWidth = 0;
