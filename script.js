@@ -43,14 +43,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (ev.button == 0) {
                     tile.classList.toggle("open");
                 } else if (ev.button == 1) {
-                    let row = tile.parentElement;
-                    let allTiles = row.querySelectorAll('.tile');
-                    allTiles.forEach(t => {
-                        t.classList.toggle("extended");
-                        t.style.backgroundColor = t.classList.contains("extended") ? "lime" : "bisque";
-                    });
+                    toggleTileState(tile);
                 }
             });
+
+            // Aggiungi le barre e le etichette al tile
+            addBarsAndLabelsToTile(tile);
 
             row.append(tile);
         }
@@ -65,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     createWeek("C");
     createWeek("D");
     createWeek("E");
+
     // Funzione per aggiustare le dimensioni di #centered-object
     const adjustCenteredObjectSize = () => {
         let totalWidth = 0;
@@ -89,6 +88,50 @@ document.addEventListener('DOMContentLoaded', () => {
         centeredObject.style.height = `${totalHeight}px`;
     };
 
+    // Funzione per aggiungere barre e etichette a un tile
+    function addBarsAndLabelsToTile(tile) {
+        const events = ['Evento 1', 'Evento 2', 'Evento 3'];
+        const colors = ['red', 'green', 'blue'];
+
+        events.forEach((event, index) => {
+            const bar = document.createElement('div');
+            bar.classList.add('bar', `${colors[index]}-bar`);
+            tile.appendChild(bar);
+
+            const label = document.createElement('div');
+            label.classList.add('label');
+            label.textContent = event;
+            tile.appendChild(label);
+        });
+    }
+
+// Funzione per gestire il click del tasto centrale del mouse sui tiles
+function handleMouseDown(event) {
+    if (event.button === 1) { // Tasto centrale
+        const tile = event.target.closest('.tile');
+        if (tile && tile.classList.contains('extended')) {
+            tile.classList.add('tile-ultra-extended');
+        }
+    }
+}
+
+function handleMouseUp(event) {
+    // Nessuna azione necessaria qui per il rilascio del mouse
+}
+
+function handleMouseLeave(event) {
+    // Nessuna azione necessaria qui per il cursore che lascia il tile
+}
+
+
+    // Aggiungi i gestori eventi a tutti i tiles
+    const tiles = document.querySelectorAll('.tile');
+    tiles.forEach(tile => {
+        tile.addEventListener('mousedown', handleMouseDown);
+        tile.addEventListener('mouseup', handleMouseUp);
+        tile.addEventListener('mouseleave', handleMouseLeave);
+    });
+
     // Aspetta che tutti gli elementi vengano caricati (ad esempio, immagini)
     window.onload = () => {
         adjustCenteredObjectSize();
@@ -97,3 +140,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Prevenire il comportamento di trascinamento predefinito del browser
     document.addEventListener('dragstart', e => e.preventDefault());
 });
+
+ function toggleTileState(tile) {
+    let row = tile.parentElement;
+    let allTiles = row.querySelectorAll('.tile');
+
+    allTiles.forEach(t => {
+        if (t.classList.contains('tile-ultra-extended')) {
+            t.classList.remove('tile-ultra-extended');
+            t.classList.add('extended');
+        } else if (t.classList.contains('extended')) {
+            t.classList.remove('extended');
+            t.classList.add('open');
+        } else if (t.classList.contains('open')) {
+            t.classList.remove('open');
+            t.classList.add('tile-ultra-extended');
+        }
+    });
+}

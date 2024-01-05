@@ -1,3 +1,4 @@
+User
 *{
     margin:0;
     padding:0;
@@ -7,17 +8,23 @@ body{
     position:relative;
     width:100vw;
     height: 100vh;
+    background-color: black;
 }
 
 #container{
     position: relative;
-    width: 100%;
-    height: 100%;
+    width: auto; /* Modificato per permettere una maggiore flessibilità */
+    height: calc(7 * (6em + 2 * .25em + 2 * .1em)); /* Altezza basata sull'altezza di 7 righe */
+    background-color: white; /* Colore di sfondo impostato a bianco */
+
 
     display: flex;
     flex-direction: column;
     align-items: center;
+margin: auto; /* Centra il container orizzontalmente e verticalmente */
+    justify-content: center; /* Centra i contenuti verticalmente nel container */
 }
+
 
 .row{
     position:relative;
@@ -58,6 +65,49 @@ body{
     background-color: lime;
 }
 
+.tile-ultra-extended {
+    width: 35em;
+    height: 20em;
+    /* Altre proprietà di stile se necessarie */
+}
+
+.bar {
+    position: absolute;
+    width: 80%; /* Larghezza pari all'80% del tile */
+    height: 5%; /* Altezza in percentuale per mantenere la proporzione */
+    background: linear-gradient(to bottom, rgba(255,255,255,0.3), rgba(0,0,0,0.3)); /* Aggiunge un effetto di gradiente */
+    border-radius: 10px; /* Angoli arrotondati */
+    box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3); /* Effetto rilievo per il 3D */
+    left: 10%; /* Centrato orizzontalmente */
+}
+
+.tile-ultra-extended .bar {
+    width: 80%; /* o una percentuale appropriata */
+    height: 5%; /* o una percentuale appropriata */
+    /* Aggiustamenti proporzionali per top, left, ecc., se necessario */
+}
+
+.red-bar { background-color: red; top: 20%; } /* Base della seconda porzione */
+.green-bar { background-color: green; top: 40%; } /* Base della terza porzione */
+.blue-bar { background-color: blue; top: 60%; } /* Base della quarta porzione */
+
+
+.label {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    font-size: 8px; /* Dimensione del testo come richiesto */
+}
+
+.label:nth-child(4) { top: 15%; } /* Sopra barra 1 */
+.label:nth-child(5) { top: 35%; } /* Sopra barra 2 */
+.label:nth-child(6) { top: 55%; } /* Sopra barra 3 */
+
+/* Posizionamento specifico delle barre e delle etichette */
+.bar:nth-child(1), .label:nth-child(4) { top: 40%; }
+.bar:nth-child(2), .label:nth-child(5) { top: 60%; }
+.bar:nth-child(3), .label:nth-child(6) { top: 80%; }
+
 /* Stile per la trasparenza durante il trascinamento */
 .row.dragging * {
     opacity: 0.7; /* Imposta la trasparenza al 70% */
@@ -74,25 +124,9 @@ body{
     50% { transform: scale(1.05); }
 }
 
-#centered-object {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: white; /* o qualsiasi altro colore */
-    overflow: hidden;
-    z-index: 10; /* per assicurarsi che sia sopra gli altri elementi */
-    /* Dimensioni iniziali, saranno impostate dinamicamente */
-    width: 1000px; /* valore temporaneo */
-    height: 2000px; /* valore temporaneo */
-}
 
-#container {
-    /* Assicurarsi che sia all'interno di #centered-object e centrato */
-    width: 100%; /* o una larghezza specifica se necessario */
-    height: auto; /* o un'altezza specifica se necessario */
-    margin: auto;
-}
-.tile{
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+/* Stili aggiuntivi per la modalità .tile-ultra-extended */
+.tile-ultra-extended {
+    background-color: #9acd32; /* Un mix di verde e rosso */
+    /* Altre modifiche agli stili se necessarie */
 }
