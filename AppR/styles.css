@@ -7,6 +7,8 @@ body{
     position:relative;
     width:100vw;
     height: 100vh;
+
+    overflow: hidden;
 }
 
 #container{
@@ -17,6 +19,8 @@ body{
     display: flex;
     flex-direction: column;
     align-items: center;
+    
+    overflow: hidden;
 }
 
 .row{
@@ -25,16 +29,23 @@ body{
 
     display:flex;
     flex-direction: row;
-    justify-content: center;
+    justify-content: flex-start;
 
     padding:.25em;
     margin: .5em 0;
+
+    overflow: hidden;
+    overflow-x: scroll;
+    
+    touch-action: pan-x;
 }
 
 .tile{
     position:relative;
     width: 4em;
     height:6em;
+    flex-grow: 0;
+    flex-shrink: 0;
 
     margin:.25em;
     padding:.5em;
@@ -48,11 +59,11 @@ body{
 
     transition: width .5s,height .5s, background-color .5s;
 }
-.tile.open{
+.tile.horext{
     width:8em;
-    background-color: bisque;
+    background-color: yellow;
 }
-.tile.open.extended{
+.tile.horext.verext{
     height:12em;
     background-color: lime;
 }
