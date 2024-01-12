@@ -58,6 +58,9 @@ body{
     text-align: center;
 
     transition: width .5s,height .5s, background-color .5s;
+
+    display: flex;
+    flex-direction: column;
 }
 .tile.horext{
     width:8em;
@@ -66,4 +69,17 @@ body{
 .tile.horext.verext{
     height:12em;
     background-color: lime;
+}
+
+.tile .item{
+    margin:.1em auto;
+    font-size: x-small;
+}
+.tile .item .title{
+    font-weight:bold;
+    text-align: left;
+}
+.tile .item .tags{
+    font-style: italic;
+    text-align: end;
 }
