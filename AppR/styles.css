@@ -71,6 +71,11 @@ body{
     background-color: lime;
 }
 
+.tile>.title{
+    font-weight: bold;
+    text-decoration: underline;
+    font-size: x-small;
+}
 .tile .item{
     margin:.1em auto;
     font-size: x-small;

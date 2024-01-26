@@ -5,6 +5,7 @@ import { giornoSettimana } from "./utils.js"
 const container=document.getElementById("container")
 
 const togglaHorExp=(week, element)=>{
+    console.log(week)
     for(let t of document.querySelectorAll(".tile")){
         if(t.getAttribute("week")==week && !t.classList.contains("verext")) t.classList.toggle("horext")
     }
@@ -17,39 +18,43 @@ const togglaVerExp=(week, element)=>{
     }
 }
 
-const createWeek=(week=undefined,giorni)=>{
-    console.log(giorni)
-    let row=document.createElement("div")
-    row.setAttribute("week",week)
-    row.classList.add("row")
+const createWeek=(week)=>{
 
-    for(let i=0;i<7;i++){
+    let row=document.createElement("div")
+    row.setAttribute("week",week.label)
+    row.classList.add("row")
+    for(let d of week.days){
+        console.log(week.label)
         let tile=document.createElement("div")
         tile.classList.add("tile")
-        tile.setAttribute("week",week)
-        tile.innerHTML=giornoSettimana(i)
+        tile.setAttribute("week",week.label)
+        
+        //title
+        let title=document.createElement("p")
+        title.classList.add("title")
+        title.innerHTML=d.day
+        tile.append(title)
 
-        for(let imp of giorni[i].impegni){
-            console.log(imp)
+        for(let ev of d.events){
             let contenitoreImpegno=document.createElement("div")
             contenitoreImpegno.classList.add("item")
 
             let titolo=document.createElement("p")
             titolo.classList.add("title")
-            titolo.innerHTML=imp.titolo
+            titolo.innerHTML=ev.TITOLO
             contenitoreImpegno.append(titolo)
 
             let tags=document.createElement("p")
             tags.classList.add("tags")
-            tags.innerHTML=imp.tags
+            tags.innerHTML=ev.TAGS
             contenitoreImpegno.append(tags)
 
             tile.append(contenitoreImpegno)
         }
 
         setListeners(tile,{
-            shortTap:()=>{togglaHorExp(week,tile)},
-            longTap:()=>{togglaVerExp(week,tile)}
+            shortTap:()=>{togglaHorExp(week.label,tile)},
+            longTap:()=>{togglaVerExp(week.label,tile)}
         })
 
         row.append(tile)
@@ -60,8 +65,16 @@ const createWeek=(week=undefined,giorni)=>{
 
 
 async function costruisciMese(){
-    let fakeData=await getData()
-    for(let sett of fakeData) createWeek(sett.nome, sett.giorni)
+    let data=await getData()
+    for(let sett of data) createWeek(sett)
 }
 
 costruisciMese()
+
+
+
+
+//UTILS
+function buildSingleEvent(ev){
+
+}
