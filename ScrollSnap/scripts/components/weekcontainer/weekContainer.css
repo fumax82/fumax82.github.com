@@ -1,0 +1,26 @@
+:host{
+  width:100vw;
+  overflow-x: hidden;
+}
+.container{
+  position:relative;
+  width:100%;
+  margin:1em 0;
+  display:flex;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scroll-snap-stop: always;
+}
+
+.container .extremity-padder{
+  width:1vw;
+  flex-shrink:0;
+  background-color: aliceblue;
+  opacity: .25;
+}
+.container .extremity-padder.compact{
+  width:42vw;
+  overflow-x: hidden;
+}
