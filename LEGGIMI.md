@@ -33,7 +33,7 @@ Requisiti: Android 8.0 o successivo, una YubiKey con FIDO2 (va bene la *Security
 
 | | Galleria normale | Cassaforte |
 |---|---|---|
-| Colori | chiari, viola e rosa | neri e oro |
+| Colori | carta chiara, lavanda e rosa cipria | carbone caldo e champagne |
 | Si vede | sempre | solo con la chiavetta |
 | Contiene | le foto del telefono | le foto che hai protetto (cifrate) |
 | Pulsante **+** e pillola **Blocca** | non ci sono | ci sono |
@@ -83,13 +83,22 @@ Dal menu ☰ trovi **Ordina** (data, nome, grandezza), **Cerca** (per nome, albu
 
 **Modifica** apre l'editor, che ha quattro schede:
 
-- **Filtri:** 14 filtri con intensità regolabile.
-- **Regola:** luminosità, contrasto, saturazione, calore, vignettatura.
+- **Filtri:** 18 filtri con intensità regolabile, tra cui i toni pastello Cipria, Salvia, Nebbia e Avorio.
+- **Regola:** luminosità, contrasto, saturazione, calore, tinta, sbiadito (effetto pellicola), grana, vignettatura e **passe-partout**, un bordo color carta come una stampa incorniciata.
 - **Ritaglia:** ritaglio libero o con proporzioni fisse, rotazione, specchio, raddrizzamento.
 - **Disegna:** disegno a mano libera con colori e spessori.
 
 Tieni premuta la foto per **confrontarla con l'originale**.
 Quando salvi puoi scegliere **Salva una copia** oppure **Sostituisci l'originale**. Nella cassaforte, anche la foto modificata resta cifrata.
+
+## 6b. Strumenti
+
+Dal menu ☰ scegli **Strumenti**:
+- **Doppioni:** trova le foto e i video presenti più volte (stesso peso e stesse dimensioni) e li mette uno accanto all'altro, così puoi eliminare le copie.
+- **File più grandi:** mostra i 100 elementi che occupano più spazio.
+- **Screenshot:** raccoglie tutte le schermate catturate.
+- **Vai a una data:** salta al giorno che scegli dal calendario.
+- **Riepilogo:** quante foto e video hai, lo spazio occupato, quante foto per anno, gli album più grandi.
 
 ## 7. Condividere
 
