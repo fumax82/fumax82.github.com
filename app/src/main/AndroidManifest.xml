@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Manifesto dell'app: dichiara i permessi e le parti dell'app.
+  Permessi usati e perché:
+   - INTERNET / ACCESS_NETWORK_STATE: mappe, ricerca indirizzi e calcolo percorsi
+   - ACCESS_FINE_LOCATION: posizione GPS per partire da qui e per la guida
+   - FOREGROUND_SERVICE(_LOCATION): la guida continua anche a schermo spento
+   - POST_NOTIFICATIONS: la notifica fissa durante la guida (obbligatoria per Android)
+  Nessun permesso per contatti, foto, microfono o pubblicità.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- La sintesi vocale di Android (per le indicazioni a voce) -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".App"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/nome_app"
+        android:supportsRtl="false"
+        android:theme="@style/Tema.Navigatore">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- La guida: servizio "in primo piano" che legge il GPS anche a schermo spento -->
+        <service
+            android:name=".guida.ServizioGuida"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+    </application>
+</manifest>

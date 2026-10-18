@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Colori dell'icona e della finestra di avvio -->
+    <color name="sfondo_icona">#2F6FDE</color>
+    <color name="sfondo_finestra">#F5F6F8</color>
+</resources>
