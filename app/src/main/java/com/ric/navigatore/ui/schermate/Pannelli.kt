@@ -44,7 +44,7 @@ fun PannelloModo(modello: ModelloApp, s: StatoUi) {
         Modo.Normale -> ""
     }
     val colore = when {
-        modo is Modo.Strada && modo.evita, modo == Modo.PezzoPercorso -> Extra.colori.esclusione
+        (modo is Modo.Strada && modo.evita) || modo == Modo.PezzoPercorso -> Extra.colori.esclusione
         modo is Modo.Disegno && modo.obiettivo == ObiettivoArea.EVITA -> Extra.colori.esclusione
         modo is Modo.SceltaPunto -> MaterialTheme.colorScheme.primary
         else -> Extra.colori.passaggio

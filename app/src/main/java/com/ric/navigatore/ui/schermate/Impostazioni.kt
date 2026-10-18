@@ -116,7 +116,7 @@ fun FoglioImpostazioni(modello: ModelloApp, dati: DatiSalvati) {
                 .onFailure { context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + context.packageName))) }
         }) { Text("Apri le impostazioni della batteria") }
         OutlinedButton(onClick = {
-            runCatching { context.startActivity(Intent(Settings.ACTION_TTS_SETTINGS)) }
+            runCatching { context.startActivity(Intent("com.android.settings.TTS_SETTINGS")) }
         }) { Text("Impostazioni della voce del telefono") }
 
         // ---------------- Aspetto ----------------
