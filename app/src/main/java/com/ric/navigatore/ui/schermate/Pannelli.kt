@@ -5,7 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -51,7 +51,7 @@ fun PannelloModo(modello: ModelloApp, s: StatoUi) {
     }
     Surface(shape = RoundedCornerShape(22.dp), shadowElevation = 8.dp, color = MaterialTheme.colorScheme.surface) {
         Column(
-            Modifier.fillMaxWidth().heightIn(max = 430.dp).verticalScroll(rememberScrollState()).padding(16.dp),
+            Modifier.fillMaxWidth().heightIn(max = 340.dp).verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(titolo, style = MaterialTheme.typography.titleMedium, color = colore)
@@ -66,8 +66,20 @@ fun PannelloModo(modello: ModelloApp, s: StatoUi) {
                 else -> {}
             }
 
-            // Obbligatorio / preferito e durata (non per la scelta di partenza/arrivo)
-            if (modo !is Modo.SceltaPunto) {
+            // Obbligatorio / preferito e durata (non per la scelta di partenza/arrivo):
+            // nascosti dietro "Cambia" per lasciare più mappa libera mentre si tocca
+            var opzioni by remember { mutableStateOf(false) }
+            if (modo !is Modo.SceltaPunto && !opzioni) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "${sel.priorita.etichetta} · ${sel.durata.etichetta.lowercase()}",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(onClick = { opzioni = true }) { Text("Cambia") }
+                }
+            }
+            if (modo !is Modo.SceltaPunto && opzioni) {
                 Titoletto("Importanza")
                 SceltaPillole(Priorita.entries, sel.priorita, { it.etichetta }, { p -> modello.cambiaSelezione { it.copy(priorita = p) } })
                 Text(
@@ -178,7 +190,7 @@ private fun ContenutoDisegno(modello: ModelloApp, s: StatoUi, obiettivo: Obietti
     }
     if (obiettivo != ObiettivoArea.EVITA) {
         Text(
-            "Metodo euristico: cerco strade dentro l'area (non il centro geometrico) e provo pochi candidati, poi verifico il risultato.",
+            "Metodo euristico (strade dentro l'area, non il centro), risultato sempre verificato.",
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }

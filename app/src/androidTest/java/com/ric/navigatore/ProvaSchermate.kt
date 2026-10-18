@@ -73,11 +73,13 @@ class ProvaSchermate {
         aspettaTesto("Disegna un'area")
         val w = dispositivo.displayWidth
         val h = dispositivo.displayHeight
-        dispositivo.click(w / 3, h / 3)
-        Thread.sleep(400)
-        dispositivo.click(2 * w / 3, h / 3)
-        Thread.sleep(400)
-        dispositivo.click(w / 2, h / 2)
+        // tocchi nella metà alta (la metà bassa è occupata dal pannello)
+        dispositivo.click(w / 4, h / 6)
+        Thread.sleep(600)
+        dispositivo.click(3 * w / 4, h / 6)
+        Thread.sleep(600)
+        dispositivo.click(w / 2, (h * 0.38).toInt())
+        Thread.sleep(600)
         foto("03_disegno_area")
         compose.onNodeWithText("Conferma").performClick()
         compose.waitForIdle()

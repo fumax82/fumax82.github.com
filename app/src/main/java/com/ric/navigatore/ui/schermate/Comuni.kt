@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 /*
  * Pezzi riutilizzati in più schermate: icone extra, titoletti, scelte a "pillola".
@@ -106,7 +107,13 @@ fun RowScope.PulsanteBarra(
     ) {
         Column(Modifier.padding(vertical = 8.dp, horizontal = 2.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Icon(icona, contentDescription = null, modifier = Modifier.size(24.dp))
-            Text(testo, style = MaterialTheme.typography.labelMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            // una parola per riga, mai spezzata: se non ci sta, il testo si rimpicciolisce
+            androidx.compose.foundation.text.BasicText(
+                testo,
+                style = MaterialTheme.typography.labelMedium.copy(color = primo, textAlign = androidx.compose.ui.text.style.TextAlign.Center),
+                maxLines = testo.split(" ").size.coerceAtMost(2),
+                autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = 13.sp, stepSize = 0.5.sp),
+            )
         }
     }
 }
