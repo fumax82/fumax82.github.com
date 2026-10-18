@@ -43,8 +43,10 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: |
             adb logcat -c || true
-            ./gradlew --no-daemon :app:connectedDebugAndroidTest > risultati/emulatore.log 2>&1 || echo FALLITO >> risultati/emulatore.log
-            mkdir -p risultati/foto && adb pull /sdcard/Android/data/com.ric.navigatore/files/foto risultati/foto || true
+            adb install -r -g app/build/outputs/apk/debug/app-debug.apk
+            adb install -r -g app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb shell am instrument -w -r com.ric.navigatore.test/androidx.test.runner.AndroidJUnitRunner > risultati/emulatore.log 2>&1 || echo FALLITO >> risultati/emulatore.log
+            mkdir -p risultati/foto && adb pull /sdcard/Android/data/com.ric.navigatore/files/foto/. risultati/foto/ || true
             adb logcat -d > risultati/logcat.txt || true
       - name: Salva i risultati nel ramo
         if: always()

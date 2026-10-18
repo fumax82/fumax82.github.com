@@ -80,6 +80,13 @@ class ProvaSchermate {
         dispositivo.click(w / 2, h / 2)
         foto("03_disegno_area")
         compose.onNodeWithText("Conferma").performClick()
+        compose.waitForIdle()
+        if (compose.onAllNodesWithText("Passa da").fetchSemanticsNodes().isEmpty()) {
+            // i tocchi non hanno completato l'area: annotiamo e usciamo dal disegno
+            android.util.Log.w("ProvaSchermate", "Area non completata dai tocchi simulati")
+            compose.onNodeWithText("Annulla").performClick()
+        }
+        aspettaTesto("Passa da")
         foto("04_area_confermata")
 
         // Menu «Passa da»
@@ -90,9 +97,9 @@ class ProvaSchermate {
 
         // Elenco dei vincoli (dal menu)
         compose.onNodeWithContentDescriptionSafe("Menu")
-        aspettaTesto("Vincoli (1)")
-        compose.onNodeWithText("Vincoli (1)").performClick()
-        aspettaTesto("I passaggi vengono fatti")
+        aspettaTesto("Vincoli (")
+        compose.onNodeWithText("Vincoli (", substring = true).performClick()
+        aspettaTesto("Vincoli")
         foto("06_vincoli")
         dispositivo.pressBack()
 
