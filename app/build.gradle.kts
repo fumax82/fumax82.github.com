@@ -12,7 +12,7 @@ plugins {
 android {
     // Nome "tecnico" dell'app (deve essere unico sul telefono)
     namespace = "com.ric.navigatore"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.ric.navigatore"
