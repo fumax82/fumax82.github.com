@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.ric.navigatore.nucleo.ScenariTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-10-18T20:53:33.032Z" hostname="runnervm8k3b6" time="1.039">
+  <properties/>
+  <testcase name="1 esclusione di un tratto del percorso calcolato()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.3"/>
+  <testcase name="2 piu aree escluse insieme()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.105"/>
+  <testcase name="7 quota esaurita()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.099"/>
+  <testcase name="4 attraversa area con centro irraggiungibile (lago)()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.135"/>
+  <testcase name="5a arrivo dentro area esclusa - conflitto prima del calcolo()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.004"/>
+  <testcase name="5d tratto obbligatorio contromano su senso unico()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.038"/>
+  <testcase name="6 deviazione dal percorso con ricalcolo che mantiene le esclusioni()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.117"/>
+  <testcase name="8 perdita di rete e di GPS()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.022"/>
+  <testcase name="5b tratto obbligatorio ed escluso insieme()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.029"/>
+  <testcase name="3 punto e tratto obbligatori()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.03"/>
+  <testcase name="coerenza istruzioni e alternative()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.041"/>
+  <testcase name="5c esclusione che taglia in due la citta - diagnosi del vincolo colpevole()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.051"/>
+  <system-out><![CDATA[=== Percorso iniziale ===
+Percorso: 3,6 km, 4 min, 2 punti
+  ✓ Ordine delle tappe: Tappe e passaggi raggiunti nell'ordine richiesto.
+  ✓ Istruzioni di guida: Istruzioni coerenti con la linea del percorso.
+  richieste di percorso usate: 1
+Strade toccate dalla fascia: [Via Verticale 6, Via Verticale 7, Via Verticale 8]
+=== Percorso con tratto escluso ===
+Percorso: 2,8 km, 4 min, 2 punti
+  ✓ Corso in centro: Il percorso non entra nella zona esclusa.
+  ✓ Ordine delle tappe: Tappe e passaggi raggiunti nell'ordine richiesto.
+  ✓ Istruzioni di guida: Istruzioni coerenti con la linea del percorso.
+  richieste di percorso usate: 1
+Differenza: -0.88 km, +0.6 min
+=== Tre aree escluse ===
+Percorso: 5,6 km, 7 min, 2 punti
+  ✓ Cerchio A: Il percorso non entra nella zona esclusa.
+  ✓ Cerchio B: Il percorso non entra nella zona esclusa.
+  ✓ Rettangolo: Il percorso non entra nella zona esclusa.
+  ✓ Ordine delle tappe: Tappe e passaggi raggiunti nell'ordine richiesto.
+  ✓ Istruzioni di guida: Istruzioni coerenti con la linea del percorso.
+  richieste di percorso usate: 1
+=== Risposta 429 ===
+Errore: QUOTA_ESAURITA – Troppe richieste in poco tempo (limite al minuto o al giorno di openrouteservice). Riprova più tardi. HTTP 429: Rate limit exceeded
+  richieste di percorso usate: 1
+=== Risposta 403 quota ===
+Errore: QUOTA_ESAURITA – Quota giornaliera di openrouteservice esaurita. Si azzera ogni giorno. HTTP 403: Quota exceeded
+  richieste di percorso usate: 1
+Terza richiesta nello stesso minuto: Limite di 2 richieste al minuto per «Percorsi» raggiunto: riprova tra 60 secondi.
+=== Passa all'interno – candidati da aggancio ===
+Percorso: 4,4 km, 5 min, 3 punti
+  ✓ Quartiere del lago: Il percorso fa 320 m dentro l'area.
+  ✓ Ordine delle tappe: Tappe e passaggi raggiunti nell'ordine richiesto.
+  ✓ Istruzioni di guida: Istruzioni coerenti con la linea del percorso.
+  nota: «Quartiere del lago»: metodo euristico (punti stradali candidati dentro l'area, verificati dopo il calcolo). Non garantisce il percorso più breve possibile.
+  nota: Percorsi alternativi non disponibili: il servizio li calcola solo senza tappe o passaggi intermedi.
+  richieste di percorso usate: 1
+  richieste totali (percorso + aggancio): 2
+=== Passa all'interno – candidati da mappa ===
+Percorso: 4,8 km, 5 min, 3 punti
+  ✓ Quartiere del lago: Il percorso fa 320 m dentro l'area.
+  ✓ Ordine delle tappe: Tappe e passaggi raggiunti nell'ordine richiesto.
+  ✓ Istruzioni di guida: Istruzioni coerenti con la linea del percorso.
+  nota: «Quartiere del lago»: metodo euristico (punti stradali candidati dentro l'area, verificati dopo il calcolo). Non garantisce il percorso più breve possibile.
+  nota: Percorsi alternativi non disponibili: il servizio li calcola solo senza tappe o passaggi intermedi.
+  richieste di percorso usate: 1
+  richieste totali (percorso + aggancio): 1
+=== Attraversa – candidati da aggancio ===
+Percorso: 4,4 km, 5 min, 3 punti
+  ✓ Quartiere del lago: Il percorso attraversa l'area (320 m all'interno).
+  ✓ Ordine delle tappe: Tappe e passaggi raggiunti nell'ordine richiesto.
+  ✓ Istruzioni di guida: Istruzioni coerenti con la linea del percorso.
+  nota: «Quartiere del lago»: metodo euristico (punti stradali candidati dentro l'area, verificati dopo il calcolo). Non garantisce il percorso più breve possibile.
+  nota: Percorsi alternativi non disponibili: il servizio li calcola solo senza tappe o passaggi intermedi.
+  richieste di percorso usate: 1
+  richieste totali (percorso + aggancio): 2
+=== Attraversa – candidati da mappa ===
+Percorso: 4,8 km, 5 min, 3 punti
+  ✓ Quartiere del lago: Il percorso attraversa l'area (320 m all'interno).
+  ✓ Ordine delle tappe: Tappe e passaggi raggiunti nell'ordine richiesto.
+  ✓ Istruzioni di guida: Istruzioni coerenti con la linea del percorso.
+  nota: «Quartiere del lago»: metodo euristico (punti stradali candidati dentro l'area, verificati dopo il calcolo). Non garantisce il percorso più breve possibile.
+  nota: Percorsi alternativi non disponibili: il servizio li calcola solo senza tappe o passaggi intermedi.
+  richieste di percorso usate: 1
+  richieste totali (percorso + aggancio): 1
+=== Arrivo dentro zona esclusa ===
+Errore: RICHIESTA_NON_VALIDA – Ci sono vincoli incompatibili: correggili prima del calcolo. 
+Conflitto BLOCCANTE: L'arrivo si trova dentro la zona esclusa «Zona vietata».
+  richieste di percorso usate: 0
+=== Tratto contromano ===
+Errore: PUNTO_NON_RAGGIUNGIBILE – Un punto è troppo lontano da una strada percorribile in auto. HTTP 404, codice 2010: Could not find routable point within a radius of 25.0 meters of specified coordinate 1: 11.877685 45.416053.
+  nota: Percorsi alternativi non disponibili: il servizio li calcola solo senza tappe o passaggi intermedi.
+  bloccano: [Verticale 3 verso sud]
+  richieste di percorso usate: 2
+=== Viaggio con tappa ed esclusione ===
+Percorso: 5,6 km, 7 min, 3 punti
+  ✓ Zona esclusa: Il percorso non entra nella zona esclusa.
+  ✓ Ordine delle tappe: Tappe e passaggi raggiunti nell'ordine richiesto.
+  ✓ Istruzioni di guida: Istruzioni coerenti con la linea del percorso.
+  nota: Percorsi alternativi non disponibili: il servizio li calcola solo senza tappe o passaggi intermedi.
+  richieste di percorso usate: 1
+=== Ricalcolo dopo la deviazione ===
+Percorso: 2,7 km, 4 min, 2 punti
+  ✓ Zona esclusa: Il percorso non entra nella zona esclusa.
+  ✓ Ordine delle tappe: Tappe e passaggi raggiunti nell'ordine richiesto.
+  ✓ Istruzioni di guida: Istruzioni coerenti con la linea del percorso.
+  richieste di percorso usate: 1
+=== Senza rete ===
+Errore: RETE_ASSENTE – Nessuna connessione a internet (o servizio irraggiungibile). Il percorso già scaricato resta disponibile. Unable to resolve host "api.openrouteservice.org"
+  richieste di percorso usate: 1
+=== Tratto obbligatorio ed escluso (entrambi obbligatori) ===
+Errore: RICHIESTA_NON_VALIDA – Ci sono vincoli incompatibili: correggili prima del calcolo. 
+Conflitto BLOCCANTE: «Corso» si trova dentro la zona esclusa «Corso escluso»: non possono valere entrambi.
+  richieste di percorso usate: 0
+=== Tratto obbligatorio, esclusione preferita ===
+Percorso: 5,6 km, 7 min, 4 punti
+Conflitto: «Corso» si trova dentro la zona esclusa «Corso escluso»: non possono valere entrambi.
+  ✓ Corso: Tratto percorso al 100%, nel senso richiesto.
+  ✓ Ordine delle tappe: Tappe e passaggi raggiunti nell'ordine richiesto.
+  ✓ Istruzioni di guida: Istruzioni coerenti con la linea del percorso.
+  nota: Percorsi alternativi non disponibili: il servizio li calcola solo senza tappe o passaggi intermedi.
+  richieste di percorso usate: 1
+Punto toccato 45.418886, 11.875507 agganciato a 45.418886, 11.875123 su Via Verticale 2 (29 m)
+=== Punto + tratto obbligatori ===
+Percorso: 8,4 km, 12 min, 5 punti
+  ✓ Passa da qui: Il percorso passa a 0 m dal punto.
+  ✓ Via Verticale 12 verso sud: Tratto percorso al 96%, nel senso richiesto.
+  ✓ Ordine delle tappe: Tappe e passaggi raggiunti nell'ordine richiesto.
+  ✓ Istruzioni di guida: Istruzioni coerenti con la linea del percorso.
+  nota: Percorsi alternativi non disponibili: il servizio li calcola solo senza tappe o passaggi intermedi.
+  richieste di percorso usate: 1
+=== Con alternative ===
+Percorso: 3,6 km, 4 min, 2 punti
+  ✓ Ordine delle tappe: Tappe e passaggi raggiunti nell'ordine richiesto.
+  ✓ Istruzioni di guida: Istruzioni coerenti con la linea del percorso.
+  richieste di percorso usate: 1
+=== Muro invalicabile ===
+Errore: NESSUN_PERCORSO – Non esiste un percorso stradale che rispetti tutti i vincoli richiesti. HTTP 404, codice 2009: Route could not be found - Unable to find a route between points 1 (11.870256 45.4) and 3 (11.905606 45.4).
+  nota: Percorsi alternativi non disponibili: il servizio li calcola solo senza tappe o passaggi intermedi.
+  bloccano: [Muro]
+  richieste di percorso usate: 3
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
