@@ -168,10 +168,11 @@ private fun SchedaVincolo(modello: ModelloApp, s: StatoUi, v: Vincolo, indice: I
                 }
                 else -> {}
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            // su schermi stretti i pulsanti vanno a capo invece di uscire dal riquadro
+            @OptIn(ExperimentalLayoutApi::class)
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 TextButton(onClick = { modello.mostraVincolo(v) }) { Text("Mostra") }
                 TextButton(onClick = { rinomina = true }) { Text("Rinomina") }
-                Spacer(Modifier.weight(1f))
                 IconButton(onClick = { modello.spostaVincolo(v.id, true) }, enabled = indice > 0) { Icon(Icons.Default.KeyboardArrowUp, "Sposta su") }
                 IconButton(onClick = { modello.spostaVincolo(v.id, false) }, enabled = indice < totale - 1) { Icon(Icons.Default.KeyboardArrowDown, "Sposta giù") }
                 IconButton(onClick = { modello.rimuoviVincolo(v.id) }) { Icon(Icons.Default.Delete, "Elimina") }
