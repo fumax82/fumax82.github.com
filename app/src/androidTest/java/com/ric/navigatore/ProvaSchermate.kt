@@ -78,7 +78,7 @@ class ProvaSchermate {
         Thread.sleep(600)
         dispositivo.click(3 * w / 4, h / 6)
         Thread.sleep(600)
-        dispositivo.click(w / 2, (h * 0.38).toInt())
+        dispositivo.click(w / 2, (h * 0.30).toInt())
         Thread.sleep(600)
         foto("03_disegno_area")
         compose.onNodeWithText("Conferma").performClick()

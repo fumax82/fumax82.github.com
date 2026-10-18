@@ -88,15 +88,18 @@ fun SchermataGuida(
                     )
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilledTonalButton(onClick = onVoce, modifier = Modifier.weight(1f).heightIn(min = 60.dp)) {
-                        Icon(if (stato.voce) IconeExtra.VoceSi else IconeExtra.VoceNo, null)
-                        Spacer(Modifier.width(6.dp))
-                        Text(if (stato.voce) "Voce" else "Muto")
+                    // icona sopra e testo sotto: il testo ha tutta la larghezza e non va mai a capo a metà
+                    FilledTonalButton(onClick = onVoce, modifier = Modifier.weight(1f).heightIn(min = 64.dp), contentPadding = PaddingValues(6.dp)) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(if (stato.voce) IconeExtra.VoceSi else IconeExtra.VoceNo, null)
+                            Text(if (stato.voce) "Voce attiva" else "Voce spenta", maxLines = 1, softWrap = false)
+                        }
                     }
-                    FilledTonalButton(onClick = onRicentra, modifier = Modifier.weight(1f).heightIn(min = 60.dp)) {
-                        Icon(IconeExtra.MiaPosizione, null)
-                        Spacer(Modifier.width(6.dp))
-                        Text("Ricentra")
+                    FilledTonalButton(onClick = onRicentra, modifier = Modifier.weight(1f).heightIn(min = 64.dp), contentPadding = PaddingValues(6.dp)) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(IconeExtra.MiaPosizione, null)
+                            Text("Ricentra", maxLines = 1, softWrap = false)
+                        }
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
