@@ -50,12 +50,11 @@ fun PannelloModo(modello: ModelloApp, s: StatoUi) {
         else -> Extra.colori.passaggio
     }
     Surface(shape = RoundedCornerShape(22.dp), shadowElevation = 8.dp, color = MaterialTheme.colorScheme.surface) {
-        Column(
-            Modifier.fillMaxWidth().heightIn(max = 340.dp).verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
+        // Titolo e pulsanti restano sempre visibili; in mezzo le opzioni scorrono
+        Column(Modifier.fillMaxWidth().heightIn(max = 400.dp).padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(titolo, style = MaterialTheme.typography.titleMedium, color = colore)
             sel.suggerimento?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             if (sel.inAttesa) LinearProgressIndicator(Modifier.fillMaxWidth())
 
             when (modo) {
@@ -91,6 +90,7 @@ fun PannelloModo(modello: ModelloApp, s: StatoUi) {
                 SceltaPillole(Durata.entries, sel.durata, { it.etichetta }, { d -> modello.cambiaSelezione { it.copy(durata = d) } })
             }
 
+            }
             Spacer(Modifier.height(4.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedButton(onClick = { modello.annullaModo() }, modifier = Modifier.weight(1f).heightIn(min = 52.dp)) { Text("Annulla") }
