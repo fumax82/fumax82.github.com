@@ -30,6 +30,8 @@ w: file:///home/runner/work/fumax82.github.com/fumax82.github.com/nucleo/src/tes
 
 > Task :test
 
+GuidaAvanzataTest > vincoli rapidi creati dalla finestra di esplorazione() PASSED
+
 GuidaAvanzataTest > anteprima con anticipo proporzionale alla velocita() PASSED
 
 GuidaAvanzataTest > ricerca solo sulla parte di percorso ancora da fare() PASSED
@@ -234,6 +236,6 @@ UnitaTest > lettura di una risposta openrouteservice reale nel formato e degli e
 
 [Incubating] Problems report is available at: file:///home/runner/work/fumax82.github.com/fumax82.github.com/nucleo/build/reports/problems/problems-report.html
 
-BUILD SUCCESSFUL in 37s
+BUILD SUCCESSFUL in 58s
 4 actionable tasks: 4 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.8.1/userguide/configuration_cache_enabling.html
