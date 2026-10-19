@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.ric.navigatore.nucleo.GuidaAvanzataTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-19T11:01:59.146Z" hostname="runnervm8k3b6" time="0.178">
+<testsuite name="com.ric.navigatore.nucleo.GuidaAvanzataTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-19T11:13:00.649Z" hostname="runnervm8k3b6" time="0.147">
   <properties/>
-  <testcase name="anteprima con anticipo proporzionale alla velocita()" classname="com.ric.navigatore.nucleo.GuidaAvanzataTest" time="0.048"/>
-  <testcase name="ricerca solo sulla parte di percorso ancora da fare()" classname="com.ric.navigatore.nucleo.GuidaAvanzataTest" time="0.073"/>
-  <testcase name="geometria dell'anteprima orientata come si arriva()" classname="com.ric.navigatore.nucleo.GuidaAvanzataTest" time="0.002"/>
-  <testcase name="discesa ripida dalle quote, avviso per tutto il tratto()" classname="com.ric.navigatore.nucleo.GuidaAvanzataTest" time="0.027"/>
+  <testcase name="anteprima con anticipo proporzionale alla velocita()" classname="com.ric.navigatore.nucleo.GuidaAvanzataTest" time="0.043"/>
+  <testcase name="ricerca solo sulla parte di percorso ancora da fare()" classname="com.ric.navigatore.nucleo.GuidaAvanzataTest" time="0.054"/>
+  <testcase name="geometria dell'anteprima orientata come si arriva()" classname="com.ric.navigatore.nucleo.GuidaAvanzataTest" time="0.005"/>
+  <testcase name="discesa ripida dalle quote, avviso per tutto il tratto()" classname="com.ric.navigatore.nucleo.GuidaAvanzataTest" time="0.022"/>
   <testcase name="serie di tornanti riconosciuta, svolte agli incroci ignorate()" classname="com.ric.navigatore.nucleo.GuidaAvanzataTest" time="0.004"/>
-  <testcase name="frasi della ricerca sul percorso()" classname="com.ric.navigatore.nucleo.GuidaAvanzataTest" time="0.003"/>
+  <testcase name="frasi della ricerca sul percorso()" classname="com.ric.navigatore.nucleo.GuidaAvanzataTest" time="0.002"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
