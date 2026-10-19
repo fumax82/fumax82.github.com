@@ -194,7 +194,7 @@ class ProvaSchermate {
 
         // Esplorazione del percorso e ricerca scritta (la voce non si può provare sull'emulatore)
         compose.onNodeWithText("Esplora").performClick()
-        aspettaTesto("Esplora il percorso")
+        aspettaTesto("Torna alla guida")
         // tempo per scaricare la piccola mappa
         repeat(5) { compose.waitForIdle(); Thread.sleep(2000) }
         foto("11_esplora")

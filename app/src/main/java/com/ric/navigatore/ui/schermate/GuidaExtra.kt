@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -110,7 +111,6 @@ fun RiquadroAvvisoStrada(a: AvvisoStrada) {
  * mappa di questa finestra, da cui si può evitare quel tratto o quella
  * zona, oppure imporre di passare da lì.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PannelloEsplora(
     stato: StatoNavigazione,
@@ -130,7 +130,13 @@ fun PannelloEsplora(
     val totale = percorso.distanza.coerceAtLeast(da + 1)
     val ambito = rememberCoroutineScope()
     var testo by remember(e.frase) { mutableStateOf(e.frase) }
-    val cerca = { if (testo.isNotBlank()) GuidaCondivisa.cerca(testo, ambito) }
+    val tastiera = LocalSoftwareKeyboardController.current
+    val cerca = {
+        if (testo.isNotBlank()) {
+            tastiera?.hide() // chiude la tastiera: si vede di nuovo tutta la finestra
+            GuidaCondivisa.cerca(testo, ambito)
+        }
+    }
 
     // ---- piccola mappa ----
     val context = LocalContext.current
@@ -155,13 +161,12 @@ fun PannelloEsplora(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Esplora il percorso", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                IconButton(onClick = onChiudi) { Icon(Icons.Default.Close, contentDescription = "Chiudi") }
+                Text(
+                    e.descrizione ?: "Punto del percorso a ${formattaDistanza((e.progressiva - da).coerceAtLeast(0.0))} da qui",
+                    style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = onChiudi) { Text("Torna alla guida") }
             }
-            Text(
-                e.descrizione ?: "Punto del percorso a ${formattaDistanza((e.progressiva - da).coerceAtLeast(0.0))} da qui",
-                style = MaterialTheme.typography.bodyLarge,
-            )
             e.nota?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Extra.colori.avviso) }
             // piccola mappa con il mirino al centro
             Box(Modifier.fillMaxWidth().height(altezzaSchermo * 0.22f).clip(RoundedCornerShape(16.dp))) {
@@ -188,7 +193,7 @@ fun PannelloEsplora(
                     onValueChange = { testo = it },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
-                    placeholder = { Text("Es. prima di Bologna") },
+                    placeholder = { Text("Es. prima di Roma", maxLines = 1) },
                     trailingIcon = { IconButton(onClick = cerca) { Icon(Icons.Default.Search, contentDescription = "Cerca lungo il percorso") } },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(onSearch = { cerca() }),
@@ -198,29 +203,31 @@ fun PannelloEsplora(
                 }
             }
             if (e.cercando) LinearProgressIndicator(Modifier.fillMaxWidth())
-            // azioni rapide: ricalcolo immediato da dove sei
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(
-                    onClick = { onEvitaTratto(e.progressiva) },
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Extra.colori.esclusione),
-                ) { Text("Evita il tratto") }
-                OutlinedButton(
-                    onClick = { mappa.puntoAlCentro()?.let(onEvitaZona) },
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Extra.colori.esclusione),
-                ) { Text("Evita la zona") }
-                OutlinedButton(
-                    onClick = { mappa.puntoAlCentro()?.let(onPassaDa) },
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Extra.colori.passaggio),
-                ) { Text("Passa da qui") }
-                OutlinedButton(onClick = onAltriStrumenti) { Text("Altri strumenti") }
+            // azioni rapide: ricalcolo immediato da dove sei (testi su due righe se serve, mai tagliati)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                PulsanteAzione("Evita il tratto", Extra.colori.esclusione, Modifier.weight(1f)) { onEvitaTratto(e.progressiva) }
+                PulsanteAzione("Evita la zona", Extra.colori.esclusione, Modifier.weight(1f)) { mappa.puntoAlCentro()?.let(onEvitaZona) }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                PulsanteAzione("Passa da qui", Extra.colori.passaggio, Modifier.weight(1f)) { mappa.puntoAlCentro()?.let(onPassaDa) }
+                PulsanteAzione("Altri strumenti", MaterialTheme.colorScheme.primary, Modifier.weight(1f), onAltriStrumenti)
             }
             Text(
                 "«Evita il tratto»: 300 m di percorso attorno al punto scelto. «Evita la zona» e «Passa da qui»: il punto nel mirino.",
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Button(onClick = onChiudi, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) { Text("Torna alla guida") }
         }
     }
+}
+
+/** Pulsante della finestra di esplorazione. */
+@Composable
+private fun PulsanteAzione(testo: String, colore: androidx.compose.ui.graphics.Color, modifier: Modifier, onClick: () -> Unit) {
+    OutlinedButton(
+        onClick = onClick, modifier = modifier.heightIn(min = 48.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = colore),
+    ) { Text(testo, textAlign = androidx.compose.ui.text.style.TextAlign.Center) }
 }
 
 /** Mirino al centro della piccola mappa. */
