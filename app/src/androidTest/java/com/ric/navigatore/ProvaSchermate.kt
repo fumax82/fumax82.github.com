@@ -109,7 +109,8 @@ class ProvaSchermate {
             compose.onNodeWithContentDescriptionSafe("Tipo di mappa")
             aspettaTesto(nome)
             compose.onNodeWithText(nome, substring = true).performClick()
-            Thread.sleep(7000)
+            // il server delle immagini satellitari può essere lento al primo caricamento
+            Thread.sleep(if (nome.startsWith("Satellite")) 20000 else 8000)
             foto(file)
         }
 
