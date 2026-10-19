@@ -94,7 +94,13 @@ class ProvaSchermate {
         foto("04_area_confermata")
 
         // Selezione dell'area appena disegnata: tocco al suo interno
-        dispositivo.click(w / 2, (h * 0.26).toInt()) // parte del triangolo non coperta dalla scheda in alto
+        // parte del triangolo non coperta dalla scheda in alto; se la mappa si è spostata un poco, riprova più in basso o più in alto
+        for (y in listOf(0.26, 0.28, 0.23, 0.29)) {
+            dispositivo.click(w / 2, (h * y).toInt())
+            compose.waitForIdle()
+            Thread.sleep(1500)
+            if (compose.onAllNodesWithText("Elimina").fetchSemanticsNodes().isNotEmpty()) break
+        }
         aspettaTesto("Elimina")
         foto("04b_area_selezionata")
         // sposto un vertice: tocco sulla maniglia, poi sul nuovo punto
