@@ -6,3 +6,5 @@ build/
 # Le chiavi di firma non vanno MAI pubblicate
 *.keystore
 *.jks
+strumenti/
+.kotlin/
