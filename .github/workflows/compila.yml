@@ -71,4 +71,5 @@ jobs:
           git config user.name "github-actions"; git config user.email "github-actions@users.noreply.github.com"
           git add -f risultati
           git commit -m "risultati [skip ci]" || true
+          git pull --rebase -X theirs origin "$GITHUB_REF_NAME" || true
           git push
