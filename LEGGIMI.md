@@ -150,6 +150,8 @@ app/      app Android
 
 ## 8. Resoconto delle prove (18-19/10/2026)
 
+**Versione 1.2.1 (19/10/2026).** Durante la guida la mappa grande resta sempre centrata sulla posizione GPS, anche mentre si esplora o si cerca un punto: il punto trovato si vede nella piccola mappa della finestra in basso, con un mirino. Da lì «Evita il tratto» (300 m di percorso attorno al punto), «Evita la zona» (cerchio di 300 m) e «Passa da qui» ricalcolano subito dalla posizione attuale; «Altri strumenti» apre gli strumenti completi. 27 prove simulate su 27 superate (nuova: creazione dei vincoli rapidi). Nell'emulatore: finestra di esplorazione, ricerca scritta e modifica in guida, con testi e pulsanti interi. L'anteprima degli incroci era già centrata sull'incrocio e la mappa grande già sul GPS: invariata.
+
 **Versione 1.2 (19/10/2026).** 26 prove simulate su 26 superate (`nucleo/src/test/.../GuidaAvanzataTest.kt`, 6 nuove):
 - anticipo dell'anteprima proporzionale alla velocità (150 m minimo, 1,5 km massimo, più anticipo per uscite e bivi) e anteprima che non sparisce se si rallenta;
 - serie di 4 tornanti riconosciuta su una strada di montagna costruita a mano; svolte agli incroci ignorate; strada dritta senza avvisi;
