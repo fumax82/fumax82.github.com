@@ -1,9 +1,14 @@
 name: diagnosi
 on: { push: { branches: [diagnosi-eox] } }
+permissions: { contents: write }
 jobs:
   d:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - run: |
+          exec > out.txt 2>&1
           for u in "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/12/1466/2183.jpg" "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/8/91/136.jpg" "https://a.tile.opentopomap.org/12/2183/1466.png"; do
             curl -sS -D h.txt -o t.bin -A "okhttp/4.12.0" "$u"; head -20 h.txt; file t.bin; xxd t.bin | head -3; python3 -c "from PIL import Image;i=Image.open('t.bin');print(i.format,i.mode,i.size,i.info)" || true; echo ====; done
+      - run: |
+          git config user.name ci; git config user.email ci@x; git add out.txt; git commit -m 'out [skip ci]'; git push
