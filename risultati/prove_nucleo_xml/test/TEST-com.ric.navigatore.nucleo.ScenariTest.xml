@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.ric.navigatore.nucleo.ScenariTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-10-19T05:43:49.672Z" hostname="runnervm8k3b6" time="1.038">
+<testsuite name="com.ric.navigatore.nucleo.ScenariTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-10-19T11:01:59.330Z" hostname="runnervm8k3b6" time="0.947">
   <properties/>
-  <testcase name="1 esclusione di un tratto del percorso calcolato()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.281"/>
+  <testcase name="1 esclusione di un tratto del percorso calcolato()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.223"/>
   <testcase name="2 piu aree escluse insieme()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.111"/>
-  <testcase name="7 quota esaurita()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.112"/>
-  <testcase name="4 attraversa area con centro irraggiungibile (lago)()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.133"/>
-  <testcase name="5a arrivo dentro area esclusa - conflitto prima del calcolo()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.006"/>
-  <testcase name="5d tratto obbligatorio contromano su senso unico()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.028"/>
-  <testcase name="6 deviazione dal percorso con ricalcolo che mantiene le esclusioni()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.079"/>
-  <testcase name="profilo altimetrico del percorso()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.058"/>
-  <testcase name="8 perdita di rete e di GPS()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.022"/>
-  <testcase name="5b tratto obbligatorio ed escluso insieme()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.027"/>
-  <testcase name="3 punto e tratto obbligatori()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.025"/>
-  <testcase name="coerenza istruzioni e alternative()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.023"/>
-  <testcase name="5c esclusione che taglia in due la citta - diagnosi del vincolo colpevole()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.048"/>
+  <testcase name="7 quota esaurita()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.118"/>
+  <testcase name="4 attraversa area con centro irraggiungibile (lago)()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.113"/>
+  <testcase name="5a arrivo dentro area esclusa - conflitto prima del calcolo()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.003"/>
+  <testcase name="5d tratto obbligatorio contromano su senso unico()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.049"/>
+  <testcase name="6 deviazione dal percorso con ricalcolo che mantiene le esclusioni()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.089"/>
+  <testcase name="profilo altimetrico del percorso()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.086"/>
+  <testcase name="8 perdita di rete e di GPS()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.018"/>
+  <testcase name="5b tratto obbligatorio ed escluso insieme()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.02"/>
+  <testcase name="3 punto e tratto obbligatori()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.03"/>
+  <testcase name="coerenza istruzioni e alternative()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.021"/>
+  <testcase name="5c esclusione che taglia in due la citta - diagnosi del vincolo colpevole()" classname="com.ric.navigatore.nucleo.ScenariTest" time="0.027"/>
   <system-out><![CDATA[=== Percorso iniziale ===
 Percorso: 3,6 km, 4 min, 2 punti
   ✓ Ordine delle tappe: Tappe e passaggi raggiunti nell'ordine richiesto.

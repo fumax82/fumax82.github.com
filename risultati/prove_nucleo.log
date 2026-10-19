@@ -30,6 +30,18 @@ w: file:///home/runner/work/fumax82.github.com/fumax82.github.com/nucleo/src/tes
 
 > Task :test
 
+GuidaAvanzataTest > anteprima con anticipo proporzionale alla velocita() PASSED
+
+GuidaAvanzataTest > ricerca solo sulla parte di percorso ancora da fare() PASSED
+
+GuidaAvanzataTest > geometria dell'anteprima orientata come si arriva() PASSED
+
+GuidaAvanzataTest > discesa ripida dalle quote, avviso per tutto il tratto() PASSED
+
+GuidaAvanzataTest > serie di tornanti riconosciuta, svolte agli incroci ignorate() PASSED
+
+GuidaAvanzataTest > frasi della ricerca sul percorso() PASSED
+
 ScenariTest > 1 esclusione di un tratto del percorso calcolato() STANDARD_OUT
     === Percorso iniziale ===
     Percorso: 3,6 km, 4 min, 2 punti
@@ -222,6 +234,6 @@ UnitaTest > lettura di una risposta openrouteservice reale nel formato e degli e
 
 [Incubating] Problems report is available at: file:///home/runner/work/fumax82.github.com/fumax82.github.com/nucleo/build/reports/problems/problems-report.html
 
-BUILD SUCCESSFUL in 58s
+BUILD SUCCESSFUL in 1m 2s
 4 actionable tasks: 4 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.8.1/userguide/configuration_cache_enabling.html
