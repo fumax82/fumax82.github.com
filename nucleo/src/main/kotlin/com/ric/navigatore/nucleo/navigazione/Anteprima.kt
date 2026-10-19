@@ -103,8 +103,8 @@ object Anteprima {
             dopo = Geo.sottoLinea(linea, s, s + lunghezzaDopo, prog),
             zoom = when {
                 veloce -> 15.6
-                rotatoria -> 16.8
-                else -> 17.4
+                rotatoria -> 16.4
+                else -> 16.9
             },
         )
     }
