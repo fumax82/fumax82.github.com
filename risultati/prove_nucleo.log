@@ -222,6 +222,6 @@ UnitaTest > lettura di una risposta openrouteservice reale nel formato e degli e
 
 [Incubating] Problems report is available at: file:///home/runner/work/fumax82.github.com/fumax82.github.com/nucleo/build/reports/problems/problems-report.html
 
-BUILD SUCCESSFUL in 44s
+BUILD SUCCESSFUL in 58s
 4 actionable tasks: 4 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.8.1/userguide/configuration_cache_enabling.html
