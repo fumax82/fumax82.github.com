@@ -39,6 +39,9 @@ Tutto questo è dichiarato anche dentro l'app.
 | Traffico, autovelox, limiti, chiusure | ❌ Non disponibile | Non inventati né simulati |
 | Calcolo percorsi offline | ❌ Non disponibile | Senza rete resta visibile il percorso già scaricato |
 | Preferiti, percorsi salvati, cronologia, annulla/ripristina | ✅ Supportata | Solo sul telefono |
+| **Selezionare, spostare, modificare, cancellare** aree e punti disegnati (1.1) | ✅ Supportata | Tocca il vincolo sulla mappa: maniglie per vertici e centro, nuovi vertici, raggio, «Sposta», «Elimina»; tutto annullabile. I tratti di strada si spostano o si cancellano, non si deformano |
+| Mappa satellite e topografica (1.1) | ✅ Supportata | Satellite Sentinel-2 (EOX, gratis, 10 m), ibrida con strade, topografica OpenTopoMap; satellite ad alta risoluzione Esri solo con chiave ArcGIS gratuita |
+| Profilo altimetrico, salita e discesa, altitudine di un punto (1.1) | ✅ Supportata | Quote dal modello del terreno di openrouteservice, precisione di qualche metro; ponti e gallerie possono falsare il profilo |
 
 ## 2. Servizi scelti e loro limiti
 
@@ -46,12 +49,16 @@ Tutto questo è dichiarato anche dentro l'app.
 |---|---|---|---|
 | **OpenFreeMap** | Mappa (tasselli vettoriali OSM) | Gratis, senza chiave | Nessuna quota dichiarata; uso corretto, attribuzione obbligatoria |
 | **openrouteservice** (HeiGIT) | Percorsi, aggancio alle strade, ricerca indirizzi (Pelias) | Gratis con chiave personale, **nessuna carta** | Piano "Standard" quando l'ho verificato: percorsi 2000/giorno e 40/minuto; aggancio 2000/giorno; ricerca 1000/giorno e 100/minuto |
+| **EOX Sentinel-2 cloudless 2024** | Satellite | Gratis, senza chiave | Licenza CC BY-NC-SA 4.0: solo uso non commerciale; risoluzione 10 m |
+| **Esri World Imagery** (facoltativo) | Satellite ad alta risoluzione | Chiave ArcGIS Location Platform, piano gratuito | Limiti del piano gratuito da controllare nel proprio account; verificare che il pagamento a consumo non sia attivo |
+| **OpenTopoMap** | Mappa topografica | Gratis, senza chiave | Uso moderato (server volontario), attribuzione CC-BY-SA |
 | **Nominatim** (OSM) | Ricerca di riserva, se manca la chiave | Gratis | Massimo 1 richiesta al secondo; **niente suggerimenti mentre scrivi** (lo vietano le loro regole); non adatto a uso intenso |
 
 - I limiti di openrouteservice possono cambiare. Il valore che conta è quello scritto nel **tuo pannello** su openrouteservice.org.
 - L'app conta le richieste. Se il server comunica quante richieste restano, mostra anche quel numero (Impostazioni → Uso dei limiti).
 - A limite raggiunto l'app si ferma e lo dice. Non passa mai a servizi a pagamento.
 - Ogni calcolo usa al massimo 8 richieste. Il numero si può regolare.
+- Le quote del percorso arrivano insieme al percorso (nessuna richiesta in più). L'altitudine di un singolo punto costa 1 richiesta (limite predefinito 2000 al giorno).
 - Perché openrouteservice:
   - è l'unico servizio pubblico gratuito, senza carta, che accetta **aree da evitare** e **direzione obbligata nei punti**;
   - è open source, quindi lo stesso codice si può installare su un proprio server senza cambiare l'app.
@@ -138,7 +145,14 @@ app/      app Android
 
 ## 8. Resoconto delle prove (18/10/2026)
 
-**A. Prove simulate della logica: 18 su 18 superate** (`nucleo/src/test`).
+**Versione 1.1 (19/10/2026).** 20 prove simulate su 20 superate: le due nuove riguardano il profilo altimetrico e l'altitudine, e la modifica di aree e punti. Nell'emulatore ho provato:
+- la selezione di un'area disegnata;
+- lo spostamento di un vertice;
+- il cambio tra mappa satellite, topografica e stradale.
+
+I server delle mappe (EOX, OpenTopoMap, OpenFreeMap, Esri) rispondono da GitHub. Il profilo altimetrico con il servizio vero non è stato provato, per mancanza della chiave.
+
+**A. Prove simulate della logica (versione 1.0): 18 su 18 superate** (`nucleo/src/test`).
 - Usano una città finta a griglia e un server openrouteservice **finto**, che legge e scrive lo stesso formato JSON di quello vero.
 - Scenari richiesti e risultato:
   - Evitare un tratto del percorso → nuovo percorso più lungo che non attraversa la fascia ✅
