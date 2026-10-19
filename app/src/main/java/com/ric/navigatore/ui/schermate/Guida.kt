@@ -63,12 +63,12 @@ fun SchermataGuida(
                     Text("Poi ${frecciaManovra(dopo.tipo)} ${dopo.istruzione}", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp))
                 }
             }
+            // ---------------- Tornanti, salite e discese ripide ----------------
+            stato.avvisiStrada.forEach { RiquadroAvvisoStrada(it) }
             // ---------------- Anteprima dell'incrocio (metà superiore) ----------------
             if (stato.anteprima != null && stato.esplorazione == null) {
                 PannelloIncrocio(stato, notte, Modifier.fillMaxWidth().height(altezzaSchermo * 0.32f))
             }
-            // ---------------- Tornanti, salite e discese ripide ----------------
-            stato.avvisiStrada.forEach { RiquadroAvvisoStrada(it) }
             // ---------------- Avvisi ----------------
             val avvisi = buildList {
                 if (stato.ricalcolo) add("Ricalcolo del percorso in corso (mantengo tutte le esclusioni)…")

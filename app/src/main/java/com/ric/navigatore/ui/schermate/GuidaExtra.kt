@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.ric.navigatore.guida.GuidaCondivisa
@@ -145,7 +145,7 @@ fun PannelloEsplora(
                     onValueChange = { testo = it },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
-                    placeholder = { Text("es. prima dell'uscita per Bologna", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    placeholder = { Text("Es. prima di Bologna") },
                     trailingIcon = { IconButton(onClick = cerca) { Icon(Icons.Default.Search, contentDescription = "Cerca lungo il percorso") } },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(onSearch = { cerca() }),
@@ -156,11 +156,12 @@ fun PannelloEsplora(
             }
             if (e.cercando) LinearProgressIndicator(Modifier.fillMaxWidth())
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onTutto, modifier = Modifier.weight(1f).heightIn(min = 52.dp)) {
-                    Text("Tutto il percorso", maxLines = 1, softWrap = false)
+                // testo su due righe se serve: mai tagliato
+                OutlinedButton(onClick = onTutto, modifier = Modifier.weight(1f).heightIn(min = 52.dp), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)) {
+                    Text("Tutto il percorso", textAlign = TextAlign.Center)
                 }
-                OutlinedButton(onClick = onModifica, modifier = Modifier.weight(1f).heightIn(min = 52.dp)) {
-                    Text("Evita o passa da", maxLines = 1, softWrap = false)
+                OutlinedButton(onClick = onModifica, modifier = Modifier.weight(1f).heightIn(min = 52.dp), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)) {
+                    Text("Evita o passa da", textAlign = TextAlign.Center)
                 }
             }
             Button(onClick = onChiudi, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) { Text("Torna alla guida") }

@@ -199,6 +199,9 @@ class ProvaSchermate {
         aspettaTesto("Modifiche durante la guida")
         foto("13_modifica_in_guida")
         compose.onNodeWithText("Annulla").performClick()
+        // si torna all'esplorazione, poi alla guida
+        aspettaTesto("Torna alla guida")
+        compose.onNodeWithText("Torna alla guida").performClick()
         aspettaTesto("Termina")
 
         compose.onNodeWithText("Termina").performClick()

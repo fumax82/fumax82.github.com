@@ -43,6 +43,8 @@ class MappaIncrocio {
     private var stile: Style? = null
     private var geometria: GeometriaAnteprima? = null
     private var auto: Punto? = null
+    /** Vero quando l'incrocio attuale è già stato disegnato sulla mappa (a stile caricato). */
+    private var disegnato = false
 
     companion object {
         private const val S_PERCORSO = "incrocio-percorso"
@@ -65,18 +67,21 @@ class MappaIncrocio {
         m.setStyle(Style.Builder().fromJson(StiliMappa.schema(notte))) { s ->
             stile = s
             prepara(s)
+            disegnato = false
             geometria?.let { mostra(it, auto) }
         }
     }
 
     /** Mostra l'incrocio [g]; [posizione] è dove si trova l'auto (se vicina). */
     fun mostra(g: GeometriaAnteprima, posizione: Punto?) {
-        val cambiato = g != geometria
+        if (g != geometria) disegnato = false
         geometria = g
         auto = posizione
+        // se lo stile non è ancora pronto, l'incrocio verrà disegnato appena lo è
         val s = stile ?: return
         val m = mappa ?: return
-        if (cambiato) {
+        if (!disegnato) {
+            disegnato = true
             (s.getSource(S_PERCORSO) as? GeoJsonSource)?.setGeoJson(FeatureCollection.fromFeatures(listOf(
                 Feature.fromGeometry(LineString.fromLngLats(g.prima.map(::pt))),
                 Feature.fromGeometry(LineString.fromLngLats(g.dopo.map(::pt))),
