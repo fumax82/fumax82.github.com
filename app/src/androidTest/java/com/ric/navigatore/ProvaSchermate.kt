@@ -179,6 +179,9 @@ class ProvaSchermate {
                 Thread.sleep(2000)
             }
             foto("10_anteprima_incrocio")
+            // chiudendo l'anteprima tornano i pulsanti
+            compose.onNodeWithContentDescriptionSafe("Chiudi l'anteprima")
+            aspettaTesto("Esplora")
         } else {
             android.util.Log.w("ProvaSchermate", "GPS simulato non disponibile: salto la prova dell'anteprima")
         }

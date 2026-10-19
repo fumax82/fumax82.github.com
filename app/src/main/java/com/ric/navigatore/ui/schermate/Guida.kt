@@ -106,37 +106,40 @@ fun SchermataGuida(
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    // icona sopra e testo sotto: il testo ha tutta la larghezza e non va mai a capo a metà
-                    FilledTonalButton(onClick = onVoce, modifier = Modifier.weight(1f).heightIn(min = 64.dp), contentPadding = PaddingValues(6.dp)) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(if (stato.voce) IconeExtra.VoceSi else IconeExtra.VoceNo, null)
-                            Text(if (stato.voce) "Voce sì" else "Voce no", maxLines = 1, softWrap = false)
+                // con l'anteprima dell'incrocio aperta i pulsanti si nascondono: più spazio per la mappa dell'incrocio
+                if (stato.anteprima == null) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // icona sopra e testo sotto: il testo ha tutta la larghezza e non va mai a capo a metà
+                        FilledTonalButton(onClick = onVoce, modifier = Modifier.weight(1f).heightIn(min = 64.dp), contentPadding = PaddingValues(6.dp)) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(if (stato.voce) IconeExtra.VoceSi else IconeExtra.VoceNo, null)
+                                Text(if (stato.voce) "Voce sì" else "Voce no", maxLines = 1, softWrap = false)
+                            }
+                        }
+                        FilledTonalButton(onClick = onCercaVoce, modifier = Modifier.weight(1f).heightIn(min = 64.dp), contentPadding = PaddingValues(6.dp)) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(IconeExtra.Microfono, null)
+                                Text("Cerca", maxLines = 1, softWrap = false)
+                            }
+                        }
+                        FilledTonalButton(onClick = onRicentra, modifier = Modifier.weight(1f).heightIn(min = 64.dp), contentPadding = PaddingValues(6.dp)) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(IconeExtra.MiaPosizione, null)
+                                Text("Ricentra", maxLines = 1, softWrap = false)
+                            }
                         }
                     }
-                    FilledTonalButton(onClick = onCercaVoce, modifier = Modifier.weight(1f).heightIn(min = 64.dp), contentPadding = PaddingValues(6.dp)) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(IconeExtra.Microfono, null)
-                            Text("Cerca", maxLines = 1, softWrap = false)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = onEsplora, modifier = Modifier.weight(1f).heightIn(min = 60.dp)) {
+                            Icon(IconeExtra.Esplora, null)
+                            Spacer(Modifier.width(6.dp))
+                            Text("Esplora", maxLines = 1, softWrap = false)
                         }
+                        Button(
+                            onClick = onTermina, modifier = Modifier.weight(1f).heightIn(min = 60.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Extra.colori.esclusione, contentColor = MaterialTheme.colorScheme.surface),
+                        ) { Text("Termina") }
                     }
-                    FilledTonalButton(onClick = onRicentra, modifier = Modifier.weight(1f).heightIn(min = 64.dp), contentPadding = PaddingValues(6.dp)) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(IconeExtra.MiaPosizione, null)
-                            Text("Ricentra", maxLines = 1, softWrap = false)
-                        }
-                    }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = onEsplora, modifier = Modifier.weight(1f).heightIn(min = 60.dp)) {
-                        Icon(IconeExtra.Esplora, null)
-                        Spacer(Modifier.width(6.dp))
-                        Text("Esplora", maxLines = 1, softWrap = false)
-                    }
-                    Button(
-                        onClick = onTermina, modifier = Modifier.weight(1f).heightIn(min = 60.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Extra.colori.esclusione, contentColor = MaterialTheme.colorScheme.surface),
-                    ) { Text("Termina") }
                 }
             }
         }
