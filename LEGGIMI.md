@@ -42,6 +42,11 @@ Tutto questo è dichiarato anche dentro l'app.
 | **Selezionare, spostare, modificare, cancellare** aree e punti disegnati (1.1) | ✅ Supportata | Tocca il vincolo sulla mappa: maniglie per vertici e centro, nuovi vertici, raggio, «Sposta», «Elimina»; tutto annullabile. I tratti di strada si spostano o si cancellano, non si deformano |
 | Mappa satellite e topografica (1.1) | ✅ Supportata | Satellite Sentinel-2 (EOX, gratis, 10 m), ibrida con strade, topografica OpenTopoMap; satellite ad alta risoluzione Esri solo con chiave ArcGIS gratuita |
 | Profilo altimetrico, salita e discesa, altitudine di un punto (1.1) | ✅ Supportata | Quote dal modello del terreno di openrouteservice, precisione di qualche metro; ponti e gallerie possono falsare il profilo |
+| **Anteprima dell'incrocio** prima di svolte, rotatorie, uscite e bivi (1.2) | ✅ Supportata | Compare in alto con anticipo proporzionale alla velocità (12 s, 20 s per uscite e bivi; tra 150 m e 1,5 km) e resta fino all'incrocio. È la mappa OpenStreetMap vera, schematica e ruotata come si arriva, con il percorso in blu e la freccia: la forma dell'incrocio è quella della mappa, non un disegno inventato |
+| Corsie (di selezione, accelerazione, decelerazione) | ❌ Non disponibile | I dati gratuiti usati (openrouteservice e mappe OpenFreeMap) non contengono le corsie: si vedono le rampe d'uscita come strade separate e l'indicazione «tieni la destra/sinistra», ma non quale corsia prendere |
+| Avvisi per **tornanti e curve strette**, **salite e discese ripide** (1.2) | ✅ Supportata, stimata | Curve: dalla forma del percorso (almeno 100° entro 80 m, esclusi incroci e rotatorie; serie = 3 curve strette o un tornante da 150°). Pendenze: dalle quote, su 200 m, tratti di almeno 300 m oltre la soglia scelta (8% di serie). Detto a voce una volta, sullo schermo per tutto il tratto |
+| **Zoom su un punto qualsiasi del percorso** ed evita/passa da durante la guida (1.2) | ✅ Supportata | «Esplora»: cursore lungo la parte di percorso che resta, «Tutto il percorso», «Evita o passa da» apre gli strumenti normali; «Applica» ricalcola da dove sei mantenendo tutti i vincoli |
+| **Ricerca a voce** di un punto del percorso, es. «prima dell'uscita per Bologna» (1.2) | ✅ Supportata, con limiti | Usa il riconoscimento vocale del telefono. Cerca SOLO sulla parte di percorso ancora da fare: prima nei nomi delle indicazioni, poi cerca il luogo per nome e prende l'incrocio del percorso più vicino (o, per una città, il punto in cui il percorso vi entra). Le indicazioni di openrouteservice non riportano i cartelli («uscita Bologna»), quindi per le uscite autostradali il punto è l'uscita del percorso più vicina al luogo detto |
 
 ## 2. Servizi scelti e loro limiti
 
@@ -143,7 +148,16 @@ app/      app Android
   ui/             schermate (Compose) e modello dell'interfaccia
 ```
 
-## 8. Resoconto delle prove (18/10/2026)
+## 8. Resoconto delle prove (18-19/10/2026)
+
+**Versione 1.2 (19/10/2026).** 26 prove simulate su 26 superate (`nucleo/src/test/.../GuidaAvanzataTest.kt`, 6 nuove):
+- anticipo dell'anteprima proporzionale alla velocità (150 m minimo, 1,5 km massimo, più anticipo per uscite e bivi) e anteprima che non sparisce se si rallenta;
+- serie di 4 tornanti riconosciuta su una strada di montagna costruita a mano; svolte agli incroci ignorate; strada dritta senza avvisi;
+- discesa al 10% riconosciuta dalle quote, pendenza al 5% ignorata; avviso detto una volta sola ma visibile per tutto il tratto;
+- frasi come «prima dell'uscita per Bologna», «prima della città di Roma», «dopo il casello di San Donà di Piave» interpretate correttamente;
+- ricerca solo sulla parte di percorso ancora da fare (un incrocio già superato non viene più trovato).
+
+Nell'emulatore (GitHub) ho simulato un viaggio con un GPS finto a 50 km/h verso una svolta a destra seguita da una discesa: sono comparse l'anteprima dell'incrocio (mappa vera, ruotata, percorso blu) e l'avviso «discesa ripida 9% per 820 m»; ho provato anche l'esplorazione del percorso, la ricerca scritta «prima della svolta per via Prova» e l'apertura degli strumenti di modifica durante la guida. **Non provati**: il riconoscimento vocale vero (l'emulatore non lo ha), la ricerca di un luogo con il servizio vero, la guida su strada.
 
 **Versione 1.1 (19/10/2026).** 20 prove simulate su 20 superate: le due nuove riguardano il profilo altimetrico e l'altitudine, e la modifica di aree e punti. Nell'emulatore ho provato:
 - la selezione di un'area disegnata;
@@ -194,6 +208,10 @@ L'emulatore usa la versione di prova (debug). L'APK pubblicato è la versione de
 - Niente traffico, limiti di velocità, chiusure; niente calcolo offline.
 - Le alternative ci sono solo senza punti intermedi e sotto i 100 km.
 - I limiti di quota mostrati sono quelli predefiniti del piano gratuito: il conteggio è locale e si azzera a mezzanotte, ora del telefono.
+- Anteprima degli incroci: niente corsie (non sono nei dati gratuiti); serve la rete per scaricare la mappa dell'incrocio; mentre è aperta i pulsanti in basso si nascondono (chiudila con la ×).
+- Tornanti e pendenze sono stime: la forma viene dalla geometria del percorso, le quote da un modello del terreno (ponti e gallerie possono creare false pendenze).
+- La ricerca a voce dipende dal riconoscimento vocale del telefono (di solito quello di Google) e, per i luoghi, consuma richieste di ricerca di openrouteservice o usa Nominatim.
+- Usare «Esplora», la ricerca e le modifiche solo da fermi o farle usare al passeggero.
 - L'APK pesa circa 47 MB: contiene la mappa per telefoni a 32 e 64 bit e per l'emulatore.
 
 ## 10. Aggiornamenti
