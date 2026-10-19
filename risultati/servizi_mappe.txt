@@ -1,0 +1,5 @@
+200 image/jpeg 22163B https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/10/361/543.jpg
+200 image/png 46882B https://a.tile.opentopomap.org/10/543/361.png
+200 application/json 19254B https://tiles.openfreemap.org/planet
+200 application/x-protobuf 76580B https://tiles.openfreemap.org/fonts/Noto%20Sans%20Regular/0-255.pbf
+200 image/jpeg 21432B https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/10/361/543
