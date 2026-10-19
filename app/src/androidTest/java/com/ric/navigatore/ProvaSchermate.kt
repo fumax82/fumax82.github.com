@@ -92,7 +92,7 @@ class ProvaSchermate {
         foto("04_area_confermata")
 
         // Selezione dell'area appena disegnata: tocco al suo interno
-        dispositivo.click(w / 2, (h * 0.21).toInt())
+        dispositivo.click(w / 2, (h * 0.26).toInt()) // parte del triangolo non coperta dalla scheda in alto
         aspettaTesto("Elimina")
         foto("04b_area_selezionata")
         // sposto un vertice: tocco sulla maniglia, poi sul nuovo punto
