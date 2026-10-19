@@ -32,7 +32,9 @@ fun SchermataGuida(
     onRicentra: () -> Unit,
     onCercaVoce: () -> Unit,
     onEsplora: () -> Unit,
-    onTutto: () -> Unit,
+    onEvitaTratto: (Double) -> Unit,
+    onEvitaZona: (com.ric.navigatore.nucleo.geo.Punto) -> Unit,
+    onPassaDa: (com.ric.navigatore.nucleo.geo.Punto) -> Unit,
     onModifica: () -> Unit,
     onChiudiEsplora: () -> Unit,
     onTermina: () -> Unit,
@@ -85,7 +87,9 @@ fun SchermataGuida(
         // ---------------- In basso: esplorazione del percorso ----------------
         if (stato.esplorazione != null) {
             PannelloEsplora(
-                stato, onVoce = onCercaVoce, onTutto = onTutto, onModifica = onModifica, onChiudi = onChiudiEsplora,
+                stato, notte = notte, altezzaSchermo = altezzaSchermo, onVoce = onCercaVoce,
+                onEvitaTratto = onEvitaTratto, onEvitaZona = onEvitaZona, onPassaDa = onPassaDa,
+                onAltriStrumenti = onModifica, onChiudi = onChiudiEsplora,
                 modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().navigationBarsPadding().imePadding().padding(12.dp),
             )
         } else Surface( // ---------------- In basso: tempi e pulsanti ----------------

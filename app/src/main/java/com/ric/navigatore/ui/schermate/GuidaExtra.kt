@@ -1,6 +1,7 @@
 package com.ric.navigatore.ui.schermate
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -14,12 +15,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.ric.navigatore.guida.GuidaCondivisa
 import com.ric.navigatore.guida.StatoNavigazione
+import com.ric.navigatore.mappa.MappaEsplora
 import com.ric.navigatore.mappa.MappaIncrocio
+import com.ric.navigatore.nucleo.geo.Geo
+import com.ric.navigatore.nucleo.geo.Punto
 import com.ric.navigatore.nucleo.modello.formattaDistanza
 import com.ric.navigatore.nucleo.navigazione.AvvisoStrada
 import com.ric.navigatore.nucleo.navigazione.Anteprima
@@ -101,16 +104,23 @@ fun RiquadroAvvisoStrada(a: AvvisoStrada) {
 }
 
 /**
- * Pannello in basso per esplorare il percorso durante la guida:
- * cursore lungo il percorso, ricerca a voce o scritta, accesso agli
- * strumenti «evita» e «passa da».
+ * Finestra in basso per esplorare il percorso durante la guida.
+ * La mappa grande resta centrata sulla posizione GPS: il punto scelto
+ * (col cursore o con la ricerca a voce/scritta) si vede nella PICCOLA
+ * mappa di questa finestra, da cui si può evitare quel tratto o quella
+ * zona, oppure imporre di passare da lì.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PannelloEsplora(
     stato: StatoNavigazione,
+    notte: Boolean,
+    altezzaSchermo: androidx.compose.ui.unit.Dp,
     onVoce: () -> Unit,
-    onTutto: () -> Unit,
-    onModifica: () -> Unit,
+    onEvitaTratto: (progressiva: Double) -> Unit,
+    onEvitaZona: (Punto) -> Unit,
+    onPassaDa: (Punto) -> Unit,
+    onAltriStrumenti: () -> Unit,
     onChiudi: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -122,8 +132,28 @@ fun PannelloEsplora(
     var testo by remember(e.frase) { mutableStateOf(e.frase) }
     val cerca = { if (testo.isNotBlank()) GuidaCondivisa.cerca(testo, ambito) }
 
+    // ---- piccola mappa ----
+    val context = LocalContext.current
+    val mappa = remember { MappaEsplora() }
+    val vista = remember { MapView(context, MapLibreMapOptions.createFromAttributes(context).textureMode(true)).apply { onCreate(null) } }
+    DisposableEffect(vista) {
+        vista.onStart()
+        vista.onResume()
+        onDispose {
+            vista.onPause()
+            vista.onStop()
+            vista.onDestroy()
+        }
+    }
+    LaunchedEffect(percorso) { mappa.percorso(percorso.geometria) }
+    LaunchedEffect(e.progressiva) { mappa.vaiA(Geo.puntoAProgressiva(percorso.geometria, e.progressiva)) }
+
     Surface(modifier, shape = RoundedCornerShape(24.dp), shadowElevation = 8.dp, color = MaterialTheme.colorScheme.surface) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(
+            // niente scorrimento: il trascinamento deve muovere la piccola mappa, non la finestra
+            Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Esplora il percorso", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 IconButton(onClick = onChiudi) { Icon(Icons.Default.Close, contentDescription = "Chiudi") }
@@ -133,6 +163,19 @@ fun PannelloEsplora(
                 style = MaterialTheme.typography.bodyLarge,
             )
             e.nota?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Extra.colori.avviso) }
+            // piccola mappa con il mirino al centro
+            Box(Modifier.fillMaxWidth().height(altezzaSchermo * 0.22f).clip(RoundedCornerShape(16.dp))) {
+                AndroidView(
+                    factory = { vista.also { v -> v.getMapAsync { m -> mappa.collega(m, notte) } } },
+                    modifier = Modifier.fillMaxSize(),
+                )
+                Mirino(Modifier.align(Alignment.Center))
+                FilledTonalButton(
+                    onClick = { mappa.inquadra(Geo.sottoLinea(percorso.geometria, da, percorso.distanza)) },
+                    modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                ) { Text("Tutto il percorso") }
+            }
             // cursore lungo la parte di percorso ancora da fare
             Slider(
                 value = e.progressiva.toFloat().coerceIn(da.toFloat(), totale.toFloat()),
@@ -155,17 +198,44 @@ fun PannelloEsplora(
                 }
             }
             if (e.cercando) LinearProgressIndicator(Modifier.fillMaxWidth())
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                // testo su due righe se serve: mai tagliato
-                OutlinedButton(onClick = onTutto, modifier = Modifier.weight(1f).heightIn(min = 52.dp), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)) {
-                    Text("Tutto il percorso", textAlign = TextAlign.Center)
-                }
-                OutlinedButton(onClick = onModifica, modifier = Modifier.weight(1f).heightIn(min = 52.dp), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)) {
-                    Text("Evita o passa da", textAlign = TextAlign.Center)
-                }
+            // azioni rapide: ricalcolo immediato da dove sei
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = { onEvitaTratto(e.progressiva) },
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Extra.colori.esclusione),
+                ) { Text("Evita il tratto") }
+                OutlinedButton(
+                    onClick = { mappa.puntoAlCentro()?.let(onEvitaZona) },
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Extra.colori.esclusione),
+                ) { Text("Evita la zona") }
+                OutlinedButton(
+                    onClick = { mappa.puntoAlCentro()?.let(onPassaDa) },
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Extra.colori.passaggio),
+                ) { Text("Passa da qui") }
+                OutlinedButton(onClick = onAltriStrumenti) { Text("Altri strumenti") }
             }
+            Text(
+                "«Evita il tratto»: 300 m di percorso attorno al punto scelto. «Evita la zona» e «Passa da qui»: il punto nel mirino.",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Button(onClick = onChiudi, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) { Text("Torna alla guida") }
         }
+    }
+}
+
+/** Mirino al centro della piccola mappa. */
+@Composable
+private fun Mirino(modifier: Modifier = Modifier) {
+    val colore = Extra.colori.percorso
+    androidx.compose.foundation.Canvas(modifier.size(36.dp)) {
+        val c = center
+        val r = size.minDimension / 2
+        drawCircle(androidx.compose.ui.graphics.Color.White, radius = r * 0.45f, center = c, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 7f))
+        drawCircle(colore, radius = r * 0.45f, center = c, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 4f))
+        drawLine(colore, c.copy(x = c.x - r), c.copy(x = c.x - r * 0.55f), strokeWidth = 4f)
+        drawLine(colore, c.copy(x = c.x + r * 0.55f), c.copy(x = c.x + r), strokeWidth = 4f)
+        drawLine(colore, c.copy(y = c.y - r), c.copy(y = c.y - r * 0.55f), strokeWidth = 4f)
+        drawLine(colore, c.copy(y = c.y + r * 0.55f), c.copy(y = c.y + r), strokeWidth = 4f)
     }
 }
 

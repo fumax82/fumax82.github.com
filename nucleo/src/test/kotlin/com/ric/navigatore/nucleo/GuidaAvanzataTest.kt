@@ -207,4 +207,22 @@ class GuidaAvanzataTest {
         val lontano = RicercaSulPercorso.vicinoAlLuogo(RicercaSulPercorso.interpreta("Napoli")!!, per, 0.0, p(0.0, -300_000.0))
         assertNotNull(lontano.nota)
     }
+
+    @Test
+    fun `vincoli rapidi creati dalla finestra di esplorazione`() {
+        val punti = listOf(p(0.0, 0.0), p(0.0, 2000.0))
+        val per = percorso(punti)
+        // evita 300 m di percorso attorno al punto a 1 km
+        val t = com.ric.navigatore.nucleo.modello.VincoliRapidi.evitaTrattoDelPercorso(per, 1000.0, "Via Roma")
+        assertEquals(300.0, Geo.lunghezza(t.linea), 1.0)
+        assertTrue(Geo.distanza(t.linea.first(), p(0.0, 850.0)) < 1)
+        assertTrue(t.nome.contains("Via Roma"))
+        // vicino alla partenza il tratto si accorcia, senza uscire dal percorso
+        assertEquals(250.0, Geo.lunghezza(com.ric.navigatore.nucleo.modello.VincoliRapidi.evitaTrattoDelPercorso(per, 100.0).linea), 1.0)
+        // zona di 300 m e passaggio
+        val z = com.ric.navigatore.nucleo.modello.VincoliRapidi.evitaZona(p(0.0, 1000.0))
+        assertTrue(com.ric.navigatore.nucleo.geo.Aree.contiene(z.poligono, p(0.0, 1200.0)))
+        assertTrue(!com.ric.navigatore.nucleo.geo.Aree.contiene(z.poligono, p(0.0, 1400.0)))
+        assertEquals(p(10.0, 10.0), com.ric.navigatore.nucleo.modello.VincoliRapidi.passaDa(p(10.0, 10.0)).punto)
+    }
 }

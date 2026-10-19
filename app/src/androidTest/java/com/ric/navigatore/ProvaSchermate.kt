@@ -195,7 +195,8 @@ class ProvaSchermate {
         // Esplorazione del percorso e ricerca scritta (la voce non si può provare sull'emulatore)
         compose.onNodeWithText("Esplora").performClick()
         aspettaTesto("Esplora il percorso")
-        repeat(3) { compose.waitForIdle(); Thread.sleep(1500) }
+        // tempo per scaricare la piccola mappa
+        repeat(5) { compose.waitForIdle(); Thread.sleep(2000) }
         foto("11_esplora")
         compose.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput("prima della svolta per via Prova")
         compose.onNodeWithContentDescriptionSafe("Cerca lungo il percorso")
@@ -204,7 +205,7 @@ class ProvaSchermate {
         foto("12_ricerca_sul_percorso")
 
         // Modifiche durante la guida
-        compose.onNodeWithText("Evita o passa da").performClick()
+        compose.onNodeWithText("Altri strumenti").performClick()
         aspettaTesto("Modifiche durante la guida")
         foto("13_modifica_in_guida")
         compose.onNodeWithText("Annulla").performClick()

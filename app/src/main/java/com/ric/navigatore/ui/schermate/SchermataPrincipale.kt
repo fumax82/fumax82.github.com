@@ -39,6 +39,7 @@ import com.ric.navigatore.mappa.DatiMappa
 import com.ric.navigatore.nucleo.geo.Geo
 import com.ric.navigatore.nucleo.geo.Punto
 import com.ric.navigatore.nucleo.modello.EvitaTratto
+import com.ric.navigatore.nucleo.modello.VincoliRapidi
 import com.ric.navigatore.nucleo.modello.Percorso
 import com.ric.navigatore.nucleo.modello.formattaDistanza
 import com.ric.navigatore.nucleo.modello.formattaDurata
@@ -116,16 +117,12 @@ fun SchermataPrincipale(modello: ModelloApp, notte: Boolean) {
 
     // durante la guida la posizione arriva dal servizio
     LaunchedEffect(guida.posizione) { guida.posizione?.let { controllore.aggiornaPosizione(it); modello.nuovaPosizione(Punto(it.latitude, it.longitude)) } }
-    // la mappa segue l'auto solo durante la guida "normale" (non mentre si esplora o si modifica)
-    val segui = guida.attiva && guida.esplorazione == null && !guida.modifica
+    // durante la guida la mappa grande segue SEMPRE l'auto (anche mentre si esplora il percorso:
+    // il punto cercato si vede nella piccola mappa della finestra in basso); non la segue solo
+    // mentre si usano gli strumenti completi di modifica ("Altri strumenti")
+    val segui = guida.attiva && !guida.modifica
     LaunchedEffect(segui, mappaPronta) {
         if (mappaPronta) controllore.modalitaGuida(segui, dati.impostazioni.mappaOrientata)
-    }
-    // esplorazione del percorso: la mappa va sul punto scelto (cursore o ricerca)
-    LaunchedEffect(guida.esplorazione?.progressiva, mappaPronta) {
-        val e = guida.esplorazione ?: return@LaunchedEffect
-        val p = guida.percorso ?: return@LaunchedEffect
-        if (mappaPronta) controllore.centra(Geo.puntoAProgressiva(p.geometria, e.progressiva), 16.0)
     }
 
     // ---------------- Ricerca a voce lungo il percorso ----------------
@@ -133,6 +130,12 @@ fun SchermataPrincipale(modello: ModelloApp, notte: Boolean) {
     val riconoscimento = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         val frase = r.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
         if (r.resultCode == Activity.RESULT_OK && !frase.isNullOrBlank()) GuidaCondivisa.cerca(frase, ambito)
+    }
+    /** Aggiunge un vincolo durante la guida e ricalcola subito dalla posizione attuale. */
+    val aggiungiInGuida: (com.ric.navigatore.nucleo.modello.Vincolo) -> Unit = { v ->
+        val vincoli = (guida.viaggio?.vincoli ?: stato.viaggio.vincoli) + v
+        modello.ripristinaVincoli(vincoli)
+        GuidaCondivisa.applicaVincoli(vincoli)
     }
     val cercaAVoce: () -> Unit = {
         GuidaCondivisa.esplora(guida.esplorazione?.progressiva)
@@ -218,12 +221,17 @@ fun SchermataPrincipale(modello: ModelloApp, notte: Boolean) {
                 onRicentra = { GuidaCondivisa.chiudiEsplorazione(); controllore.ricentra(true, dati.impostazioni.mappaOrientata, null) },
                 onCercaVoce = cercaAVoce,
                 onEsplora = { GuidaCondivisa.esplora() },
-                onTutto = {
+                // vincoli rapidi dalla finestra di esplorazione: aggiunti e applicati subito (ricalcolo da dove sei)
+                onEvitaTratto = { s ->
                     guida.percorso?.let { p ->
-                        val da = guida.guida?.progressiva ?: 0.0
-                        controllore.inquadra(Geo.sottoLinea(p.geometria, da, p.distanza))
+                        // nome della strada in quel punto: quello dell'ultima manovra prima del punto
+                        val prog = Geo.progressive(p.geometria)
+                        val nome = p.manovre.lastOrNull { m -> prog[m.daIndice.coerceIn(0, prog.lastIndex)] <= s }?.nomeStrada
+                        aggiungiInGuida(VincoliRapidi.evitaTrattoDelPercorso(p, s, nome))
                     }
                 },
+                onEvitaZona = { c -> aggiungiInGuida(VincoliRapidi.evitaZona(c)) },
+                onPassaDa = { c -> aggiungiInGuida(VincoliRapidi.passaDa(c)) },
                 onModifica = { GuidaCondivisa.iniziaModifica() },
                 onChiudiEsplora = { GuidaCondivisa.chiudiEsplorazione() },
                 onTermina = { GuidaCondivisa.termina(context); controllore.modalitaGuida(false, false) },
