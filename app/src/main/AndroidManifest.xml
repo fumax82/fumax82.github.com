@@ -6,7 +6,9 @@
    - ACCESS_FINE_LOCATION: posizione GPS per partire da qui e per la guida
    - FOREGROUND_SERVICE(_LOCATION): la guida continua anche a schermo spento
    - POST_NOTIFICATIONS: la notifica fissa durante la guida (obbligatoria per Android)
-  Nessun permesso per contatti, foto, microfono o pubblicità.
+  Nessun permesso per contatti, foto, microfono o pubblicità: la ricerca a voce
+  usa il riconoscimento vocale già presente nel telefono, che chiede da sé
+  il permesso del microfono.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
@@ -22,6 +24,10 @@
     <queries>
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+        <!-- Il riconoscimento vocale del telefono (per la ricerca a voce lungo il percorso) -->
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
         </intent>
     </queries>
 

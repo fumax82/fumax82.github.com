@@ -1,6 +1,9 @@
 package com.ric.navigatore.ui.schermate
 
 import android.Manifest
+import android.app.Activity
+import android.content.ActivityNotFoundException
+import android.speech.RecognizerIntent
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -113,8 +116,37 @@ fun SchermataPrincipale(modello: ModelloApp, notte: Boolean) {
 
     // durante la guida la posizione arriva dal servizio
     LaunchedEffect(guida.posizione) { guida.posizione?.let { controllore.aggiornaPosizione(it); modello.nuovaPosizione(Punto(it.latitude, it.longitude)) } }
-    LaunchedEffect(guida.attiva, mappaPronta) {
-        if (mappaPronta) controllore.modalitaGuida(guida.attiva, dati.impostazioni.mappaOrientata)
+    // la mappa segue l'auto solo durante la guida "normale" (non mentre si esplora o si modifica)
+    val segui = guida.attiva && guida.esplorazione == null && !guida.modifica
+    LaunchedEffect(segui, mappaPronta) {
+        if (mappaPronta) controllore.modalitaGuida(segui, dati.impostazioni.mappaOrientata)
+    }
+    // esplorazione del percorso: la mappa va sul punto scelto (cursore o ricerca)
+    LaunchedEffect(guida.esplorazione?.progressiva, mappaPronta) {
+        val e = guida.esplorazione ?: return@LaunchedEffect
+        val p = guida.percorso ?: return@LaunchedEffect
+        if (mappaPronta) controllore.centra(Geo.puntoAProgressiva(p.geometria, e.progressiva), 16.0)
+    }
+
+    // ---------------- Ricerca a voce lungo il percorso ----------------
+    val ambito = rememberCoroutineScope()
+    val riconoscimento = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
+        val frase = r.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+        if (r.resultCode == Activity.RESULT_OK && !frase.isNullOrBlank()) GuidaCondivisa.cerca(frase, ambito)
+    }
+    val cercaAVoce: () -> Unit = {
+        GuidaCondivisa.esplora(guida.esplorazione?.progressiva)
+        // riconoscimento vocale del telefono, in italiano (sul telefono se possibile)
+        val richiesta = android.content.Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+            .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            .putExtra(RecognizerIntent.EXTRA_LANGUAGE, "it-IT")
+            .putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
+            .putExtra(RecognizerIntent.EXTRA_PROMPT, "Dove vuoi guardare? Es. «prima dell'uscita per Bologna»")
+        try {
+            riconoscimento.launch(richiesta)
+        } catch (e: ActivityNotFoundException) {
+            GuidaCondivisa.notaEsplorazione("Il riconoscimento vocale non è disponibile su questo telefono: scrivi la frase nel riquadro.")
+        }
     }
 
     // schermo acceso durante la guida (se scelto nelle impostazioni)
@@ -125,8 +157,15 @@ fun SchermataPrincipale(modello: ModelloApp, notte: Boolean) {
     }
 
     // ---------------- Disegno sulla mappa ----------------
-    LaunchedEffect(stato, guida.percorso, guida.attiva, mappaPronta) {
-        if (mappaPronta) controllore.disegna(datiMappa(modello, stato, if (guida.attiva) guida else null))
+    LaunchedEffect(stato, guida.percorso, guida.attiva, guida.modifica, guida.esplorazione?.progressiva, mappaPronta) {
+        if (!mappaPronta) return@LaunchedEffect
+        val d = when {
+            // durante le modifiche: vincoli e selezione della pianificazione, ma il percorso è quello della guida
+            guida.attiva && guida.modifica -> datiMappa(modello, stato, null).copy(percorso = guida.percorso?.geometria, alternative = emptyList())
+            guida.attiva -> datiMappa(modello, stato, guida)
+            else -> datiMappa(modello, stato, null)
+        }
+        controllore.disegna(d)
     }
 
     // ---------------- Eventi del modello ----------------
@@ -170,19 +209,38 @@ fun SchermataPrincipale(modello: ModelloApp, notte: Boolean) {
             modifier = Modifier.fillMaxSize(),
         )
 
-        if (guida.attiva) {
+        if (guida.attiva && !guida.modifica) {
             SchermataGuida(
                 stato = guida,
-                onVoce = { GuidaCondivisa.voce(!guida.voce) },
-                onRicentra = { controllore.ricentra(true, dati.impostazioni.mappaOrientata, null) },
-                onPanoramica = { guida.percorso?.let { controllore.modalitaGuida(false, false); controllore.inquadra(it.geometria) } },
-                onTermina = { GuidaCondivisa.termina(context); controllore.modalitaGuida(false, false) },
                 rete = stato.rete,
+                notte = notte,
+                onVoce = { GuidaCondivisa.voce(!guida.voce) },
+                onRicentra = { GuidaCondivisa.chiudiEsplorazione(); controllore.ricentra(true, dati.impostazioni.mappaOrientata, null) },
+                onCercaVoce = cercaAVoce,
+                onEsplora = { GuidaCondivisa.esplora() },
+                onTutto = {
+                    guida.percorso?.let { p ->
+                        val da = guida.guida?.progressiva ?: 0.0
+                        controllore.inquadra(Geo.sottoLinea(p.geometria, da, p.distanza))
+                    }
+                },
+                onModifica = { GuidaCondivisa.iniziaModifica() },
+                onChiudiEsplora = { GuidaCondivisa.chiudiEsplorazione() },
+                onTermina = { GuidaCondivisa.termina(context); controllore.modalitaGuida(false, false) },
             )
         } else {
             // ---------- In alto: viaggio ----------
             Column(Modifier.align(Alignment.TopCenter).fillMaxWidth().statusBarsPadding().padding(horizontal = 12.dp, vertical = 8.dp)) {
-                if (stato.modo == Modo.Normale) SchedaViaggio(modello, stato)
+                if (guida.modifica) {
+                    // modifiche durante la guida: al posto della scheda del viaggio
+                    FasciaModificaGuida(
+                        onApplica = { modello.messaggio(GuidaCondivisa.applicaVincoli(stato.viaggio.vincoli)) },
+                        onAnnulla = {
+                            guida.viaggio?.let { modello.ripristinaVincoli(it.vincoli) }
+                            GuidaCondivisa.annullaModifica()
+                        },
+                    )
+                } else if (stato.modo == Modo.Normale) SchedaViaggio(modello, stato)
                 if (!stato.rete) {
                     Spacer(Modifier.height(6.dp))
                     Riquadro(Extra.colori.avvisoSfondo, Extra.colori.avviso) {
@@ -234,14 +292,14 @@ fun SchermataPrincipale(modello: ModelloApp, notte: Boolean) {
                     PannelloModo(modello, stato)
                 } else {
                     if (stato.esito != null || stato.calcoloInCorso) RiepilogoPercorso(modello, stato)
-                    BarraAzioni(modello, stato, avvia)
+                    BarraAzioni(modello, stato, avvia, inGuida = guida.modifica)
                 }
             }
         }
 
         // ---------- Fogli ----------
         val foglio = stato.foglio
-        if (foglio != null && !guida.attiva) {
+        if (foglio != null && (!guida.attiva || guida.modifica)) {
             ModalBottomSheet(
                 onDismissRequest = { modello.apri(null) },
                 sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -291,10 +349,13 @@ private fun CicloDiVitaMappa(v: MapView) {
 private fun datiMappa(modello: ModelloApp, s: StatoUi, guida: com.ric.navigatore.guida.StatoNavigazione?): DatiMappa {
     if (guida != null) {
         val v = guida.viaggio
+        val p = guida.percorso
         return DatiMappa(
-            percorso = guida.percorso?.geometria,
+            percorso = p?.geometria,
             fermate = v?.let { modello.fermateDaDisegnare(it) } ?: emptyList(),
             vincoli = v?.vincoliAttivi ?: emptyList(),
+            // punto esplorato lungo il percorso (cursore o ricerca a voce)
+            puntoProfilo = guida.esplorazione?.let { e -> p?.let { Geo.puntoAProgressiva(it.geometria, e.progressiva) } },
         )
     }
     val sel = s.selezione
@@ -508,14 +569,17 @@ fun confronto(p: Percorso, iniziale: Percorso): String {
 
 /** Barra in basso con i cinque pulsanti principali. */
 @Composable
-private fun BarraAzioni(modello: ModelloApp, s: StatoUi, avvia: () -> Unit) {
+private fun BarraAzioni(modello: ModelloApp, s: StatoUi, avvia: () -> Unit, inGuida: Boolean = false) {
     Surface(shape = RoundedCornerShape(22.dp), shadowElevation = 8.dp, color = MaterialTheme.colorScheme.surface) {
         Row(Modifier.padding(6.dp), horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.CenterVertically) {
             PulsanteBarra("Evita", IconeExtra.Divieto, { modello.apri(Foglio.MENU_EVITA) }, colore = Extra.colori.esclusione)
             PulsanteBarra("Passa da", Icons.Default.Place, { modello.apri(Foglio.MENU_PASSA) }, colore = Extra.colori.passaggio)
             PulsanteBarra("Disegna area", Icons.Default.Edit, { modello.avviaModo(Modo.Disegno(ObiettivoArea.EVITA)) })
-            PulsanteBarra("Ricalcola", Icons.Default.Refresh, { modello.calcola() }, attivo = s.viaggio.pronto && !s.calcoloInCorso)
-            PulsanteBarra("Avvia", IconeExtra.Navigazione, avvia, attivo = s.percorsoScelto != null, evidenziato = s.percorsoScelto != null)
+            // durante la guida il ricalcolo si fa con «Applica» (parte da dove sei)
+            if (!inGuida) {
+                PulsanteBarra("Ricalcola", Icons.Default.Refresh, { modello.calcola() }, attivo = s.viaggio.pronto && !s.calcoloInCorso)
+                PulsanteBarra("Avvia", IconeExtra.Navigazione, avvia, attivo = s.percorsoScelto != null, evidenziato = s.percorsoScelto != null)
+            }
         }
     }
 }

@@ -108,6 +108,18 @@ fun FoglioImpostazioni(modello: ModelloApp, dati: DatiSalvati) {
         RigaInterruttore("Istruzioni vocali", imp.voce) { v -> modello.cambiaImpostazioni { it.copy(voce = v) } }
         RigaInterruttore("Mappa orientata nel senso di marcia", imp.mappaOrientata, "Se spento, il nord resta in alto.") { v -> modello.cambiaImpostazioni { it.copy(mappaOrientata = v) } }
         RigaInterruttore("Schermo sempre acceso durante la guida", imp.schermoAcceso, "Con lo schermo spento la guida vocale continua comunque.") { v -> modello.cambiaImpostazioni { it.copy(schermoAcceso = v) } }
+        RigaInterruttore(
+            "Anteprima degli incroci", imp.anteprimaIncroci,
+            "Prima di ogni svolta, uscita o rotatoria compare in alto la mappa schematica dell'incrocio, con un anticipo che cresce con la velocità.",
+        ) { v -> modello.cambiaImpostazioni { it.copy(anteprimaIncroci = v) } }
+        RigaInterruttore(
+            "Avvisi per tornanti e pendenze", imp.avvisiStrada,
+            "Avvisa prima di una serie di curve strette o di una salita o discesa ripida; l'avviso resta per tutto il tratto. Le pendenze sono stimate dal modello del terreno.",
+        ) { v -> modello.cambiaImpostazioni { it.copy(avvisiStrada = v) } }
+        if (imp.avvisiStrada) {
+            Text("Pendenza da segnalare", style = MaterialTheme.typography.bodyMedium)
+            SceltaPillole(listOf(6, 8, 10, 12), imp.sogliaPendenza, { "da $it%" }, { v -> modello.cambiaImpostazioni { it.copy(sogliaPendenza = v) } })
+        }
         Text(
             "Alcuni telefoni chiudono le app in secondo piano per risparmiare batteria. Se la guida si interrompe a schermo spento, escludi questa app dal risparmio energetico.",
             style = MaterialTheme.typography.bodySmall,

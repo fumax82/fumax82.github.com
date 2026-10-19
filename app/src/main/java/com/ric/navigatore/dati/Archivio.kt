@@ -43,6 +43,12 @@ data class Impostazioni(
     val mappaBase: MappaBase = MappaBase.STRADALE,
     /** Chiave ArcGIS (facoltativa, gratuita): serve solo per il satellite ad alta risoluzione Esri. */
     val chiaveArcgis: String = "",
+    /** Durante la guida, mostra in alto l'anteprima dell'incrocio prima di ogni svolta. */
+    val anteprimaIncroci: Boolean = true,
+    /** Avvisa (a voce e sullo schermo) di tornanti, salite e discese ripide. */
+    val avvisiStrada: Boolean = true,
+    /** Pendenza (in %) oltre la quale salite e discese sono "ripide". */
+    val sogliaPendenza: Int = 8,
 )
 
 /** Un percorso salvato dall'utente (tappe + vincoli). */

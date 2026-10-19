@@ -22,10 +22,18 @@ import android.speech.tts.TextToSpeech
 import com.ric.navigatore.MainActivity
 import com.ric.navigatore.R
 import com.ric.navigatore.Servizi
+import com.ric.navigatore.nucleo.modello.Esito
+import com.ric.navigatore.nucleo.modello.Manovra
 import com.ric.navigatore.nucleo.modello.Percorso
+import com.ric.navigatore.nucleo.modello.Vincolo
 import com.ric.navigatore.nucleo.modello.Viaggio
 import com.ric.navigatore.nucleo.modello.formattaDistanza
+import com.ric.navigatore.nucleo.geo.Pericoli
 import com.ric.navigatore.nucleo.navigazione.Annunciatore
+import com.ric.navigatore.nucleo.navigazione.AvvisoStrada
+import com.ric.navigatore.nucleo.navigazione.GestoreAnteprima
+import com.ric.navigatore.nucleo.navigazione.RicercaSulPercorso
+import com.ric.navigatore.nucleo.navigazione.SorveglianzaPericoli
 import com.ric.navigatore.nucleo.navigazione.Decisione
 import com.ric.navigatore.nucleo.navigazione.Inseguitore
 import com.ric.navigatore.nucleo.navigazione.PoliticaRicalcolo
@@ -59,7 +67,39 @@ data class StatoNavigazione(
     val rapporto: Rapporto? = null,
     val voce: Boolean = true,
     val ricalcoli: Int = 0,
+    /** Manovra di cui mostrare l'anteprima dell'incrocio (in alto), se c'è. */
+    val anteprima: Manovra? = null,
+    /** Avvisi per tornanti e pendenze attivi adesso. */
+    val avvisiStrada: List<AvvisoStrada> = emptyList(),
+    /** Esplorazione del percorso (pannello in basso), se aperta. */
+    val esplorazione: Esplorazione? = null,
+    /** Vero mentre l'utente modifica i vincoli (evita / passa da) durante la guida. */
+    val modifica: Boolean = false,
 )
+
+/**
+ * Esplorazione del percorso durante la guida: la mappa smette di seguire
+ * l'auto e si centra sul punto del percorso scelto (col cursore o con la
+ * ricerca a voce).
+ */
+data class Esplorazione(
+    /** Metri dalla partenza del percorso del punto mostrato. */
+    val progressiva: Double,
+    /** Cosa è stato trovato, es. "Svolta a destra su Via Roma · tra 37 km". */
+    val descrizione: String? = null,
+    /** Avvertenze o errori della ricerca. */
+    val nota: String? = null,
+    val cercando: Boolean = false,
+    /** Ultima frase cercata (detta o scritta). */
+    val frase: String = "",
+)
+
+/** Comandi che la schermata può dare al servizio di guida. */
+interface ComandiGuida {
+    fun nascondiAnteprima()
+    /** Ricalcola subito dalla posizione attuale (dopo una modifica dei vincoli). */
+    fun ricalcolaOra(): Boolean
+}
 
 /** Ponte fra la schermata e il servizio di guida. */
 object GuidaCondivisa {
@@ -86,6 +126,92 @@ object GuidaCondivisa {
     fun voce(attiva: Boolean) {
         aggiorna { it.copy(voce = attiva) }
     }
+
+    /** Collegamento al servizio in corso (impostato dal servizio stesso). */
+    internal var comandi: ComandiGuida? = null
+
+    fun nascondiAnteprima() {
+        comandi?.nascondiAnteprima()
+        aggiorna { it.copy(anteprima = null) }
+    }
+
+    // ---------------- Esplorazione del percorso ----------------
+
+    /** Apre l'esplorazione sul punto [progressiva] (di solito: dove sono adesso). */
+    fun esplora(progressiva: Double? = null) = aggiorna {
+        val s = progressiva ?: it.guida?.progressiva ?: 0.0
+        it.copy(esplorazione = (it.esplorazione ?: Esplorazione(s)).copy(progressiva = s))
+    }
+
+    /** Sposta il punto esplorato (cursore lungo il percorso). */
+    fun spostaEsplorazione(progressiva: Double) = aggiorna {
+        it.copy(esplorazione = it.esplorazione?.copy(progressiva = progressiva, descrizione = null, nota = null))
+    }
+
+    fun chiudiEsplorazione() = aggiorna { it.copy(esplorazione = null) }
+
+    /** Mostra un'avvertenza nel pannello di esplorazione. */
+    fun notaEsplorazione(testo: String) = aggiorna {
+        it.copy(esplorazione = (it.esplorazione ?: Esplorazione(it.guida?.progressiva ?: 0.0)).copy(nota = testo))
+    }
+
+    /**
+     * Cerca un punto LUNGO IL PERCORSO ATTUALE a partire da una frase
+     * (detta o scritta), es. "prima dell'uscita per Bologna".
+     * Si cerca solo nella parte di percorso ancora da fare.
+     */
+    fun cerca(frase: String, ambito: CoroutineScope) {
+        val st = _stato.value
+        val percorso = st.percorso ?: return
+        val da = st.guida?.progressiva ?: 0.0
+        val base = (st.esplorazione ?: Esplorazione(da)).copy(frase = frase, nota = null, descrizione = null)
+        val domanda = RicercaSulPercorso.interpreta(frase)
+        if (domanda == null) {
+            aggiorna { it.copy(esplorazione = base.copy(nota = "Non ho capito cosa cercare. Prova con «prima dell'uscita per Bologna» o «prima di Roma».")) }
+            return
+        }
+        // 1) fra le indicazioni del percorso (nessuna richiesta in rete)
+        RicercaSulPercorso.cercaNelleIndicazioni(domanda, percorso, da)?.let { t ->
+            aggiorna { it.copy(esplorazione = base.copy(progressiva = t.progressiva, descrizione = t.descrizione, nota = t.nota)) }
+            return
+        }
+        // 2) cerco il luogo per nome e prendo il punto del percorso che gli corrisponde
+        val geo = Servizi.geocodifica
+        if (geo == null) {
+            aggiorna { it.copy(esplorazione = base.copy(nota = "«${domanda.nomeLeggibile}» non compare nelle indicazioni del percorso e manca un servizio di ricerca (Impostazioni).")) }
+            return
+        }
+        aggiorna { it.copy(esplorazione = base.copy(cercando = true)) }
+        ambito.launch {
+            val esito = withContext(Dispatchers.IO) { geo.cerca(domanda.nome, st.guida?.puntoSulPercorso) }
+            val nuova = when (esito) {
+                is Esito.Errore -> base.copy(nota = "Ricerca non riuscita: ${esito.messaggio}")
+                is Esito.Ok -> if (esito.valore.isEmpty()) base.copy(nota = "Non trovo «${domanda.nomeLeggibile}».") else {
+                    val i = RicercaSulPercorso.piuVicinoAlPercorso(esito.valore.map { it.punto }, percorso, da)
+                    val r = esito.valore[i]
+                    val t = RicercaSulPercorso.vicinoAlLuogo(domanda, percorso, da, r.punto, r.nome.ifBlank { domanda.nomeLeggibile })
+                    base.copy(progressiva = t.progressiva, descrizione = t.descrizione, nota = t.nota)
+                }
+            }
+            aggiorna { it.copy(esplorazione = nuova) }
+        }
+    }
+
+    // ---------------- Modifica dei vincoli durante la guida ----------------
+
+    fun iniziaModifica() = aggiorna { it.copy(modifica = true) }
+
+    fun annullaModifica() = aggiorna { it.copy(modifica = false) }
+
+    /**
+     * Applica alla guida i vincoli modificati e ricalcola dalla posizione
+     * attuale. Restituisce un messaggio per l'utente.
+     */
+    fun applicaVincoli(vincoli: List<Vincolo>): String {
+        aggiorna { it.copy(modifica = false, esplorazione = null, viaggio = it.viaggio?.copy(vincoli = vincoli)) }
+        return if (comandi?.ricalcolaOra() == true) "Ricalcolo il percorso con le modifiche…"
+        else "Le modifiche saranno usate appena il GPS dà la posizione."
+    }
 }
 
 /**
@@ -105,6 +231,10 @@ class ServizioGuida : Service(), TextToSpeech.OnInitListener {
     private var ttsPronta = false
     private var inseguitore: Inseguitore? = null
     private val annunciatore = Annunciatore()
+    private val anteprime = GestoreAnteprima()
+    private var sorveglianza: SorveglianzaPericoli? = null
+    /** Una modifica dei vincoli è arrivata durante un ricalcolo: ricalcolare di nuovo alla fine. */
+    private var ricalcoloPendente = false
     private val politica = PoliticaRicalcolo()
     private var fuoriDa: Long? = null
     private var ricalcoloInCorso = false
@@ -136,13 +266,30 @@ class ServizioGuida : Service(), TextToSpeech.OnInitListener {
         } else {
             startForeground(ID_NOTIFICA, notifica)
         }
-        GuidaCondivisa.stato.value.percorso?.let { inseguitore = Inseguitore(it) }
+        GuidaCondivisa.stato.value.percorso?.let(::nuovoPercorso)
+        GuidaCondivisa.comandi = object : ComandiGuida {
+            override fun nascondiAnteprima() = anteprime.nascondi()
+            override fun ricalcolaOra(): Boolean {
+                val l = ultimaPosizione ?: return false
+                if (ricalcoloInCorso) ricalcoloPendente = true else ricalcola(l.comeRilevamento())
+                return true
+            }
+        }
         avviaGps()
         orologio.post(controlloPeriodico)
         return START_NOT_STICKY
     }
 
+    /** Prepara la guida su un percorso (all'avvio e dopo ogni ricalcolo). */
+    private fun nuovoPercorso(p: Percorso) {
+        inseguitore = Inseguitore(p)
+        val imp = Servizi.archivio.dati.impostazioni
+        // tornanti e pendenze: calcolati una volta per tutto il percorso
+        sorveglianza = if (imp.avvisiStrada) SorveglianzaPericoli(Pericoli.analizza(p, imp.sogliaPendenza.toDouble())) else null
+    }
+
     override fun onDestroy() {
+        GuidaCondivisa.comandi = null
         orologio.removeCallbacks(controlloPeriodico)
         lm.removeUpdates(ascoltatore)
         tts?.stop()
@@ -170,9 +317,10 @@ class ServizioGuida : Service(), TextToSpeech.OnInitListener {
         }
     }
 
-    private fun parla(frase: String) {
+    /** Pronuncia una frase. Con [accoda] aspetta la fine della frase in corso invece di interromperla. */
+    private fun parla(frase: String, accoda: Boolean = false) {
         if (!GuidaCondivisa.stato.value.voce || !ttsPronta) return
-        tts?.speak(frase, TextToSpeech.QUEUE_FLUSH, Bundle(), frase.hashCode().toString())
+        tts?.speak(frase, if (accoda) TextToSpeech.QUEUE_ADD else TextToSpeech.QUEUE_FLUSH, Bundle(), frase.hashCode().toString())
     }
 
     // ------------------------------------------------------------------
@@ -211,8 +359,14 @@ class ServizioGuida : Service(), TextToSpeech.OnInitListener {
             gpsPersoAnnunciato = false
             parla("Segnale GPS ritrovato")
         }
+        // anteprima dell'incrocio e avvisi per tornanti e pendenze
+        val imp = Servizi.archivio.dati.impostazioni
+        val anteprima = if (imp.anteprimaIncroci) anteprime.aggiorna(g, r.velocita) else null
+        val (avvisiStrada, frasePericolo) = if (g.fuoriPercorso || g.arrivato) emptyList<AvvisoStrada>() to null
+            else sorveglianza?.aggiorna(g.progressiva, r.velocita) ?: (emptyList<AvvisoStrada>() to null)
         GuidaCondivisa.aggiorna {
             it.copy(
+                anteprima = anteprima, avvisiStrada = avvisiStrada,
                 guida = g, posizione = l, segnale = g.segnale,
                 avviso = when {
                     g.segnale == Segnale.DEBOLE -> "Segnale GPS debole (precisione ${r.accuratezza.toInt()} m)"
@@ -228,7 +382,8 @@ class ServizioGuida : Service(), TextToSpeech.OnInitListener {
             arrivoAnnunciato = true
             parla("Sei arrivato a destinazione")
         } else if (!g.arrivato && !g.fuoriPercorso) {
-            annunciatore.frase(g, r.velocita)?.let(::parla)
+            annunciatore.frase(g, r.velocita)?.let { parla(it) }
+            frasePericolo?.let { parla(it, accoda = true) }
         }
 
         // Uscita dal percorso -> ricalcolo (con attesa e limiti)
@@ -297,7 +452,7 @@ class ServizioGuida : Service(), TextToSpeech.OnInitListener {
             ricalcoloInCorso = false
             val nuovo = esito.percorso
             if (nuovo != null) {
-                inseguitore = Inseguitore(nuovo)
+                nuovoPercorso(nuovo)
                 fuoriDa = null
                 GuidaCondivisa.aggiorna {
                     it.copy(
@@ -310,6 +465,11 @@ class ServizioGuida : Service(), TextToSpeech.OnInitListener {
             } else {
                 val motivo = esito.errore?.messaggio ?: esito.conflitti.firstOrNull()?.messaggio ?: "errore sconosciuto"
                 GuidaCondivisa.aggiorna { it.copy(ricalcolo = false, avviso = "Ricalcolo non riuscito: $motivo") }
+            }
+            // vincoli cambiati mentre si ricalcolava: si ricalcola ancora con quelli nuovi
+            if (ricalcoloPendente) {
+                ricalcoloPendente = false
+                ultimaPosizione?.let { ricalcola(it.comeRilevamento()) }
             }
         }
     }

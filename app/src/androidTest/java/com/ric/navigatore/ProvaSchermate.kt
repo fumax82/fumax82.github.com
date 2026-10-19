@@ -7,11 +7,13 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.GrantPermissionRule
 import androidx.test.uiautomator.UiDevice
 import com.ric.navigatore.guida.GuidaCondivisa
+import com.ric.navigatore.nucleo.geo.Geo
 import com.ric.navigatore.nucleo.geo.Punto
 import com.ric.navigatore.nucleo.modello.Luogo
 import com.ric.navigatore.nucleo.modello.Manovra
@@ -140,7 +142,8 @@ class ProvaSchermate {
         foto("07_impostazioni")
         dispositivo.pressBack()
 
-        // Guida su un percorso finto (attorno alla posizione predefinita dell'emulatore)
+        // Guida su un percorso finto (attorno alla posizione predefinita dell'emulatore):
+        // 1 km verso nord, svolta a destra su "Via Prova", poi 800 m verso est in discesa al 10%.
         val a = Punto(37.4220, -122.0841)
         val b = Punto(37.4310, -122.0841)
         val c = Punto(37.4310, -122.0750)
@@ -148,23 +151,103 @@ class ProvaSchermate {
             geometria = listOf(a, b, c), distanza = 1800.0, durata = 240.0,
             manovre = listOf(
                 Manovra(TipoManovra.PARTENZA, "Parti verso nord", "", 1000.0, 120.0, 0, 1),
-                Manovra(TipoManovra.DESTRA, "Svolta a destra", "", 800.0, 120.0, 1, 2),
+                Manovra(TipoManovra.DESTRA, "Svolta a destra su Via Prova", "Via Prova", 800.0, 120.0, 1, 2),
                 Manovra(TipoManovra.ARRIVO, "Sei arrivato", "", 0.0, 0.0, 2, 2),
             ),
             indiciPunti = listOf(0, 2),
+            quote = listOf(30.0, 30.0, -50.0),
         )
         val viaggio = Viaggio(partenza = Luogo(a, "Prova A"), arrivo = Luogo(c, "Prova B"))
+        // GPS simulato: l'auto avanza verso la svolta a ~50 km/h
+        val gps = GpsSimulato(strumenti.targetContext)
+        val gpsAttivo = gps.prepara()
         compose.runOnUiThread { GuidaCondivisa.avvia(compose.activity, viaggio, percorso, null) }
         aspettaTesto("Termina")
         Thread.sleep(3000)
         foto("08_guida")
+        if (gpsAttivo) {
+            for (metri in listOf(600.0, 680.0, 760.0, 820.0, 850.0, 860.0)) {
+                gps.invia(Geo.puntoAProgressiva(percorso.geometria, metri), velocita = 14f, direzione = 0f)
+                compose.waitForIdle()
+                Thread.sleep(1000)
+            }
+            aspettaTesto("Svolta a destra")
+            // tempo per scaricare la mappa dell'incrocio
+            repeat(6) {
+                gps.invia(Geo.puntoAProgressiva(percorso.geometria, 860.0), velocita = 14f, direzione = 0f)
+                compose.waitForIdle()
+                Thread.sleep(2000)
+            }
+            foto("10_anteprima_incrocio")
+        } else {
+            android.util.Log.w("ProvaSchermate", "GPS simulato non disponibile: salto la prova dell'anteprima")
+        }
+
+        // Esplorazione del percorso e ricerca scritta (la voce non si può provare sull'emulatore)
+        compose.onNodeWithText("Esplora").performClick()
+        aspettaTesto("Esplora il percorso")
+        repeat(3) { compose.waitForIdle(); Thread.sleep(1500) }
+        foto("11_esplora")
+        compose.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput("prima della svolta per via Prova")
+        compose.onNodeWithContentDescriptionSafe("Cerca lungo il percorso")
+        aspettaTesto("· tra")
+        repeat(3) { compose.waitForIdle(); Thread.sleep(1500) }
+        foto("12_ricerca_sul_percorso")
+
+        // Modifiche durante la guida
+        compose.onNodeWithText("Evita o passa da").performClick()
+        aspettaTesto("Modifiche durante la guida")
+        foto("13_modifica_in_guida")
+        compose.onNodeWithText("Annulla").performClick()
+        aspettaTesto("Termina")
+
         compose.onNodeWithText("Termina").performClick()
         aspettaTesto("Dove vuoi andare?")
         foto("09_dopo_guida")
+        gps.chiudi()
     }
 
     /** Apre il menu in alto (icona con descrizione "Menu"). */
     private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.onNodeWithContentDescriptionSafe(d: String) {
         onNode(androidx.compose.ui.test.hasContentDescription(d)).performClick()
+    }
+}
+
+/**
+ * GPS finto per le prove: sostituisce il GPS del telefono con posizioni
+ * inviate dalla prova. Serve il permesso "posizione fittizia", che il
+ * flusso di prova concede con `adb shell appops set ... mock_location allow`.
+ */
+private class GpsSimulato(context: android.content.Context) {
+    private val lm = context.getSystemService(android.location.LocationManager::class.java)
+    private val nome = android.location.LocationManager.GPS_PROVIDER
+
+    /** Vero se il GPS finto è stato attivato. */
+    fun prepara(): Boolean = try {
+        @Suppress("DEPRECATION")
+        lm.addTestProvider(nome, false, true, false, false, true, true, true, android.location.Criteria.POWER_LOW, android.location.Criteria.ACCURACY_FINE)
+        lm.setTestProviderEnabled(nome, true)
+        true
+    } catch (e: SecurityException) {
+        false
+    } catch (e: IllegalArgumentException) {
+        false
+    }
+
+    fun invia(p: Punto, velocita: Float, direzione: Float) {
+        val l = android.location.Location(nome).apply {
+            latitude = p.lat
+            longitude = p.lon
+            accuracy = 5f
+            speed = velocita
+            bearing = direzione
+            time = System.currentTimeMillis()
+            elapsedRealtimeNanos = android.os.SystemClock.elapsedRealtimeNanos()
+        }
+        lm.setTestProviderLocation(nome, l)
+    }
+
+    fun chiudi() {
+        runCatching { lm.removeTestProvider(nome) }
     }
 }

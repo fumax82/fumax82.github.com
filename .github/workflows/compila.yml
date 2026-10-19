@@ -57,6 +57,7 @@ jobs:
             adb logcat -c || true
             adb install -r -g app/build/outputs/apk/debug/app-debug.apk
             adb install -r -g app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb shell appops set com.ric.navigatore android:mock_location allow || true
             adb shell am instrument -w -r com.ric.navigatore.test/androidx.test.runner.AndroidJUnitRunner > risultati/emulatore.log 2>&1 || echo FALLITO >> risultati/emulatore.log
             mkdir -p risultati/foto && adb pull /sdcard/Android/data/com.ric.navigatore/files/foto/. risultati/foto/ || true
             adb logcat -d > risultati/logcat.txt || true

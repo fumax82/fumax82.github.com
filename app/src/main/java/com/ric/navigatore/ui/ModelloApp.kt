@@ -181,6 +181,9 @@ class ModelloApp {
     fun prioritaVincolo(id: String, p: Priorita) = cambiaVincolo(id) { it.cambia(priorita = p) }
     fun durataVincolo(id: String, d: Durata) = cambiaVincolo(id) { it.cambia(durata = d) }
     fun rinominaVincolo(id: String, nome: String) = cambiaVincolo(id) { it.cambia(nome = nome.ifBlank { it.nome }) }
+    /** Rimette i vincoli com'erano (es. "Annulla" delle modifiche fatte durante la guida). */
+    fun ripristinaVincoli(vincoli: List<Vincolo>) = cambiaViaggio(s.viaggio.copy(vincoli = vincoli))
+
     fun rimuoviVincolo(id: String) = cambiaViaggio(s.viaggio.copy(vincoli = s.viaggio.vincoli.filter { it.id != id }))
 
     fun sensoVincolo(id: String, senso: Senso) = cambiaVincolo(id) { if (it is PassaTratto && !it.sensoUnico) it.copy(senso = senso) else it }

@@ -100,6 +100,47 @@ object StiliMappa {
          ]}
         """.trimIndent()
     }
+
+    /**
+     * Stile "schematico" per l'anteprima degli incroci: solo strade (con il
+     * loro bordo), acqua e nomi delle strade, dai dati OpenStreetMap di
+     * OpenFreeMap. Niente edifici né riempimenti: l'incrocio si legge al volo.
+     */
+    fun schema(notte: Boolean): String {
+        val sfondo = if (notte) "#1C2230" else "#EEF1F5"
+        val acqua = if (notte) "#24344D" else "#CFE0F3"
+        val bordo = if (notte) "#0E131C" else "#AEB8C6"
+        val strada = if (notte) "#4A5468" else "#FFFFFF"
+        val veloce = if (notte) "#7A6634" else "#F6D58E"
+        val testo = if (notte) "#E6EAF2" else "#2E3440"
+        val alone = if (notte) "#1C2230" else "#FFFFFF"
+        val classi = """["literal",["motorway","trunk","primary","secondary","tertiary","minor","service","raceway","busway"]]"""
+        // larghezza (in pixel a zoom 18) secondo l'importanza della strada
+        fun larghezza(f: Double) = """["interpolate",["exponential",1.6],["zoom"],
+            14,["*",$f,0.3,["match",["get","class"],["motorway","trunk"],14,["primary","secondary"],12,["tertiary","minor"],10,7]],
+            18,["*",$f,1.6,["match",["get","class"],["motorway","trunk"],14,["primary","secondary"],12,["tertiary","minor"],10,7]]]"""
+        return """
+        {"version":8,
+         "glyphs":"https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+         "sources":{"openmaptiles":{"type":"vector","url":"https://tiles.openfreemap.org/planet","attribution":"${js(OSM_ATTRIBUZIONE)}"}},
+         "layers":[
+           {"id":"sfondo","type":"background","paint":{"background-color":"$sfondo"}},
+           {"id":"acqua","type":"fill","source":"openmaptiles","source-layer":"water","paint":{"fill-color":"$acqua"}},
+           {"id":"strade-bordo","type":"line","source":"openmaptiles","source-layer":"transportation",
+            "filter":["in",["get","class"],$classi],
+            "layout":{"line-cap":"round","line-join":"round"},
+            "paint":{"line-color":"$bordo","line-width":${larghezza(1.25)}}},
+           {"id":"strade","type":"line","source":"openmaptiles","source-layer":"transportation",
+            "filter":["in",["get","class"],$classi],
+            "layout":{"line-cap":"round","line-join":"round"},
+            "paint":{"line-color":["match",["get","class"],["motorway","trunk"],"$veloce","$strada"],"line-width":${larghezza(1.0)}}},
+           {"id":"nomi-strade","type":"symbol","source":"openmaptiles","source-layer":"transportation_name","minzoom":14,
+            "layout":{"symbol-placement":"line","text-field":["coalesce",["get","name:it"],["get","name"],["get","ref"]],
+              "text-font":["Noto Sans Regular"],"text-size":13},
+            "paint":{"text-color":"$testo","text-halo-color":"$alone","text-halo-width":1.6}}
+         ]}
+        """.trimIndent()
+    }
 }
 
 /** Colori dei disegni sulla mappa (come richiesto: rosso, verde, blu). */

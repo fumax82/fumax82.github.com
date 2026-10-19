@@ -18,20 +18,28 @@ import com.ric.navigatore.ui.tema.Extra
 /**
  * Schermata di guida: comandi GRANDI, leggibili a colpo d'occhio.
  *  - in alto: prossima manovra con freccia e distanza;
- *  - avvisi (GPS, ricalcolo, rete);
- *  - in basso: tempo e km rimanenti, arrivo previsto, pulsanti.
+ *  - sotto, prima di ogni svolta, l'anteprima dell'incrocio (mappa schematica);
+ *  - avvisi (tornanti e pendenze, GPS, ricalcolo, rete);
+ *  - in basso: tempo e km rimanenti, arrivo previsto, pulsanti;
+ *    oppure il pannello per esplorare il percorso e cercarvi un punto a voce.
  */
 @Composable
 fun SchermataGuida(
     stato: StatoNavigazione,
     rete: Boolean,
+    notte: Boolean,
     onVoce: () -> Unit,
     onRicentra: () -> Unit,
-    onPanoramica: () -> Unit,
+    onCercaVoce: () -> Unit,
+    onEsplora: () -> Unit,
+    onTutto: () -> Unit,
+    onModifica: () -> Unit,
+    onChiudiEsplora: () -> Unit,
     onTermina: () -> Unit,
 ) {
     val g = stato.guida
-    Box(Modifier.fillMaxSize()) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val altezzaSchermo = maxHeight
         // ---------------- Prossima manovra ----------------
         Column(Modifier.align(Alignment.TopCenter).fillMaxWidth().statusBarsPadding().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary, shadowElevation = 8.dp) {
@@ -55,6 +63,12 @@ fun SchermataGuida(
                     Text("Poi ${frecciaManovra(dopo.tipo)} ${dopo.istruzione}", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp))
                 }
             }
+            // ---------------- Anteprima dell'incrocio (metà superiore) ----------------
+            if (stato.anteprima != null && stato.esplorazione == null) {
+                PannelloIncrocio(stato, notte, Modifier.fillMaxWidth().height(altezzaSchermo * 0.32f))
+            }
+            // ---------------- Tornanti, salite e discese ripide ----------------
+            stato.avvisiStrada.forEach { RiquadroAvvisoStrada(it) }
             // ---------------- Avvisi ----------------
             val avvisi = buildList {
                 if (stato.ricalcolo) add("Ricalcolo del percorso in corso (mantengo tutte le esclusioni)…")
@@ -68,8 +82,13 @@ fun SchermataGuida(
             }
         }
 
-        // ---------------- In basso ----------------
-        Surface(
+        // ---------------- In basso: esplorazione del percorso ----------------
+        if (stato.esplorazione != null) {
+            PannelloEsplora(
+                stato, onVoce = onCercaVoce, onTutto = onTutto, onModifica = onModifica, onChiudi = onChiudiEsplora,
+                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().navigationBarsPadding().imePadding().padding(12.dp),
+            )
+        } else Surface( // ---------------- In basso: tempi e pulsanti ----------------
             Modifier.align(Alignment.BottomCenter).fillMaxWidth().navigationBarsPadding().padding(12.dp),
             shape = RoundedCornerShape(24.dp), shadowElevation = 8.dp, color = MaterialTheme.colorScheme.surface,
         ) {
@@ -92,7 +111,13 @@ fun SchermataGuida(
                     FilledTonalButton(onClick = onVoce, modifier = Modifier.weight(1f).heightIn(min = 64.dp), contentPadding = PaddingValues(6.dp)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(if (stato.voce) IconeExtra.VoceSi else IconeExtra.VoceNo, null)
-                            Text(if (stato.voce) "Voce attiva" else "Voce spenta", maxLines = 1, softWrap = false)
+                            Text(if (stato.voce) "Voce sì" else "Voce no", maxLines = 1, softWrap = false)
+                        }
+                    }
+                    FilledTonalButton(onClick = onCercaVoce, modifier = Modifier.weight(1f).heightIn(min = 64.dp), contentPadding = PaddingValues(6.dp)) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(IconeExtra.Microfono, null)
+                            Text("Cerca", maxLines = 1, softWrap = false)
                         }
                     }
                     FilledTonalButton(onClick = onRicentra, modifier = Modifier.weight(1f).heightIn(min = 64.dp), contentPadding = PaddingValues(6.dp)) {
@@ -103,7 +128,11 @@ fun SchermataGuida(
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = onPanoramica, modifier = Modifier.weight(1f).heightIn(min = 60.dp)) { Text("Panoramica") }
+                    OutlinedButton(onClick = onEsplora, modifier = Modifier.weight(1f).heightIn(min = 60.dp)) {
+                        Icon(IconeExtra.Esplora, null)
+                        Spacer(Modifier.width(6.dp))
+                        Text("Esplora", maxLines = 1, softWrap = false)
+                    }
                     Button(
                         onClick = onTermina, modifier = Modifier.weight(1f).heightIn(min = 60.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Extra.colori.esclusione, contentColor = MaterialTheme.colorScheme.surface),
