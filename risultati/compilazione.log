@@ -3,9 +3,9 @@ Daemon will be stopped at the end of the build
 > Task :app:preBuild UP-TO-DATE
 > Task :nucleo:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :app:preReleaseBuild UP-TO-DATE
-> Task :app:mergeReleaseJniLibFolders
 > Task :nucleo:compileKotlin UP-TO-DATE
 > Task :nucleo:compileJava NO-SOURCE
+> Task :app:mergeReleaseJniLibFolders
 > Task :nucleo:processResources NO-SOURCE
 > Task :nucleo:classes UP-TO-DATE
 > Task :nucleo:jar UP-TO-DATE
@@ -20,34 +20,35 @@ Daemon will be stopped at the end of the build
 Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, libmaplibre.so. Run with --info option to learn more.
 
 > Task :app:extractReleaseNativeSymbolTables
+> Task :app:mergeReleaseNativeDebugMetadata NO-SOURCE
 > Task :app:javaPreCompileRelease
 > Task :app:parseReleaseLocalResources
-> Task :app:mergeReleaseNativeDebugMetadata NO-SOURCE
 > Task :app:checkReleaseAarMetadata
 > Task :app:mapReleaseSourceSetPaths
 > Task :app:generateReleaseRFile
 > Task :app:compileReleaseNavigationResources
 > Task :app:createReleaseCompatibleScreenManifests
 > Task :app:extractDeepLinksRelease
-> Task :app:processReleaseMainManifest
 > Task :app:mergeReleaseResources
+> Task :app:processReleaseMainManifest
 > Task :app:processReleaseManifest
+> Task :app:processReleaseManifestForPackage
 > Task :app:desugarReleaseFileDependencies
 > Task :app:mergeReleaseStartupProfile
+> Task :app:processReleaseResources
 > Task :app:compileReleaseKotlin
-> Task :app:processReleaseManifestForPackage
 > Task :app:mergeExtDexRelease
 > Task :app:compileReleaseJavaWithJavac
-> Task :app:generateReleaseAssets UP-TO-DATE
+> Task :app:dexBuilderRelease
 > Task :app:mergeReleaseArtProfile
+> Task :app:generateReleaseAssets UP-TO-DATE
+> Task :app:mergeReleaseGlobalSynthetics
 > Task :app:mergeReleaseAssets
 > Task :app:compressReleaseAssets
 > Task :app:extractReleaseVersionControlInfo
 > Task :app:extractProguardFiles
-> Task :app:processReleaseResources
 > Task :app:generateReleaseLintVitalReportModel
-> Task :app:dexBuilderRelease
-> Task :app:mergeReleaseGlobalSynthetics
+> Task :app:mergeDexRelease
 > Task :app:processReleaseJavaRes
 > Task :app:optimizeReleaseResources
 > Task :app:collectReleaseDependencies
@@ -62,23 +63,22 @@ Unable to strip the following libraries, packaging them as they are: libandroidx
 > Task :app:processDebugNavigationResources
 > Task :app:parseDebugLocalResources
 > Task :app:generateDebugRFile
-> Task :app:mergeDexRelease
 > Task :app:mergeReleaseJavaResource
-> Task :app:javaPreCompileDebug
+> Task :app:compileReleaseArtProfile
 > Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:javaPreCompileDebug
 > Task :app:mergeDebugAssets
 > Task :app:compressDebugAssets
 > Task :app:generateDebugGlobalSynthetics
-> Task :app:checkDebugDuplicateClasses
 > Task :app:desugarDebugFileDependencies
-> Task :app:compileReleaseArtProfile
+> Task :app:checkDebugDuplicateClasses
+> Task :app:checkDebugAarMetadata
 > Task :app:lintVitalAnalyzeRelease
 > Task :app:compileDebugKotlin
 > Task :app:mergeExtDexDebug
 > Task :app:compileDebugJavaWithJavac
 > Task :app:processDebugJavaRes
 > Task :app:mergeLibDexDebug
-> Task :app:checkDebugAarMetadata
 > Task :app:mapDebugSourceSetPaths
 > Task :app:compileDebugNavigationResources
 > Task :app:mergeDebugJavaResource
@@ -90,42 +90,41 @@ Unable to strip the following libraries, packaging them as they are: libandroidx
 > Task :app:mergeDebugJniLibFolders
 > Task :app:mergeDebugResources
 > Task :app:mergeDebugNativeLibs
-> Task :app:processDebugResources
 
 > Task :app:stripDebugDebugSymbols
 Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, libmaplibre.so. Run with --info option to learn more.
 
+> Task :app:processDebugResources
+> Task :app:validateSigningDebug
 > Task :app:lintVitalReportRelease
 > Task :app:dexBuilderDebug
 > Task :app:lintVitalRelease
-> Task :app:mergeProjectDexDebug
-> Task :app:validateSigningDebug
 > Task :app:writeDebugAppMetadata
-> Task :app:packageRelease
-> Task :app:createReleaseApkListingFileRedirect
-> Task :app:assembleRelease
 > Task :app:writeDebugSigningConfigVersions
 > Task :app:preDebugAndroidTestBuild SKIPPED
 > Task :app:bundleDebugClassesToCompileJar
+> Task :app:mergeProjectDexDebug
 > Task :app:mergeDebugAndroidTestManifest
 > Task :app:processDebugAndroidTestManifest
 > Task :app:generateDebugAndroidTestBuildConfig
 > Task :app:generateDebugAndroidTestResources
 > Task :app:packageDebugAndroidTestResources
 > Task :app:processDebugAndroidTestNavigationResources
-> Task :app:generateDebugAndroidTestAssets UP-TO-DATE
 > Task :app:javaPreCompileDebugAndroidTest
+> Task :app:generateDebugAndroidTestAssets UP-TO-DATE
 > Task :app:parseDebugAndroidTestLocalResources
 > Task :app:mergeDebugAndroidTestAssets
 > Task :app:compressDebugAndroidTestAssets
 > Task :app:generateDebugAndroidTestRFile
 > Task :app:generateDebugAndroidTestGlobalSynthetics
+> Task :app:packageRelease
+> Task :app:createReleaseApkListingFileRedirect
+> Task :app:assembleRelease
+> Task :app:checkDebugAndroidTestDuplicateClasses
 > Task :app:packageDebug
 > Task :app:createDebugApkListingFileRedirect
 > Task :app:assembleDebug
 > Task :app:desugarDebugAndroidTestFileDependencies
-> Task :app:checkDebugAndroidTestDuplicateClasses
-> Task :app:checkDebugAndroidTestAarMetadata
 
 > Task :app:compileDebugAndroidTestKotlin
 w: file:///home/runner/work/fumax82.github.com/fumax82.github.com/app/src/androidTest/java/com/ric/navigatore/ProvaSchermate.kt:42:27 'fun <reified A : ComponentActivity> createAndroidComposeRule(effectContext: CoroutineContext = ...): AndroidComposeTestRule<ActivityScenarioRule<A>, A>' is deprecated. Use `androidx.compose.ui.test.junit4.v2.createAndroidComposeRule` instead. The v2 APIs use StandardTestDispatcher instead of UnconfinedTestDispatcher, which aligns with standard coroutine behavior by queuing tasks rather than executing them immediately. Tests relying on immediate execution may require explicit synchronization. Please refer to the migration guide for more details.
@@ -134,6 +133,7 @@ w: file:///home/runner/work/fumax82.github.com/fumax82.github.com/app/src/androi
 > Task :app:compileDebugAndroidTestJavaWithJavac
 > Task :app:processDebugAndroidTestJavaRes
 > Task :app:mergeLibDexDebugAndroidTest
+> Task :app:checkDebugAndroidTestAarMetadata
 > Task :app:mapDebugAndroidTestSourceSetPaths
 > Task :app:compileDebugAndroidTestNavigationResources
 > Task :app:mergeDebugAndroidTestJavaResource
@@ -141,8 +141,8 @@ w: file:///home/runner/work/fumax82.github.com/fumax82.github.com/app/src/androi
 > Task :app:mergeDebugAndroidTestNativeLibs NO-SOURCE
 > Task :app:stripDebugAndroidTestDebugSymbols NO-SOURCE
 > Task :app:validateSigningDebugAndroidTest
-> Task :app:mergeDebugAndroidTestResources
 > Task :app:writeDebugAndroidTestSigningConfigVersions
+> Task :app:mergeDebugAndroidTestResources
 > Task :app:processDebugAndroidTestResources
 > Task :app:dexBuilderDebugAndroidTest
 > Task :app:mergeProjectDexDebugAndroidTest
@@ -158,6 +158,6 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.8.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 3m 45s
+BUILD SUCCESSFUL in 3m 52s
 122 actionable tasks: 120 executed, 2 up-to-date
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.8.1/userguide/configuration_cache_enabling.html
