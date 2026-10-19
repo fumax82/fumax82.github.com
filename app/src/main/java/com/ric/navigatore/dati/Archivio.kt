@@ -11,6 +11,15 @@ import java.io.File
 
 /** Tema della mappa. */
 @Serializable
+/** Mappe di base disponibili, tutte gratuite. */
+enum class MappaBase(val etichetta: String, val spiegazione: String) {
+    STRADALE("Stradale", "OpenFreeMap (OpenStreetMap), con modalità notte."),
+    SATELLITE("Satellite", "Sentinel-2 cloudless di EOX: gratuito per uso personale, nessuna chiave. Risoluzione 10 m: vedi campi, boschi e città, non i dettagli delle singole strade."),
+    IBRIDA("Satellite con strade", "Come «Satellite», con sopra strade e nomi di OpenStreetMap."),
+    SATELLITE_HD("Satellite alta risoluzione", "Esri World Imagery: immagini dettagliate. I termini Esri richiedono una chiave ArcGIS (gratuita, nelle Impostazioni)."),
+    TOPOGRAFICA("Topografica", "OpenTopoMap: curve di livello e rilievo, utile con il profilo altimetrico."),
+}
+
 enum class Tema(val etichetta: String) { AUTOMATICO("Automatico (come il telefono)"), GIORNO("Giorno"), NOTTE("Notte") }
 
 /** Le impostazioni dell'utente (salvate solo sul telefono). */
@@ -30,6 +39,10 @@ data class Impostazioni(
     val budgetRichieste: Int = 8,
     /** Ruota la mappa nella direzione di marcia durante la guida. */
     val mappaOrientata: Boolean = true,
+    /** Tipo di mappa di base mostrata. */
+    val mappaBase: MappaBase = MappaBase.STRADALE,
+    /** Chiave ArcGIS (facoltativa, gratuita): serve solo per il satellite ad alta risoluzione Esri. */
+    val chiaveArcgis: String = "",
 )
 
 /** Un percorso salvato dall'utente (tappe + vincoli). */

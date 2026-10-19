@@ -91,6 +91,28 @@ class ProvaSchermate {
         aspettaTesto("Passa da")
         foto("04_area_confermata")
 
+        // Selezione dell'area appena disegnata: tocco al suo interno
+        dispositivo.click(w / 2, (h * 0.21).toInt())
+        aspettaTesto("Elimina")
+        foto("04b_area_selezionata")
+        // sposto un vertice: tocco sulla maniglia, poi sul nuovo punto
+        dispositivo.click(w / 4, h / 6)
+        Thread.sleep(600)
+        dispositivo.click(w / 8, (h * 0.26).toInt())
+        Thread.sleep(800)
+        foto("04c_vertice_spostato")
+        compose.onNodeWithText("Fatto").performClick()
+        aspettaTesto("Passa da")
+
+        // Tipi di mappa
+        for ((nome, file) in listOf("Satellite con strade" to "04d_satellite", "Topografica" to "04e_topografica", "Stradale" to "04f_stradale")) {
+            compose.onNodeWithContentDescriptionSafe("Tipo di mappa")
+            aspettaTesto(nome)
+            compose.onNodeWithText(nome, substring = true).performClick()
+            Thread.sleep(7000)
+            foto(file)
+        }
+
         // Menu «Passa da»
         compose.onNodeWithText("Passa da").performClick()
         aspettaTesto("Da dove vuoi passare?")

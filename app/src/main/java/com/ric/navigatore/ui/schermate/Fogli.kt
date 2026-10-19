@@ -172,6 +172,7 @@ private fun SchedaVincolo(modello: ModelloApp, s: StatoUi, v: Vincolo, indice: I
             @OptIn(ExperimentalLayoutApi::class)
             FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 TextButton(onClick = { modello.mostraVincolo(v) }) { Text("Mostra") }
+                TextButton(onClick = { modello.mostraVincolo(v); modello.selezionaVincolo(v.id) }) { Text("Modifica") }
                 TextButton(onClick = { rinomina = true }) { Text("Rinomina") }
                 IconButton(onClick = { modello.spostaVincolo(v.id, true) }, enabled = indice > 0) { Icon(Icons.Default.KeyboardArrowUp, "Sposta su") }
                 IconButton(onClick = { modello.spostaVincolo(v.id, false) }, enabled = indice < totale - 1) { Icon(Icons.Default.KeyboardArrowDown, "Sposta giù") }
@@ -268,6 +269,17 @@ fun FoglioDettagli(modello: ModelloApp, s: StatoUi) = CorpoFoglio("Dettagli del 
             RigaValore("Con i tuoi vincoli", "${formattaDistanza(p.distanza)} · ${formattaDurata(p.durata)}")
             Text(confronto(p, i), style = MaterialTheme.typography.bodyMedium)
             Text("Sulla mappa il percorso senza vincoli è la linea grigia tratteggiata.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+
+    // Profilo altimetrico (le quote arrivano con il percorso: nessuna richiesta in più)
+    if (p != null) {
+        val profilo = remember(p) { com.ric.navigatore.nucleo.geo.Altimetria.profilo(p) }
+        Titoletto("Profilo altimetrico")
+        if (profilo == null) {
+            Text("Quote non disponibili per questo percorso.", style = MaterialTheme.typography.bodySmall)
+        } else {
+            GraficoProfilo(profilo, onIndica = { modello.indicaSulProfilo(it) })
         }
     }
 

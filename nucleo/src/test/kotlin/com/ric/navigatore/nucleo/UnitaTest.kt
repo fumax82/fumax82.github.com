@@ -132,4 +132,33 @@ class UnitaTest {
         assertTrue("\"k\"" !in corpo)
         Json.parseToJsonElement(corpo)
     }
+
+    @Test
+    fun `modifica di aree e punti disegnati`() {
+        val a = Punto(45.40, 11.87)
+        val b = Punto(45.41, 11.89)
+        val rett = com.ric.navigatore.nucleo.modello.EvitaArea(nome = "r", forma = FormaArea.RETTANGOLO, poligono = Aree.rettangolo(a, b))
+        // sposto l'angolo 2 (= b): l'angolo opposto (a) resta fermo
+        val m = com.ric.navigatore.nucleo.modello.Modifiche.maniglie(rett).first { it.indice == 2 }
+        val nuovo = com.ric.navigatore.nucleo.modello.Modifiche.spostaManiglia(rett, m, Punto(45.42, 11.90)) as com.ric.navigatore.nucleo.modello.EvitaArea
+        assertTrue(nuovo.poligono.esterno.contains(a))
+        assertTrue(Aree.superficie(nuovo.poligono) > Aree.superficie(rett.poligono))
+        // spostamento intero di un cerchio e cambio di raggio
+        val c = com.ric.navigatore.nucleo.modello.EvitaArea(nome = "c", forma = FormaArea.CERCHIO, poligono = Aree.cerchio(a, 300.0), centro = a, raggio = 300.0)
+        val c2 = com.ric.navigatore.nucleo.modello.Modifiche.cambiaRaggio(com.ric.navigatore.nucleo.modello.Modifiche.trasla(c, b), 600.0) as com.ric.navigatore.nucleo.modello.EvitaArea
+        assertEquals(b, c2.centro)
+        assertTrue(Aree.contiene(c2.poligono, b))
+        assertEquals(4.0, Aree.superficie(c2.poligono) / Aree.superficie(c.poligono), 0.05)
+        // poligono: aggiungo e tolgo un vertice
+        val pol = com.ric.navigatore.nucleo.modello.EvitaArea(nome = "p", forma = FormaArea.POLIGONO, poligono = com.ric.navigatore.nucleo.geo.Poligono(listOf(a, Punto(45.40, 11.89), b)))
+        val con4 = com.ric.navigatore.nucleo.modello.Modifiche.inserisciVertice(pol, 2, Punto(45.412, 11.86)) as com.ric.navigatore.nucleo.modello.EvitaArea
+        assertEquals(4, con4.poligono.esterno.size)
+        val di3 = com.ric.navigatore.nucleo.modello.Modifiche.togliVertice(con4, 3) as com.ric.navigatore.nucleo.modello.EvitaArea
+        assertEquals(3, di3.poligono.esterno.size)
+        // il tocco dentro l'area seleziona l'area; vicino al punto seleziona il punto
+        val punto = com.ric.navigatore.nucleo.modello.PassaPunto(nome = "pp", punto = Punto(45.405, 11.88))
+        val sel = com.ric.navigatore.nucleo.modello.Modifiche.colpito(listOf(rett, punto), Punto(45.40501, 11.88001), 20.0)
+        assertEquals(punto.id, sel?.id)
+        assertEquals(rett.id, com.ric.navigatore.nucleo.modello.Modifiche.colpito(listOf(rett, punto), Punto(45.401, 11.871), 20.0)?.id)
+    }
 }

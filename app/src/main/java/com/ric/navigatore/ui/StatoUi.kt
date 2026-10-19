@@ -4,6 +4,7 @@ import com.ric.navigatore.nucleo.geo.Linea
 import com.ric.navigatore.nucleo.geo.Punto
 import com.ric.navigatore.nucleo.modello.Durata
 import com.ric.navigatore.nucleo.modello.FormaArea
+import com.ric.navigatore.nucleo.modello.Maniglia
 import com.ric.navigatore.nucleo.modello.Percorso
 import com.ric.navigatore.nucleo.modello.Priorita
 import com.ric.navigatore.nucleo.modello.Senso
@@ -38,6 +39,9 @@ sealed class Modo {
 
     /** Disegna un'area. */
     data class Disegno(val obiettivo: ObiettivoArea) : Modo()
+
+    /** Un vincolo già creato è selezionato: si può spostare, deformare, cancellare. */
+    data class Modifica(val id: String) : Modo()
 }
 
 /** Dati della selezione in corso (anteprima prima della conferma). */
@@ -67,6 +71,10 @@ data class Selezione(
     val priorita: Priorita = Priorita.OBBLIGATORIO,
     val durata: Durata = Durata.SOLO_QUESTO_VIAGGIO,
     val inAttesa: Boolean = false,
+    /** Modifica: la maniglia scelta (il prossimo tocco la sposta lì). */
+    val maniglia: Maniglia? = null,
+    /** Modifica: il prossimo tocco sposta TUTTO il vincolo. */
+    val spostaTutto: Boolean = false,
     /** Istruzione o avviso da mostrare nel pannello. */
     val suggerimento: String? = null,
 )
@@ -99,6 +107,10 @@ data class StatoUi(
     val puoAnnullare: Boolean = false,
     val puoRipristinare: Boolean = false,
     val rete: Boolean = true,
+    /** Punto del percorso indicato sul grafico altimetrico (mostrato sulla mappa). */
+    val puntoProfilo: Punto? = null,
+    /** Quota del punto chiesta dal menu del tocco lungo. */
+    val quotaPunto: Pair<Punto, String>? = null,
 ) {
     /** Il percorso attualmente scelto (principale o alternativa). */
     val percorsoScelto: Percorso?

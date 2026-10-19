@@ -58,6 +58,11 @@ class ServerOrsFinto(val citta: CittaSimulata = CittaSimulata()) : ClientHttp {
         return when {
             "/v2/directions/driving-car/geojson" in richiesta.url -> percorso(corpo)
             "/v2/snap/driving-car/json" in richiesta.url -> aggancio(corpo)
+            "/elevation/point" in richiesta.url -> {
+                val g = corpo["geometry"]!!.jsonArray
+                val p = Punto(g[1].jsonPrimitive.double, g[0].jsonPrimitive.double)
+                RispostaHttp(200, buildJsonObject { putJsonArray("geometry") { add(p.lon); add(p.lat); add(quotaFinta(p)) } }.toString())
+            }
             else -> RispostaHttp(404, """{"error":"Not found"}""")
         }
     }
@@ -93,7 +98,14 @@ class ServerOrsFinto(val citta: CittaSimulata = CittaSimulata()) : ClientHttp {
 
     // ------------------------------------------------------------------
 
+    /** Vero se l'ultima richiesta chiedeva le quote ("elevation"). */
+    var ultimaConQuote = false
+
+    /** Quota finta: il terreno sale verso nord (circa 2 m ogni isolato). */
+    fun quotaFinta(p: Punto) = 12.0 + (p.lat - 45.40) * 1000
+
     private fun percorso(corpo: JsonObject): RispostaHttp {
+        ultimaConQuote = corpo["elevation"]?.jsonPrimitive?.content == "true"
         val punti = corpo["coordinates"]!!.jsonArray.map(::punto)
         val direzioni = corpo["bearings"]?.jsonArray?.map { b ->
             val a = b.jsonArray
@@ -200,10 +212,15 @@ class ServerOrsFinto(val citta: CittaSimulata = CittaSimulata()) : ClientHttp {
                     val dur = segmenti.sumOf { it.jsonObject["duration"]!!.jsonPrimitive.double }
                     putJsonObject("summary") { put("distance", dist); put("duration", dur) }
                     putJsonArray("way_points") { wayPoints.forEach { add(it) } }
+                    if (ultimaConQuote) {
+                        val q = coordinate.map(::quotaFinta)
+                        put("ascent", q.zipWithNext().sumOf { (a, b) -> maxOf(0.0, b - a) })
+                        put("descent", q.zipWithNext().sumOf { (a, b) -> maxOf(0.0, a - b) })
+                    }
                 }
                 putJsonObject("geometry") {
                     put("type", "LineString")
-                    putJsonArray("coordinates") { coordinate.forEach { p -> addJsonArray { add(p.lon); add(p.lat) } } }
+                    putJsonArray("coordinates") { coordinate.forEach { p -> addJsonArray { add(p.lon); add(p.lat); if (ultimaConQuote) add(quotaFinta(p)) } } }
                 }
             }
         }

@@ -134,6 +134,11 @@ data class Percorso(
     val avvisi: List<String> = emptyList(),
     /** Sempre falso con i servizi gratuiti usati: niente traffico in tempo reale. */
     val includeTraffico: Boolean = false,
+    /** Quota (m s.l.m.) di ogni punto della geometria, se il servizio la fornisce. */
+    val quote: List<Double>? = null,
+    /** Metri totali di salita e di discesa (calcolati dal servizio). */
+    val salita: Double? = null,
+    val discesa: Double? = null,
 )
 
 /** Tipo di errore, per mostrare un messaggio chiaro all'utente. */

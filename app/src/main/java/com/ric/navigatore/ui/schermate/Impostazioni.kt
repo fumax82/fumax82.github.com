@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.ric.navigatore.BuildConfig
 import com.ric.navigatore.Servizi
 import com.ric.navigatore.dati.DatiSalvati
+import com.ric.navigatore.dati.MappaBase
 import com.ric.navigatore.dati.Tema
 import com.ric.navigatore.ui.ModelloApp
 import com.ric.navigatore.ui.tema.Extra
@@ -119,6 +120,30 @@ fun FoglioImpostazioni(modello: ModelloApp, dati: DatiSalvati) {
             runCatching { context.startActivity(Intent("com.android.settings.TTS_SETTINGS")) }
         }) { Text("Impostazioni della voce del telefono") }
 
+        // ---------------- Mappe ----------------
+        Titoletto("Tipo di mappa")
+        SceltaPillole(MappaBase.entries, imp.mappaBase, { it.etichetta }, { b -> modello.cambiaImpostazioni { it.copy(mappaBase = b) } })
+        Text(imp.mappaBase.spiegazione, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Titoletto("Chiave ArcGIS (facoltativa, gratuita)")
+        Text(
+            "Serve solo per il «Satellite alta risoluzione» di Esri. Si ottiene creando un account ArcGIS Location Platform " +
+                "(piano gratuito) e una chiave con il permesso «basemaps». Controlla nel tuo account che non sia attivo il pagamento a consumo: " +
+                "l'app non lo può verificare. Senza chiave l'app usa il satellite Sentinel-2, che non ne richiede.",
+            style = MaterialTheme.typography.bodySmall,
+        )
+        var arcgis by remember { mutableStateOf(imp.chiaveArcgis) }
+        OutlinedTextField(
+            value = arcgis, onValueChange = { arcgis = it.trim() }, singleLine = true,
+            label = { Text("Chiave ArcGIS") },
+            visualTransformation = if (mostra) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { modello.cambiaImpostazioni { it.copy(chiaveArcgis = arcgis) } }) { Text("Salva") }
+            TextButton(onClick = { apri(context, "https://location.arcgis.com/") }) { Text("Pagina ArcGIS") }
+        }
+
         // ---------------- Aspetto ----------------
         Titoletto("Aspetto")
         SceltaPillole(Tema.entries, imp.tema, { it.etichetta }, { t -> modello.cambiaImpostazioni { it.copy(tema = t) } })
@@ -141,6 +166,8 @@ fun FoglioInformazioni() {
         Text("Navigatore ${BuildConfig.VERSION_NAME} · app personale, senza pubblicità, senza tracciamento, senza account.", style = MaterialTheme.typography.bodySmall)
 
         Titoletto("Quali dati escono dal telefono")
+        PuntoElenco("Satellite e topografica (EOX, Esri, OpenTopoMap): come per la mappa, il server vede la zona visualizzata e il tuo indirizzo IP; a Esri va anche la tua chiave ArcGIS.")
+        PuntoElenco("Altitudine di un punto (dal menu del tocco lungo): le coordinate del punto vanno a openrouteservice.")
         PuntoElenco("Mappa (OpenFreeMap): vengono scaricati i «tasselli» della zona che guardi. Il server vede quindi la zona visualizzata e il tuo indirizzo IP, non la tua posizione GPS.")
         PuntoElenco("Percorsi (openrouteservice, HeiGIT, Germania): a ogni calcolo invio le coordinate di partenza, tappe, destinazione, dei punti ausiliari dei vincoli e le aree da evitare, insieme alla tua chiave.")
         PuntoElenco("Durante la guida, solo se esci dal percorso: invio la posizione attuale e i punti residui per ricalcolare.")
@@ -159,6 +186,10 @@ fun FoglioInformazioni() {
         PuntoElenco("Mappe: OpenFreeMap, schema OpenMapTiles © OpenMapTiles.")
         PuntoElenco("Percorsi e ricerca: openrouteservice © HeiGIT gGmbH, ricerca basata su Pelias.")
         PuntoElenco("Ricerca alternativa: Nominatim © contributori di OpenStreetMap.")
+        PuntoElenco("Satellite: Sentinel-2 cloudless 2024 di EOX IT Services GmbH (contiene dati Copernicus Sentinel modificati), licenza CC BY-NC-SA 4.0: solo uso non commerciale.")
+        PuntoElenco("Satellite alta risoluzione (solo con chiave ArcGIS): © Esri, Maxar, Earthstar Geographics e la comunità GIS.")
+        PuntoElenco("Topografica: © OpenTopoMap (CC-BY-SA), dati © OpenStreetMap e SRTM.")
+        PuntoElenco("Altitudini e profilo: openrouteservice (modello digitale del terreno).")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = { apri(context, "https://www.openstreetmap.org/copyright") }) { Text("Copyright OSM") }
             TextButton(onClick = { apri(context, "https://openfreemap.org") }) { Text("OpenFreeMap") }

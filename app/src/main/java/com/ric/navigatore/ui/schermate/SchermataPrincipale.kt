@@ -75,7 +75,10 @@ fun SchermataPrincipale(modello: ModelloApp, notte: Boolean) {
     val vistaMappa = remember { MapView(context).apply { onCreate(null) } }
     var mappaPronta by remember { mutableStateOf(false) }
     CicloDiVitaMappa(vistaMappa)
-    LaunchedEffect(notte, mappaPronta) { if (mappaPronta) controllore.cambiaTema(notte) }
+    // giorno/notte e tipo di mappa (stradale, satellite, topografica)
+    LaunchedEffect(notte, dati.impostazioni.mappaBase, dati.impostazioni.chiaveArcgis, mappaPronta) {
+        if (mappaPronta) controllore.cambiaTema(notte, dati.impostazioni.mappaBase, dati.impostazioni.chiaveArcgis)
+    }
 
     // ---------------- Posizione (fuori dalla guida) ----------------
     var permesso by remember { mutableStateOf(haPermessoPosizione(context)) }
@@ -205,6 +208,7 @@ fun SchermataPrincipale(modello: ModelloApp, notte: Boolean) {
                     stato.posizione?.let { controllore.centra(it, maxOf(controllore.zoom(), 15.0)) }
                         ?: modello.messaggio("Posizione non ancora disponibile.")
                 }
+                SceltaMappa(modello, dati.impostazioni.mappaBase, dati.impostazioni.chiaveArcgis.isNotBlank())
                 PulsanteTondo(IconeExtra.Annulla, "Annulla", attivo = stato.puoAnnullare) { modello.annulla() }
                 PulsanteTondo(IconeExtra.Ripristina, "Ripristina", attivo = stato.puoRipristinare) { modello.ripristina() }
             }
@@ -216,7 +220,17 @@ fun SchermataPrincipale(modello: ModelloApp, notte: Boolean) {
             ) {
                 SnackbarHost(avvisi)
                 stato.menuPunto?.let { p -> MenuPunto(p, modello) }
-                if (stato.modo != Modo.Normale) {
+                stato.quotaPunto?.let { (_, testo) ->
+                    Surface(shape = RoundedCornerShape(16.dp), shadowElevation = 4.dp, color = MaterialTheme.colorScheme.surface) {
+                        Row(Modifier.padding(start = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(testo, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                            TextButton(onClick = { modello.chiudiQuota() }) { Text("Chiudi") }
+                        }
+                    }
+                }
+                if (stato.modo is Modo.Modifica) {
+                    PannelloModifica(modello, stato)
+                } else if (stato.modo != Modo.Normale) {
                     PannelloModo(modello, stato)
                 } else {
                     if (stato.esito != null || stato.calcoloInCorso) RiepilogoPercorso(modello, stato)
@@ -306,6 +320,22 @@ private fun datiMappa(modello: ModelloApp, s: StatoUi, guida: com.ric.navigatore
         val area = modello.areaDisegnata(sel)
         if (area != null) aree += area else if (sel.vertici.size >= 2) linee += sel.vertici
     }
+    // modifica di un vincolo: contorno ambra e maniglie
+    val maniglie = mutableListOf<Punto>()
+    val secondarie = mutableListOf<Punto>()
+    modello.vincoloSelezionato(s)?.let { v ->
+        when (v) {
+            is com.ric.navigatore.nucleo.modello.EvitaArea -> aree += v.poligono
+            is com.ric.navigatore.nucleo.modello.PassaArea -> aree += v.poligono
+            is EvitaTratto -> linee += v.linea
+            is com.ric.navigatore.nucleo.modello.PassaTratto -> linee += v.linea
+            else -> {}
+        }
+        com.ric.navigatore.nucleo.modello.Modifiche.maniglie(v).forEach { m ->
+            if (m.tipo == com.ric.navigatore.nucleo.modello.TipoManiglia.META_LATO) secondarie += m.punto else maniglie += m.punto
+        }
+    }
+    s.quotaPunto?.let { punti += it.first }
     val e = s.esito
     return DatiMappa(
         percorso = s.percorsoScelto?.geometria,
@@ -315,6 +345,8 @@ private fun datiMappa(modello: ModelloApp, s: StatoUi, guida: com.ric.navigatore
         fermate = modello.fermateDaDisegnare(s.viaggio),
         vincoli = s.viaggio.vincoli,
         anteprimaLinee = linee, anteprimaAree = aree, anteprimaPunti = punti, anteprimaCollegamenti = collegamenti,
+        maniglie = maniglie, maniglieSecondarie = secondarie, manigliaScelta = sel.maniglia?.punto,
+        puntoProfilo = s.puntoProfilo,
     )
 }
 
@@ -400,7 +432,7 @@ private fun MenuPunto(p: Punto, modello: ModelloApp) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(
                     "Parti da qui" to "partenza", "Vai qui" to "arrivo", "Aggiungi tappa" to "tappa",
-                    "Passa da qui" to "passa", "Evita questa strada" to "evita", "Salva nei preferiti" to "preferito",
+                    "Passa da qui" to "passa", "Evita questa strada" to "evita", "Salva nei preferiti" to "preferito", "Altitudine qui" to "quota",
                 ).forEach { (t, a) -> AssistChip(onClick = { modello.azioneMenu(p, a) }, label = { Text(t) }) }
             }
             TextButton(onClick = { modello.chiudiMenuPunto() }, modifier = Modifier.align(Alignment.End)) { Text("Chiudi") }
@@ -432,6 +464,11 @@ private fun RiepilogoPercorso(modello: ModelloApp, s: StatoUi) {
                     }
                     Text("Arrivo verso le ${ora(System.currentTimeMillis() + (p.durata * 1000).toLong())} · stima senza traffico", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     s.iniziale?.let { i -> Text(confronto(p, i), style = MaterialTheme.typography.bodySmall) }
+                    val su = p.salita
+                    val giu = p.discesa
+                    if (su != null && giu != null) {
+                        Text("Dislivello: ↗ ${su.roundToInt()} m · ↘ ${giu.roundToInt()} m", style = MaterialTheme.typography.bodySmall)
+                    }
                     val nonRispettati = e.preferitiNonRispettati.size
                     when {
                         !e.rapporto.valido -> Text("✗ Alcuni vincoli obbligatori non risultano rispettati: vedi dettagli", color = Extra.colori.esclusione, style = MaterialTheme.typography.bodySmall)
@@ -479,6 +516,31 @@ private fun BarraAzioni(modello: ModelloApp, s: StatoUi, avvia: () -> Unit) {
             PulsanteBarra("Disegna area", Icons.Default.Edit, { modello.avviaModo(Modo.Disegno(ObiettivoArea.EVITA)) })
             PulsanteBarra("Ricalcola", Icons.Default.Refresh, { modello.calcola() }, attivo = s.viaggio.pronto && !s.calcoloInCorso)
             PulsanteBarra("Avvia", IconeExtra.Navigazione, avvia, attivo = s.percorsoScelto != null, evidenziato = s.percorsoScelto != null)
+        }
+    }
+}
+
+
+/** Pulsante tondo «Mappa»: scelta fra stradale, satellite, ibrida, topografica. */
+@Composable
+private fun SceltaMappa(modello: ModelloApp, attuale: com.ric.navigatore.dati.MappaBase, haChiaveArcgis: Boolean) {
+    var aperto by remember { mutableStateOf(false) }
+    Box {
+        PulsanteTondo(IconeExtra.Livelli, "Tipo di mappa") { aperto = true }
+        DropdownMenu(expanded = aperto, onDismissRequest = { aperto = false }) {
+            com.ric.navigatore.dati.MappaBase.entries.forEach { b ->
+                DropdownMenuItem(
+                    text = {
+                        Column(Modifier.widthIn(max = 280.dp)) {
+                            Text(b.etichetta + if (b == attuale) "  ✓" else "", style = MaterialTheme.typography.bodyLarge)
+                            val nota = if (b == com.ric.navigatore.dati.MappaBase.SATELLITE_HD && !haChiaveArcgis)
+                                "Serve la chiave ArcGIS gratuita (Impostazioni). Senza, mostro il satellite Sentinel-2." else b.spiegazione
+                            Text(nota, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    },
+                    onClick = { aperto = false; modello.cambiaImpostazioni { it.copy(mappaBase = b) } },
+                )
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.ric.navigatore.nucleo
 
+import com.ric.navigatore.nucleo.geo.Altimetria
 import com.ric.navigatore.nucleo.geo.Aree
 import com.ric.navigatore.nucleo.geo.Geo
 import com.ric.navigatore.nucleo.geo.PianoLocale
@@ -408,5 +409,29 @@ class ScenariTest {
         // Con un passaggio intermedio le alternative non sono disponibili (limite del servizio) e lo diciamo
         val e2 = pianificatore.calcola(viaggio.copy(vincoli = listOf(PassaPunto(nome = "p", punto = citta.nodo(1, 5)))))
         assertTrue(e2.note.any { "alternativi non disponibili" in it })
+    }
+
+    @Test
+    fun `profilo altimetrico del percorso`() {
+        // Da sud a nord: il terreno simulato sale di circa 1 m ogni 111 m di latitudine
+        val v = Viaggio(partenza = luogo(1, 1), arrivo = luogo(12, 12))
+        val e = pianificatore.calcola(v)
+        val p = assertNotNull(e.percorso)
+        assertNotNull(p.quote, "le quote devono arrivare con il percorso")
+        assertEquals(p.geometria.size, p.quote!!.size)
+        val prof = assertNotNull(Altimetria.profilo(p))
+        println("Profilo: min ${prof.minima}, max ${prof.massima}, salita ${prof.salita}, discesa ${prof.discesa}, pendenza max ${"%.1f".format(prof.pendenzaMassima)}%")
+        // salita - discesa = differenza di quota fra arrivo e partenza
+        val atteso = server.quotaFinta(p.geometria.last()) - server.quotaFinta(p.geometria.first())
+        assertEquals(atteso, prof.salita - prof.discesa, 0.5)
+        assertTrue(prof.salita > 1.0, "deve salire")
+        assertTrue(prof.massima > prof.minima)
+        // dislivelli calcolati in proprio (se il servizio non li desse) coerenti con quelli del servizio
+        val (su, _) = Altimetria.dislivelli(p.quote!!, 0.0)
+        assertEquals(prof.salita, su, 1.0)
+        // altitudine di un singolo punto (menu del tocco lungo)
+        val q = ors.altitudine(p.geometria.last())
+        assertTrue(q is com.ric.navigatore.nucleo.modello.Esito.Ok)
+        assertEquals(server.quotaFinta(p.geometria.last()), q.valore, 0.01)
     }
 }

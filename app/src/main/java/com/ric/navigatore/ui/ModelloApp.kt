@@ -46,6 +46,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.max
+import kotlin.math.roundToInt
+import com.ric.navigatore.nucleo.modello.Modifiche
+import com.ric.navigatore.nucleo.modello.TipoManiglia
 
 /** Ciò che il modello chiede alla mappa (lo implementa ControlloreMappa). */
 interface LettoreMappa {
@@ -234,6 +237,7 @@ class ModelloApp {
             Modo.PezzoPercorso -> if (s.percorsoScelto == null) "Prima calcola un percorso." else "Tocca sul percorso blu l'INIZIO del pezzo da evitare."
             Modo.Punto -> "Tocca il punto da cui vuoi passare."
             is Modo.Disegno -> "Tocca la mappa per disegnare l'area."
+            is Modo.Modifica -> "Tocca una maniglia (cerchietto bianco) e poi il punto dove spostarla."
         }
         aggiorna { it.copy(modo = m, selezione = Selezione(suggerimento = suggerimento), foglio = null, menuPunto = null) }
     }
@@ -261,7 +265,12 @@ class ModelloApp {
     fun tocco(p: Punto) {
         if (s.menuPunto != null) { chiudiMenuPunto(); return }
         when (val m = s.modo) {
-            Modo.Normale -> sceltaAlternativaVicina(p)
+            Modo.Normale -> {
+                // un tocco su un vincolo già disegnato lo seleziona per modificarlo
+                val v = Modifiche.colpito(s.viaggio.vincoli, p, sogliaTocco())
+                if (v != null) selezionaVincolo(v.id) else sceltaAlternativaVicina(p)
+            }
+            is Modo.Modifica -> toccoModifica(m.id, p)
             is Modo.SceltaPunto -> {
                 impostaLuogo(m.scopo, Luogo(p, "Punto sulla mappa"))
                 annullaModo()
@@ -284,6 +293,7 @@ class ModelloApp {
             "passa" -> { avviaModo(Modo.Punto); toccoPunto(p) }
             "evita" -> { avviaModo(Modo.Strada(true)); toccoStrada(p, true) }
             "preferito" -> aggiungiPreferito(Luogo(p, "Preferito"))
+            "quota" -> chiediQuota(p)
         }
     }
 
@@ -315,6 +325,132 @@ class ModelloApp {
         val soglia = sogliaTocco()
         val i = tutte.indices.minByOrNull { Geo.proietta(tutte[it].geometria, p).distanza } ?: return
         if (Geo.proietta(tutte[i].geometria, p).distanza <= soglia) aggiorna { it.copy(sceltaAlternativa = i) }
+    }
+
+    // ---------------- Modifica di un vincolo già creato ----------------
+
+    /** Il vincolo attualmente selezionato per la modifica. */
+    fun vincoloSelezionato(st: StatoUi = s): Vincolo? =
+        (st.modo as? Modo.Modifica)?.let { m -> st.viaggio.vincoli.firstOrNull { it.id == m.id } }
+
+    fun selezionaVincolo(id: String) {
+        val v = s.viaggio.vincoli.firstOrNull { it.id == id } ?: return
+        val testo = when (v) {
+            is EvitaTratto, is PassaTratto -> "Tratto di strada selezionato: puoi cambiarne le opzioni, spostarlo o eliminarlo."
+            is PassaPunto -> "Punto selezionato: tocca il cerchietto e poi il nuovo punto, oppure «Sposta»."
+            else -> "Area selezionata: tocca un cerchietto bianco e poi dove spostarlo. I cerchietti piccoli aggiungono un vertice."
+        }
+        aggiorna { it.copy(modo = Modo.Modifica(id), selezione = Selezione(suggerimento = testo), foglio = null, menuPunto = null) }
+    }
+
+    /** Il prossimo tocco sposterà tutto il vincolo. */
+    fun spostaTutto() = cambiaSelezione { it.copy(spostaTutto = true, maniglia = null, suggerimento = "Tocca il punto dove spostare il vincolo.") }
+
+    fun eliminaSelezionato() {
+        val v = vincoloSelezionato() ?: return
+        rimuoviVincolo(v.id)
+        annullaModo()
+        avvisa("«${v.nome}» eliminato. Puoi recuperarlo con Annulla.")
+    }
+
+    fun raggioSelezionato(raggio: Double) {
+        val v = vincoloSelezionato() ?: return
+        cambiaVincolo(v.id) { Modifiche.cambiaRaggio(it, raggio) }
+    }
+
+    fun togliVerticeScelto() {
+        val v = vincoloSelezionato() ?: return
+        val m = s.selezione.maniglia ?: return
+        cambiaVincolo(v.id) { Modifiche.togliVertice(it, m.indice) }
+        cambiaSelezione { it.copy(maniglia = null) }
+    }
+
+    private fun toccoModifica(id: String, p: Punto) {
+        val v = s.viaggio.vincoli.firstOrNull { it.id == id } ?: run { annullaModo(); return }
+        val sel = s.selezione
+        val soglia = sogliaTocco()
+        when {
+            // 1) spostamento dell'intero vincolo
+            sel.spostaTutto -> {
+                if (v is PassaPunto) riposizionaPunto(v, p) else cambiaVincolo(id) { Modifiche.trasla(it, p) }
+                cambiaSelezione { it.copy(spostaTutto = false, suggerimento = "Spostato. Puoi continuare a modificarlo o premere «Fatto».") }
+            }
+            // 2) una maniglia è già scelta: il tocco la sposta qui
+            sel.maniglia != null -> {
+                val m = sel.maniglia
+                when {
+                    v is PassaPunto -> riposizionaPunto(v, p)
+                    m.tipo == TipoManiglia.META_LATO -> cambiaVincolo(id) { Modifiche.inserisciVertice(it, m.indice, p) }
+                    else -> cambiaVincolo(id) { Modifiche.spostaManiglia(it, m, p) }
+                }
+                cambiaSelezione { it.copy(maniglia = null, suggerimento = "Fatto. Tocca un'altra maniglia o premi «Fatto».") }
+            }
+            else -> {
+                // 3) scelta di una maniglia vicina al tocco
+                val m = Modifiche.maniglie(v).minByOrNull { Geo.distanza(it.punto, p) }?.takeIf { Geo.distanza(it.punto, p) <= soglia * 1.3 }
+                if (m != null) {
+                    cambiaSelezione {
+                        it.copy(maniglia = m, suggerimento = when (m.tipo) {
+                            TipoManiglia.META_LATO -> "Tocca dove mettere il nuovo vertice."
+                            else -> "Ora tocca il punto dove spostarlo."
+                        })
+                    }
+                } else {
+                    // 4) tocco su un altro vincolo: si passa a quello; altrove: fine modifica
+                    val altro = Modifiche.colpito(s.viaggio.vincoli, p, soglia)
+                    if (altro != null && altro.id != id) selezionaVincolo(altro.id) else annullaModo()
+                }
+            }
+        }
+    }
+
+    /** Sposta un punto di passaggio e lo riaggancia alla strada (1 richiesta, se disponibile). */
+    private fun riposizionaPunto(v: PassaPunto, p: Punto) {
+        cambiaSelezione { it.copy(inAttesa = true, suggerimento = "Cerco la strada più vicina…") }
+        ambito.launch {
+            val a = agganciaPunto(p)
+            cambiaVincolo(v.id) { (it as? PassaPunto)?.copy(punto = p, agganciato = a?.agganciato, nomeStrada = a?.nomeStrada) ?: it }
+            cambiaSelezione {
+                it.copy(inAttesa = false, suggerimento = if (a == null) "Nessuna strada vicina: userò il punto toccato." else "Userò il punto su ${a.nomeStrada.ifBlank { "strada senza nome" }}.")
+            }
+        }
+    }
+
+    /** Aggancio di un punto alla strada: prima il servizio, poi le strade della mappa. */
+    private suspend fun agganciaPunto(p: Punto): PuntoAgganciato? {
+        if (Servizi.haChiave && s.rete) {
+            val e = withContext(Dispatchers.IO) { Servizi.ors.agganciatore.aggancia(listOf(p), 350.0) }
+            if (e is Esito.Ok) e.valore.firstOrNull()?.let { return it }
+        }
+        val l = lettore ?: return null
+        if (l.zoom() < 13) return null
+        val c = ReteLocale(l.leggiStrade(p, 400.0)).candidati(p, 350.0).firstOrNull() ?: return null
+        return PuntoAgganciato(p, c.puntoSuStrada, c.strada.nome, Geo.distanza(p, c.puntoSuStrada))
+    }
+
+    // ---------------- Altitudine e profilo ----------------
+
+    /** Altitudine del punto toccato (1 richiesta a openrouteservice). */
+    private fun chiediQuota(p: Punto) {
+        if (!Servizi.haChiave) { avvisa("Per l'altitudine serve la chiave openrouteservice (Impostazioni)."); return }
+        if (!s.rete) { avvisa("Nessuna connessione."); return }
+        aggiorna { it.copy(quotaPunto = p to "Calcolo l'altitudine…") }
+        ambito.launch {
+            val e = withContext(Dispatchers.IO) { Servizi.ors.altitudine(p) }
+            val testo = when (e) {
+                is Esito.Ok -> "Altitudine: ${e.valore.roundToInt()} m s.l.m. (modello del terreno, precisione di qualche metro)"
+                is Esito.Errore -> "Altitudine non disponibile: ${e.messaggio}"
+            }
+            aggiorna { it.copy(quotaPunto = p to testo) }
+        }
+    }
+
+    fun chiudiQuota() = aggiorna { it.copy(quotaPunto = null) }
+
+    /** Dal grafico altimetrico: mostra sulla mappa il punto a [progressiva] metri dalla partenza. */
+    fun indicaSulProfilo(progressiva: Double?) {
+        val p = s.percorsoScelto ?: return
+        aggiorna { it.copy(puntoProfilo = progressiva?.let { d -> Geo.puntoAProgressiva(p.geometria, d) }) }
     }
 
     // ---------------- Strade (evita / percorri) ----------------
@@ -624,7 +760,7 @@ class ModelloApp {
                 iniziale = e0.percorso
                 if (iniziale != null) chiaveIniziale = chiave
             }
-            aggiorna { it.copy(esito = esito, iniziale = iniziale, calcoloInCorso = false, daRicalcolare = false, sceltaAlternativa = 0) }
+            aggiorna { it.copy(esito = esito, iniziale = iniziale, calcoloInCorso = false, daRicalcolare = false, sceltaAlternativa = 0, puntoProfilo = null) }
             val p = esito.percorso
             when {
                 p != null -> _eventi.tryEmit(Evento.Inquadra(p.geometria))

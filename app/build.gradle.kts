@@ -18,8 +18,8 @@ android {
         applicationId = "com.ric.navigatore"
         minSdk = 26          // Android 8.0 o successivo
         targetSdk = 36
-        versionCode = 1      // aumentalo ad ogni nuova versione
-        versionName = "1.0"
+        versionCode = 2      // aumentalo ad ogni nuova versione
+        versionName = "1.1"
         // Telefoni a 64 e 32 bit + emulatore (x86_64)
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64") }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

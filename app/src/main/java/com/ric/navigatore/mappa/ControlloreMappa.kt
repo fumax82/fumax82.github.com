@@ -49,6 +49,57 @@ import org.maplibre.geojson.Polygon
 object StiliMappa {
     const val GIORNO = "https://tiles.openfreemap.org/styles/liberty"
     const val NOTTE = "https://tiles.openfreemap.org/styles/dark"
+
+    // Tasselli "immagine" (raster) gratuiti
+    const val EOX = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/{z}/{y}/{x}.jpg"
+    const val EOX_ATTRIBUZIONE = "<a href=\"https://s2maps.eu\">Sentinel-2 cloudless 2024</a> di EOX IT Services GmbH (contiene dati Copernicus Sentinel modificati, 2024)"
+    const val ESRI = "https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?token="
+    const val ESRI_ATTRIBUZIONE = "Immagini © Esri, Maxar, Earthstar Geographics e la comunità GIS"
+    val TOPO = listOf("a", "b", "c").map { "https://$it.tile.opentopomap.org/{z}/{x}/{y}.png" }
+    const val TOPO_ATTRIBUZIONE = "© contributori di OpenStreetMap, SRTM | stile © <a href=\"https://opentopomap.org\">OpenTopoMap</a> (CC-BY-SA)"
+    const val OSM_ATTRIBUZIONE = "© <a href=\"https://www.openstreetmap.org/copyright\">contributori di OpenStreetMap</a> · OpenFreeMap · OpenMapTiles"
+
+    /**
+     * Stile MapLibre per una mappa di base fatta di immagini (satellite o
+     * topografica). Contiene SEMPRE anche le strade vettoriali di OpenFreeMap:
+     * invisibili (servono a scegliere le strade col dito) oppure, se
+     * [conStrade], disegnate sopra le immagini con i loro nomi.
+     */
+    /** Prepara un testo per stare dentro una stringa JSON. */
+    private fun js(testo: String) = testo.replace("\\", "\\\\").replace("\"", "\\\"")
+
+    fun raster(tasselli: List<String>, attribuzione: String, maxZoom: Int, conStrade: Boolean): String {
+        val t = tasselli.joinToString(",") { "\"$it\"" }
+        val strade = if (conStrade) """
+            ,{"id":"strade-ibride","type":"line","source":"openmaptiles","source-layer":"transportation",
+              "filter":["in",["get","class"],["literal",["motorway","trunk","primary","secondary","tertiary","minor"]]],
+              "layout":{"line-cap":"round","line-join":"round"},
+              "paint":{"line-color":"#FFFFFF","line-opacity":0.55,
+                "line-width":["interpolate",["linear"],["zoom"],8,0.6,12,1.4,16,4,19,10]}}
+            ,{"id":"nomi-strade","type":"symbol","source":"openmaptiles","source-layer":"transportation_name","minzoom":13,
+              "layout":{"symbol-placement":"line","text-field":["get","name"],"text-font":["Noto Sans Regular"],"text-size":12},
+              "paint":{"text-color":"#FFFFFF","text-halo-color":"#1F2A44","text-halo-width":1.4}}
+            ,{"id":"nomi-luoghi","type":"symbol","source":"openmaptiles","source-layer":"place",
+              "layout":{"text-field":["get","name"],"text-font":["Noto Sans Regular"],"text-size":["interpolate",["linear"],["zoom"],6,11,12,15]},
+              "paint":{"text-color":"#FFFFFF","text-halo-color":"#1F2A44","text-halo-width":1.6}}
+        """ else """
+            ,{"id":"strade-invisibili","type":"line","source":"openmaptiles","source-layer":"transportation",
+              "paint":{"line-opacity":0}}
+        """
+        return """
+        {"version":8,
+         "glyphs":"https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+         "sources":{
+           "base":{"type":"raster","tiles":[$t],"tileSize":256,"maxzoom":$maxZoom,"attribution":"${js(attribuzione)}"},
+           "openmaptiles":{"type":"vector","url":"https://tiles.openfreemap.org/planet","attribution":"${js(OSM_ATTRIBUZIONE)}"}
+         },
+         "layers":[
+           {"id":"sfondo","type":"background","paint":{"background-color":"#DDE3EA"}},
+           {"id":"immagini","type":"raster","source":"base"}
+           $strade
+         ]}
+        """.trimIndent()
+    }
 }
 
 /** Colori dei disegni sulla mappa (come richiesto: rosso, verde, blu). */
@@ -79,6 +130,13 @@ data class DatiMappa(
     val anteprimaPunti: List<Punto> = emptyList(),
     /** Linee tratteggiate di collegamento (es. tocco → punto agganciato). */
     val anteprimaCollegamenti: List<Linea> = emptyList(),
+    /** Modifica di un vincolo: maniglie principali (vertici, centro) e secondarie (metà dei lati). */
+    val maniglie: List<Punto> = emptyList(),
+    val maniglieSecondarie: List<Punto> = emptyList(),
+    /** La maniglia scelta, evidenziata. */
+    val manigliaScelta: Punto? = null,
+    /** Punto indicato sul grafico altimetrico. */
+    val puntoProfilo: Punto? = null,
 )
 
 /**
@@ -106,6 +164,9 @@ class ControlloreMappa(private val context: Context) : com.ric.navigatore.ui.Let
         const val ZOOM_STRADE = 14.0
     }
 
+    private var base = com.ric.navigatore.dati.MappaBase.STRADALE
+    private var chiaveArcgis = ""
+
     /** Collega la mappa appena pronta e carica lo stile. */
     fun collega(m: MapLibreMap, notte: Boolean, pronto: () -> Unit) {
         mappa = m
@@ -123,14 +184,32 @@ class ControlloreMappa(private val context: Context) : com.ric.navigatore.ui.Let
         caricaStile(notte, pronto)
     }
 
-    fun cambiaTema(notte: Boolean) {
-        if (notte != this.notte || stile == null) caricaStile(notte) {}
+    /** Cambia giorno/notte o tipo di mappa (ricarica lo stile solo se serve). */
+    fun cambiaTema(notte: Boolean, base: com.ric.navigatore.dati.MappaBase = this.base, chiaveArcgis: String = this.chiaveArcgis) {
+        if (notte != this.notte || base != this.base || chiaveArcgis != this.chiaveArcgis || stile == null) {
+            this.base = base
+            this.chiaveArcgis = chiaveArcgis
+            caricaStile(notte) {}
+        }
+    }
+
+    private fun costruttoreStile(): Style.Builder {
+        val b = Style.Builder()
+        return when (base) {
+            com.ric.navigatore.dati.MappaBase.STRADALE -> b.fromUri(if (notte) StiliMappa.NOTTE else StiliMappa.GIORNO)
+            com.ric.navigatore.dati.MappaBase.SATELLITE -> b.fromJson(StiliMappa.raster(listOf(StiliMappa.EOX), StiliMappa.EOX_ATTRIBUZIONE, 15, false))
+            com.ric.navigatore.dati.MappaBase.IBRIDA -> b.fromJson(StiliMappa.raster(listOf(StiliMappa.EOX), StiliMappa.EOX_ATTRIBUZIONE, 15, true))
+            com.ric.navigatore.dati.MappaBase.SATELLITE_HD ->
+                if (chiaveArcgis.isBlank()) b.fromJson(StiliMappa.raster(listOf(StiliMappa.EOX), StiliMappa.EOX_ATTRIBUZIONE, 15, true))
+                else b.fromJson(StiliMappa.raster(listOf(StiliMappa.ESRI + chiaveArcgis), StiliMappa.ESRI_ATTRIBUZIONE, 19, true))
+            com.ric.navigatore.dati.MappaBase.TOPOGRAFICA -> b.fromJson(StiliMappa.raster(StiliMappa.TOPO, StiliMappa.TOPO_ATTRIBUZIONE, 17, false))
+        }
     }
 
     private fun caricaStile(notte: Boolean, pronto: () -> Unit) {
         this.notte = notte
         val m = mappa ?: return
-        m.setStyle(Style.Builder().fromUri(if (notte) StiliMappa.NOTTE else StiliMappa.GIORNO)) { s ->
+        m.setStyle(costruttoreStile()) { s ->
             stile = s
             aggiungiStrati(s)
             disegna(ultimiDati)
@@ -200,8 +279,11 @@ class ControlloreMappa(private val context: Context) : com.ric.navigatore.ui.Let
             PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
         ))
         s.addLayer(CircleLayer("anteprima-punti", S_ANTEPRIMA).withFilter(Expression.eq(Expression.geometryType(), Expression.literal("Point"))).withProperties(
-            PropertyFactory.circleColor(colore), PropertyFactory.circleRadius(9f),
-            PropertyFactory.circleStrokeColor("#FFFFFF"), PropertyFactory.circleStrokeWidth(2.5f),
+            PropertyFactory.circleColor(colore), PropertyFactory.circleRadius(larghezza),
+            PropertyFactory.circleStrokeColor(
+                Expression.switchCase(Expression.eq(Expression.get("tipo"), Expression.literal("maniglia")), Expression.literal(ColoriMappa.ANTEPRIMA), Expression.literal("#FFFFFF")),
+            ),
+            PropertyFactory.circleStrokeWidth(2.5f),
         ))
     }
 
@@ -269,7 +351,12 @@ class ControlloreMappa(private val context: Context) : com.ric.navigatore.ui.Let
         d.anteprimaAree.forEach { ant += Feature.fromGeometry(poligono(it)).con(ColoriMappa.ANTEPRIMA, larghezza = 2.0) }
         d.anteprimaLinee.forEach { if (it.size >= 2) ant += Feature.fromGeometry(linea(it)).con(ColoriMappa.ANTEPRIMA, larghezza = 9.0) }
         d.anteprimaCollegamenti.forEach { if (it.size >= 2) ant += Feature.fromGeometry(linea(it)).con("#6B7280", larghezza = 2.0) }
-        d.anteprimaPunti.forEach { ant += Feature.fromGeometry(pt(it)).con(ColoriMappa.ANTEPRIMA) }
+        d.anteprimaPunti.forEach { ant += Feature.fromGeometry(pt(it)).con(ColoriMappa.ANTEPRIMA, larghezza = 9.0) }
+        // maniglie: bianche con bordo ambra (secondarie più piccole), quella scelta piena
+        d.maniglie.forEach { ant += Feature.fromGeometry(pt(it)).con("#FFFFFF", larghezza = 9.0, tipo = "maniglia") }
+        d.maniglieSecondarie.forEach { ant += Feature.fromGeometry(pt(it)).con("#FFFFFF", larghezza = 6.0, tipo = "maniglia") }
+        d.manigliaScelta?.let { ant += Feature.fromGeometry(pt(it)).con(ColoriMappa.ANTEPRIMA, larghezza = 11.0, tipo = "maniglia") }
+        d.puntoProfilo?.let { ant += Feature.fromGeometry(pt(it)).con(ColoriMappa.PERCORSO, larghezza = 9.0, tipo = "maniglia") }
         s.getSourceAs<GeoJsonSource>(S_ANTEPRIMA)?.setGeoJson(FeatureCollection.fromFeatures(ant))
     }
 

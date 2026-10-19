@@ -72,6 +72,7 @@ class Openrouteservice(
         const val Q_RICERCA = "ors_ricerca"
         const val Q_SUGGERIMENTI = "ors_suggerimenti"
         const val Q_INVERSO = "ors_inverso"
+        const val Q_QUOTA = "ors_quota"
 
         /**
          * Limiti del piano gratuito "Standard" (da verificare nella propria
@@ -83,6 +84,7 @@ class Openrouteservice(
             LimiteServizio(Q_RICERCA, "Ricerca indirizzi", alGiorno = 1000, alMinuto = 100),
             LimiteServizio(Q_SUGGERIMENTI, "Suggerimenti", alGiorno = 1000, alMinuto = 100),
             LimiteServizio(Q_INVERSO, "Indirizzo da coordinate", alGiorno = 1000, alMinuto = 100),
+            LimiteServizio(Q_QUOTA, "Altitudine di un punto", alGiorno = 2000, alMinuto = 40),
         )
 
         val CAPACITA = Capacita(
@@ -122,11 +124,30 @@ class Openrouteservice(
     }
 
     // ==================================================================
+    // Altitudine di un singolo punto
+    // ==================================================================
+
+    /** Quota in metri sul livello del mare del punto (1 richiesta, modello del terreno di openrouteservice). */
+    fun altitudine(punto: Punto): Esito<Double> {
+        val corpo = buildJsonObject {
+            put("format_in", "point")
+            put("format_out", "point")
+            put("geometry", punto.comeJson())
+        }.toString()
+        val risposta = invia(Q_QUOTA, RichiestaHttp("POST", "$indirizzoBase/elevation/point", mapOf("Content-Type" to "application/json"), corpo))
+        if (risposta is Esito.Errore) return risposta
+        val g = J.leggi((risposta as Esito.Ok).valore.corpo)?.lista("geometry")
+        val quota = g?.getOrNull(2)?.jsonPrimitive?.content?.toDoubleOrNull()
+            ?: return Esito.Errore(TipoErrore.SCONOSCIUTO, "Il servizio non ha restituito la quota.")
+        return Esito.Ok(quota)
+    }
+
+    // ==================================================================
     // Percorsi
     // ==================================================================
 
     /** Costruisce il JSON della richiesta (pubblico per le prove automatiche). */
-    fun corpoRichiesta(r: RichiestaPercorso, conDirezioni: Boolean = true): JsonObject = buildJsonObject {
+    fun corpoRichiesta(r: RichiestaPercorso, conDirezioni: Boolean = true, conQuote: Boolean = true): JsonObject = buildJsonObject {
         putJsonArray("coordinates") { r.punti.forEach { add(it.punto.comeJson()) } }
         // Direzione di marcia: [gradi, tolleranza]. Per i punti senza direzione
         // usiamo tolleranza 180° (= qualsiasi direzione).
@@ -146,6 +167,8 @@ class Openrouteservice(
         put("language", "it")
         put("units", "m")
         put("geometry", true)
+        // Quota di ogni punto (modello del terreno usato da openrouteservice): profilo altimetrico, salita e discesa
+        if (conQuote) put("elevation", true)
         if (r.proseguiDritto) put("continue_straight", true)
         val evita = buildList {
             if (r.opzioni.evitaAutostrade) add("highways")
@@ -200,11 +223,15 @@ class Openrouteservice(
         ) {
             esito = inviaPercorso(r, conDirezioni = false)
         }
+        // Se il server (es. uno installato in proprio) non ha i dati altimetrici, riproviamo senza quote
+        if (esito is Esito.Errore && esito.tipo == TipoErrore.RICHIESTA_NON_VALIDA && esito.dettaglio?.contains("elevation", true) == true) {
+            esito = inviaPercorso(r, conDirezioni = r.punti.any { it.direzione != null }, conQuote = false)
+        }
         return esito
     }
 
-    private fun inviaPercorso(r: RichiestaPercorso, conDirezioni: Boolean): Esito<List<Percorso>> {
-        val corpo = corpoRichiesta(r, conDirezioni).toString()
+    private fun inviaPercorso(r: RichiestaPercorso, conDirezioni: Boolean, conQuote: Boolean = true): Esito<List<Percorso>> {
+        val corpo = corpoRichiesta(r, conDirezioni, conQuote).toString()
         val risposta = invia(
             Q_PERCORSI,
             RichiestaHttp(
@@ -224,7 +251,11 @@ class Openrouteservice(
         val elementi = radice.lista("features") ?: return Esito.Errore(TipoErrore.SCONOSCIUTO, "Risposta senza percorsi.")
         val percorsi = elementi.mapNotNull { f ->
             val prop = f.ogg("properties") ?: return@mapNotNull null
-            val geom = f.ogg("geometry")?.lista("coordinates")?.map { it.comePunto() } ?: return@mapNotNull null
+            val coordinate = f.ogg("geometry")?.lista("coordinates") ?: return@mapNotNull null
+            val geom = coordinate.map { it.comePunto() }
+            // terzo valore = quota in metri (presente se richiesta con "elevation")
+            val quote = coordinate.map { c -> (c as? JsonArray)?.getOrNull(2)?.jsonPrimitive?.content?.toDoubleOrNull() }
+                .takeIf { q -> q.isNotEmpty() && q.all { it != null } }?.map { it!! }
             val sommario = prop.ogg("summary")
             val manovre = prop.lista("segments").orEmpty().flatMap { seg ->
                 seg.lista("steps").orEmpty().map { s ->
@@ -250,6 +281,9 @@ class Openrouteservice(
                 indiciPunti = prop.lista("way_points").orEmpty().map { it.jsonPrimitive.content.toInt() },
                 puntiRichiesta = r.punti,
                 avvisi = avvisi,
+                quote = quote,
+                salita = prop.numero("ascent") ?: sommario.numero("ascent"),
+                discesa = prop.numero("descent") ?: sommario.numero("descent"),
             )
         }
         if (percorsi.isEmpty()) return Esito.Errore(TipoErrore.NESSUN_PERCORSO, "Il servizio non ha restituito percorsi.")

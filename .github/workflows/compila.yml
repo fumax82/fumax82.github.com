@@ -28,6 +28,18 @@ jobs:
           set -o pipefail
           ./gradlew --no-daemon :app:assembleRelease :app:assembleDebug :app:assembleDebugAndroidTest 2>&1 | tee risultati/compilazione.log
           cp app/build/outputs/apk/release/*.apk risultati/Navigatore-non-firmato.apk
+      - name: Controllo dei servizi di mappe gratuiti
+        run: |
+          {
+          for u in \
+            "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/10/361/543.jpg" \
+            "https://a.tile.opentopomap.org/10/543/361.png" \
+            "https://tiles.openfreemap.org/planet" \
+            "https://tiles.openfreemap.org/fonts/Noto%20Sans%20Regular/0-255.pbf" \
+            "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/10/361/543" ; do
+            echo "$(curl -s -o /dev/null -A 'Navigatore-personale/prova' -w '%{http_code} %{content_type} %{size_download}B' "$u") $u"
+          done
+          } | tee risultati/servizi_mappe.txt
       - name: Abilita KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules

@@ -12,7 +12,12 @@ import androidx.compose.ui.unit.dp
 import com.ric.navigatore.nucleo.geo.Aree
 import com.ric.navigatore.nucleo.geo.Geo
 import com.ric.navigatore.nucleo.modello.Durata
+import com.ric.navigatore.nucleo.modello.EvitaArea
+import com.ric.navigatore.nucleo.modello.EvitaTratto
 import com.ric.navigatore.nucleo.modello.FormaArea
+import com.ric.navigatore.nucleo.modello.PassaArea
+import com.ric.navigatore.nucleo.modello.PassaTratto
+import com.ric.navigatore.nucleo.modello.TipoManiglia
 import com.ric.navigatore.nucleo.modello.ModoArea
 import com.ric.navigatore.nucleo.modello.Priorita
 import com.ric.navigatore.nucleo.modello.Senso
@@ -41,7 +46,7 @@ fun PannelloModo(modello: ModelloApp, s: StatoUi) {
         Modo.PezzoPercorso -> "Evita un pezzo del percorso"
         Modo.Punto -> "Passa da un punto"
         is Modo.Disegno -> "Disegna un'area"
-        Modo.Normale -> ""
+        Modo.Normale, is Modo.Modifica -> ""
     }
     val colore = when {
         (modo is Modo.Strada && modo.evita) || modo == Modo.PezzoPercorso -> Extra.colori.esclusione
@@ -214,6 +219,72 @@ private fun ContenutoDisegno(modello: ModelloApp, s: StatoUi, obiettivo: Obietti
         if (obiettivo == ObiettivoArea.EVITA && ((c.maxAreaKmq != null && sup / 1e6 > c.maxAreaKmq!!) || (c.maxEstensioneKm != null && est / 1000 > c.maxEstensioneKm!!))) {
             Riquadro(Extra.colori.esclusioneSfondo, Extra.colori.esclusione) {
                 Text("Troppo grande per openrouteservice (massimo ${c.maxAreaKmq?.roundToInt()} km² e ${c.maxEstensioneKm?.roundToInt()} km di lato): riducila.", style = MaterialTheme.typography.bodySmall)
+            }
+        }
+    }
+}
+
+
+/**
+ * Pannello quando un vincolo già creato è selezionato sulla mappa:
+ * spostarlo, deformarlo (maniglie), cambiare raggio, attivarlo, eliminarlo.
+ */
+@Composable
+fun PannelloModifica(modello: ModelloApp, s: StatoUi) {
+    val v = modello.vincoloSelezionato(s) ?: return
+    val sel = s.selezione
+    val colore = if (v.esclusione) Extra.colori.esclusione else Extra.colori.passaggio
+    Surface(shape = RoundedCornerShape(22.dp), shadowElevation = 8.dp, color = MaterialTheme.colorScheme.surface) {
+        Column(Modifier.fillMaxWidth().heightIn(max = 400.dp).padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(v.nome, style = MaterialTheme.typography.titleMedium, color = colore)
+                    Text(v.descrizione(), style = MaterialTheme.typography.bodySmall)
+                }
+                Switch(checked = v.attivo, onCheckedChange = { modello.attivaVincolo(v.id, it) })
+            }
+            sel.suggerimento?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+            if (sel.inAttesa) LinearProgressIndicator(Modifier.fillMaxWidth())
+            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                // raggio dei cerchi
+                val raggio = when (v) { is EvitaArea -> v.raggio; is PassaArea -> v.raggio; else -> null }
+                val cerchio = (v as? EvitaArea)?.forma == FormaArea.CERCHIO || (v as? PassaArea)?.forma == FormaArea.CERCHIO
+                if (cerchio && raggio != null) {
+                    var r by remember(v.id) { mutableFloatStateOf(raggio.toFloat()) }
+                    Titoletto("Raggio: ${formattaDistanza(r.toDouble())}")
+                    Slider(
+                        value = r, valueRange = 50f..5000f,
+                        onValueChange = { r = (it / 10).roundToInt() * 10f },
+                        // la modifica vera (annullabile) si registra quando si alza il dito
+                        onValueChangeFinished = { modello.raggioSelezionato(r.toDouble()) },
+                    )
+                }
+                when (v) {
+                    is PassaArea -> SceltaPillole(ModoArea.entries, v.modo, { it.etichetta }, { modello.modoArea(v.id, it) })
+                    is PassaTratto -> if (!v.sensoUnico) SceltaPillole(Senso.entries, v.senso, { it.etichetta }, { modello.sensoVincolo(v.id, it) })
+                    is EvitaTratto -> Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Fascia ±${v.larghezzaFascia.toInt()} m", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                        TextButton(onClick = { modello.larghezzaFascia(v.id, (v.larghezzaFascia - 5).coerceAtLeast(5.0)) }) { Text("Più stretta") }
+                        TextButton(onClick = { modello.larghezzaFascia(v.id, (v.larghezzaFascia + 5).coerceAtMost(40.0)) }) { Text("Più larga") }
+                    }
+                    else -> {}
+                }
+                SceltaPillole(Priorita.entries, v.priorita, { it.etichetta }, { modello.prioritaVincolo(v.id, it) })
+                @OptIn(ExperimentalLayoutApi::class)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { modello.spostaTutto() }) { Text(if (sel.spostaTutto) "Tocca la mappa…" else "Sposta") }
+                    val forma = (v as? EvitaArea)?.forma ?: (v as? PassaArea)?.forma
+                    if (sel.maniglia?.tipo == TipoManiglia.VERTICE && forma == FormaArea.POLIGONO) {
+                        OutlinedButton(onClick = { modello.togliVerticeScelto() }) { Text("Togli vertice") }
+                    }
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(
+                    onClick = { modello.eliminaSelezionato() }, modifier = Modifier.weight(1f).heightIn(min = 52.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Extra.colori.esclusione),
+                ) { Text("Elimina") }
+                Button(onClick = { modello.annullaModo() }, modifier = Modifier.weight(1f).heightIn(min = 52.dp)) { Text("Fatto") }
             }
         }
     }
