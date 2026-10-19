@@ -19,10 +19,10 @@ Daemon will be stopped at the end of the build
 > Task :app:stripReleaseDebugSymbols
 Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, libmaplibre.so. Run with --info option to learn more.
 
-> Task :app:javaPreCompileRelease
 > Task :app:extractReleaseNativeSymbolTables
-> Task :app:parseReleaseLocalResources
 > Task :app:mergeReleaseNativeDebugMetadata NO-SOURCE
+> Task :app:javaPreCompileRelease
+> Task :app:parseReleaseLocalResources
 > Task :app:checkReleaseAarMetadata
 > Task :app:mapReleaseSourceSetPaths
 > Task :app:generateReleaseRFile
@@ -30,8 +30,8 @@ Unable to strip the following libraries, packaging them as they are: libandroidx
 > Task :app:createReleaseCompatibleScreenManifests
 > Task :app:extractDeepLinksRelease
 > Task :app:processReleaseMainManifest
-> Task :app:mergeReleaseResources
 > Task :app:processReleaseManifest
+> Task :app:mergeReleaseResources
 > Task :app:desugarReleaseFileDependencies
 > Task :app:mergeReleaseStartupProfile
 > Task :app:compileReleaseKotlin
@@ -44,14 +44,14 @@ Unable to strip the following libraries, packaging them as they are: libandroidx
 > Task :app:compressReleaseAssets
 > Task :app:extractReleaseVersionControlInfo
 > Task :app:extractProguardFiles
-> Task :app:generateReleaseLintVitalReportModel
-> Task :app:processReleaseJavaRes
-> Task :app:collectReleaseDependencies
 > Task :app:processReleaseResources
-> Task :app:sdkReleaseDependencyData
-> Task :app:mergeReleaseJavaResource
+> Task :app:generateReleaseLintVitalReportModel
 > Task :app:dexBuilderRelease
 > Task :app:mergeReleaseGlobalSynthetics
+> Task :app:processReleaseJavaRes
+> Task :app:optimizeReleaseResources
+> Task :app:collectReleaseDependencies
+> Task :app:sdkReleaseDependencyData
 > Task :app:writeReleaseAppMetadata
 > Task :app:writeReleaseSigningConfigVersions
 > Task :app:preDebugBuild UP-TO-DATE
@@ -60,54 +60,54 @@ Unable to strip the following libraries, packaging them as they are: libandroidx
 > Task :app:generateDebugResources
 > Task :app:packageDebugResources
 > Task :app:processDebugNavigationResources
-> Task :app:optimizeReleaseResources
+> Task :app:parseDebugLocalResources
+> Task :app:generateDebugRFile
+> Task :app:mergeDexRelease
+> Task :app:mergeReleaseJavaResource
 > Task :app:javaPreCompileDebug
 > Task :app:generateDebugAssets UP-TO-DATE
-> Task :app:parseDebugLocalResources
 > Task :app:mergeDebugAssets
 > Task :app:compressDebugAssets
-> Task :app:generateDebugRFile
 > Task :app:generateDebugGlobalSynthetics
 > Task :app:checkDebugDuplicateClasses
 > Task :app:desugarDebugFileDependencies
-> Task :app:mergeDexRelease
+> Task :app:compileReleaseArtProfile
 > Task :app:lintVitalAnalyzeRelease
 > Task :app:compileDebugKotlin
 > Task :app:mergeExtDexDebug
-> Task :app:lintVitalReportRelease
 > Task :app:compileDebugJavaWithJavac
-> Task :app:lintVitalRelease
 > Task :app:processDebugJavaRes
 > Task :app:mergeLibDexDebug
 > Task :app:checkDebugAarMetadata
 > Task :app:mapDebugSourceSetPaths
 > Task :app:compileDebugNavigationResources
 > Task :app:mergeDebugJavaResource
-> Task :app:compileReleaseArtProfile
 > Task :app:createDebugCompatibleScreenManifests
 > Task :app:extractDeepLinksDebug
-> Task :app:mergeDebugResources
+> Task :app:lintVitalReportRelease
 > Task :app:processDebugMainManifest
+> Task :app:lintVitalRelease
+> Task :app:mergeDebugResources
 > Task :app:processDebugManifest
 > Task :app:mergeDebugJniLibFolders
 > Task :app:processDebugManifestForPackage
 > Task :app:mergeDebugNativeLibs
-> Task :app:processDebugResources
 
 > Task :app:stripDebugDebugSymbols
 Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, libmaplibre.so. Run with --info option to learn more.
 
-> Task :app:dexBuilderDebug
-> Task :app:packageRelease
-> Task :app:createReleaseApkListingFileRedirect
-> Task :app:assembleRelease
-> Task :app:mergeProjectDexDebug
+> Task :app:processDebugResources
 > Task :app:validateSigningDebug
+> Task :app:dexBuilderDebug
 > Task :app:writeDebugAppMetadata
 > Task :app:writeDebugSigningConfigVersions
 > Task :app:preDebugAndroidTestBuild SKIPPED
 > Task :app:bundleDebugClassesToCompileJar
+> Task :app:mergeProjectDexDebug
 > Task :app:mergeDebugAndroidTestManifest
+> Task :app:packageRelease
+> Task :app:createReleaseApkListingFileRedirect
+> Task :app:assembleRelease
 > Task :app:processDebugAndroidTestManifest
 > Task :app:generateDebugAndroidTestBuildConfig
 > Task :app:generateDebugAndroidTestResources
@@ -120,10 +120,10 @@ Unable to strip the following libraries, packaging them as they are: libandroidx
 > Task :app:compressDebugAndroidTestAssets
 > Task :app:generateDebugAndroidTestRFile
 > Task :app:generateDebugAndroidTestGlobalSynthetics
-> Task :app:checkDebugAndroidTestDuplicateClasses
 > Task :app:packageDebug
 > Task :app:createDebugApkListingFileRedirect
 > Task :app:assembleDebug
+> Task :app:checkDebugAndroidTestDuplicateClasses
 > Task :app:desugarDebugAndroidTestFileDependencies
 
 > Task :app:compileDebugAndroidTestKotlin
@@ -141,8 +141,8 @@ w: file:///home/runner/work/fumax82.github.com/fumax82.github.com/app/src/androi
 > Task :app:mergeDebugAndroidTestNativeLibs NO-SOURCE
 > Task :app:stripDebugAndroidTestDebugSymbols NO-SOURCE
 > Task :app:validateSigningDebugAndroidTest
-> Task :app:writeDebugAndroidTestSigningConfigVersions
 > Task :app:mergeDebugAndroidTestResources
+> Task :app:writeDebugAndroidTestSigningConfigVersions
 > Task :app:processDebugAndroidTestResources
 > Task :app:dexBuilderDebugAndroidTest
 > Task :app:mergeProjectDexDebugAndroidTest
