@@ -1,4 +1,4 @@
-# Video Tutorial: app Android (Fase 1)
+# Video Tutorial: app Android (Fase 2)
 
 L'app prepara, per ogni video, una cartella da cui Claude scrive il tutorial.
 Claude legge solo `tutorial_input.md` e le foto in `foto/`.
@@ -23,8 +23,16 @@ Claude legge solo `tutorial_input.md` e le foto in `foto/`.
    - "↔ Sposta": porta il video nel punto esatto con la barra, la striscia o −1 / +1 fotogramma, poi premi "✓ Fissa qui". La foto viene rifatta nel nuovo punto e i numeri si aggiornano. "✕ Annulla" o il tasto indietro riportano al punto di partenza;
    - "🗑 Elimina" cancella il segnalibro, dopo una conferma.
 9. **Audio.** L'audio completo viene copiato in sottofondo, senza perdita di qualità, in `_archivio/audio_completo.m4a`. In questa fase funziona con l'audio AAC, cioè quasi tutti i video fatti col telefono.
-10. **Termina.** Il pulsante salva le note finali. `Stato: COMPLETO` compare solo quando hai premuto Termina e l'audio ha finito. Una nuova cattura riporta lo stato a IN CORSO.
-11. **Tasto indietro** del telefono: torna alla Home.
+10. **Trascrizione del parlato (Fase 2).** Dopo l'estrazione dell'audio, l'app lo spedisce al servizio **Groq** (modelli Whisper) e riceve le frasi con i tempi:
+    - nella cronologia di `tutorial_input.md` compaiono le righe `[mm:ss] PARLATO: …`, in ordine di tempo insieme a foto e commenti;
+    - in `_archivio/trascrizione.srt` c'è la trascrizione completa in formato sottotitoli;
+    - nel lettore, la frase pronunciata in quel momento compare in alto sul video.
+
+    Il testo viene ripulito da esitazioni ("ehm"), parole ripetute e frasi inventate sul silenzio. Titolo, macchina, reparto e scopo della scheda vengono passati a Whisper come suggerimento, così scrive meglio i termini tecnici. L'audio viene spedito a pezzi di massimo 10 minuti, senza ricodifica. La trascrizione parte solo con internet attivo. Se si supera il limite del piano gratuito l'app aspetta e riprende, senza rispedire i pezzi già fatti.
+
+    **Come attivarla:** nella Home tocca ⚙, incolla la chiave API creata su console.groq.com (sezione API Keys), premi "Verifica chiave" e poi Salva. Senza chiave la trascrizione resta spenta. I progetti già creati vengono trascritti la prima volta che li riapri.
+11. **Termina.** Il pulsante salva le note finali. `Stato: COMPLETO` compare solo quando hai premuto Termina e sia l'audio sia la trascrizione hanno finito. Una nuova cattura riporta lo stato a IN CORSO.
+12. **Tasto indietro** del telefono: torna alla Home.
 
 ## Struttura della cartella prodotta
 
@@ -55,6 +63,8 @@ Formazione/
 | Pausa che chiude una frase dettata (4 s) | `schermate/Dettatura.kt` | `SILENZIO_FINE_FRASE_MS` |
 | Colori dell'app (chiaro, scuro, lettore) | `schermate/Tema.kt` | `ColoriChiari`, `ColoriScuri` |
 | Simboli dei pulsanti (🔧 ⚠️ ⛔ 🔍) | `modello/TipoPasso.kt` | elenco dei tipi |
+| Parole da togliere dal parlato (esitazioni, frasi inventate) | `trascrizione/PuliziaParlato.kt` | elenchi in alto |
+| Durata e dimensione dei pezzi di audio (10 min, 20 MB) | `media/DivisoreAudio.kt` | `DURATA_MASSIMA_MS`, `BYTE_MASSIMI` |
 | Testi delle schermate | `schermate/Schermata*.kt` | testi tra virgolette |
 
 Tutti i file Kotlin sono in `app/src/main/java/it/formazione/videotutorial/`.
@@ -78,6 +88,11 @@ media/                          video e audio
   EstrattoreAudio.kt            copia dell'audio senza ricodifica
   GeneratoreMiniature.kt        miniature per la striscia di anteprime
   LavoroEstrazioneAudio.kt      lavoro in sottofondo per l'audio
+  DivisoreAudio.kt              divide l'audio in pezzi per la trascrizione
+trascrizione/                   trascrizione del parlato (Fase 2)
+  ClientGroq.kt                 comunicazione con il servizio Groq
+  PuliziaParlato.kt             pulizia del testo e file .srt
+  LavoroTrascrizione.kt         lavoro in sottofondo per la trascrizione
 testo/
   GeneratoreTutorialInput.kt    crea tutorial_input.md
 schermate/                      interfaccia
@@ -86,6 +101,7 @@ schermate/                      interfaccia
   FumettoSegnalibro.kt          fumetto con il testo del segnalibro
   FinestrePasso.kt              finestre: segnalibro, conferma eliminazione, termina
   Tema.kt                       colori e forme dell'app
+  FinestraImpostazioni.kt       chiave Groq e modello di trascrizione
   StrisciaAnteprime.kt          striscia di miniature con effetto "lente"
   Dettatura.kt                  riconoscimento vocale per i commenti
   ProgettoViewModel.kt          dati e operazioni (il "cervello")
@@ -130,5 +146,6 @@ Aumenta `versionCode` in `app/build.gradle.kts` a ogni nuova versione.
 
 ## Fasi successive
 
-- **Fase 2:** trascrizione del parlato con i tempi (righe PARLATO nella cronologia e `trascrizione.srt`), commento a voce tenendo premuto il pulsante, conversione dell'audio non AAC.
+- **Fase 2 (fatta in questa versione):** trascrizione del parlato con i tempi tramite Groq. Commento a voce: già coperto dalla dettatura automatica nella finestra del commento.
+- **Ancora da fare:** conversione dell'audio non AAC (oggi questi video non vengono trascritti), trascrizione sul telefono senza internet (whisper.cpp).
 - **Fase 3:** elenco dei passi con miniature, correzione di ±0,1 s, ritaglio del dettaglio, avviso per le foto doppie, fotogrammi di contesto e impostazioni.

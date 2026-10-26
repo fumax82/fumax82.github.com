@@ -3,6 +3,7 @@
  * Prima schermata:
  *   - intestazione dell'app
  *   - cartella condivisa "Formazione" (scelta una volta sola)
+ *   - pulsante ⚙ per le impostazioni della trascrizione (chiave Groq)
  *   - pulsante "Nuovo video"
  *   - elenco dei progetti già creati: toccandone uno si riapre e si possono
  *     modificare i suoi segnalibri.
@@ -76,6 +77,8 @@ fun SchermataHome(vm: ProgettoViewModel) {
         }
     }
 
+    if (vm.finestraImpostazioni) FinestraImpostazioni(vm)
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -83,8 +86,35 @@ fun SchermataHome(vm: ProgettoViewModel) {
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        // --- Intestazione ---
-        item { Intestazione() }
+        // --- Intestazione con il pulsante delle impostazioni ---
+        item {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.weight(1f)) { Intestazione() }
+                TextButton(onClick = { vm.apriImpostazioni() }) {
+                    Text("⚙", style = MaterialTheme.typography.headlineSmall)
+                }
+            }
+        }
+
+        // --- Stato della trascrizione automatica ---
+        item {
+            Surface(
+                color = if (vm.chiaveGroq.isBlank()) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.secondaryContainer,
+                shape = MaterialTheme.shapes.medium,
+                onClick = { vm.apriImpostazioni() },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    if (vm.chiaveGroq.isBlank()) {
+                        "🎙 Trascrizione del parlato spenta: tocca per inserire la chiave Groq"
+                    } else {
+                        "🎙 Trascrizione automatica attiva · ${vm.modelloTrascrizione.descrizione}"
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                )
+            }
+        }
 
         // --- Cartella condivisa ---
         item {

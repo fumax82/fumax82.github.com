@@ -1,7 +1,8 @@
 /*
  * Preferenze.kt
  * Valori che l'app ricorda tra un utilizzo e l'altro:
- * la cartella condivisa scelta e gli ultimi macchina, reparto e autore.
+ * la cartella condivisa scelta, gli ultimi macchina, reparto e autore,
+ * la chiave Groq e il modello di trascrizione.
  */
 package it.formazione.videotutorial.archivio
 
@@ -28,4 +29,17 @@ class Preferenze(context: Context) {
     var ultimoAutore: String
         get() = prefs.getString("ultimo_autore", "") ?: ""
         set(valore) = prefs.edit().putString("ultimo_autore", valore).apply()
+
+    /**
+     * Chiave API di Groq per la trascrizione (vuota = trascrizione spenta).
+     * Resta salvata solo in questo telefono, nella memoria privata dell'app.
+     */
+    var chiaveGroq: String
+        get() = prefs.getString("chiave_groq", "") ?: ""
+        set(valore) = prefs.edit().putString("chiave_groq", valore.trim()).apply()
+
+    /** Modello di trascrizione Groq (vedi ModelloTrascrizione). */
+    var modelloTrascrizione: String
+        get() = prefs.getString("modello_trascrizione", "whisper-large-v3") ?: "whisper-large-v3"
+        set(valore) = prefs.edit().putString("modello_trascrizione", valore).apply()
 }

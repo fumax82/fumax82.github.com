@@ -12,7 +12,7 @@
  *   AAAA-MM-GG_titolo/
  *     tutorial_input.md
  *     foto/
- *     _archivio/indice.json, audio_completo.m4a, foto_originali/
+ *     _archivio/indice.json, audio_completo.m4a, trascrizione.srt, foto_originali/
  */
 package it.formazione.videotutorial.archivio
 
@@ -21,8 +21,10 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
+import it.formazione.videotutorial.modello.FraseParlato
 import it.formazione.videotutorial.modello.ProgettoVideo
 import it.formazione.videotutorial.modello.StatoAudio
+import it.formazione.videotutorial.modello.StatoTrascrizione
 import it.formazione.videotutorial.testo.GeneratoreTutorialInput
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -39,6 +41,7 @@ class CartellaFormazione(private val context: Context, val uriRadice: Uri) {
         const val CARTELLA_ORIGINALI = "foto_originali"
         const val FILE_INDICE = "indice.json"
         const val FILE_AUDIO = "audio_completo.m4a"
+        const val FILE_TRASCRIZIONE = "trascrizione.srt"
 
         // Qualità JPG (da 0 a 100)
         const val QUALITA_FOTO_RIDOTTA = 85
@@ -135,14 +138,56 @@ class CartellaFormazione(private val context: Context, val uriRadice: Uri) {
      */
     suspend fun salvaProgetto(progetto: ProgettoVideo) = lucchetto.withLock {
         val suDisco = cartellaArchivio(progetto.nomeCartella)?.findFile(FILE_INDICE)?.let { leggiProgetto(it) }
-        val daSalvare = if (suDisco != null && suDisco.impronta == progetto.impronta &&
-            suDisco.statoAudioAggiornatoMs > progetto.statoAudioAggiornatoMs
-        ) {
-            progetto.copy(statoAudio = suDisco.statoAudio, statoAudioAggiornatoMs = suDisco.statoAudioAggiornatoMs)
-        } else {
-            progetto
+        salvaProgettoSenzaLucchetto(unisciConDisco(progetto, suDisco))
+    }
+
+    /**
+     * Tiene dal disco le parti scritte dai lavori in sottofondo (stato
+     * dell'audio, trascrizione e parlato) se sono più recenti di quelle in
+     * memoria nell'app.
+     */
+    private fun unisciConDisco(progetto: ProgettoVideo, suDisco: ProgettoVideo?): ProgettoVideo {
+        if (suDisco == null || suDisco.impronta != progetto.impronta) return progetto
+        var risultato = progetto
+        if (suDisco.statoAudioAggiornatoMs > progetto.statoAudioAggiornatoMs) {
+            risultato = risultato.copy(
+                statoAudio = suDisco.statoAudio,
+                statoAudioAggiornatoMs = suDisco.statoAudioAggiornatoMs,
+            )
         }
-        salvaProgettoSenzaLucchetto(daSalvare)
+        if (suDisco.statoTrascrizioneAggiornatoMs > progetto.statoTrascrizioneAggiornatoMs) {
+            risultato = risultato.copy(
+                statoTrascrizione = suDisco.statoTrascrizione,
+                parlato = suDisco.parlato,
+                statoTrascrizioneAggiornatoMs = suDisco.statoTrascrizioneAggiornatoMs,
+            )
+        }
+        return risultato
+    }
+
+    /** Legge il progetto di una cartella così com'è su disco (null se non c'è). */
+    fun leggiProgettoDaDisco(nomeCartella: String): ProgettoVideo? =
+        cartellaArchivio(nomeCartella)?.findFile(FILE_INDICE)?.let { leggiProgetto(it) }
+            ?.copy(nomeCartella = nomeCartella)
+
+    /**
+     * Aggiorna stato della trascrizione e, se indicato, il parlato, leggendo
+     * indice.json dal disco. Usata dal lavoro di trascrizione in sottofondo.
+     */
+    suspend fun aggiornaTrascrizione(
+        nomeCartella: String,
+        stato: StatoTrascrizione,
+        parlato: List<FraseParlato>? = null,
+    ) = lucchetto.withLock {
+        val indice = cartellaArchivio(nomeCartella)?.findFile(FILE_INDICE) ?: return@withLock
+        val progetto = leggiProgetto(indice) ?: return@withLock
+        salvaProgettoSenzaLucchetto(
+            progetto.copy(
+                statoTrascrizione = stato,
+                parlato = parlato ?: progetto.parlato,
+                statoTrascrizioneAggiornatoMs = System.currentTimeMillis(),
+            )
+        )
     }
 
     /**
@@ -223,6 +268,21 @@ class CartellaFormazione(private val context: Context, val uriRadice: Uri) {
         context.contentResolver.openOutputStream(destinazione.uri, "w")?.use { uscita ->
             sorgente.inputStream().use { it.copyTo(uscita) }
         } ?: error("Impossibile scrivere $nomeFile")
+    }
+
+    /** Copia un file di _archivio in un file del telefono. Restituisce false se non c'è. */
+    fun copiaDaArchivio(nomeCartella: String, nomeFile: String, destinazione: File): Boolean {
+        val file = cartellaArchivio(nomeCartella)?.findFile(nomeFile) ?: return false
+        context.contentResolver.openInputStream(file.uri)?.use { ingresso ->
+            destinazione.outputStream().use { ingresso.copyTo(it) }
+        } ?: return false
+        return true
+    }
+
+    /** Scrive (o riscrive) un file di testo dentro _archivio (es. trascrizione.srt). */
+    fun scriviInArchivio(nomeCartella: String, nomeFile: String, testo: String) {
+        val archivio = cartellaArchivio(nomeCartella) ?: error("Cartella $CARTELLA_ARCHIVIO non trovata")
+        scriviTesto(archivio, nomeFile, testo)
     }
 
     // ---------------------------------------------------------------------

@@ -2,10 +2,13 @@
 <!--
   Descrizione dell'app per Android: nome, icona, schermata iniziale.
   Il video e la cartella si scelgono con le finestre di sistema, che danno
-  all'app l'accesso solo a quei file. L'unico permesso è il microfono, per
-  dettare i commenti.
+  all'app l'accesso solo a quei file. Permessi: microfono (per dettare i
+  commenti) e internet (per la trascrizione del parlato).
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Internet: serve per la trascrizione del parlato con il servizio Groq -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Microfono: serve solo per dettare i commenti (chiesto la prima volta) -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />

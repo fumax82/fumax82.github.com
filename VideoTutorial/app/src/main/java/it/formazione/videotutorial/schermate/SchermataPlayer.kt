@@ -2,8 +2,9 @@
  * SchermataPlayer.kt
  * Schermata principale di lavoro (sempre in tema scuro):
  *   - in alto: ←, titolo, contatore foto, stato audio, pulsante Termina
- *   - il video; sopra la striscia compare il fumetto del segnalibro su cui
- *     si trova il video (toccalo per modificarlo)
+ *   - il video, con in alto il sottotitolo della frase pronunciata (se il
+ *     parlato è stato trascritto); sopra la striscia compare il fumetto del
+ *     segnalibro su cui si trova il video (toccalo per modificarlo)
  *   - la striscia di anteprime dell'intero video
  *   - tempo, velocità, tasti segnalibro ◀ ▶, ±1 fotogramma, Play/Pausa
  *   - la barra di scorrimento a ritorno automatico
@@ -106,6 +107,23 @@ fun SchermataPlayer(vm: ProgettoViewModel) {
             contentAlignment = Alignment.Center,
         ) {
             VistaVideo(vm)
+
+            // Sottotitolo: la frase pronunciata in questo momento (se trascritta)
+            progetto.fraseAl(posizioneMs)?.let { frase ->
+                Text(
+                    frase.testo,
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(8.dp)
+                        .background(Color.Black.copy(alpha = 0.6f), MaterialTheme.shapes.small)
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                )
+            }
+
             if (mostraFumetto && segnalibroQui != null) {
                 FumettoSegnalibro(
                     passo = segnalibroQui,
@@ -252,7 +270,7 @@ fun SchermataPlayer(vm: ProgettoViewModel) {
     if (vm.finestraTermina) {
         FinestraTermina(
             noteIniziali = progetto.noteFinali,
-            audioInLavorazione = progetto.statoAudio.inLavorazione,
+            lavoriInCorso = progetto.statoAudio.inLavorazione || progetto.statoTrascrizione.inLavorazione,
             onTermina = { note -> vm.termina(note) },
             onAnnulla = { vm.chiudiTermina() },
         )
@@ -292,7 +310,7 @@ private fun BarraSuperiore(vm: ProgettoViewModel, progetto: ProgettoVideo) {
                     Etichetta("salvo ${vm.fotoInSalvataggio}…", MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
                 }
                 Text(
-                    "🎵 ${progetto.statoAudio.descrizione}",
+                    statoLavori(vm, progetto),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -305,6 +323,13 @@ private fun BarraSuperiore(vm: ProgettoViewModel, progetto: ProgettoVideo) {
         FilledTonalButton(onClick = { vm.apriTermina() }) { Text("✓ Termina") }
         Spacer(Modifier.width(4.dp))
     }
+}
+
+/** Stato di audio e trascrizione in poche parole, per la barra in alto. */
+private fun statoLavori(vm: ProgettoViewModel, progetto: ProgettoVideo): String = when {
+    progetto.statoAudio.inLavorazione -> "🎵 ${progetto.statoAudio.descrizione}"
+    vm.avanzamentoTrascrizione != null -> "🎙 ${vm.avanzamentoTrascrizione}"
+    else -> "🎙 ${progetto.statoTrascrizione.descrizione}"
 }
 
 /** Pannello mostrato durante lo spostamento di un segnalibro. */

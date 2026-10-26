@@ -230,7 +230,7 @@ fun FinestraConfermaEliminazione(numero: Int, onConferma: () -> Unit, onAnnulla:
 @Composable
 fun FinestraTermina(
     noteIniziali: String,
-    audioInLavorazione: Boolean,
+    lavoriInCorso: Boolean,
     onTermina: (String) -> Unit,
     onAnnulla: () -> Unit,
 ) {
@@ -253,9 +253,9 @@ fun FinestraTermina(
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                     modifier = Modifier.fillMaxWidth(),
                 )
-                if (audioInLavorazione) {
+                if (lavoriInCorso) {
                     Text(
-                        "L'audio è ancora in estrazione: la cartella diventerà COMPLETA appena finisce.",
+                        "Audio o trascrizione ancora in lavorazione: la cartella diventerà COMPLETA appena finiscono.",
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }

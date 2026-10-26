@@ -15,8 +15,11 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import it.formazione.videotutorial.archivio.CartellaFormazione
+import it.formazione.videotutorial.archivio.Preferenze
 import it.formazione.videotutorial.modello.ProgettoVideo
 import it.formazione.videotutorial.modello.StatoAudio
+import it.formazione.videotutorial.modello.StatoTrascrizione
+import it.formazione.videotutorial.trascrizione.LavoroTrascrizione
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -30,6 +33,7 @@ class LavoroEstrazioneAudio(
         private const val CHIAVE_URI_VIDEO = "uri_video"
         private const val CHIAVE_URI_RADICE = "uri_radice"
         private const val CHIAVE_CARTELLA = "cartella"
+        private const val CHIAVE_IMPRONTA = "impronta"
 
         /** Chiave del risultato: contiene il nome di uno StatoAudio. */
         const val CHIAVE_STATO = "stato"
@@ -45,6 +49,7 @@ class LavoroEstrazioneAudio(
                         CHIAVE_URI_VIDEO to progetto.uriVideo,
                         CHIAVE_URI_RADICE to uriRadice.toString(),
                         CHIAVE_CARTELLA to progetto.nomeCartella,
+                        CHIAVE_IMPRONTA to progetto.impronta,
                     )
                 )
                 .build()
@@ -73,6 +78,20 @@ class LavoroEstrazioneAudio(
         // Scrive lo stato anche su disco: utile se l'app nel frattempo è stata chiusa.
         try {
             cartella.aggiornaStatoAudio(nomeCartella, stato)
+        } catch (_: Exception) {
+        }
+
+        // Fase 2: con l'audio pronto parte la trascrizione (se la chiave Groq c'è)
+        val impronta = inputData.getString(CHIAVE_IMPRONTA)
+        try {
+            when {
+                stato == StatoAudio.ASSENTE || stato == StatoAudio.NON_SUPPORTATO ->
+                    cartella.aggiornaTrascrizione(nomeCartella, StatoTrascrizione.NON_POSSIBILE)
+                stato == StatoAudio.COMPLETATO && Preferenze(applicationContext).chiaveGroq.isBlank() ->
+                    cartella.aggiornaTrascrizione(nomeCartella, StatoTrascrizione.NON_CONFIGURATA)
+                stato == StatoAudio.COMPLETATO && impronta != null ->
+                    LavoroTrascrizione.avvia(applicationContext, uriRadice, nomeCartella, impronta)
+            }
         } catch (_: Exception) {
         }
         return Result.success(workDataOf(CHIAVE_STATO to stato.name))

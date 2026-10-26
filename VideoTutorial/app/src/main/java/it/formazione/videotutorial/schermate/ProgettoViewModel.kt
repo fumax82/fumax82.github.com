@@ -45,6 +45,10 @@ import it.formazione.videotutorial.modello.Passo
 import it.formazione.videotutorial.modello.ProgettoVideo
 import it.formazione.videotutorial.modello.SchedaVideo
 import it.formazione.videotutorial.modello.StatoAudio
+import it.formazione.videotutorial.modello.StatoTrascrizione
+import it.formazione.videotutorial.trascrizione.ClientGroq
+import it.formazione.videotutorial.trascrizione.LavoroTrascrizione
+import it.formazione.videotutorial.trascrizione.ModelloTrascrizione
 import it.formazione.videotutorial.modello.TipoPasso
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -159,6 +163,22 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
     var caricamentoProgetti by mutableStateOf(false)
         private set
 
+    /** Chiave Groq per la trascrizione (vuota = trascrizione spenta). */
+    var chiaveGroq by mutableStateOf(preferenze.chiaveGroq)
+        private set
+
+    /** Modello di trascrizione scelto nelle impostazioni. */
+    var modelloTrascrizione by mutableStateOf(ModelloTrascrizione.daCodice(preferenze.modelloTrascrizione))
+        private set
+
+    /** true se è aperta la finestra delle impostazioni. */
+    var finestraImpostazioni by mutableStateOf(false)
+        private set
+
+    /** Avanzamento della trascrizione in corso (es. "trascrizione 2/5…"), oppure null. */
+    var avanzamentoTrascrizione by mutableStateOf<String?>(null)
+        private set
+
     /** true quando la Home deve far scegliere di nuovo il video (non più raggiungibile). */
     var richiestaSceltaVideo by mutableStateOf(false)
         private set
@@ -172,6 +192,7 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
     // ---------------------------------------------------------------------
 
     private var osservatoreAudio: Job? = null
+    private var osservatoreTrascrizione: Job? = null
     private var lavoroSalti: Job? = null
     private var lavoroMiniature: Job? = null
     private var posizioneVirtualeMs = 0.0
@@ -425,6 +446,7 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
         avviaMiniature(p)
         schermata = Schermata.PLAYER
         if (p.statoAudio.inLavorazione || p.statoAudio == StatoAudio.ERRORE) avviaAudio()
+        gestisciTrascrizione()
     }
 
     /** Torna alla Home chiudendo il progetto (i dati sono già salvati). */
@@ -432,6 +454,9 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
         fermaSalti()
         osservatoreAudio?.cancel()
         osservatoreAudio = null
+        osservatoreTrascrizione?.cancel()
+        osservatoreTrascrizione = null
+        avanzamentoTrascrizione = null
         lavoroMiniature?.cancel()
         lavoroMiniature = null
         miniature.clear()
@@ -502,6 +527,118 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
                         modifica { it.copy(statoAudio = stato, statoAudioAggiornatoMs = System.currentTimeMillis()) }
                     }
                 }
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Trascrizione del parlato (Fase 2, servizio Groq)
+    // ---------------------------------------------------------------------
+
+    fun apriImpostazioni() {
+        finestraImpostazioni = true
+    }
+
+    fun chiudiImpostazioni() {
+        finestraImpostazioni = false
+    }
+
+    /** Salva chiave Groq e modello scelti nella finestra delle impostazioni. */
+    fun salvaImpostazioni(chiave: String, modello: ModelloTrascrizione) {
+        preferenze.chiaveGroq = chiave
+        preferenze.modelloTrascrizione = modello.codice
+        chiaveGroq = preferenze.chiaveGroq
+        modelloTrascrizione = modello
+        finestraImpostazioni = false
+        mostra(
+            if (chiaveGroq.isBlank()) "Trascrizione disattivata"
+            else "Impostazioni salvate: i video verranno trascritti automaticamente"
+        )
+    }
+
+    /** Controlla una chiave Groq. Restituisce null se è valida, altrimenti il motivo. */
+    suspend fun verificaChiave(chiave: String): String? =
+        withContext(Dispatchers.IO) { ClientGroq(chiave.trim()).verificaChiave() }
+
+    /**
+     * Decide cosa fare della trascrizione del progetto appena aperto:
+     * avviarla, segnarla come non possibile o non configurata, oppure nulla.
+     * Poi ne segue l'avanzamento.
+     */
+    private fun gestisciTrascrizione() {
+        val p = progetto ?: return
+        val c = cartella ?: return
+        val adesso = System.currentTimeMillis()
+        when {
+            p.statoTrascrizione == StatoTrascrizione.COMPLETATA -> Unit
+            p.statoAudio == StatoAudio.ASSENTE || p.statoAudio == StatoAudio.NON_SUPPORTATO ->
+                if (p.statoTrascrizione != StatoTrascrizione.NON_POSSIBILE) {
+                    modifica { it.copy(statoTrascrizione = StatoTrascrizione.NON_POSSIBILE, statoTrascrizioneAggiornatoMs = adesso) }
+                }
+            p.statoAudio != StatoAudio.COMPLETATO -> Unit // l'audio è in lavorazione: la trascrizione partirà dopo
+            chiaveGroq.isBlank() ->
+                if (p.statoTrascrizione != StatoTrascrizione.NON_CONFIGURATA) {
+                    modifica { it.copy(statoTrascrizione = StatoTrascrizione.NON_CONFIGURATA, statoTrascrizioneAggiornatoMs = adesso) }
+                }
+            else -> LavoroTrascrizione.avvia(contesto, c.uriRadice, p.nomeCartella, p.impronta)
+        }
+        osservaTrascrizione(p.impronta)
+    }
+
+    /** Segue il lavoro di trascrizione: avanzamento e, alla fine, lettura del risultato. */
+    private fun osservaTrascrizione(impronta: String) {
+        osservatoreTrascrizione?.cancel()
+        avanzamentoTrascrizione = null
+        osservatoreTrascrizione = viewModelScope.launch {
+            var vistoInCorso = false
+            WorkManager.getInstance(contesto)
+                .getWorkInfosForUniqueWorkFlow(LavoroTrascrizione.nomeLavoro(impronta))
+                .collect { lavori ->
+                    val lavoro = lavori.firstOrNull { !it.state.isFinished } ?: lavori.lastOrNull()
+                        ?: return@collect
+                    when (lavoro.state) {
+                        WorkInfo.State.RUNNING -> {
+                            vistoInCorso = true
+                            val fatti = lavoro.progress.getInt(LavoroTrascrizione.PEZZI_FATTI, 0)
+                            val totali = lavoro.progress.getInt(LavoroTrascrizione.PEZZI_TOTALI, 0)
+                            avanzamentoTrascrizione =
+                                if (totali > 0) "trascrizione $fatti/$totali…" else "trascrizione in corso…"
+                        }
+                        WorkInfo.State.ENQUEUED, WorkInfo.State.BLOCKED -> {
+                            vistoInCorso = true
+                            avanzamentoTrascrizione = "trascrizione in attesa (rete o limite Groq)…"
+                        }
+                        else -> {
+                            avanzamentoTrascrizione = null
+                            ricaricaTrascrizione(impronta)
+                            val messaggio = lavoro.outputData.getString("messaggio").orEmpty()
+                            if (vistoInCorso && messaggio.isNotBlank()) mostra("Trascrizione: $messaggio")
+                            vistoInCorso = false
+                        }
+                    }
+                }
+        }
+    }
+
+    /** Rilegge dal disco parlato e stato della trascrizione scritti dal lavoro in sottofondo. */
+    private fun ricaricaTrascrizione(impronta: String) {
+        val c = cartella ?: return
+        val nomeCartella = progetto?.nomeCartella ?: return
+        accoda {
+            val daDisco = c.leggiProgettoDaDisco(nomeCartella) ?: return@accoda
+            withContext(Dispatchers.Main) {
+                val attuale = progetto
+                if (attuale != null && attuale.impronta == impronta &&
+                    daDisco.statoTrascrizioneAggiornatoMs > attuale.statoTrascrizioneAggiornatoMs
+                ) {
+                    modifica {
+                        it.copy(
+                            parlato = daDisco.parlato,
+                            statoTrascrizione = daDisco.statoTrascrizione,
+                            statoTrascrizioneAggiornatoMs = daDisco.statoTrascrizioneAggiornatoMs,
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -892,8 +1029,8 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
         modifica { it.copy(terminato = true, noteFinali = noteFinali.trim()) }
         finestraTermina = false
         mostra(
-            if (p.statoAudio.inLavorazione) {
-                "Salvato. Sarà COMPLETO appena finisce l'estrazione dell'audio."
+            if (p.statoAudio.inLavorazione || p.statoTrascrizione.inLavorazione) {
+                "Salvato. Sarà COMPLETO appena finiscono audio e trascrizione."
             } else {
                 "Lavoro COMPLETO: la cartella ${p.nomeCartella} è pronta per Claude."
             }
