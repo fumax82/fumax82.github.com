@@ -17,6 +17,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -62,12 +63,13 @@ fun SchermataPlayer(vm: ProgettoViewModel) {
     val progetto = vm.progetto ?: return
     val player = vm.player
 
-    // Tempo attuale del video, aggiornato 10 volte al secondo
+    // Tempo attuale del video, aggiornato 20 volte al secondo
+    // (così anche la striscia di anteprime scorre in modo fluido)
     var posizioneMs by remember { mutableLongStateOf(0L) }
     LaunchedEffect(player) {
         while (true) {
             posizioneMs = player?.currentPosition ?: 0L
-            delay(100)
+            delay(50)
         }
     }
 
@@ -123,6 +125,16 @@ fun SchermataPlayer(vm: ProgettoViewModel) {
             VistaVideo(vm)
         }
 
+        // --- Striscia di anteprime dell'intero video (tocca per saltare) ---
+        StrisciaAnteprime(
+            miniature = vm.miniature,
+            intervalloMs = vm.intervalloMiniatureMs,
+            durataMs = vm.durataMs(),
+            posizioneMs = posizioneMs,
+            passi = progetto.passi,
+            onTocco = { tempo -> vm.vaiA(tempo) },
+        )
+
         // --- Comandi ---
         Column(
             modifier = Modifier
@@ -146,13 +158,29 @@ fun SchermataPlayer(vm: ProgettoViewModel) {
                 )
             }
 
-            // Play/Pausa e ±1 fotogramma
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { vm.fotogramma(-1) }, modifier = Modifier.weight(1f)) { Text("−1 fot.") }
-                Button(onClick = { vm.playPausa() }, modifier = Modifier.weight(1f)) {
-                    Text(if (vm.inRiproduzione) "Pausa" else "Play")
+            // Segnalibro precedente, ±1 fotogramma, Play/Pausa, segnalibro successivo
+            val precedente = vm.segnalibroPrecedente(posizioneMs)
+            val successivo = vm.segnalibroSuccessivo(posizioneMs)
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                PulsanteSegnalibro(
+                    testo = "◀ " + (precedente?.let { codiceDi(progetto.passi, it) } ?: "—"),
+                    attivo = precedente != null,
+                    modifier = Modifier.weight(1f),
+                ) { precedente?.let { vm.vaiA(it.tempoMs) } }
+                PulsanteCompatto("−1", Modifier.weight(0.8f)) { vm.fotogramma(-1) }
+                Button(
+                    onClick = { vm.playPausa() },
+                    contentPadding = PaddingValues(horizontal = 4.dp),
+                    modifier = Modifier.weight(1.2f),
+                ) {
+                    Text(if (vm.inRiproduzione) "Pausa" else "Play", maxLines = 1)
                 }
-                OutlinedButton(onClick = { vm.fotogramma(+1) }, modifier = Modifier.weight(1f)) { Text("+1 fot.") }
+                PulsanteCompatto("+1", Modifier.weight(0.8f)) { vm.fotogramma(+1) }
+                PulsanteSegnalibro(
+                    testo = (successivo?.let { codiceDi(progetto.passi, it) } ?: "—") + " ▶",
+                    attivo = successivo != null,
+                    modifier = Modifier.weight(1f),
+                ) { successivo?.let { vm.vaiA(it.tempoMs) } }
             }
 
             // Barra di scorrimento a ritorno automatico
@@ -218,6 +246,31 @@ private fun VistaVideo(vm: ProgettoViewModel) {
         onRelease = { vista -> vista.player = null },
         modifier = Modifier.fillMaxSize(),
     )
+}
+
+/** Codice del segnalibro (P01, P02...) in base alla sua posizione nell'elenco. */
+private fun codiceDi(passi: List<Passo>, passo: Passo): String =
+    NomiFile.codicePasso(passi.indexOfFirst { it.id == passo.id } + 1)
+
+/** Pulsante per andare al segnalibro precedente o successivo. */
+@Composable
+private fun PulsanteSegnalibro(testo: String, attivo: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    OutlinedButton(
+        onClick = onClick,
+        enabled = attivo,
+        contentPadding = PaddingValues(horizontal = 4.dp),
+        modifier = modifier,
+    ) {
+        Text(testo, maxLines = 1, fontWeight = FontWeight.Bold)
+    }
+}
+
+/** Pulsante piccolo (±1 fotogramma). */
+@Composable
+private fun PulsanteCompatto(testo: String, modifier: Modifier, onClick: () -> Unit) {
+    OutlinedButton(onClick = onClick, contentPadding = PaddingValues(horizontal = 2.dp), modifier = modifier) {
+        Text(testo, maxLines = 1)
+    }
 }
 
 /** Pulsante colorato di cattura per un tipo di passo. */

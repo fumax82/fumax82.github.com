@@ -8,7 +8,9 @@ Claude legge solo `tutorial_input.md` e le foto in `foto/`.
 1. **Home.** Scegli una volta la cartella condivisa "Formazione" e apri un video (mp4, mov, mkv…).
 2. **Riconoscimento.** L'app calcola l'impronta del video. Se l'ha già elaborato, riapre la sua cartella.
 3. **Scheda.** Per un video nuovo chiede titolo (obbligatorio), macchina, reparto, scopo e autore. Macchina, reparto e autore restano quelli dell'ultima volta.
-4. **Lettore.** Mostra il tempo al decimo di secondo, Play/Pausa e i pulsanti per andare avanti o indietro di un fotogramma.
+4. **Lettore.** Mostra il tempo al decimo di secondo, Play/Pausa e i pulsanti −1 / +1 per andare indietro o avanti di un fotogramma.
+   - **Striscia di anteprime** sotto il video, con miniature di tutto il filmato ed effetto "lente". Il punto attuale è al centro (linea bianca). Vicino al punto attuale le miniature sono larghe, così vedi i fotogrammi precedenti e successivi. Oltre una soglia, ai lati, la striscia si comprime e mostra il resto del video in poco spazio. I segnalibri sono tacche colorate. Tocca la striscia per saltare a quel punto. Le miniature si creano in sottofondo e restano in memoria: riaprendo lo stesso video compaiono subito.
+   - **Tasti segnalibro** "◀ P02" e "P03 ▶": portano il video al segnalibro precedente o successivo, da dove puoi riprendere a riprodurre e aggiungerne altri. Il tasto è spento ("—") se in quella direzione non ci sono segnalibri.
 5. **Barra di scorrimento.** Dito a destra: il video va avanti. Dito a sinistra: torna indietro. Più ti allontani dal punto in cui hai appoggiato il dito, più va veloce, fino a 50x. Quando lasci il dito la barra torna al centro.
 6. **Cattura.** Ci sono quattro pulsanti colorati: Operazione, Sicurezza, Errore da evitare e Dettaglio. Ognuno salva il fotogramma del video originale:
    - in `foto/` una copia ridotta a 1024 px (1280 px per Dettaglio);
@@ -38,6 +40,8 @@ Formazione/
 | Cosa | File | Dove |
 |---|---|---|
 | Velocità massima della barra (50x), zona morta (5%) | `schermate/BarraScorrimento.kt` | `object CurvaVelocita` |
+| Striscia di anteprime: altezza, larghezza delle miniature vicine, quota compressa ai lati | `schermate/StrisciaAnteprime.kt` | `object ImpostazioniStriscia` |
+| Numero e dimensione delle miniature (max 400, alte 90 px, almeno 1 s di distanza) | `media/GeneratoreMiniature.kt` | costanti in alto |
 | Velocità oltre la quale il video scorre "a salti" (4x) | `schermate/ProgettoViewModel.kt` | `VELOCITA_MAX_RIPRODUZIONE` |
 | Soglia di avviso delle foto (25) | `schermate/ProgettoViewModel.kt` | `SOGLIA_FOTO` |
 | Misura delle foto (1024 / 1280 px), nomi, colori dei pulsanti | `modello/TipoPasso.kt` | elenco dei tipi |
@@ -65,12 +69,14 @@ archivio/                       file e cartelle
 media/                          video e audio
   EstrattoreFotogrammi.kt       fotogramma dal video originale
   EstrattoreAudio.kt            copia dell'audio senza ricodifica
+  GeneratoreMiniature.kt        miniature per la striscia di anteprime
   LavoroEstrazioneAudio.kt      lavoro in sottofondo per l'audio
 testo/
   GeneratoreTutorialInput.kt    crea tutorial_input.md
 schermate/                      interfaccia
   SchermataHome.kt, SchermataScheda.kt, SchermataPlayer.kt
   BarraScorrimento.kt           barra a ritorno automatico
+  StrisciaAnteprime.kt          striscia di miniature con effetto "lente"
   ProgettoViewModel.kt          dati e operazioni (il "cervello")
 ```
 

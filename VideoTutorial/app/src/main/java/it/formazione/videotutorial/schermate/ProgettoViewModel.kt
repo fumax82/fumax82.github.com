@@ -17,6 +17,10 @@ import android.provider.OpenableColumns
 import androidx.annotation.OptIn
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -35,6 +39,7 @@ import it.formazione.videotutorial.archivio.ImprontaVideo
 import it.formazione.videotutorial.archivio.NomiFile
 import it.formazione.videotutorial.archivio.Preferenze
 import it.formazione.videotutorial.media.EstrattoreFotogrammi
+import it.formazione.videotutorial.media.GeneratoreMiniature
 import it.formazione.videotutorial.media.LavoroEstrazioneAudio
 import it.formazione.videotutorial.modello.Passo
 import it.formazione.videotutorial.modello.ProgettoVideo
@@ -45,6 +50,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -126,6 +132,13 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
     var fotoInSalvataggio by mutableIntStateOf(0)
         private set
 
+    /** Miniature dell'intero video per la striscia di anteprime (null = non ancora pronta). */
+    val miniature = mutableStateListOf<ImageBitmap?>()
+
+    /** Ogni quanti millisecondi c'è una miniatura. */
+    var intervalloMiniatureMs by mutableLongStateOf(GeneratoreMiniature.INTERVALLO_MINIMO_MS)
+        private set
+
     /** Passo di cui è aperta la finestra del commento (null = finestra chiusa). */
     var passoInCommento by mutableStateOf<String?>(null)
         private set
@@ -140,6 +153,7 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
 
     private var osservatoreAudio: Job? = null
     private var lavoroSalti: Job? = null
+    private var lavoroMiniature: Job? = null
     private var posizioneVirtualeMs = 0.0
 
     /**
@@ -318,6 +332,7 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
         videoScelto = null
         modifica { it } // scrive subito indice.json e tutorial_input.md
         creaPlayer(Uri.parse(p.uriVideo))
+        avviaMiniature(p)
         schermata = Schermata.PLAYER
         if (p.statoAudio.inLavorazione || p.statoAudio == StatoAudio.ERRORE) avviaAudio()
     }
@@ -327,6 +342,9 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
         fermaSalti()
         osservatoreAudio?.cancel()
         osservatoreAudio = null
+        lavoroMiniature?.cancel()
+        lavoroMiniature = null
+        miniature.clear()
         player?.release()
         player = null
         inRiproduzione = false
@@ -446,6 +464,69 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
         val passoMs = (1000f / fps).roundToLong()
         pl.setSeekParameters(SeekParameters.EXACT)
         pl.seekTo((pl.currentPosition + direzione * passoMs).coerceIn(0L, durataMs()))
+    }
+
+    /** Porta il video al tempo indicato (in pausa, nel fotogramma esatto). */
+    fun vaiA(tempoMs: Long) {
+        val pl = player ?: return
+        pl.pause()
+        pl.setSeekParameters(SeekParameters.EXACT)
+        pl.seekTo(tempoMs.coerceIn(0L, durataMs()))
+    }
+
+    // ---------------------------------------------------------------------
+    // Segnalibri (passi): tasti precedente e successivo
+    // ---------------------------------------------------------------------
+
+    /** Tolleranza: un segnalibro a meno di 50 ms conta come "qui". */
+    private val toleranzaSegnalibroMs = 50L
+
+    /** Segnalibro prima del punto indicato (null se non ce ne sono). */
+    fun segnalibroPrecedente(posizioneMs: Long): Passo? =
+        progetto?.passi?.lastOrNull { it.tempoMs < posizioneMs - toleranzaSegnalibroMs }
+
+    /** Segnalibro dopo il punto indicato (null se non ce ne sono). */
+    fun segnalibroSuccessivo(posizioneMs: Long): Passo? =
+        progetto?.passi?.firstOrNull { it.tempoMs > posizioneMs + toleranzaSegnalibroMs }
+
+    // ---------------------------------------------------------------------
+    // Striscia di anteprime
+    // ---------------------------------------------------------------------
+
+    /**
+     * Crea in sottofondo le miniature dell'intero video. Si mette in pausa
+     * mentre ci sono foto da salvare, per non rallentarle.
+     */
+    private fun avviaMiniature(p: ProgettoVideo) {
+        lavoroMiniature?.cancel()
+        miniature.clear()
+        val durata = p.durataMs
+        if (durata <= 0) return
+        val intervallo = GeneratoreMiniature.intervalloPer(durata)
+        val numero = GeneratoreMiniature.numeroPer(durata, intervallo)
+        intervalloMiniatureMs = intervallo
+        miniature.addAll(List(numero) { null })
+
+        lavoroMiniature = viewModelScope.launch(Dispatchers.IO) {
+            val generatore = GeneratoreMiniature(contesto, Uri.parse(p.uriVideo), p.impronta, intervallo)
+            try {
+                for (indice in GeneratoreMiniature.ordine(numero)) {
+                    ensureActive() // si ferma subito se si esce dal progetto
+                    while (fotoInSalvataggio > 0) delay(100)
+                    val immagine = try {
+                        generatore.miniatura(indice)
+                    } catch (e: Exception) {
+                        null
+                    } ?: continue
+                    val pronta = immagine.asImageBitmap()
+                    withContext(Dispatchers.Main) {
+                        if (progetto?.impronta == p.impronta && indice < miniature.size) miniature[indice] = pronta
+                    }
+                }
+            } finally {
+                generatore.chiudi()
+            }
+        }
     }
 
     // ---------------------------------------------------------------------
