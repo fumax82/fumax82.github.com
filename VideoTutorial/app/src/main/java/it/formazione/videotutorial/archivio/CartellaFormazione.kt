@@ -159,7 +159,7 @@ class CartellaFormazione(private val context: Context, val uriRadice: Uri) {
         val cartella = cartellaProgetto(nomeCartella) ?: error("Cartella $nomeCartella non trovata")
         val foto = cartella.findFile(CARTELLA_FOTO) ?: cartella.createDirectory(CARTELLA_FOTO)
             ?: error("Impossibile creare $CARTELLA_FOTO")
-        val originali = cartellaOriginali(cartella)
+        val originali = cartellaOriginali(cartella) ?: error("Impossibile creare $CARTELLA_ORIGINALI")
 
         scriviJpg(originali, nomeFile, originale, QUALITA_FOTO_ORIGINALE)
         val ridotta = ridimensiona(originale, latoLungoPx)
