@@ -1,10 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Descrizione dell'app per Android: nome, icona, schermata iniziale.
-  Non servono permessi speciali: il video e la cartella si scelgono con le
-  finestre di sistema, che danno all'app l'accesso solo a quei file.
+  Il video e la cartella si scelgono con le finestre di sistema, che danno
+  all'app l'accesso solo a quei file. L'unico permesso è il microfono, per
+  dettare i commenti.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Microfono: serve solo per dettare i commenti (chiesto la prima volta) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Permette di trovare il servizio di riconoscimento vocale del telefono -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
 
     <application
         android:allowBackup="false"

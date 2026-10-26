@@ -17,7 +17,7 @@ Claude legge solo `tutorial_input.md` e le foto in `foto/`.
    - in `_archivio/foto_originali/` la copia a piena risoluzione.
    La cattura è istantanea: la finestra del commento si apre subito, mentre la foto viene estratta e salvata in sottofondo. In alto compare "salvo N…" finché il salvataggio non è finito.
 7. **Numerazione.** I passi sono sempre in ordine di tempo nel video. Se catturi un punto precedente, le foto si rinumerano da sole.
-8. **Commento.** Dopo ogni foto si apre una finestra con Salva, Salta ed Elimina foto. Puoi dettare il commento con il microfono della tastiera.
+8. **Commento.** Dopo ogni foto si apre una finestra con Salva, Salta ed Elimina foto. Il cursore è già nel campo e la **dettatura parte da sola**: basta parlare. Le parole compaiono sotto il campo mentre parli e, dopo una breve pausa, vengono aggiunte al commento. Con "■ Ferma" smetti di dettare, con "🎤 Detta" riprendi. Puoi anche correggere scrivendo. La prima volta Android chiede il permesso del microfono. Il riconoscimento vocale è quello del telefono (di solito Google): la lingua è quella del telefono.
 9. **Audio.** L'audio completo viene copiato in sottofondo, senza perdita di qualità, in `_archivio/audio_completo.m4a`. In questa fase funziona con l'audio AAC, cioè quasi tutti i video fatti col telefono.
 10. **Termina.** Il pulsante salva le note finali. `Stato: COMPLETO` compare solo quando hai premuto Termina e l'audio ha finito. Una nuova cattura riporta lo stato a IN CORSO.
 11. **Tasto indietro** del telefono: torna alla Home.
@@ -48,6 +48,7 @@ Formazione/
 | Qualità JPG (85% ridotte, 95% originali) | `archivio/CartellaFormazione.kt` | `QUALITA_FOTO_...` |
 | Formato dei nomi di cartelle e foto, formato dei tempi | `archivio/NomiFile.kt` | funzioni `nomeCartella`, `nomeFoto`, `tempoFoto` |
 | Contenuto di `tutorial_input.md` | `testo/GeneratoreTutorialInput.kt` | funzione `genera` |
+| Pausa che chiude una frase dettata (4 s) | `schermate/Dettatura.kt` | `SILENZIO_FINE_FRASE_MS` |
 | Testi delle schermate | `schermate/Schermata*.kt` | testi tra virgolette |
 
 Tutti i file Kotlin sono in `app/src/main/java/it/formazione/videotutorial/`.
@@ -77,6 +78,7 @@ schermate/                      interfaccia
   SchermataHome.kt, SchermataScheda.kt, SchermataPlayer.kt
   BarraScorrimento.kt           barra a ritorno automatico
   StrisciaAnteprime.kt          striscia di miniature con effetto "lente"
+  Dettatura.kt                  riconoscimento vocale per i commenti
   ProgettoViewModel.kt          dati e operazioni (il "cervello")
 ```
 

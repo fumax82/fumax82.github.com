@@ -10,6 +10,16 @@
  */
 package it.formazione.videotutorial.schermate
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.core.content.ContextCompat
 import android.graphics.Color as ColoreAndroid
 import androidx.activity.compose.BackHandler
 import androidx.annotation.OptIn
@@ -286,7 +296,10 @@ private fun PulsanteCattura(tipo: TipoPasso, attivo: Boolean, modifier: Modifier
     }
 }
 
-/** Finestra con il commento della foto appena catturata: Salva, Salta, Elimina foto. */
+/**
+ * Finestra con il commento della foto appena catturata: Salva, Salta, Elimina foto.
+ * Appena si apre, il cursore è già nel campo e parte la dettatura: basta parlare.
+ */
 @Composable
 private fun FinestraCommento(
     passo: Passo,
@@ -295,7 +308,40 @@ private fun FinestraCommento(
     onSalta: () -> Unit,
     onElimina: () -> Unit,
 ) {
-    var testo by remember(passo.id) { mutableStateOf(passo.commento) }
+    // Testo del campo con la posizione del cursore (sempre in fondo dopo una dettatura)
+    var campo by remember(passo.id) {
+        mutableStateOf(TextFieldValue(passo.commento, TextRange(passo.commento.length)))
+    }
+    val dettatura = rememberDettatura { frase -> campo = aggiungiFrase(campo, frase) }
+    val contesto = LocalContext.current
+    val focus = remember { FocusRequester() }
+
+    // Permesso del microfono: chiesto solo la prima volta
+    val richiestaPermesso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { concesso ->
+        if (concesso) dettatura.avvia()
+    }
+    val avviaDettatura = {
+        val permesso = ContextCompat.checkSelfPermission(contesto, Manifest.permission.RECORD_AUDIO)
+        if (permesso == PackageManager.PERMISSION_GRANTED) {
+            dettatura.avvia()
+        } else {
+            richiestaPermesso.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
+    // All'apertura: cursore nel campo e dettatura avviata
+    LaunchedEffect(passo.id) {
+        delay(150) // attende che la finestra sia sullo schermo
+        try {
+            focus.requestFocus()
+        } catch (_: IllegalStateException) {
+        }
+        avviaDettatura()
+    }
+
+    // Testo da salvare, comprese le parole dette ma non ancora confermate
+    val testoFinale = { aggiungiFrase(campo, dettatura.prendiParziale()).text }
+
     AlertDialog(
         onDismissRequest = onSalta,
         properties = DialogProperties(dismissOnClickOutside = false),
@@ -303,20 +349,36 @@ private fun FinestraCommento(
             Text("Foto ${NomiFile.codicePasso(numero)} · ${passo.tipo.testoPerClaude} · ${NomiFile.tempoFoto(passo.tempoMs)}")
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 OutlinedTextField(
-                    value = testo,
-                    onValueChange = { testo = it },
+                    value = campo,
+                    onValueChange = { campo = it },
                     label = { Text("Commento") },
                     placeholder = { Text("Cosa si vede, cosa fare, a cosa stare attenti…") },
                     minLines = 3,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focus),
                 )
-                Text(
-                    "Suggerimento: puoi dettare con il microfono della tastiera.",
-                    style = MaterialTheme.typography.bodySmall,
-                )
+                // Stato della dettatura e tasto Ferma / Detta
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = if (dettatura.inAscolto) {
+                            "🎤 In ascolto… ${dettatura.testoParziale}"
+                        } else {
+                            dettatura.avviso ?: "Tocca \"Detta\" per aggiungere altro a voce."
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (dettatura.inAscolto) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (dettatura.inAscolto) {
+                        TextButton(onClick = { dettatura.ferma() }) { Text("■ Ferma") }
+                    } else {
+                        TextButton(onClick = avviaDettatura) { Text("🎤 Detta") }
+                    }
+                }
             }
         },
         // "Elimina foto" a sinistra, "Salta" e "Salva" a destra
@@ -329,10 +391,18 @@ private fun FinestraCommento(
         confirmButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 TextButton(onClick = onSalta) { Text("Salta") }
-                Button(onClick = { onSalva(testo) }) { Text("Salva") }
+                Button(onClick = { onSalva(testoFinale()) }) { Text("Salva") }
             }
         },
     )
+}
+
+/** Aggiunge una frase dettata in fondo al testo e mette il cursore alla fine. */
+private fun aggiungiFrase(campo: TextFieldValue, frase: String): TextFieldValue {
+    if (frase.isBlank()) return campo
+    val base = campo.text.trimEnd()
+    val nuovo = if (base.isEmpty()) frase.trim().replaceFirstChar { it.titlecase() } else "$base ${frase.trim()}"
+    return TextFieldValue(nuovo, TextRange(nuovo.length))
 }
 
 /** Finestra di fine lavoro con le note finali dell'autore. */
