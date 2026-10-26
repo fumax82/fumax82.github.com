@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tema di base della finestra; i colori veri sono definiti in Compose (MainActivity). -->
+<resources>
+    <style name="Tema.VideoTutorial" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+</resources>

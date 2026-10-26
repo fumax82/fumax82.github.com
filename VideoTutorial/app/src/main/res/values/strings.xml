@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Testi fissi dell'app. -->
+<resources>
+    <string name="nome_app">Video Tutorial</string>
+</resources>

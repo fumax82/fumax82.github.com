@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Simbolo dell'icona: una cinepresa bianca con un pallino verde (la "cattura"). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- corpo della cinepresa -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,40 h34 a4,4 0 0 1 4,4 v20 a4,4 0 0 1 -4,4 h-34 a4,4 0 0 1 -4,-4 v-20 a4,4 0 0 1 4,-4 z" />
+    <!-- obiettivo -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M70,48 L82,41 L82,67 L70,60 Z" />
+    <!-- pallino di cattura -->
+    <path
+        android:fillColor="#43A047"
+        android:pathData="M47,54 m-7,0 a7,7 0 1 0 14,0 a7,7 0 1 0 -14,0" />
+</vector>

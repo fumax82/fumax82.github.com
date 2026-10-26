@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Colore di sfondo dell'icona dell'app. -->
+<resources>
+    <color name="sfondo_icona">#1565C0</color>
+</resources>

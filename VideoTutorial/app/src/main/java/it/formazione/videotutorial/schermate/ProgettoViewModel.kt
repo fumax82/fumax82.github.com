@@ -1,0 +1,642 @@
+/*
+ * ProgettoViewModel.kt
+ * Il "cervello" dell'app: contiene tutti i dati mostrati sullo schermo e
+ * tutte le operazioni (scegliere cartella e video, catturare foto, commenti,
+ * scorrimento del video, audio, fine lavoro).
+ *
+ * Le schermate si limitano a mostrare questi dati e a chiamare queste funzioni.
+ * Ogni cambiamento al progetto passa dalla funzione modifica(), che aggiorna
+ * i dati e riscrive indice.json e tutorial_input.md.
+ */
+package it.formazione.videotutorial.schermate
+
+import android.app.Application
+import android.content.Intent
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.annotation.OptIn
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.PlaybackParameters
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.SeekParameters
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import it.formazione.videotutorial.archivio.CartellaFormazione
+import it.formazione.videotutorial.archivio.ImprontaVideo
+import it.formazione.videotutorial.archivio.NomiFile
+import it.formazione.videotutorial.archivio.Preferenze
+import it.formazione.videotutorial.media.EstrattoreFotogrammi
+import it.formazione.videotutorial.media.LavoroEstrazioneAudio
+import it.formazione.videotutorial.modello.Passo
+import it.formazione.videotutorial.modello.ProgettoVideo
+import it.formazione.videotutorial.modello.SchedaVideo
+import it.formazione.videotutorial.modello.StatoAudio
+import it.formazione.videotutorial.modello.TipoPasso
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.time.LocalDate
+import java.util.UUID
+import kotlin.math.abs
+import kotlin.math.roundToLong
+
+/** Le tre schermate dell'app. */
+enum class Schermata { HOME, SCHEDA, PLAYER }
+
+/** Video appena scelto, in attesa che l'utente compili la scheda. */
+data class VideoScelto(
+    val uri: Uri,
+    val nomeFile: String,
+    val impronta: String,
+    val durataMs: Long,
+)
+
+@OptIn(UnstableApi::class)
+class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazione) {
+
+    companion object {
+        /** Oltre questo numero di foto l'app avvisa (ogni foto costa risorse a Claude). */
+        const val SOGLIA_FOTO = 25
+
+        /** Fino a questa velocità il video scorre in avanti riproducendo; oltre, a salti. */
+        const val VELOCITA_MAX_RIPRODUZIONE = 4f
+
+        /** Ogni quanti millisecondi si fa un salto durante lo scorrimento veloce. */
+        const val INTERVALLO_SALTI_MS = 40L
+
+        /** Fotogrammi al secondo da usare se il video non lo dice. */
+        const val FPS_PREDEFINITI = 30f
+    }
+
+    private val contesto: Application get() = getApplication()
+    private val preferenze = Preferenze(applicazione)
+    private val estrattore = EstrattoreFotogrammi(applicazione)
+
+    // ---------------------------------------------------------------------
+    // Dati mostrati sullo schermo (ogni cambiamento aggiorna l'interfaccia)
+    // ---------------------------------------------------------------------
+
+    var schermata by mutableStateOf(Schermata.HOME)
+        private set
+
+    /** Cartella condivisa "Formazione" (null se non ancora scelta). */
+    var cartella by mutableStateOf<CartellaFormazione?>(null)
+        private set
+
+    /** true mentre l'app lavora (es. calcolo dell'impronta): mostra una rotellina. */
+    var occupato by mutableStateOf(false)
+        private set
+
+    /** Messaggio breve da mostrare all'utente (poi si cancella). */
+    var messaggio by mutableStateOf<String?>(null)
+        private set
+
+    var videoScelto by mutableStateOf<VideoScelto?>(null)
+        private set
+
+    /** Progetto aperto nel lettore. */
+    var progetto by mutableStateOf<ProgettoVideo?>(null)
+        private set
+
+    /** Lettore video. */
+    var player by mutableStateOf<ExoPlayer?>(null)
+        private set
+
+    var inRiproduzione by mutableStateOf(false)
+        private set
+
+    /** Velocità attuale della barra di scorrimento (negativa = indietro, 0 = ferma). */
+    var velocitaScorrimento by mutableStateOf(0f)
+        private set
+
+    /** true mentre si salva una foto: i pulsanti di cattura sono disattivati. */
+    var salvataggioInCorso by mutableStateOf(false)
+        private set
+
+    /** Passo di cui è aperta la finestra del commento (null = finestra chiusa). */
+    var passoInCommento by mutableStateOf<String?>(null)
+        private set
+
+    /** true se è aperta la finestra "Termina". */
+    var finestraTermina by mutableStateOf(false)
+        private set
+
+    // ---------------------------------------------------------------------
+    // Variabili interne
+    // ---------------------------------------------------------------------
+
+    private var osservatoreAudio: Job? = null
+    private var lavoroSalti: Job? = null
+    private var posizioneVirtualeMs = 0.0
+
+    /** Coda dei salvataggi: si salva sempre l'ultima versione, uno alla volta. */
+    private val codaSalvataggi = Channel<Pair<CartellaFormazione, ProgettoVideo>>(Channel.CONFLATED)
+
+    init {
+        // Riprende la cartella scelta l'ultima volta
+        preferenze.uriCartella?.let { uri ->
+            val c = CartellaFormazione(contesto, uri)
+            if (c.accessibile()) cartella = c
+        }
+        // Salvataggi in sottofondo, uno dopo l'altro
+        viewModelScope.launch(Dispatchers.IO) {
+            for ((c, p) in codaSalvataggi) {
+                try {
+                    c.salvaProgetto(p)
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) { mostra("Errore nel salvataggio: ${e.message}") }
+                }
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Messaggi
+    // ---------------------------------------------------------------------
+
+    private fun mostra(testo: String) {
+        messaggio = testo
+    }
+
+    /** Chiamata dalla schermata dopo aver mostrato il messaggio. */
+    fun messaggioMostrato() {
+        messaggio = null
+    }
+
+    // ---------------------------------------------------------------------
+    // Home: cartella condivisa e scelta del video
+    // ---------------------------------------------------------------------
+
+    /** L'utente ha scelto la cartella condivisa (uri null = ha annullato). */
+    fun cartellaScelta(uri: Uri?) {
+        if (uri == null) return
+        try {
+            contesto.contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+            )
+        } catch (e: SecurityException) {
+            mostra("Permesso sulla cartella non ottenuto")
+        }
+        preferenze.uriCartella = uri
+        cartella = CartellaFormazione(contesto, uri)
+    }
+
+    /**
+     * L'utente ha scelto un video. Calcola l'impronta: se il video è già stato
+     * elaborato riapre la sua cartella, altrimenti mostra la scheda.
+     */
+    fun videoSelezionato(uri: Uri?) {
+        val c = cartella ?: return
+        if (uri == null) return
+        try {
+            contesto.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        } catch (_: SecurityException) {
+            // Alcune app non concedono il permesso permanente: il video si apre comunque.
+        }
+        occupato = true
+        viewModelScope.launch {
+            try {
+                val (scelto, esistente) = withContext(Dispatchers.IO) {
+                    val impronta = ImprontaVideo.calcola(contesto, uri)
+                    val scelto = VideoScelto(
+                        uri = uri,
+                        nomeFile = nomeVisibile(uri),
+                        impronta = impronta,
+                        durataMs = EstrattoreFotogrammi.leggiDurataMs(contesto, uri),
+                    )
+                    scelto to c.cercaProgetto(impronta)
+                }
+                if (esistente != null) {
+                    apriProgetto(esistente.copy(uriVideo = uri.toString(), nomeFileVideo = scelto.nomeFile))
+                    mostra("Video già elaborato: riaperta la cartella ${esistente.nomeCartella}")
+                } else {
+                    videoScelto = scelto
+                    schermata = Schermata.SCHEDA
+                }
+            } catch (e: Exception) {
+                mostra("Impossibile aprire il video: ${e.message}")
+            } finally {
+                occupato = false
+            }
+        }
+    }
+
+    /** Nome del file (es. "pompa.mp4") a partire dal suo indirizzo. */
+    private fun nomeVisibile(uri: Uri): String {
+        contesto.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+            ?.use { cursore ->
+                if (cursore.moveToFirst()) {
+                    val nome = cursore.getString(0)
+                    if (!nome.isNullOrBlank()) return nome
+                }
+            }
+        return uri.lastPathSegment ?: "video"
+    }
+
+    // ---------------------------------------------------------------------
+    // Scheda del video
+    // ---------------------------------------------------------------------
+
+    /** Valori iniziali della scheda: macchina, reparto e autore dell'ultima volta. */
+    fun schedaIniziale(): SchedaVideo = SchedaVideo(
+        titolo = "",
+        macchina = preferenze.ultimaMacchina,
+        reparto = preferenze.ultimoReparto,
+        scopo = "",
+        autore = preferenze.ultimoAutore,
+        data = LocalDate.now().toString(),
+    )
+
+    /** L'utente ha confermato la scheda: crea la cartella e apre il lettore. */
+    fun confermaScheda(scheda: SchedaVideo) {
+        val v = videoScelto ?: return
+        val c = cartella ?: return
+        if (scheda.titolo.isBlank()) {
+            mostra("Il titolo della procedura è obbligatorio")
+            return
+        }
+        preferenze.ultimaMacchina = scheda.macchina.trim()
+        preferenze.ultimoReparto = scheda.reparto.trim()
+        preferenze.ultimoAutore = scheda.autore.trim()
+
+        val pulita = scheda.copy(
+            titolo = scheda.titolo.trim(),
+            macchina = scheda.macchina.trim(),
+            reparto = scheda.reparto.trim(),
+            scopo = scheda.scopo.trim(),
+            autore = scheda.autore.trim(),
+            data = LocalDate.now().toString(),
+        )
+        occupato = true
+        viewModelScope.launch {
+            try {
+                val nomeCartella = withContext(Dispatchers.IO) {
+                    c.creaCartellaProgetto(NomiFile.nomeCartella(pulita.data, pulita.titolo))
+                }
+                apriProgetto(
+                    ProgettoVideo(
+                        impronta = v.impronta,
+                        nomeCartella = nomeCartella,
+                        uriVideo = v.uri.toString(),
+                        nomeFileVideo = v.nomeFile,
+                        durataMs = v.durataMs,
+                        scheda = pulita,
+                    )
+                )
+            } catch (e: Exception) {
+                mostra("Impossibile creare la cartella: ${e.message}")
+            } finally {
+                occupato = false
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Apertura e chiusura di un progetto
+    // ---------------------------------------------------------------------
+
+    private fun apriProgetto(p: ProgettoVideo) {
+        progetto = p
+        videoScelto = null
+        modifica { it } // scrive subito indice.json e tutorial_input.md
+        creaPlayer(Uri.parse(p.uriVideo))
+        schermata = Schermata.PLAYER
+        if (p.statoAudio.inLavorazione || p.statoAudio == StatoAudio.ERRORE) avviaAudio()
+    }
+
+    /** Torna alla Home chiudendo il progetto (i dati sono già salvati). */
+    fun tornaHome() {
+        fermaSalti()
+        osservatoreAudio?.cancel()
+        osservatoreAudio = null
+        player?.release()
+        player = null
+        inRiproduzione = false
+        velocitaScorrimento = 0f
+        viewModelScope.launch(Dispatchers.IO) { estrattore.chiudi() }
+        progetto = null
+        videoScelto = null
+        passoInCommento = null
+        finestraTermina = false
+        schermata = Schermata.HOME
+    }
+
+    /**
+     * L'UNICA funzione che cambia il progetto: applica la modifica e mette in
+     * coda il salvataggio di indice.json e tutorial_input.md.
+     */
+    private fun modifica(cambia: (ProgettoVideo) -> ProgettoVideo) {
+        val attuale = progetto ?: return
+        val nuovo = cambia(attuale)
+        progetto = nuovo
+        cartella?.let { codaSalvataggi.trySend(it to nuovo) }
+    }
+
+    override fun onCleared() {
+        player?.release()
+        estrattore.chiudi()
+        super.onCleared()
+    }
+
+    // ---------------------------------------------------------------------
+    // Audio in sottofondo
+    // ---------------------------------------------------------------------
+
+    private fun avviaAudio() {
+        val p = progetto ?: return
+        val c = cartella ?: return
+        modifica { it.copy(statoAudio = StatoAudio.IN_CORSO, statoAudioAggiornatoMs = System.currentTimeMillis()) }
+        LavoroEstrazioneAudio.avvia(contesto, p, c.uriRadice)
+
+        // Segue l'avanzamento del lavoro e aggiorna lo stato nel progetto
+        osservatoreAudio?.cancel()
+        osservatoreAudio = viewModelScope.launch {
+            WorkManager.getInstance(contesto)
+                .getWorkInfosForUniqueWorkFlow(LavoroEstrazioneAudio.nomeLavoro(p.impronta))
+                .collect { lavori ->
+                    val lavoro = lavori.firstOrNull { !it.state.isFinished } ?: lavori.lastOrNull()
+                        ?: return@collect
+                    val stato = when (lavoro.state) {
+                        WorkInfo.State.SUCCEEDED ->
+                            lavoro.outputData.getString(LavoroEstrazioneAudio.CHIAVE_STATO)
+                                ?.let { nome -> StatoAudio.entries.firstOrNull { it.name == nome } }
+                                ?: StatoAudio.ERRORE
+                        WorkInfo.State.FAILED, WorkInfo.State.CANCELLED -> StatoAudio.ERRORE
+                        else -> StatoAudio.IN_CORSO
+                    }
+                    val attuale = progetto
+                    if (attuale != null && attuale.impronta == p.impronta && attuale.statoAudio != stato) {
+                        modifica { it.copy(statoAudio = stato, statoAudioAggiornatoMs = System.currentTimeMillis()) }
+                    }
+                }
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Lettore video
+    // ---------------------------------------------------------------------
+
+    private fun creaPlayer(uri: Uri) {
+        player?.release()
+        val nuovo = ExoPlayer.Builder(contesto).build()
+        nuovo.setMediaItem(MediaItem.fromUri(uri))
+        nuovo.setSeekParameters(SeekParameters.EXACT)
+        nuovo.playWhenReady = false
+        nuovo.addListener(object : Player.Listener {
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                inRiproduzione = isPlaying
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                mostra("Errore di riproduzione: ${error.errorCodeName}")
+            }
+        })
+        nuovo.prepare()
+        player = nuovo
+    }
+
+    /** Durata del video in ms (dal lettore o, se non ancora nota, dal progetto). */
+    fun durataMs(): Long {
+        val dalLettore = player?.duration ?: 0L
+        return if (dalLettore > 0) dalLettore else progetto?.durataMs ?: 0L
+    }
+
+    /** Pulsante Play/Pausa. */
+    fun playPausa() {
+        val pl = player ?: return
+        if (pl.isPlaying) {
+            pl.pause()
+        } else {
+            pl.playbackParameters = PlaybackParameters.DEFAULT
+            pl.volume = 1f
+            if (pl.playbackState == Player.STATE_ENDED) pl.seekTo(0)
+            pl.play()
+        }
+    }
+
+    /** Avanti (+1) o indietro (-1) di un fotogramma. */
+    fun fotogramma(direzione: Int) {
+        val pl = player ?: return
+        pl.pause()
+        val fps = pl.videoFormat?.frameRate?.takeIf { it > 0f } ?: FPS_PREDEFINITI
+        val passoMs = (1000f / fps).roundToLong()
+        pl.setSeekParameters(SeekParameters.EXACT)
+        pl.seekTo((pl.currentPosition + direzione * passoMs).coerceIn(0L, durataMs()))
+    }
+
+    // ---------------------------------------------------------------------
+    // Barra di scorrimento
+    // ---------------------------------------------------------------------
+
+    /** Il dito si è appoggiato sulla barra. */
+    fun iniziaScorrimento() {
+        val pl = player ?: return
+        pl.volume = 0f // audio muto durante lo scorrimento
+        posizioneVirtualeMs = pl.currentPosition.toDouble()
+    }
+
+    /**
+     * Il dito si è spostato: "velocita" è positiva in avanti, negativa
+     * indietro, 0 nella zona morta centrale.
+     */
+    fun aggiornaScorrimento(velocita: Float) {
+        val pl = player ?: return
+        velocitaScorrimento = velocita
+        when {
+            velocita == 0f -> {
+                if (lavoroSalti != null) fermaSalti()
+                pl.pause()
+            }
+            velocita > 0f && velocita <= VELOCITA_MAX_RIPRODUZIONE -> {
+                // Avanti fino a 4x: riproduzione normale accelerata
+                if (lavoroSalti != null) {
+                    fermaSalti()
+                    pl.setSeekParameters(SeekParameters.EXACT)
+                    pl.seekTo(posizioneVirtualeMs.toLong())
+                }
+                pl.playbackParameters = PlaybackParameters(velocita)
+                if (!pl.isPlaying) pl.play()
+            }
+            else -> {
+                // Indietro oppure oltre 4x: salti ogni 40 ms
+                if (lavoroSalti == null) {
+                    pl.pause()
+                    posizioneVirtualeMs = pl.currentPosition.toDouble()
+                    avviaSalti(pl)
+                }
+            }
+        }
+    }
+
+    /** Il dito si è staccato: pausa, velocità normale, posizione esatta. */
+    fun fineScorrimento() {
+        val pl = player ?: return
+        val posizione = if (lavoroSalti != null) posizioneVirtualeMs.toLong() else pl.currentPosition
+        fermaSalti()
+        pl.pause()
+        pl.playbackParameters = PlaybackParameters.DEFAULT
+        pl.volume = 1f
+        pl.setSeekParameters(SeekParameters.EXACT)
+        pl.seekTo(posizione.coerceIn(0L, durataMs()))
+        velocitaScorrimento = 0f
+    }
+
+    private fun avviaSalti(pl: ExoPlayer) {
+        lavoroSalti = viewModelScope.launch {
+            while (isActive) {
+                val v = velocitaScorrimento
+                val durata = durataMs().toDouble()
+                posizioneVirtualeMs = (posizioneVirtualeMs + v * INTERVALLO_SALTI_MS).coerceIn(0.0, durata)
+                // Sotto 4x salto preciso, sopra salto al fotogramma chiave più vicino (più veloce)
+                pl.setSeekParameters(if (abs(v) < VELOCITA_MAX_RIPRODUZIONE) SeekParameters.EXACT else SeekParameters.CLOSEST_SYNC)
+                pl.seekTo(posizioneVirtualeMs.toLong())
+                delay(INTERVALLO_SALTI_MS)
+            }
+        }
+    }
+
+    private fun fermaSalti() {
+        lavoroSalti?.cancel()
+        lavoroSalti = null
+    }
+
+    // ---------------------------------------------------------------------
+    // Cattura delle foto e passi
+    // ---------------------------------------------------------------------
+
+    /** Pulsante di cattura: salva il fotogramma attuale come nuovo passo. */
+    fun cattura(tipo: TipoPasso) {
+        val p = progetto ?: return
+        val c = cartella ?: return
+        val pl = player ?: return
+        if (salvataggioInCorso) return
+        pl.pause()
+        val tempoMs = pl.currentPosition.coerceIn(0L, durataMs())
+        salvataggioInCorso = true
+        viewModelScope.launch {
+            try {
+                val nuovo = Passo(id = UUID.randomUUID().toString(), tempoMs = tempoMs, tipo = tipo, nomeFile = "")
+                val elenco = withContext(Dispatchers.IO) {
+                    val immagine = estrattore.estrai(Uri.parse(p.uriVideo), tempoMs)
+                        ?: error("fotogramma non leggibile")
+                    try {
+                        val numerati = rinumera(c, p.nomeCartella, p.passi + nuovo)
+                        val salvato = numerati.first { it.id == nuovo.id }
+                        c.salvaFoto(p.nomeCartella, salvato.nomeFile, immagine, tipo.latoLungoPx)
+                        numerati
+                    } finally {
+                        immagine.recycle()
+                    }
+                }
+                // Una nuova cattura riporta il lavoro "IN CORSO"
+                modifica { it.copy(passi = elenco, terminato = false) }
+                passoInCommento = nuovo.id
+                if (elenco.size > SOGLIA_FOTO) {
+                    mostra("Attenzione: ${elenco.size} foto, oltre la soglia di $SOGLIA_FOTO")
+                }
+            } catch (e: Exception) {
+                mostra("Foto non salvata: ${e.message}")
+            } finally {
+                salvataggioInCorso = false
+            }
+        }
+    }
+
+    /**
+     * Mette i passi in ordine di tempo, assegna i numeri (P01, P02...) e
+     * rinomina le foto che cambiano numero. La rinomina avviene in due fasi
+     * (prima nomi temporanei) per non sovrascrivere foto con lo stesso nome.
+     */
+    private fun rinumera(c: CartellaFormazione, nomeCartella: String, passi: List<Passo>): List<Passo> {
+        val ordinati = passi.sortedBy { it.tempoMs }
+        val numerati = ordinati.mapIndexed { indice, passo ->
+            passo.copy(nomeFile = NomiFile.nomeFoto(indice + 1, passo.tempoMs, passo.tipo))
+        }
+        val daRinominare = ordinati.zip(numerati)
+            .filter { (vecchio, nuovo) -> vecchio.nomeFile.isNotEmpty() && vecchio.nomeFile != nuovo.nomeFile }
+        daRinominare.forEach { (vecchio, _) ->
+            c.rinominaFoto(nomeCartella, vecchio.nomeFile, "tmp_${vecchio.id}.jpg")
+        }
+        daRinominare.forEach { (vecchio, nuovo) ->
+            c.rinominaFoto(nomeCartella, "tmp_${vecchio.id}.jpg", nuovo.nomeFile)
+        }
+        return numerati
+    }
+
+    /** Pulsante "Salva" della finestra commento. */
+    fun salvaCommento(idPasso: String, testo: String) {
+        modifica { p ->
+            p.copy(passi = p.passi.map { if (it.id == idPasso) it.copy(commento = testo.trim()) else it })
+        }
+        passoInCommento = null
+    }
+
+    /** Pulsante "Salta" della finestra commento. */
+    fun saltaCommento() {
+        passoInCommento = null
+    }
+
+    /** Pulsante "Elimina foto": cancella il passo e rinumera gli altri. */
+    fun eliminaPasso(idPasso: String) {
+        val p = progetto ?: return
+        val c = cartella ?: return
+        val passo = p.passi.firstOrNull { it.id == idPasso } ?: return
+        passoInCommento = null
+        salvataggioInCorso = true
+        viewModelScope.launch {
+            try {
+                val elenco = withContext(Dispatchers.IO) {
+                    c.eliminaFoto(p.nomeCartella, passo.nomeFile)
+                    rinumera(c, p.nomeCartella, p.passi.filter { it.id != idPasso })
+                }
+                modifica { it.copy(passi = elenco) }
+                mostra("Foto eliminata")
+            } catch (e: Exception) {
+                mostra("Errore nell'eliminazione: ${e.message}")
+            } finally {
+                salvataggioInCorso = false
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Fine lavoro
+    // ---------------------------------------------------------------------
+
+    fun apriTermina() {
+        player?.pause()
+        finestraTermina = true
+    }
+
+    fun chiudiTermina() {
+        finestraTermina = false
+    }
+
+    /** Pulsante "Termina": salva le note finali e chiude il progetto. */
+    fun termina(noteFinali: String) {
+        val p = progetto ?: return
+        modifica { it.copy(terminato = true, noteFinali = noteFinali.trim()) }
+        finestraTermina = false
+        mostra(
+            if (p.statoAudio.inLavorazione) {
+                "Salvato. Sarà COMPLETO appena finisce l'estrazione dell'audio."
+            } else {
+                "Lavoro COMPLETO: la cartella ${p.nomeCartella} è pronta per Claude."
+            }
+        )
+        tornaHome()
+    }
+}
