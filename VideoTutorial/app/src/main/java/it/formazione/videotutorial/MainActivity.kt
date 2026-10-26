@@ -10,12 +10,9 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -26,6 +23,8 @@ import it.formazione.videotutorial.schermate.Schermata
 import it.formazione.videotutorial.schermate.SchermataHome
 import it.formazione.videotutorial.schermate.SchermataPlayer
 import it.formazione.videotutorial.schermate.SchermataScheda
+import it.formazione.videotutorial.schermate.TemaApp
+import it.formazione.videotutorial.schermate.TemaLettore
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,13 +38,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
-
-/** Colori dell'app: chiari o scuri come il telefono. */
-@Composable
-private fun TemaApp(contenuto: @Composable () -> Unit) {
-    val colori = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()
-    MaterialTheme(colorScheme = colori, content = contenuto)
 }
 
 /** Sceglie la schermata da mostrare e visualizza i messaggi brevi. */
@@ -62,7 +54,7 @@ private fun Contenuto(vm: ProgettoViewModel) {
         when (vm.schermata) {
             Schermata.HOME -> SchermataHome(vm)
             Schermata.SCHEDA -> SchermataScheda(vm)
-            Schermata.PLAYER -> SchermataPlayer(vm)
+            Schermata.PLAYER -> TemaLettore { SchermataPlayer(vm) }
         }
     }
 }

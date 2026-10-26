@@ -18,6 +18,7 @@ package it.formazione.videotutorial.archivio
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import it.formazione.videotutorial.modello.ProgettoVideo
@@ -74,17 +75,37 @@ class CartellaFormazione(private val context: Context, val uriRadice: Uri) {
     // ---------------------------------------------------------------------
 
     /** Cerca tra le sottocartelle un progetto con questa impronta; null se non c'è. */
-    fun cercaProgetto(impronta: String): ProgettoVideo? {
-        val cartelle = radice?.listFiles()?.filter { it.isDirectory } ?: return null
-        for (cartella in cartelle) {
-            val indice = cartella.findFile(CARTELLA_ARCHIVIO)?.findFile(FILE_INDICE) ?: continue
-            val progetto = leggiProgetto(indice) ?: continue
-            if (progetto.impronta == impronta) {
-                // Il nome reale della cartella vince (se l'utente l'ha rinominata).
-                return progetto.copy(nomeCartella = cartella.name ?: progetto.nomeCartella)
-            }
-        }
-        return null
+    fun cercaProgetto(impronta: String): ProgettoVideo? =
+        elencoProgetti().firstOrNull { it.impronta == impronta }
+
+    /**
+     * Tutti i progetti presenti nella cartella condivisa (le sottocartelle
+     * con un _archivio/indice.json), dal più recente al più vecchio.
+     */
+    fun elencoProgetti(): List<ProgettoVideo> {
+        val cartelle = radice?.listFiles()?.filter { it.isDirectory } ?: return emptyList()
+        return cartelle.mapNotNull { cartella ->
+            val indice = cartella.findFile(CARTELLA_ARCHIVIO)?.findFile(FILE_INDICE) ?: return@mapNotNull null
+            val progetto = leggiProgetto(indice) ?: return@mapNotNull null
+            // Il nome reale della cartella vince (se l'utente l'ha rinominata).
+            progetto.copy(nomeCartella = cartella.name ?: progetto.nomeCartella)
+        }.sortedWith(compareByDescending<ProgettoVideo> { it.scheda.data }.thenByDescending { it.nomeCartella })
+    }
+
+    /**
+     * Legge una foto ridotta di foto/ in versione piccola (lato lungo circa
+     * "latoMassimo" pixel), per le anteprime della Home. Null se non c'è.
+     */
+    fun leggiAnteprima(nomeCartella: String, nomeFile: String, latoMassimo: Int): Bitmap? {
+        val file = cartellaProgetto(nomeCartella)?.findFile(CARTELLA_FOTO)?.findFile(nomeFile) ?: return null
+        val resolver = context.contentResolver
+        // 1. legge solo le dimensioni, 2. legge l'immagine già rimpicciolita
+        val dimensioni = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        resolver.openInputStream(file.uri)?.use { BitmapFactory.decodeStream(it, null, dimensioni) }
+        var riduzione = 1
+        while (maxOf(dimensioni.outWidth, dimensioni.outHeight) / (riduzione * 2) >= latoMassimo) riduzione *= 2
+        val opzioni = BitmapFactory.Options().apply { inSampleSize = riduzione }
+        return resolver.openInputStream(file.uri)?.use { BitmapFactory.decodeStream(it, null, opzioni) }
     }
 
     /**

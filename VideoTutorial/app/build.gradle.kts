@@ -18,8 +18,8 @@ android {
         minSdk = 26
         targetSdk = 35
         // Aumentare versionCode a ogni nuova versione da installare sopra la precedente.
-        versionCode = 4
-        versionName = "1.3-fase1"
+        versionCode = 5
+        versionName = "1.4-fase1"
     }
 
     // Firma dell'APK.

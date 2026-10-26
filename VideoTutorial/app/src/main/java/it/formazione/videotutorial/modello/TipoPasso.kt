@@ -22,9 +22,11 @@ enum class TipoPasso(
     val latoLungoPx: Int,
     /** Aggiunta al nome del file (es. "_dettaglio"); vuota se non serve. */
     val suffissoFile: String,
+    /** Simbolo mostrato sul pulsante e nei segnalibri. */
+    val simbolo: String,
 ) {
-    OPERAZIONE("Operazione", "OPERAZIONE", 0xFF2E7D32, 1024, ""),
-    SICUREZZA("Sicurezza", "SICUREZZA", 0xFFC62828, 1024, ""),
-    ERRORE_DA_EVITARE("Errore da evitare", "ERRORE DA EVITARE", 0xFFEF6C00, 1024, ""),
-    DETTAGLIO("Dettaglio", "DETTAGLIO", 0xFF1565C0, 1280, "_dettaglio"),
+    OPERAZIONE("Operazione", "OPERAZIONE", 0xFF2E7D32, 1024, "", "🔧"),
+    SICUREZZA("Sicurezza", "SICUREZZA", 0xFFC62828, 1024, "", "⚠️"),
+    ERRORE_DA_EVITARE("Errore da evitare", "ERRORE DA EVITARE", 0xFFEF6C00, 1024, "", "⛔"),
+    DETTAGLIO("Dettaglio", "DETTAGLIO", 0xFF1565C0, 1280, "_dettaglio", "🔍"),
 }

@@ -143,6 +143,26 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
     var passoInCommento by mutableStateOf<String?>(null)
         private set
 
+    /** true se la finestra del commento è per una foto appena catturata (dettatura automatica). */
+    var commentoDiNuovaFoto by mutableStateOf(false)
+        private set
+
+    /** Segnalibro che si sta spostando (null = nessuno). */
+    var passoInSpostamento by mutableStateOf<String?>(null)
+        private set
+
+    /** Progetti presenti nella cartella condivisa (elenco della Home). */
+    var progettiSalvati by mutableStateOf<List<ProgettoVideo>>(emptyList())
+        private set
+
+    /** true mentre si legge l'elenco dei progetti. */
+    var caricamentoProgetti by mutableStateOf(false)
+        private set
+
+    /** true quando la Home deve far scegliere di nuovo il video (non più raggiungibile). */
+    var richiestaSceltaVideo by mutableStateOf(false)
+        private set
+
     /** true se è aperta la finestra "Termina". */
     var finestraTermina by mutableStateOf(false)
         private set
@@ -324,6 +344,76 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
     }
 
     // ---------------------------------------------------------------------
+    // Progetti già creati (elenco della Home)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Legge l'elenco dei progetti nella cartella condivisa. Passa dalla coda
+     * dei file, così vede anche gli ultimi salvataggi appena fatti.
+     */
+    fun caricaProgetti() {
+        val c = cartella ?: run {
+            progettiSalvati = emptyList()
+            return
+        }
+        caricamentoProgetti = true
+        accoda {
+            val elenco = try {
+                c.elencoProgetti()
+            } catch (e: Exception) {
+                emptyList()
+            }
+            withContext(Dispatchers.Main) {
+                progettiSalvati = elenco
+                caricamentoProgetti = false
+            }
+        }
+    }
+
+    /** Miniatura della prima foto di un progetto (null se non ha foto). */
+    suspend fun anteprimaProgetto(p: ProgettoVideo): ImageBitmap? {
+        val c = cartella ?: return null
+        val prima = p.passi.firstOrNull() ?: return null
+        return withContext(Dispatchers.IO) {
+            try {
+                c.leggiAnteprima(p.nomeCartella, prima.nomeFile, 240)?.asImageBitmap()
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+
+    /**
+     * Riapre un progetto dall'elenco. Se il video non è più raggiungibile
+     * (spostato o permesso perso) chiede di sceglierlo di nuovo: l'impronta
+     * lo ricollega al progetto giusto.
+     */
+    fun riapriProgetto(p: ProgettoVideo) {
+        occupato = true
+        viewModelScope.launch {
+            val raggiungibile = withContext(Dispatchers.IO) { videoRaggiungibile(Uri.parse(p.uriVideo)) }
+            occupato = false
+            if (raggiungibile) {
+                apriProgetto(p)
+            } else {
+                mostra("Il video «${p.nomeFileVideo}» non si trova più: selezionalo di nuovo.")
+                richiestaSceltaVideo = true
+            }
+        }
+    }
+
+    /** La Home ha aperto la scelta del video richiesta. */
+    fun sceltaVideoAvviata() {
+        richiestaSceltaVideo = false
+    }
+
+    private fun videoRaggiungibile(uri: Uri): Boolean = try {
+        contesto.contentResolver.openFileDescriptor(uri, "r")?.use { true } ?: false
+    } catch (e: Exception) {
+        false
+    }
+
+    // ---------------------------------------------------------------------
     // Apertura e chiusura di un progetto
     // ---------------------------------------------------------------------
 
@@ -353,6 +443,7 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
         progetto = null
         videoScelto = null
         passoInCommento = null
+        passoInSpostamento = null
         finestraTermina = false
         schermata = Schermata.HOME
     }
@@ -616,24 +707,41 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
      */
     fun cattura(tipo: TipoPasso) {
         val p = progetto ?: return
-        val c = cartella ?: return
         val pl = player ?: return
+        if (passoInSpostamento != null) return
         pl.pause()
         val tempoMs = pl.currentPosition.coerceIn(0L, durataMs())
         val nuovo = Passo(id = UUID.randomUUID().toString(), tempoMs = tempoMs, tipo = tipo, nomeFile = "")
-        val (numerati, rinomine) = numera(p.passi + nuovo)
-        val nomeFile = numerati.first { it.id == nuovo.id }.nomeFile
+        salvaPassoConFoto(p.passi + nuovo, nuovo, fileVecchio = null)
+        passoInCommento = nuovo.id
+        commentoDiNuovaFoto = true
+        val totale = p.passi.size + 1
+        if (totale > SOGLIA_FOTO) mostra("Attenzione: $totale foto, oltre la soglia di $SOGLIA_FOTO")
+    }
+
+    /**
+     * Inserisce "passo" (nuovo, spostato o con il tipo cambiato) nell'elenco,
+     * rinumera tutto e aggiorna subito il progetto. In sottofondo: cancella
+     * la vecchia foto (se c'è), rinomina le altre e salva il fotogramma al
+     * tempo del passo. "passi" deve già contenere "passo" con nomeFile vuoto.
+     */
+    private fun salvaPassoConFoto(passi: List<Passo>, passo: Passo, fileVecchio: String?) {
+        val p = progetto ?: return
+        val c = cartella ?: return
+        val (numerati, rinomine) = numera(passi)
+        val nomeFile = numerati.first { it.id == passo.id }.nomeFile
         val uriVideo = Uri.parse(p.uriVideo)
         val nomeCartella = p.nomeCartella
 
-        // 1. In sottofondo: rinomina le foto che cambiano numero e salva la nuova
+        // 1. In sottofondo: file
         fotoInSalvataggio++
         accoda {
             try {
+                if (fileVecchio != null) c.eliminaFoto(nomeCartella, fileVecchio)
                 applicaRinomine(c, nomeCartella, rinomine)
-                val immagine = estrattore.estrai(uriVideo, tempoMs) ?: error("fotogramma non leggibile")
+                val immagine = estrattore.estrai(uriVideo, passo.tempoMs) ?: error("fotogramma non leggibile")
                 try {
-                    c.salvaFoto(nomeCartella, nomeFile, immagine, tipo.latoLungoPx)
+                    c.salvaFoto(nomeCartella, nomeFile, immagine, passo.tipo.latoLungoPx)
                 } finally {
                     immagine.recycle()
                 }
@@ -641,19 +749,15 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
                 // Foto non salvata: si toglie il passo per non lasciarlo senza file
                 withContext(Dispatchers.Main) {
                     mostra("Foto non salvata: ${e.message}")
-                    eliminaPasso(nuovo.id, avvisa = false)
+                    eliminaPasso(passo.id, avvisa = false)
                 }
             } finally {
                 withContext(Dispatchers.Main) { fotoInSalvataggio-- }
             }
         }
 
-        // 2. Subito: aggiorna l'elenco (una nuova cattura riporta il lavoro "IN CORSO")
+        // 2. Subito: aggiorna l'elenco (una modifica alle foto riporta il lavoro "IN CORSO")
         modifica { it.copy(passi = numerati, terminato = false) }
-        passoInCommento = nuovo.id
-        if (numerati.size > SOGLIA_FOTO) {
-            mostra("Attenzione: ${numerati.size} foto, oltre la soglia di $SOGLIA_FOTO")
-        }
     }
 
     /** Una foto da rinominare: dal nome "da" al nome "a". */
@@ -684,21 +788,73 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
         rinomine.forEach { c.rinominaFoto(nomeCartella, "tmp_${it.id}.jpg", it.a) }
     }
 
-    /** Pulsante "Salva" della finestra commento. */
-    fun salvaCommento(idPasso: String, testo: String) {
-        modifica { p ->
-            p.copy(passi = p.passi.map { if (it.id == idPasso) it.copy(commento = testo.trim()) else it })
+    // ---------------------------------------------------------------------
+    // Modifica dei segnalibri (commento, tipo, spostamento, eliminazione)
+    // ---------------------------------------------------------------------
+
+    /** Segnalibro nel punto indicato (quello su cui si trova il video), o null. */
+    fun segnalibroQui(posizioneMs: Long): Passo? =
+        progetto?.passi?.firstOrNull { abs(it.tempoMs - posizioneMs) <= toleranzaSegnalibroMs }
+
+    /** Apre la finestra di modifica di un segnalibro esistente (dal fumetto). */
+    fun apriModificaPasso(idPasso: String) {
+        player?.pause()
+        passoInCommento = idPasso
+        commentoDiNuovaFoto = false
+    }
+
+    /** Pulsante "Salva" della finestra: aggiorna commento e, se cambiato, il tipo. */
+    fun salvaPasso(idPasso: String, testo: String, tipo: TipoPasso) {
+        passoInCommento = null
+        val p = progetto ?: return
+        val passo = p.passi.firstOrNull { it.id == idPasso } ?: return
+        if (tipo != passo.tipo) {
+            // Il tipo cambia nome e misura della foto: la si rifà
+            val modificato = passo.copy(commento = testo.trim(), tipo = tipo, nomeFile = "")
+            salvaPassoConFoto(p.passi.map { if (it.id == idPasso) modificato else it }, modificato, passo.nomeFile)
+        } else {
+            modifica { pr ->
+                pr.copy(passi = pr.passi.map { if (it.id == idPasso) it.copy(commento = testo.trim()) else it })
+            }
         }
+    }
+
+    /** Chiude la finestra del commento senza salvare ("Salta" o "Annulla"). */
+    fun chiudiFinestraPasso() {
         passoInCommento = null
     }
 
-    /** Pulsante "Salta" della finestra commento. */
-    fun saltaCommento() {
+    /** Inizia lo spostamento: l'utente porta il video nel punto giusto e conferma. */
+    fun iniziaSpostamento(idPasso: String) {
+        player?.pause()
         passoInCommento = null
+        passoInSpostamento = idPasso
+    }
+
+    /** Annulla lo spostamento e torna al punto originale del segnalibro. */
+    fun annullaSpostamento() {
+        val id = passoInSpostamento ?: return
+        passoInSpostamento = null
+        progetto?.passi?.firstOrNull { it.id == id }?.let { vaiA(it.tempoMs) }
+    }
+
+    /** "Fissa qui": sposta il segnalibro nel punto attuale e rifà la foto. */
+    fun confermaSpostamento() {
+        val id = passoInSpostamento ?: return
+        passoInSpostamento = null
+        val p = progetto ?: return
+        val pl = player ?: return
+        val passo = p.passi.firstOrNull { it.id == id } ?: return
+        pl.pause()
+        val nuovoTempo = pl.currentPosition.coerceIn(0L, durataMs())
+        if (nuovoTempo == passo.tempoMs) return
+        val spostato = passo.copy(tempoMs = nuovoTempo, nomeFile = "")
+        salvaPassoConFoto(p.passi.map { if (it.id == id) spostato else it }, spostato, passo.nomeFile)
+        mostra("Segnalibro spostato a ${NomiFile.tempoFoto(nuovoTempo)}")
     }
 
     /**
-     * Pulsante "Elimina foto": toglie subito il passo e rinumera gli altri;
+     * Elimina un segnalibro: lo toglie subito e rinumera gli altri;
      * i file vengono cancellati e rinominati in sottofondo.
      */
     fun eliminaPasso(idPasso: String, avvisa: Boolean = true) {
@@ -706,6 +862,7 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
         val c = cartella ?: return
         val passo = p.passi.firstOrNull { it.id == idPasso } ?: return
         if (passoInCommento == idPasso) passoInCommento = null
+        if (passoInSpostamento == idPasso) passoInSpostamento = null
         val (numerati, rinomine) = numera(p.passi.filter { it.id != idPasso })
         val nomeCartella = p.nomeCartella
         accoda {
@@ -713,7 +870,7 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
             applicaRinomine(c, nomeCartella, rinomine)
         }
         modifica { it.copy(passi = numerati) }
-        if (avvisa) mostra("Foto eliminata")
+        if (avvisa) mostra("Segnalibro eliminato")
     }
 
     // ---------------------------------------------------------------------

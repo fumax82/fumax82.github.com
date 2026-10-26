@@ -11,7 +11,10 @@
  * - Oltre una soglia (ai lati) la striscia si comprime e mostra tutto il
  *   resto del video in poco spazio, per avere una visione d'insieme.
  * - I segnalibri (foto catturate) sono tacche colorate come i pulsanti.
- * - Toccando la striscia il video salta a quel punto.
+ * - Toccando la striscia il video salta a quel punto; toccando vicino a
+ *   una tacca salta esattamente su quel segnalibro.
+ * - Durante lo spostamento di un segnalibro, la sua tacca segue il punto
+ *   attuale (al centro) ed è evidenziata.
  *
  * Per cambiare l'aspetto modificare le costanti in ImpostazioniStriscia.
  */
@@ -38,6 +41,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import it.formazione.videotutorial.modello.Passo
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
@@ -54,6 +58,9 @@ object ImpostazioniStriscia {
 
     /** Larghezza minima di una miniatura nella zona compressa. */
     val CELLA_MINIMA = 3.dp
+
+    /** Toccando entro questa distanza da una tacca si salta sul segnalibro. */
+    val AGGANCIO_TACCA = 16.dp
 }
 
 /**
@@ -112,6 +119,8 @@ fun StrisciaAnteprime(
     passi: List<Passo>,
     onTocco: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    /** Segnalibro in spostamento (disegnato sul punto attuale), oppure null. */
+    idInSpostamento: String? = null,
 ) {
     // Valori sempre aggiornati anche dentro il gestore del tocco
     val densita = LocalDensity.current
@@ -119,6 +128,8 @@ fun StrisciaAnteprime(
         geometria(larghezza, durataMs, posizioneMs, intervalloMs, densita)
     }
     val tocco by rememberUpdatedState(onTocco)
+    val passiAttuali by rememberUpdatedState(passi)
+    val raggioAggancio = with(densita) { ImpostazioniStriscia.AGGANCIO_TACCA.toPx() }
 
     Canvas(
         modifier = modifier
@@ -126,7 +137,13 @@ fun StrisciaAnteprime(
             .height(ImpostazioniStriscia.ALTEZZA)
             .pointerInput(Unit) {
                 detectTapGestures { punto ->
-                    tocco(geometriaAttuale(size.width.toFloat()).tempo(punto.x))
+                    val g = geometriaAttuale(size.width.toFloat())
+                    // Tocco vicino a una tacca: si va esattamente su quel segnalibro
+                    val vicino = passiAttuali
+                        .map { it to abs(g.x(it.tempoMs.toDouble()) - punto.x) }
+                        .filter { it.second <= raggioAggancio }
+                        .minByOrNull { it.second }?.first
+                    tocco(vicino?.tempoMs ?: g.tempo(punto.x))
                 }
             },
     ) {
@@ -144,10 +161,20 @@ fun StrisciaAnteprime(
         // Segnalibri: tacca colorata con un triangolino in alto
         val spessore = 3.dp.toPx()
         passi.forEach { passo ->
+            if (passo.id == idInSpostamento) return@forEach
             val x = g.x(passo.tempoMs.toDouble())
             val colore = Color(passo.tipo.colore)
             drawRect(colore, topLeft = Offset(x - spessore / 2, 0f), size = Size(spessore, size.height))
             triangolo(x, 0f, 6.dp.toPx(), colore, versoIlBasso = true)
+        }
+
+        // Segnalibro in spostamento: tacca larga e bordata sul punto attuale
+        passi.firstOrNull { it.id == idInSpostamento }?.let { passo ->
+            val x = g.x(posizioneMs.toDouble())
+            val largo = 8.dp.toPx()
+            drawRect(Color.White, topLeft = Offset(x - largo / 2 - 1.dp.toPx(), 0f), size = Size(largo + 2.dp.toPx(), size.height))
+            drawRect(Color(passo.tipo.colore), topLeft = Offset(x - largo / 2, 0f), size = Size(largo, size.height))
+            triangolo(x, 0f, 9.dp.toPx(), Color(passo.tipo.colore), versoIlBasso = true)
         }
 
         // Punto attuale: linea bianca al centro
