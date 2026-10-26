@@ -86,6 +86,14 @@ fun SchermataHome(vm: ProgettoViewModel) {
             Text("Analisi del video in corso…")
         }
 
+        // Foto dell'ultimo video ancora in salvataggio: meglio non chiudere l'app
+        if (vm.fotoInSalvataggio > 0) {
+            Text(
+                "Salvataggio di ${vm.fotoInSalvataggio} foto in corso: non chiudere l'app.",
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
+
         if (cartella == null) {
             Text(
                 "Prima scegli la cartella \"Formazione\" (ad esempio una cartella sincronizzata " +

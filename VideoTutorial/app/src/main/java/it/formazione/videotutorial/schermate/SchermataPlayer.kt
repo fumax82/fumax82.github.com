@@ -27,7 +27,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -102,6 +101,7 @@ fun SchermataPlayer(vm: ProgettoViewModel) {
                 )
                 Text(
                     "Foto: $numeroFoto${if (troppeFoto) " (oltre ${ProgettoViewModel.SOGLIA_FOTO}!)" else ""}" +
+                        (if (vm.fotoInSalvataggio > 0) " · salvo ${vm.fotoInSalvataggio}…" else "") +
                         " · ${progetto.statoAudio.descrizione}",
                     style = MaterialTheme.typography.bodySmall,
                     color = if (troppeFoto) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -121,7 +121,6 @@ fun SchermataPlayer(vm: ProgettoViewModel) {
             contentAlignment = Alignment.Center,
         ) {
             VistaVideo(vm)
-            if (vm.salvataggioInCorso) CircularProgressIndicator()
         }
 
         // --- Comandi ---
@@ -169,7 +168,7 @@ fun SchermataPlayer(vm: ProgettoViewModel) {
                     riga.forEach { tipo ->
                         PulsanteCattura(
                             tipo = tipo,
-                            attivo = !vm.salvataggioInCorso,
+                            attivo = true, // sempre attivi: il salvataggio avviene in sottofondo
                             modifier = Modifier.weight(1f),
                         ) { vm.cattura(tipo) }
                     }

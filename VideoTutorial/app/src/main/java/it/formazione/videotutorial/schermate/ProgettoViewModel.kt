@@ -16,6 +16,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.annotation.OptIn
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -121,8 +122,8 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
     var velocitaScorrimento by mutableStateOf(0f)
         private set
 
-    /** true mentre si salva una foto: i pulsanti di cattura sono disattivati. */
-    var salvataggioInCorso by mutableStateOf(false)
+    /** Foto catturate che si stanno ancora salvando in sottofondo. */
+    var fotoInSalvataggio by mutableIntStateOf(0)
         private set
 
     /** Passo di cui è aperta la finestra del commento (null = finestra chiusa). */
@@ -141,8 +142,12 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
     private var lavoroSalti: Job? = null
     private var posizioneVirtualeMs = 0.0
 
-    /** Coda dei salvataggi: si salva sempre l'ultima versione, uno alla volta. */
-    private val codaSalvataggi = Channel<Pair<CartellaFormazione, ProgettoVideo>>(Channel.CONFLATED)
+    /**
+     * Coda delle operazioni sui file (salvare foto, rinominarle, scrivere
+     * indice.json...). Vengono eseguite in sottofondo, una alla volta e
+     * nell'ordine in cui sono state chieste: così lo schermo non aspetta mai.
+     */
+    private val codaFile = Channel<suspend () -> Unit>(Channel.UNLIMITED)
 
     init {
         // Riprende la cartella scelta l'ultima volta
@@ -150,13 +155,13 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
             val c = CartellaFormazione(contesto, uri)
             if (c.accessibile()) cartella = c
         }
-        // Salvataggi in sottofondo, uno dopo l'altro
+        // Esecuzione della coda dei file, un'operazione dopo l'altra
         viewModelScope.launch(Dispatchers.IO) {
-            for ((c, p) in codaSalvataggi) {
+            for (operazione in codaFile) {
                 try {
-                    c.salvaProgetto(p)
+                    operazione()
                 } catch (e: Exception) {
-                    withContext(Dispatchers.Main) { mostra("Errore nel salvataggio: ${e.message}") }
+                    withContext(Dispatchers.Main) { mostra("Errore nei file: ${e.message}") }
                 }
             }
         }
@@ -326,7 +331,7 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
         player = null
         inRiproduzione = false
         velocitaScorrimento = 0f
-        viewModelScope.launch(Dispatchers.IO) { estrattore.chiudi() }
+        accoda { estrattore.chiudi() } // dopo le foto ancora in coda
         progetto = null
         videoScelto = null
         passoInCommento = null
@@ -342,7 +347,13 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
         val attuale = progetto ?: return
         val nuovo = cambia(attuale)
         progetto = nuovo
-        cartella?.let { codaSalvataggi.trySend(it to nuovo) }
+        val c = cartella ?: return
+        accoda { c.salvaProgetto(nuovo) }
+    }
+
+    /** Aggiunge un'operazione sui file in fondo alla coda. */
+    private fun accoda(operazione: suspend () -> Unit) {
+        codaFile.trySend(operazione)
     }
 
     override fun onCleared() {
@@ -517,63 +528,79 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
     // Cattura delle foto e passi
     // ---------------------------------------------------------------------
 
-    /** Pulsante di cattura: salva il fotogramma attuale come nuovo passo. */
+    /**
+     * Pulsante di cattura. È istantaneo: il nuovo passo compare subito e si
+     * apre la finestra del commento; il fotogramma viene estratto e salvato
+     * in sottofondo (vedi codaFile), mentre si scrive il commento.
+     */
     fun cattura(tipo: TipoPasso) {
         val p = progetto ?: return
         val c = cartella ?: return
         val pl = player ?: return
-        if (salvataggioInCorso) return
         pl.pause()
         val tempoMs = pl.currentPosition.coerceIn(0L, durataMs())
-        salvataggioInCorso = true
-        viewModelScope.launch {
+        val nuovo = Passo(id = UUID.randomUUID().toString(), tempoMs = tempoMs, tipo = tipo, nomeFile = "")
+        val (numerati, rinomine) = numera(p.passi + nuovo)
+        val nomeFile = numerati.first { it.id == nuovo.id }.nomeFile
+        val uriVideo = Uri.parse(p.uriVideo)
+        val nomeCartella = p.nomeCartella
+
+        // 1. In sottofondo: rinomina le foto che cambiano numero e salva la nuova
+        fotoInSalvataggio++
+        accoda {
             try {
-                val nuovo = Passo(id = UUID.randomUUID().toString(), tempoMs = tempoMs, tipo = tipo, nomeFile = "")
-                val elenco = withContext(Dispatchers.IO) {
-                    val immagine = estrattore.estrai(Uri.parse(p.uriVideo), tempoMs)
-                        ?: error("fotogramma non leggibile")
-                    try {
-                        val numerati = rinumera(c, p.nomeCartella, p.passi + nuovo)
-                        val salvato = numerati.first { it.id == nuovo.id }
-                        c.salvaFoto(p.nomeCartella, salvato.nomeFile, immagine, tipo.latoLungoPx)
-                        numerati
-                    } finally {
-                        immagine.recycle()
-                    }
-                }
-                // Una nuova cattura riporta il lavoro "IN CORSO"
-                modifica { it.copy(passi = elenco, terminato = false) }
-                passoInCommento = nuovo.id
-                if (elenco.size > SOGLIA_FOTO) {
-                    mostra("Attenzione: ${elenco.size} foto, oltre la soglia di $SOGLIA_FOTO")
+                applicaRinomine(c, nomeCartella, rinomine)
+                val immagine = estrattore.estrai(uriVideo, tempoMs) ?: error("fotogramma non leggibile")
+                try {
+                    c.salvaFoto(nomeCartella, nomeFile, immagine, tipo.latoLungoPx)
+                } finally {
+                    immagine.recycle()
                 }
             } catch (e: Exception) {
-                mostra("Foto non salvata: ${e.message}")
+                // Foto non salvata: si toglie il passo per non lasciarlo senza file
+                withContext(Dispatchers.Main) {
+                    mostra("Foto non salvata: ${e.message}")
+                    eliminaPasso(nuovo.id, avvisa = false)
+                }
             } finally {
-                salvataggioInCorso = false
+                withContext(Dispatchers.Main) { fotoInSalvataggio-- }
             }
+        }
+
+        // 2. Subito: aggiorna l'elenco (una nuova cattura riporta il lavoro "IN CORSO")
+        modifica { it.copy(passi = numerati, terminato = false) }
+        passoInCommento = nuovo.id
+        if (numerati.size > SOGLIA_FOTO) {
+            mostra("Attenzione: ${numerati.size} foto, oltre la soglia di $SOGLIA_FOTO")
         }
     }
 
+    /** Una foto da rinominare: dal nome "da" al nome "a". */
+    private data class Rinomina(val id: String, val da: String, val a: String)
+
     /**
-     * Mette i passi in ordine di tempo, assegna i numeri (P01, P02...) e
-     * rinomina le foto che cambiano numero. La rinomina avviene in due fasi
-     * (prima nomi temporanei) per non sovrascrivere foto con lo stesso nome.
+     * Mette i passi in ordine di tempo e assegna i numeri (P01, P02...).
+     * Restituisce l'elenco numerato e le foto da rinominare perché hanno
+     * cambiato numero. Non tocca i file.
      */
-    private fun rinumera(c: CartellaFormazione, nomeCartella: String, passi: List<Passo>): List<Passo> {
+    private fun numera(passi: List<Passo>): Pair<List<Passo>, List<Rinomina>> {
         val ordinati = passi.sortedBy { it.tempoMs }
         val numerati = ordinati.mapIndexed { indice, passo ->
             passo.copy(nomeFile = NomiFile.nomeFoto(indice + 1, passo.tempoMs, passo.tipo))
         }
-        val daRinominare = ordinati.zip(numerati)
+        val rinomine = ordinati.zip(numerati)
             .filter { (vecchio, nuovo) -> vecchio.nomeFile.isNotEmpty() && vecchio.nomeFile != nuovo.nomeFile }
-        daRinominare.forEach { (vecchio, _) ->
-            c.rinominaFoto(nomeCartella, vecchio.nomeFile, "tmp_${vecchio.id}.jpg")
-        }
-        daRinominare.forEach { (vecchio, nuovo) ->
-            c.rinominaFoto(nomeCartella, "tmp_${vecchio.id}.jpg", nuovo.nomeFile)
-        }
-        return numerati
+            .map { (vecchio, nuovo) -> Rinomina(vecchio.id, vecchio.nomeFile, nuovo.nomeFile) }
+        return numerati to rinomine
+    }
+
+    /**
+     * Rinomina i file delle foto in due fasi (prima nomi temporanei) per non
+     * sovrascrivere foto con lo stesso nome. Da eseguire nella coda dei file.
+     */
+    private fun applicaRinomine(c: CartellaFormazione, nomeCartella: String, rinomine: List<Rinomina>) {
+        rinomine.forEach { c.rinominaFoto(nomeCartella, it.da, "tmp_${it.id}.jpg") }
+        rinomine.forEach { c.rinominaFoto(nomeCartella, "tmp_${it.id}.jpg", it.a) }
     }
 
     /** Pulsante "Salva" della finestra commento. */
@@ -589,27 +616,23 @@ class ProgettoViewModel(applicazione: Application) : AndroidViewModel(applicazio
         passoInCommento = null
     }
 
-    /** Pulsante "Elimina foto": cancella il passo e rinumera gli altri. */
-    fun eliminaPasso(idPasso: String) {
+    /**
+     * Pulsante "Elimina foto": toglie subito il passo e rinumera gli altri;
+     * i file vengono cancellati e rinominati in sottofondo.
+     */
+    fun eliminaPasso(idPasso: String, avvisa: Boolean = true) {
         val p = progetto ?: return
         val c = cartella ?: return
         val passo = p.passi.firstOrNull { it.id == idPasso } ?: return
-        passoInCommento = null
-        salvataggioInCorso = true
-        viewModelScope.launch {
-            try {
-                val elenco = withContext(Dispatchers.IO) {
-                    c.eliminaFoto(p.nomeCartella, passo.nomeFile)
-                    rinumera(c, p.nomeCartella, p.passi.filter { it.id != idPasso })
-                }
-                modifica { it.copy(passi = elenco) }
-                mostra("Foto eliminata")
-            } catch (e: Exception) {
-                mostra("Errore nell'eliminazione: ${e.message}")
-            } finally {
-                salvataggioInCorso = false
-            }
+        if (passoInCommento == idPasso) passoInCommento = null
+        val (numerati, rinomine) = numera(p.passi.filter { it.id != idPasso })
+        val nomeCartella = p.nomeCartella
+        accoda {
+            c.eliminaFoto(nomeCartella, passo.nomeFile)
+            applicaRinomine(c, nomeCartella, rinomine)
         }
+        modifica { it.copy(passi = numerati) }
+        if (avvisa) mostra("Foto eliminata")
     }
 
     // ---------------------------------------------------------------------

@@ -13,6 +13,7 @@ Claude legge solo `tutorial_input.md` e le foto in `foto/`.
 6. **Cattura.** Ci sono quattro pulsanti colorati: Operazione, Sicurezza, Errore da evitare e Dettaglio. Ognuno salva il fotogramma del video originale:
    - in `foto/` una copia ridotta a 1024 px (1280 px per Dettaglio);
    - in `_archivio/foto_originali/` la copia a piena risoluzione.
+   La cattura è istantanea: la finestra del commento si apre subito, mentre la foto viene estratta e salvata in sottofondo. In alto compare "salvo N…" finché il salvataggio non è finito.
 7. **Numerazione.** I passi sono sempre in ordine di tempo nel video. Se catturi un punto precedente, le foto si rinumerano da sole.
 8. **Commento.** Dopo ogni foto si apre una finestra con Salva, Salta ed Elimina foto. Puoi dettare il commento con il microfono della tastiera.
 9. **Audio.** L'audio completo viene copiato in sottofondo, senza perdita di qualità, in `_archivio/audio_completo.m4a`. In questa fase funziona con l'audio AAC, cioè quasi tutti i video fatti col telefono.
