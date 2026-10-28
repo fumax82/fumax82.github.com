@@ -62,10 +62,20 @@ python3 Kalend/tools/pack-apk.py    # → Kalend/dist/Kalend-unsigned.apk
 e‑mail, legge applicabile): i segnaposto vengono sostituiti nei testi legali
 dell'app e nelle pagine web al momento del build.
 
-Il build inserisce nella pagina i dizionari (`window.KX_I18N`), i pacchetti lingua
-(`window.KX_PACKS`) e i moduli di `src/modules/` (in ordine di nome), poi ricalcola
-gli hash SHA-256 di ogni `<script>` nella CSP: senza questo passo la WebView
-bloccherebbe gli script. **Ogni modifica a `src/` richiede un nuovo build.**
+Il build inserisce nella pagina i dizionari di italiano e inglese (`window.KX_I18N`),
+i pacchetti lingua (`window.KX_PACKS`) e i moduli di `src/modules/` (in ordine di
+nome), poi ricalcola gli hash SHA-256 di ogni `<script>` nella CSP: senza questo
+passo la WebView bloccherebbe gli script. **Ogni modifica a `src/` richiede un nuovo build.**
+
+Dalla v55 le altre lingue stanno in `www/i18n/<lingua>.json` (traduzioni, lessico
+del parser, auto-tag, cultura, testi legali): un caricatore in testa alla pagina
+legge quella in uso all'avvio. La cartella `www/i18n/` va distribuita insieme alla
+pagina (l'APK e il progetto Android la copiano da soli). `node tools/build.js --out
+<file>` costruisce una pagina di prova altrove, con la sua cartella `i18n/`.
+
+Collaudi disponibili (Playwright): `wx-test.js`, `geo-test.js`, `hol-test.js`,
+`legal-test.js`, `sec-test.js`, `daycal-test.js`, `nl-suite.js <lingua|all>`
+(parser con frasi e risultati attesi per lingua in `tools/nl-suite/`).
 
 ## Come si firma e si installa l'APK
 
