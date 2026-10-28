@@ -23,7 +23,8 @@ Kalend/
 ├─ www/index.html          ← PAGINA COSTRUITA (non modificare a mano: è generata)
 ├─ tools/
 │   build.js               assembla www/index.html e ricalcola gli hash della Content-Security-Policy
-│   pack-apk.py            crea dist/Kalend-unsigned.apk dall'APK originale + pagina nuova
+│   pack-apk.py            crea dist/Kalend-unsigned.apk (allineato, versionCode) dall'APK originale
+│   sign-apk.py            firma v2 con chiave di prova, senza SDK Android
 │   harness.js             apre l'app in Chromium headless: errori JS, testi, screenshot
 │   i18n-audit.js          copertura delle traduzioni e testi rimasti in italiano
 │   i18n-merge.py          unisce file parziali in un pacchetto lingua
@@ -57,9 +58,21 @@ adb install -r Kalend/dist/Kalend.apk
 ```
 
 Per aggiornare un'app già installata (o pubblicata sul Play Store) la chiave deve
-essere la stessa delle versioni precedenti. Il `versionCode` nel manifest resta
-quello dell'APK originale (53): per il Play Store va aumentato ricostruendo la
-parte nativa con Android Studio, oppure modificando il manifest con `apktool`.
+essere la stessa delle versioni precedenti. `pack-apk.py --version 54` porta il
+`versionCode` del manifest a 54 (e il `versionName` a 54.0) senza ricostruire la
+parte nativa; l'allineamento a 4 byte è già fatto, `zipalign` non è più necessario.
+
+### APK di prova senza SDK (chiave temporanea)
+
+```bash
+python3 Kalend/tools/pack-apk.py --version 54      # allinea le voci e alza il versionCode
+python3 Kalend/tools/sign-apk.py                   # → dist/Kalend-test-signed.apk (firma v2)
+```
+
+`sign-apk.py` firma con una chiave auto-generata (`android/test-key.pem`, esclusa da git):
+va bene per provare sul telefono, **non** per pubblicare né per aggiornare un'app già
+installata con un'altra firma (Android chiede di disinstallarla: fai prima un backup
+dall'app). Per la versione definitiva usa `apksigner` con il tuo keystore.
 
 ## Come si collauda
 
