@@ -20339,6 +20339,8 @@ function writeBackup(data){
     localStorage.setItem('cal_settings',JSON.stringify(s));}
   if(data.chains!=null&&typeof data.chains==='object'){deepFix(data.chains,0,new WeakSet());localStorage.setItem(CHAIN_STORE_KEY,JSON.stringify(data.chains));}
   if(data.todo!=null&&typeof data.todo==='object'){deepFix(data.todo,0,new WeakSet());localStorage.setItem(TODO_STORE_KEY,JSON.stringify(data.todo));}
+  /* v55: personalizzazioni per calendario nella giornata (modulo 45-daycal.js) */
+  if(data.calPrefs&&typeof data.calPrefs==='object'&&!Array.isArray(data.calPrefs)){deepFix(data.calPrefs,0,new WeakSet());const cp={};Object.keys(data.calPrefs).slice(0,200).forEach(k=>{const v=data.calPrefs[k];if(!/^(own|todo|sub:[\w-]{1,40}|dev:.{0,80})$/.test(k)||!v||typeof v!=='object')return;const o={};if(typeof v.hidden==='boolean')o.hidden=v.hidden;if(typeof v.color==='string'&&/^#[0-9a-fA-F]{6}$/.test(v.color))o.color=v.color;if(typeof v.label==='string')o.label=v.label.slice(0,40);if(typeof v.icon==='string')o.icon=v.icon.slice(0,8);['loc','desc','tags','compact'].forEach(f=>{if(typeof v[f]==='boolean')o[f]=v[f];});if(v.remind===''||/^\d{1,5}$/.test(String(v.remind)))o.remind=String(v.remind);cp[k]=o;});localStorage.setItem('kx_calprefs_v1',JSON.stringify(cp));}
   /* v43: famiglie di tag, numeri delle catene e (senza indirizzi segreti) i calendari collegati */
   const K=data.kx&&typeof data.kx==='object'?data.kx:null;
   if(K){
@@ -20359,7 +20361,7 @@ function sanitizeEventsObj(obj){
 function validBackup(d){
   if(!d||typeof d!=='object'||Array.isArray(d))return{ok:false,why:T('File non valido')};
   if(d.events!=null&&(typeof d.events!=='object'||Array.isArray(d.events)))return{ok:false,why:T('Sezione eventi non valida')};
-  for(const sec of ['settings','chains','todo','tagConfig','kx'])if(d[sec]!=null&&(typeof d[sec]!=='object'||Array.isArray(d[sec])))return{ok:false,why:T('Sezione «{s}» non valida',{s:sec})};
+  for(const sec of ['settings','chains','todo','tagConfig','kx','calPrefs'])if(d[sec]!=null&&(typeof d[sec]!=='object'||Array.isArray(d[sec])))return{ok:false,why:T('Sezione «{s}» non valida',{s:sec})};
   const n=Object.keys(d.events||{}).length;if(n>20000)return{ok:false,why:T('Troppi giorni nel file')};
   return{ok:true};
 }

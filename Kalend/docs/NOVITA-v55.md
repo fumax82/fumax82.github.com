@@ -158,5 +158,22 @@ nel repository è verificata solo la compilazione del Java (`tools/native-check.
   tutte le lingue; nuovo banco di prova `tools/nl-suite.js` con frasi e
   risultati attesi per lingua (`tools/nl-suite/<lingua>.json`).
 
+## 8. Calendari nella giornata (personalizzazioni per calendario)
+Aprendo una giornata, gli eventi dei vari calendari (i miei, quelli collegati
+via iCal, quelli del telefono, le attività To Do) ora si distinguono e si
+personalizzano senza toccare il calendario d'origine (modulo `45-daycal.js`):
+* **barra dei calendari** in testa al dettaglio del giorno: un chip per ogni
+  calendario presente, con colore, nome e numero di eventi. Un tocco lo
+  nasconde o mostra nella giornata; una pressione lunga (o ⋯) apre la scheda;
+* **scheda per calendario**: nome mostrato, colore (vale anche nella griglia),
+  icona davanti al titolo, quali dettagli mostrare (luogo, descrizione, tag),
+  barre compatte, **promemoria per gli eventi di quel calendario** (che di suo
+  non ne hanno), nascondi nella giornata, azzera;
+* **contrassegno di provenienza** sulle barre: 🔗 collegato, 📱 telefono, ☑ To Do.
+Le preferenze stanno in `kx_calprefs_v1`, entrano nel backup completo
+(sezione `calPrefs`, verificata al ripristino) e si applicano in memoria agli
+eventi collegati (colore e promemoria) senza modificare i calendari esterni.
+Collaudo: `node Kalend/tools/daycal-test.js` (12 controlli, tutti ok).
+
 ## Cosa NON è cambiato
 Grafica, viste, cielo vivo, parser, tag, calendari, widget: identici alla v54.
