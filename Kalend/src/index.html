@@ -5157,7 +5157,7 @@ body.kx-land .day-cell.kx-fest-bday .kx-fest-em{top:2px;font-size:8px}
         <div data-kx-wx-credit="1">Dati meteo: MET Norway (CC BY 4.0)</div>
         <div>Geocodifica: città da GeoNames (CC BY 4.0) · indirizzi da Photon (komoot), © OpenStreetMap contributors (ODbL)</div>
         <div>Font: Plus Jakarta Sans © 2020 The Plus Jakarta Sans Project Authors · IBM Plex Mono © 2017 IBM Corp., nome riservato «Plex» — entrambi SIL Open Font License 1.1 (openfontlicense.org), incorporati senza modifiche</div>
-        <div>Festività: Nager.Date · mappe e indirizzi: © OpenStreetMap contributors (ODbL)</div>
+        <div>Festività: regole nell'app (indicative; in parte dal progetto Nager.Date, licenza MIT) · mappe e indirizzi: © OpenStreetMap contributors (ODbL)</div>
         <div>Codici QR e musica: generati dall'app, senza librerie o campioni di terzi</div>
         <div>Google Calendar è un marchio di Google LLC, citato solo per indicare la compatibilità</div>
         <div>Astronomia: formule di J. Meeus / NOAA, calcolate sul dispositivo</div>
@@ -12687,14 +12687,8 @@ async function fetchHolidays(countryCode){
   for(const y of years){
     const cacheKey=`${countryCode}_${y}`;
     if(AppSettings.holidays[cacheKey])continue;
-    try{
-      const resp=await fetch(`https://date.nager.at/api/v3/PublicHolidays/${y}/${countryCode}`);
-      if(resp.ok){
-        const data=await resp.json();
-        AppSettings.holidays[cacheKey]=data.map(h=>({date:h.date,name:h.localName||h.name}));
-        apiOk=true;
-      }
-    }catch(e){/* API non disponibile, usiamo fallback */}
+    /* v55: nessuna chiamata di rete; le regole offline bastano */
+    try{if(typeof rulesFor==='function'){const list=rulesFor(countryCode,y);if(list.length){AppSettings.holidays[cacheKey]=list.map(h=>({date:h.date,name:h.name}));apiOk=true;}}}catch(e){}
     /* Fallback offline se API fallita */
     if(!AppSettings.holidays[cacheKey]){
       const gen=HOLIDAYS_FALLBACK[countryCode];
@@ -14978,22 +14972,13 @@ fetchHolidays=async function(cc){
   let changed=false;
   for(const y of years){
     const ck=`${cc}_${y}`,cached=AppSettings.holidays[ck];
-    const good=Array.isArray(cached)&&cached.length&&cached[0].v===2&&!cached[0].fb;
-    if(good)continue;
-    let ok=false;
-    try{
-      const txt=await Net.get(`https://date.nager.at/api/v3/PublicHolidays/${y}/${cc}`,12000);
-      const data=JSON.parse(txt);
-      if(Array.isArray(data)){
-        AppSettings.holidays[ck]=data.filter(h=>h.global!==false).map(h=>({date:h.date,name:h.localName||h.name,en:h.name,v:2}));
-        ok=true;changed=true;
-      }
-    }catch(e){}
-    if(!ok&&!(Array.isArray(cached)&&cached.length)){
-      const list=rulesFor(cc,y);
-      AppSettings.holidays[ck]=list.map(h=>({date:h.date,name:h.name,v:2,fb:1}));
-      changed=true;
-    }
+    void cached;  /* v55: si rigenera sempre dalle regole */
+    /* v55: nessuna chiamata di rete (Nager.Date rimosso): le festività
+       vengono SEMPRE dalle regole nell'app (sorgente storico + modulo
+       31-holidays.js), rigenerate a ogni avvio perché costano nulla. */
+    const list=(window.KX&&KX.Holidays&&KX.Holidays.list)?KX.Holidays.list(cc,y):rulesFor(cc,y);
+    AppSettings.holidays[ck]=list.map(h=>({date:h.date,name:h.name,v:2,fb:1}));
+    changed=true;
   }
   /* solo il paese attuale e gli anni utili restano in archivio */
   Object.keys(AppSettings.holidays).forEach(k=>{const[c2,y2]=k.split('_');if(c2!==cc||!years.includes(+y2))delete AppSettings.holidays[k];});
@@ -15006,6 +14991,11 @@ function rulesFor(cc,y){
   const r=HOL_RULES[cc];if(!r)return[];
   return r.split('|').map(x=>{const sp=x.indexOf(' ');return{date:ruleDate(x.slice(0,sp),y),name:x.slice(sp+1)};}).filter(h=>h.date);
 }
+/* v55: queste funzioni vivono dentro una chiusura; i moduli (feste
+   offline per tutti i paesi, calendari) le raggiungono da KX.HolRules.
+   I riferimenti sono "pigri" (funzioni) perché alcune costanti sono
+   definite più avanti nello stesso blocco. */
+const HolRules={rules:HOL_RULES,ruleDate:(c,y)=>ruleDate(c,y),rulesFor:(cc,y)=>rulesFor(cc,y),altCal:()=>AltCal,easterW:y=>easterW(y),easterO:y=>easterO(y),rebuild:()=>rebuildHolidayMaps(),gridYears:()=>gridYears()};  /* esportato in window.KX più sotto */
 function rebuildHolidayMaps(){
   const p=new Map(),cc=AppSettings.country;
   Object.entries(AppSettings.holidays||{}).forEach(([k,arr])=>{if(!k.startsWith(cc+'_'))return;(arr||[]).forEach(h=>{if(!p.has(h.date))p.set(h.date,[]);p.get(h.date).push(h);});});
@@ -15765,7 +15755,7 @@ try{
 
 
 /* ── esportazione ── */
-window.KX={detectCountry,SkyLive,NowWx,wxNow(){const w=NowWx.data;return w&&w.code!=null?((ST_ICON[WMO_ST(w.code)]||'')+' '+fmtT(w.temp)).trim():'';},Home,Astro,SkyPal,Net,KN,SUBS,DEVICE,HOL,Theme,Widget,dayHolidays,gcalUrl,
+window.KX={HolRules,detectCountry,SkyLive,NowWx,wxNow(){const w=NowWx.data;return w&&w.code!=null?((ST_ICON[WMO_ST(w.code)]||'')+' '+fmtT(w.temp)).trim():'';},Home,Astro,SkyPal,Net,KN,SUBS,DEVICE,HOL,Theme,Widget,dayHolidays,gcalUrl,
   /* chiamata a fine init della v25 */
   afterInit(){
     try{installNative();}catch(e){console.error('[v26 native]',e);}

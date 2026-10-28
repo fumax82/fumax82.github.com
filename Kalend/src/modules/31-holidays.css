@@ -1,0 +1,15 @@
+/* v55 — scheda "Festività del paese" */
+#kx-hol-card .kx-hol-list{display:flex;flex-direction:column;gap:2px;max-height:260px;overflow:auto;margin:6px 0;border:1px solid var(--divider);border-radius:10px;padding:4px}
+#kx-hol-card .kx-hol-it{display:flex;gap:8px;align-items:center;width:100%;text-align:left;background:transparent;border:0;border-radius:8px;padding:6px 8px;color:var(--text-hi);font:inherit;font-size:12.5px;cursor:pointer}
+#kx-hol-card .kx-hol-it:hover{background:var(--surface-2,rgba(127,127,127,.08))}
+#kx-hol-card .kx-hol-it.off{color:var(--text-dim);text-decoration:line-through}
+#kx-hol-card .kx-hol-it.user .kx-hol-n{color:var(--accent)}
+#kx-hol-card .kx-hol-d{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);min-width:56px}
+#kx-hol-card .kx-hol-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#kx-hol-card .kx-hol-x{font-size:12px;opacity:.7}
+#kx-hol-card .kx-hol-add{display:flex;gap:6px;margin-top:6px}
+#kx-hol-card .kx-hol-add input{min-width:0}
+#kx-hol-card #kx-hol-name{flex:2}
+#kx-hol-card #kx-hol-date{flex:1;font-family:var(--font-mono)}
+#kx-hol-card .kx-hol-add .kx-btn{white-space:nowrap}
+#kx-hol-card .kx-hol-reset{margin-top:8px;background:transparent;border:1px solid var(--divider);border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;color:var(--text-mid);cursor:pointer}

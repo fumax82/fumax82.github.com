@@ -54,7 +54,7 @@ Dove: **pagina** = `src/index.html` e `src/modules/` · **nativo** = progetto An
 | 1.4 | Rimuovere il vecchio gestore di import | 🟠 | 1 | pagina | S | — |
 | 1.5 | Provenienza visibile degli eventi da calendari collegati | 🟡 | 1 | pagina | S | — |
 | 1.6 | Meteo con MET Norway (Open-Meteo opzionale) | ✅ fatto v55 | 1 | pagina | M | D3 |
-| 1.7 | Festività offline per tutti i paesi dei 20 mercati | 🟠 | 1 | pagina | L | D4 |
+| 1.7 | Festività offline per tutti i paesi dei 20 mercati | ✅ fatto v55 | 1 | pagina | L | D4 |
 | 1.8 | Geocodifica senza Nominatim (parte pagina) | ✅ fatto v55 | 1 | pagina | S | 2.6 |
 | 1.9 | Restringere la CSP agli host necessari | 🟠 | 1 | pagina + build | S | D3, D4, 1.8 |
 | 1.10 | Informative in-app prima dei permessi | 🟠 | 1 | pagina | M | — |

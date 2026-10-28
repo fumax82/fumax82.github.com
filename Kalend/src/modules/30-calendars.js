@@ -189,7 +189,7 @@ const EXTRA_CALC={
   IL:[['H','Tishri',1,'ראש השנה'],['H','Tishri',2,'ראש השנה'],['H','Tishri',10,'יום כיפור'],['H','Tishri',15,'סוכות'],['H','Tishri',22,'שמיני עצרת'],['H','Nisan',15,'פסח'],['H','Nisan',21,'שביעי של פסח'],['H','Sivan',6,'שבועות']],
 };
 function calcHolidays(cc,y){
-  const list=EXTRA_CALC[cc];if(!list||typeof AltCal==='undefined')return[];
+  const list=EXTRA_CALC[cc];const AltCal=(window.KX&&KX.HolRules&&KX.HolRules.altCal)?KX.HolRules.altCal():null;if(!list||!AltCal)return[];
   const out=[];
   list.forEach(([kind,mo,da,name])=>{
     let k=null;
@@ -203,14 +203,13 @@ function calcHolidays(cc,y){
   return out;
 }
 function installHolidays(){
+  /* v55: le regole di base stanno in KX.HolRules.rules (chiusura del sorgente
+     storico); le feste calcolate (islamiche, lunari, ebraiche) vengono
+     chieste dal modulo 31-holidays.js tramite KX.AltDate.calcHolidays */
   try{
-    if(typeof HOL_RULES==='object'){Object.keys(EXTRA_RULES).forEach(cc=>{if(!HOL_RULES[cc])HOL_RULES[cc]=EXTRA_RULES[cc];});}
-    if(typeof rulesFor==='function'&&!rulesFor._v54){
-      const _rf=rulesFor;
-      rulesFor=function(cc,y){const base=_rf(cc,y)||[];const extra=calcHolidays(cc,y);const have=new Set(base.map(h=>h.date+'|'+h.name));
-        return base.concat(extra.filter(h=>!have.has(h.date+'|'+h.name)));};
-      rulesFor._v54=true;
-    }
+    const H=window.KX&&KX.HolRules;
+    if(H&&H.rules){Object.keys(EXTRA_RULES).forEach(cc=>{if(!H.rules[cc])H.rules[cc]=EXTRA_RULES[cc];});}
+    KX.AltDate=KX.AltDate||{};KX.AltDate.calcHolidays=calcHolidays;KX.AltDate.EXTRA_RULES=EXTRA_RULES;
     /* il selettore dei paesi include anche quelli aggiunti qui */
     if(typeof buildCountryOptions==='function'){try{buildCountryOptions();}catch(e){}}
   }catch(e){console.warn('[v54 feste]',e);}

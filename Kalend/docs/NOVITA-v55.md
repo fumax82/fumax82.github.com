@@ -55,7 +55,30 @@ Un luogo scritto diventa coordinate passando per strati, dal più economico
 Nominatim e Open‑Meteo gratuito non vengono più interrogati. Crediti aggiornati.
 Collaudo: `node Kalend/tools/geo-test.js`.
 
-## 3. Da fare nella parte nativa (Fase 2 del piano)
+## 3. Festività: tutte nel telefono, indicative, personalizzabili
+Nager.Date non viene più interrogato (`src/modules/31-holidays.js`):
+
+* regole per i paesi che mancavano: Filippine, Nigeria, Kenya, Ghana, Venezuela,
+  Ecuador, Guatemala, Cuba, Bolivia, Rep. Dominicana, Honduras, Paraguay, El Salvador,
+  Nicaragua, Costa Rica, Panama, Uruguay, Porto Rico, Monaco, Senegal, Costa d'Avorio,
+  Tunisia, Algeria, Liechtenstein, Angola, Mozambico, Suriname, Bielorussia,
+  Kazakistan, Iraq, Giordania, Libano, Kuwait, Qatar, Bahrein, Oman, Siria, Libia,
+  Sudan, Yemen, Palestina, Macao; versioni migliorate per USA, Regno Unito, Irlanda,
+  Giappone, Australia, Nuova Zelanda, Canada, Sudafrica, Hong Kong, India;
+* **giorni sostitutivi**: USA (sabato→venerdì, domenica→lunedì), Regno Unito,
+  Australia, Canada, Nuova Zelanda (fine settimana→primo feriale libero), Giappone
+  振替休日, Sudafrica e Hong Kong (domenica→lunedì). La festa resta nel suo giorno e
+  si aggiunge il sostitutivo;
+* feste lunari, islamiche ed ebraiche calcolate (ora funzionano davvero: nella v54
+  l'aggancio non raggiungeva il codice del sorgente storico); Diwali, Holi, Dussehra,
+  Matariki da tabella ufficiale 2025–2032;
+* scheda **Festività del paese** (Impostazioni → Lingua e paese): elenco dell'anno,
+  tocca per nascondere o mostrare, aggiungi una festa propria, ripristina;
+  dicitura «indicative: controlla le fonti ufficiali».
+
+Collaudo: `node Kalend/tools/hol-test.js` (date note del 2026 per 20 paesi).
+
+## 4. Da fare nella parte nativa (Fase 2 del piano)
 * `User-Agent` con nome, versione e contatto (es. `Kalend/55 (+https://…; email)`):
   MET Norway lo richiede per identificare l'app; oggi il nativo invia `Kalend/1.0`.
 * Metodo `geocode(id, testo, lingua)` nel ponte, con `android.location.Geocoder`,

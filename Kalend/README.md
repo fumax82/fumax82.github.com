@@ -12,7 +12,8 @@ Kalend/
 │  ├─ modules/            ← i moduli nuovi della v54, un file per tema, commentati in italiano
 │  │   10-lang-packs.js     parser multilingue e auto-tag per ogni alfabeto
 │  │   20-tags-culture.js   famiglie, parole chiave e tag culturali nella lingua in uso
-│  │   30-calendars.js/css  calendario secondario (islamico, ebraico, lunare…) + festività offline
+│  │   30-calendars.js/css  calendario secondario (islamico, ebraico, lunare…) + feste calcolate
+│  │   31-holidays.js/css   festività offline per tutti i paesi dei 20 mercati, giorni sostitutivi, personalizzabili
 │  │   40-widget.js         fasce libere e riepilogo del giorno nel widget
 │  │   50-ux.js/css         azioni rapide, menu, suggerimenti al momento giusto, localizzazione tardiva
 │  │   70-weather.js/css    meteo a fornitori: MET Norway (base), Open-Meteo e OpenWeatherMap con chiave personale
@@ -33,6 +34,7 @@ Kalend/
 │   nl-test.js             prova il parser in linguaggio naturale in una lingua
 │   wx-test.js             collaudo del meteo con risposte simulate dei tre fornitori
 │   geo-test.js            collaudo della geocodifica a strati
+│   hol-test.js            collaudo delle festività (date note del 2026)
 │   build-atlas.py         genera www/data/cities.json dal pacchetto npm all-the-cities (GeoNames)
 ├─ android/Kalend-v53-original.apk   ← APK originale (parte nativa: widget, promemoria)
 ├─ dist/Kalend-unsigned.apk          ← APK nuovo, DA FIRMARE
@@ -109,5 +111,8 @@ culturale) è in `src/i18n/SCHEMA.md`.
   (GeoNames, CC BY 4.0), Geocoder di Android (quando il ponte nativo lo offrirà),
   chiave personale dell'utente, infine Photon (komoot, dati OpenStreetMap ODbL) per gli
   indirizzi. Nominatim e Open-Meteo gratuito non vengono più interrogati.
-* **Festività**: Nager.Date è gratuito (licenza MIT); per i paesi non coperti ci sono
-  regole offline nell'app.
+* **Festività** (v55): tutte nel telefono, nessuna chiamata di rete. Regole per ~100
+  paesi (quelle del sorgente storico + `31-holidays.js`), giorni sostitutivi, feste
+  lunari/islamiche/ebraiche calcolate, Diwali/Holi/Matariki da tabella 2025–2032.
+  Dichiarate «indicative»; l'utente può nasconderle o aggiungerne in Impostazioni →
+  Lingua e paese. Dove si è attinto a Nager.Date (MIT) la nota resta nei crediti.
