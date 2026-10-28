@@ -8,13 +8,13 @@
   </item>
   <item>
     <shape android:shape="rectangle">
-      <gradient android:startColor="#3A2AABB8" android:endColor="#002AABB8" android:angle="0.000000" android:type="1" android:centerX="0.150000" android:centerY="0.000000" android:gradientRadius="260dp"/>
+      <gradient android:startColor="#3A2AABB8" android:endColor="#002AABB8" android:angle="0.000000" android:type="radial" android:centerX="0.150000" android:centerY="0.000000" android:gradientRadius="260dp"/>
       <corners android:radius="22dp"/>
     </shape>
   </item>
   <item>
     <shape android:shape="rectangle">
-      <gradient android:startColor="#38F07856" android:endColor="#00F07856" android:angle="0.000000" android:type="1" android:centerX="1.000000" android:centerY="1.000000" android:gradientRadius="220dp"/>
+      <gradient android:startColor="#38F07856" android:endColor="#00F07856" android:angle="0.000000" android:type="radial" android:centerX="1.000000" android:centerY="1.000000" android:gradientRadius="220dp"/>
       <corners android:radius="22dp"/>
     </shape>
   </item>

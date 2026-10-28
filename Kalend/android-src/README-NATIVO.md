@@ -25,8 +25,12 @@ non sta qui: al momento del build viene copiata automaticamente negli asset
    La chiave si crea una volta sola con `keytool -genkeypair -v -keystore kalend-release.jks -alias kalend -keyalg RSA -keysize 4096 -validity 10000`
    e va conservata al sicuro: **non** nel repository (il `.gitignore` la esclude).
 
-Senza l'SDK (ad esempio nell'ambiente di sviluppo di questo repository) si può
-almeno verificare che il Java compili: `bash Kalend/tools/native-check.sh`.
+Senza l'SDK (ad esempio nell'ambiente di sviluppo di questo repository):
+- `bash Kalend/tools/native-check.sh` verifica che il Java compili;
+- `bash Kalend/tools/build-apk.sh` costruisce un **APK di prova completo**
+  (`dist/Kalend-native-test-signed.apk`) usando d8 e aapt2 scaricati dalle fonti
+  ufficiali e la firma di prova: serve per installare e collaudare, **non** per il
+  negozio (lì serve l'AAB firmato con la tua chiave, da Android Studio).
 
 ## Le classi (package `app.kalend`)
 
