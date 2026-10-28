@@ -63,14 +63,14 @@ Dove: **pagina** = `src/index.html` e `src/modules/` · **nativo** = progetto An
 | 1.13 | Dizionari caricati solo per la lingua in uso | 🟡 | 1 | pagina + build | M | — |
 | 1.14 | Opzione «testo grande» | 🟡 | 1 | pagina | M | — |
 | 1.15 | Test automatici di sicurezza nel collaudo | ✅ fatto v55 | 1 | build | M | — |
-| 2.1 | Progetto Android nel repository, build riproducibile | 🔴 | 2 | nativo | M | D1 |
-| 2.2 | Ponte nativo: togliere `loadUrl` e `finish` | 🔴 | 2 | nativo | S | 2.1 |
-| 2.3 | Codifica di ogni valore passato alla pagina, Intent verificati | 🔴 | 2 | nativo | M | 2.1 |
-| 2.4 | Impostazioni WebView e filtro dei link esterni | 🟠 | 2 | nativo | S | 2.1 |
-| 2.5 | Download sicuri: redirect, host privati, dimensione | 🟠 | 2 | nativo | S | 2.1 |
-| 2.6 | Geocoder di Android nel ponte nativo | 🟠 | 2 | nativo | S | 2.1 |
+| 2.1 | Progetto Android nel repository, build riproducibile | ✅ ricostruito (da collaudare in Android Studio) | 2 | nativo | M | D1 |
+| 2.2 | Ponte nativo: inventario dei metodi esposti (rettifica: `loadUrl`/`finish` NON sono esposti) | ✅ verificato | 2 | nativo | S | 2.1 |
+| 2.3 | Codifica di ogni valore passato alla pagina, Intent verificati | ✅ | 2 | nativo | M | 2.1 |
+| 2.4 | Impostazioni WebView e filtro dei link esterni | ✅ | 2 | nativo | S | 2.1 |
+| 2.5 | Download sicuri: redirect, host privati, dimensione | ✅ | 2 | nativo | S | 2.1 |
+| 2.6 | Geocoder di Android nel ponte nativo | ✅ | 2 | nativo | S | 2.1 |
 | 2.7 | Dettatura: preferire il riconoscimento sul telefono | 🟡 | 2 | nativo + pagina | S | 2.1 |
-| 2.8 | Porting a target API 36 (Android 16) | 🔴 | 2 | nativo + pagina | L | 2.1 |
+| 2.8 | Porting a target API 36 (Android 16) | 🟠 codice fatto, collaudo su dispositivi da fare | 2 | nativo + pagina | L | 2.1 |
 | 2.9 | Acquisti in-app con Play Billing (solo se Pro) | 🟠 | 2 | nativo + pagina | L | D2, 2.1 |
 | 2.10 | Test minimi della parte nativa | 🟡 | 2 | nativo | M | 2.1 |
 | 3.1 | Verifica del livello API richiesto al momento | 🔴 | 3 | nativo | S | 2.8 |
@@ -291,18 +291,22 @@ Sono **correzioni di sicurezza e lavoro tecnico** che servono comunque, anche pr
 di decidere la data di pubblicazione. Il porting all'API 36 sta qui, e non in Fase 3,
 perché cambia il comportamento dell'app e richiede settimane di collaudo.
 
-### 2.1 · Progetto Android nel repository 🔴
-- Cartella `android-src/` con build Gradle riproducibile; stessa funzionalità della
-  v53; la pagina costruita da `tools/build.js` copiata in `assets/www/`.
-- **Fatto quando**: un comando produce l'APK di prova identico per funzioni a quello attuale.
+### 2.1 · Progetto Android nel repository ✅ (ricostruito)
+- Cartella `android-src/` con build Gradle; stessa funzionalità della v53; la pagina
+  costruita da `tools/build.js` copiata negli asset dal task `copyWeb`.
+- **Stato**: il sorgente originale non c'era, il progetto è stato **ricostruito per
+  decompilazione** dell'APK v53 e riscritto in Java commentato (vedi
+  `android-src/README-NATIVO.md`). Compila contro le classi del framework API 36
+  (`tools/native-check.sh`); l'APK/AAB va prodotto in Android Studio e **ricollaudato
+  su un telefono reale** (widget, promemoria, dettatura, calendario, condivisione).
 
-### 2.2 · Ponte nativo: togliere `loadUrl` e `finish` 🔴
-- **Problema**: `loadUrl` permetterebbe a uno script ostile di aprire una pagina
-  esterna con accesso a calendario, file, microfono e link segreti.
-- **Cosa fare**: rimuoverli; fare l'inventario dei metodi esposti e tenere solo quelli
-  usati dalla pagina.
+### 2.2 · Ponte nativo: inventario dei metodi esposti ✅ (rettifica)
+- La lettura dell'elenco dei metodi della classe `MainActivity$Bridge` nel dex mostra
+  che `loadUrl` e `finish` **non** sono esposti alla pagina: le stringhe trovate in
+  precedenza erano chiamate interne. Il bridge espone i metodi usati dalla pagina più
+  `exactAlarms`, `vaultHas`, `version`. Nessun intervento necessario.
 
-### 2.3 · Valori passati alla pagina sempre codificati, Intent verificati 🔴
+### 2.3 · Valori passati alla pagina sempre codificati, Intent verificati ✅
 - **Problema**: il nativo costruisce comandi JavaScript con date, modalità, testi e
   risposte di rete. L'Activity principale e i ricevitori del widget sono raggiungibili
   da altre app. Se un valore non è codificato, un'app malevola ottiene tutto il calendario.
@@ -311,29 +315,40 @@ perché cambia il comportamento dell'app e richiede settimane di collaudo.
   PendingIntent (codice segreto generato all'installazione); azioni del widget
   protette dal controllo del mittente.
 - **Fatto quando**: un'app di prova che invia Intent costruiti non esegue nulla.
+- **Stato**: in `MainActivity.handleIntent` date, id evento e nomi lista passano
+  solo se rispettano l'espressione regolare, ogni testo è codificato con
+  `JSONObject.quote`, gli avvisi richiedono il token `alert_tok`.
 
-### 2.4 · Impostazioni WebView e link esterni 🟠
+### 2.4 · Impostazioni WebView e link esterni ✅
 - Debug della WebView attivo **solo** nelle build di debug; `setAllowFileAccess(false)`,
   `setAllowContentAccess(false)`, Safe Browsing attivo; navigazione bloccata fuori da
   `appassets.androidplatform.net` e `kalend://`; `openUrl` accetta solo `https://`
   (mai `intent:`, `javascript:`, `file:`).
+- **Stato**: fatto in `MainActivity` (debug WebView solo con `BuildConfig.DEBUG`;
+  `openExternal` accetta https/http/mailto/tel/geo).
 
-### 2.5 · Download sicuri 🟠
+### 2.5 · Download sicuri ✅
 - Massimo 3 redirect, solo `https`, stesso filtro della pagina sugli indirizzi
   privati e locali (anche dopo la risoluzione del nome), interruzione oltre 15 MB
   durante lo scaricamento, tempi massimi di connessione e lettura.
 - **Fatto quando**: un link che rimanda a `192.168.x.x` o a un file enorme viene rifiutato.
+- **Stato**: `Net.fetchPublic` (solo https, controllo degli indirizzi privati dopo la
+  risoluzione DNS, 5 redirect, 8 MB, tempi massimi, User-Agent con contatto).
 
-### 2.6 · Geocoder di Android nel ponte 🟠
-- Nuovo metodo `geocode(testo, lingua)` che usa il servizio di sistema; completa 1.8.
+### 2.6 · Geocoder di Android nel ponte ✅
+- Nuovo metodo `geocode(id, testo, lingua)` che usa il servizio di sistema
+  (`Geo.java`); completa 1.8. La pagina lo usa già come terzo strato.
 
 ### 2.7 · Dettatura sul telefono 🟡
 - L'app già usa il riconoscimento sul dispositivo quando c'è. Dove manca, il
   servizio di sistema può inviare l'audio a Google: mostrarlo nell'informativa
   (1.10) e scriverlo in Data safety.
 
-### 2.8 · Porting a target API 36 (Android 16) 🔴
+### 2.8 · Porting a target API 36 (Android 16) 🟠 (codice fatto, collaudo da fare)
 - Requisito Google Play dal 31 agosto 2026 per app nuove e aggiornamenti.
+- **Stato**: `targetSdk 36`, margini di sistema applicati alla WebView, gesto
+  «indietro» con `OnBackInvokedCallback` (la pagina risponde con `kalendBack()`),
+  `enableOnBackInvokedCallback` nel manifest. Resta il collaudo sui dispositivi.
 - Punti da collaudare per un'app WebView:
   - **schermo intero obbligatorio** («edge-to-edge»): la pagina deve rispettare
     barre di stato e di navigazione (margini sicuri);

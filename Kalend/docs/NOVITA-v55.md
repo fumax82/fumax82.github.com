@@ -117,12 +117,25 @@ Collaudo: `node Kalend/tools/legal-test.js`.
 
 Collaudo: `node Kalend/tools/sec-test.js`.
 
-## 6. Da fare nella parte nativa (Fase 2 del piano)
-* `User-Agent` con nome, versione e contatto (es. `Kalend/55 (+https://…; email)`):
-  MET Norway lo richiede per identificare l'app; oggi il nativo invia `Kalend/1.0`.
-* Metodo `geocode(id, testo, lingua)` nel ponte, con `android.location.Geocoder`,
-  che risponde via `__knCb` con `[{name, display, lat, lon}]`: la pagina lo usa
-  già se c'è.
+## 6. Parte nativa ricostruita (Fase 2 del piano)
+Il sorgente Android originale non era nel repository: è stato **ricostruito
+dall'APK v53** e riscritto in Java pulito e commentato in `android-src/`
+(guida: `android-src/README-NATIVO.md`). Rispetto alla v53:
+* **target API 36** (obbligatorio su Google Play dal 31 agosto 2026): schermo
+  intero gestito con i margini di sistema, gesto «indietro» con il nuovo
+  `OnBackInvokedCallback`, nessuna libreria esterna;
+* `User-Agent` con nome, versione e contatto (`Kalend/55.0 (Android; +contatto)`):
+  MET Norway lo richiede per identificare l'app; il contatto si imposta con la
+  variabile `KALEND_CONTACT` al momento del build;
+* nuovo metodo `geocode(id, testo, lingua)` nel ponte, con il Geocoder del
+  telefono, che risponde via `__knCb` con `[{name, display, lat, lon, …}]`: la
+  pagina lo usa già come terzo strato della ricerca luoghi;
+* ponte, Intent e download sicuri conservati (controllo `trusted()`, valori
+  codificati con `JSONObject.quote`, token segreto per gli avvisi, solo https,
+  indirizzi privati rifiutati, 8 MB massimo);
+* firma di rilascio e AAB: fuori dal repository, con variabili d'ambiente.
+L'APK/AAB definitivo va prodotto in Android Studio (qui non c'è l'SDK Android):
+nel repository è verificata solo la compilazione del Java (`tools/native-check.sh`).
 
 ## Cosa NON è cambiato
 Grafica, viste, cielo vivo, parser, tag, calendari, widget: identici alla v54.

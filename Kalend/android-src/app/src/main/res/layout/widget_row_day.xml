@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content">
+  <FrameLayout android:layout_width="20dp" android:layout_height="match_parent" android:layout_marginRight="0dp">
+    <ImageView android:id="@+id/r_mo_ln" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@android:color/transparent" android:scaleType="fitXY" android:importantForAccessibility="no"/>
+    <FrameLayout android:layout_gravity="center_horizontal|center_vertical" android:id="@+id/r_mo_pill" android:background="@drawable/w_pill_ring" android:padding="2dp" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content">
+      <ImageView android:id="@+id/r_mo_pbg" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/w_pill" android:scaleType="fitXY" android:importantForAccessibility="no"/>
+      <TextView android:textSize="8.5sp" android:textStyle="bold" android:textColor="#FFFFFFFF" android:gravity="center_horizontal|center_vertical" android:id="@+id/r_mo" android:paddingLeft="2dp" android:paddingTop="4dp" android:paddingRight="2dp" android:paddingBottom="4dp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="13dp" android:includeFontPadding="false" android:lineSpacingMultiplier="0.900000"/>
+    </FrameLayout>
+  </FrameLayout>
+  <FrameLayout android:layout_width="20dp" android:layout_height="match_parent" android:layout_marginRight="6dp">
+    <ImageView android:id="@+id/r_wk_ln" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@android:color/transparent" android:scaleType="fitXY" android:importantForAccessibility="no"/>
+    <FrameLayout android:layout_gravity="center_horizontal|center_vertical" android:id="@+id/r_wk_pill" android:background="@drawable/w_pill_ring" android:padding="2dp" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content">
+      <ImageView android:id="@+id/r_wk_pbg" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/w_pill" android:scaleType="fitXY" android:importantForAccessibility="no"/>
+      <TextView android:textSize="8.5sp" android:textStyle="bold" android:textColor="#FFFFFFFF" android:gravity="center_horizontal|center_vertical" android:id="@+id/r_wk" android:paddingLeft="2dp" android:paddingTop="4dp" android:paddingRight="2dp" android:paddingBottom="4dp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="13dp" android:includeFontPadding="false" android:lineSpacingMultiplier="0.900000"/>
+    </FrameLayout>
+  </FrameLayout>
+  <TextView android:textSize="10.5sp" android:textStyle="bold" android:textColor="#A6FFFFFF" android:ellipsize="end" android:id="@+id/r_day" android:paddingLeft="2dp" android:paddingTop="10dp" android:paddingBottom="5dp" android:layout_width="0dp" android:layout_height="wrap_content" android:maxLines="1" android:layout_weight="1.000000" android:fontFamily="sans-serif-medium" android:letterSpacing="0.120000"/>
+</LinearLayout>

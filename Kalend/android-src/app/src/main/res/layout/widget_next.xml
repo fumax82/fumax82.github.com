@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/n_root" android:layout_width="match_parent" android:layout_height="match_parent">
+  <ImageView android:id="@+id/n_img" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:contentDescription="@string/widget2_name"/>
+  <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:paddingLeft="20dp" android:paddingTop="8dp" android:paddingRight="18dp" android:paddingBottom="8dp" android:layout_width="match_parent" android:layout_height="match_parent">
+    <ImageView android:id="@+id/n_bar" android:background="#FFFFFFFF" android:layout_width="4dp" android:layout_height="match_parent" android:layout_marginTop="10dp" android:layout_marginBottom="10dp" android:importantForAccessibility="no"/>
+    <LinearLayout android:orientation="vertical" android:paddingLeft="10dp" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.000000">
+      <TextView android:textSize="10.5sp" android:textStyle="bold" android:textColor="#E6FFFFFF" android:ellipsize="end" android:id="@+id/n_kicker" android:layout_width="match_parent" android:layout_height="wrap_content" android:maxLines="1" android:shadowColor="#80000000" android:shadowDy="1.000000" android:shadowRadius="3.000000" android:letterSpacing="0.060000"/>
+      <TextView android:textSize="17sp" android:textStyle="bold" android:textColor="#FFFFFFFF" android:ellipsize="end" android:id="@+id/n_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:maxLines="2" android:shadowColor="#80000000" android:shadowDy="1.000000" android:shadowRadius="3.000000"/>
+      <TextView android:textSize="12.5sp" android:textColor="#F2FFFFFF" android:id="@+id/n_time" android:layout_width="match_parent" android:layout_height="wrap_content" android:maxLines="1" android:shadowColor="#80000000" android:shadowDy="1.000000" android:shadowRadius="3.000000"/>
+      <TextView android:textSize="11.5sp" android:textColor="#D9FFFFFF" android:ellipsize="end" android:id="@+id/n_loc" android:layout_width="match_parent" android:layout_height="wrap_content" android:maxLines="1" android:shadowColor="#80000000" android:shadowDy="1.000000" android:shadowRadius="3.000000"/>
+    </LinearLayout>
+  </LinearLayout>
+</FrameLayout>

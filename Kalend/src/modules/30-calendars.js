@@ -41,7 +41,7 @@ const CALENDARS=[
   ['japanese','🎌 Giapponese (ere)'],
   ['ethiopic','🇪🇹 Etiope'],
   ['coptic','⛪ Copto'],
-  ['roc','🇹🇼 Minguo (Taiwan)'],
+  ['roc','🗓 Minguo (ROC)'],
 ];
 /* scelta automatica: prima il paese, poi la lingua */
 const BY_COUNTRY={SA:'islamic-umalqura',AE:'islamic-umalqura',QA:'islamic-umalqura',KW:'islamic-umalqura',BH:'islamic-umalqura',OM:'islamic-umalqura',YE:'islamic-umalqura',

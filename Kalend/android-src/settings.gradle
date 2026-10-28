@@ -1,0 +1,10 @@
+// Progetto Android di Kalend — apri questa cartella con Android Studio.
+pluginManagement {
+    repositories { google(); mavenCentral(); gradlePluginPortal() }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories { google(); mavenCentral() }
+}
+rootProject.name = "Kalend"
+include ":app"

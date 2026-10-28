@@ -1,0 +1,72 @@
+/* ══════════════════════════════════════════════════════════════════
+   Kalend — modulo app (parte nativa Android)
+   · nessuna libreria esterna: solo le API di Android (niente AndroidX)
+   · la pagina web sta in src/main/assets/www/ (copiata da ../www al build)
+   · target API 36 (richiesto da Google Play dal 31 agosto 2026)
+   · per il negozio:  ./gradlew bundleRelease   → app/build/outputs/bundle/release/app-release.aab
+   · per le prove:    ./gradlew assembleDebug   → app/build/outputs/apk/debug/app-debug.apk
+   La firma di rilascio NON è in questo file: si configura con le variabili
+   d'ambiente KALEND_KEYSTORE, KALEND_KEYSTORE_PASS, KALEND_KEY_ALIAS,
+   KALEND_KEY_PASS (vedi README-NATIVO.md), così la chiave non entra mai nel repository.
+══════════════════════════════════════════════════════════════════ */
+plugins { id "com.android.application" }
+
+def ks = System.getenv("KALEND_KEYSTORE")
+
+android {
+    namespace "app.kalend"
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "app.kalend"
+        minSdk 24
+        targetSdk 36
+        versionCode 55
+        versionName "55.0"
+        // contatto richiesto da MET Norway nello User-Agent (vedi Net.java)
+        buildConfigField "String", "CONTACT", "\"" + (System.getenv("KALEND_CONTACT") ?: "https://github.com/fumax82/fumax82.github.com") + "\""
+    }
+
+    signingConfigs {
+        if (ks != null) {
+            release {
+                storeFile file(ks)
+                storePassword System.getenv("KALEND_KEYSTORE_PASS")
+                keyAlias System.getenv("KALEND_KEY_ALIAS")
+                keyPassword System.getenv("KALEND_KEY_PASS")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+            if (ks != null) signingConfig signingConfigs.release
+        }
+        debug {
+            applicationIdSuffix ""
+        }
+    }
+
+    buildFeatures { buildConfig true }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    // la pagina costruita (Kalend/www) diventa l'asset www/ dell'app:
+    // viene copiata in app/build/www-assets (cartella generata, non nel repository)
+    sourceSets {
+        main { assets.srcDirs += [layout.buildDirectory.dir("www-assets").get().asFile] }
+    }
+}
+
+// Copia Kalend/www/index.html e Kalend/www/data/* in assets/www/ prima di ogni build.
+// Ricorda: prima di costruire l'app va eseguito `node tools/build.js` in Kalend/.
+tasks.register("copyWeb", Copy) {
+    from("../../www") { include "index.html", "data/**" }
+    into layout.buildDirectory.dir("www-assets/www")
+}
+preBuild.dependsOn copyWeb

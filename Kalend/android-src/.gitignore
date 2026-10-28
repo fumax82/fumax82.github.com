@@ -1,0 +1,12 @@
+# Cartelle generate da Android Studio / Gradle: non vanno nel repository
+.gradle/
+build/
+app/build/
+local.properties
+.idea/
+*.iml
+.kotlin/
+captures/
+# Chiavi di firma: MAI nel repository
+*.jks
+*.keystore
