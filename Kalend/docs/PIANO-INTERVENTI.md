@@ -41,10 +41,10 @@ Dove: **pagina** = `src/index.html` e `src/modules/` · **nativo** = progetto An
 
 | ID | Intervento | Gravità | Fase | Dove | Impegno | Dipende da |
 |---|---|---|---|---|---|---|
-| D1 | Recuperare il progetto Android nativo | 🔴 | D | — | — | — |
+| D1 | Recuperare il progetto Android nativo | ✅ ricostruito dall'APK (android-src/) | D | — | — | — |
 | D2 | Modello di vendita: a pagamento o gratuita + Pro | 🟠 | D | — | — | — |
-| D3 | Fornitore meteo | 🔴 | D | — | — | — |
-| D4 | Fonte delle festività | 🟠 | D | — | — | — |
+| D3 | Fornitore meteo | ✅ MET Norway di base + chiave personale | D | — | — | — |
+| D4 | Fonte delle festività | ✅ regole offline nell'app | D | — | — | — |
 | D5 | Nome e identificativo definitivi dell'app | 🟠 | D | — | — | — |
 | D6 | Tipo di account sviluppatore Google Play | 🟠 | D | — | — | — |
 | D7 | Dati nel backup cloud di Android: sì o no | 🟡 | D | — | — | — |
@@ -59,7 +59,7 @@ Dove: **pagina** = `src/index.html` e `src/modules/` · **nativo** = progetto An
 | 1.9 | Restringere la CSP agli host necessari | ✅ fatto v55 | 1 | pagina + build | S | D3, D4, 1.8 |
 | 1.10 | Informative in-app prima dei permessi | ✅ fatto v55 | 1 | pagina | M | — |
 | 1.11 | Privacy policy in 20 lingue (bozza) | ✅ bozza v55 (da far rileggere) | 1 | documenti | M | D3, D4, D7 |
-| 1.12 | Icona neutra per il calendario Minguo | 🟡 | 1 | pagina | S | — |
+| 1.12 | Icona neutra per il calendario Minguo | ✅ | 1 | pagina | S | — |
 | 1.13 | Dizionari caricati solo per la lingua in uso | 🟡 | 1 | pagina + build | M | — |
 | 1.14 | Opzione «testo grande» | 🟡 | 1 | pagina | M | — |
 | 1.15 | Test automatici di sicurezza nel collaudo | ✅ fatto v55 | 1 | build | M | — |
