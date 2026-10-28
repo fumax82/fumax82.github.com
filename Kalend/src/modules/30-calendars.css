@@ -1,0 +1,8 @@
+/* ══ v54 · calendario secondario nelle celle del mese e nei pannelli ══ */
+.day-cell .kx-alt{position:absolute;top:2px;right:3px;z-index:2;font-family:var(--font-mono);font-size:7.5px;line-height:1;color:var(--text-dim);opacity:.85;pointer-events:none;letter-spacing:-.01em;white-space:nowrap;max-width:60%;overflow:hidden;text-overflow:ellipsis}
+.day-cell .kx-alt.m{color:var(--accent);opacity:1;font-weight:700}
+.day-cell.is-wide .kx-alt,.day-cell.today .kx-alt{display:none}
+body.kx-land .day-cell .kx-alt{font-size:7px;top:1px;right:2px}
+.kx-altdate{font-family:var(--font-mono);font-size:10px;color:var(--text-mid);margin-top:2px;line-height:1.3}
+#dd-title .kx-altdate{display:block;font-size:10px;font-weight:500}
+.kx-alt-wk{font-weight:600;color:var(--text-mid)}

@@ -1,0 +1,12 @@
+/* ══ v54 · azioni rapide e suggerimenti ══ */
+#evp-avail{font-family:var(--font-mono);font-size:10px;padding:4px 10px;border-radius:7px;border:1px solid rgba(62,158,120,.35);background:rgba(62,158,120,.07);color:#2E8F5E;cursor:pointer}
+:root[data-theme="dark"] #evp-avail{color:#8FD6B6;background:rgba(62,158,120,.14)}
+.kx-ds-acts{display:flex;gap:6px;margin:6px 12px 0;flex-wrap:wrap}
+.kx-ds-acts button{flex:1 1 30%;min-width:0;padding:8px 6px;border-radius:10px;border:1px solid var(--divider,rgba(0,0,0,.08));background:var(--bg-cell,#fff);color:var(--text-hi);font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kx-ds-acts button.free{color:#2E8F5E;border-color:rgba(62,158,120,.35)}
+:root[data-theme="dark"] .kx-ds-acts button{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1)}
+:root[data-theme="dark"] .kx-ds-acts button.free{color:#8FD6B6}
+.kx-ds-acts button:active{transform:scale(.97)}
+.kx-mrow.kx-v54 span{filter:saturate(1.1)}
+/* il consiglio «tocca due volte…» non copre il sipario di apertura */
+body.kx-intro-on #kx-tip{opacity:0!important;pointer-events:none}
