@@ -5154,16 +5154,15 @@ body.kx-land .day-cell.kx-fest-bday .kx-fest-em{top:2px;font-size:8px}
     <div id="kx-credits" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--divider)">
       <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Informazioni e crediti</div>
       <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);line-height:1.6">
-        <div>Dati meteo: Open-Meteo.com (CC BY 4.0)</div>
+        <div data-kx-wx-credit="1">Dati meteo: MET Norway (CC BY 4.0)</div>
         <div>Geocodifica: Open-Meteo Geocoding (CC BY 4.0) · ricerca singola: OpenStreetMap Nominatim (ODbL)</div>
         <div>Font: Plus Jakarta Sans © 2020 The Plus Jakarta Sans Project Authors · IBM Plex Mono © 2017 IBM Corp., nome riservato «Plex» — entrambi SIL Open Font License 1.1 (openfontlicense.org), incorporati senza modifiche</div>
-        <div>Dati meteo: Open-Meteo.com (CC BY 4.0) — piano gratuito solo per uso non commerciale</div>
         <div>Festività: Nager.Date · mappe e indirizzi: © OpenStreetMap contributors (ODbL)</div>
         <div>Codici QR e musica: generati dall'app, senza librerie o campioni di terzi</div>
         <div>Google Calendar è un marchio di Google LLC, citato solo per indicare la compatibilità</div>
         <div>Astronomia: formule di J. Meeus / NOAA, calcolate sul dispositivo</div>
         <div>Festività: Nager.Date</div>
-        <div style="margin-top:4px;opacity:.7">Kalend v54 · Mondo</div>
+        <div style="margin-top:4px;opacity:.7">Kalend v55 · Mondo</div>
       </div>
     </div>
     <div class="sync-settings-card" id="sync-settings-card">
@@ -8636,6 +8635,10 @@ const WX={
        la leggerebbe come mezzanotte UTC, sbagliando giorno in certi fusi */
     const evDate=parseDateKey(dayKey);evDate.setHours(0,0,0,0);
     const diffDays=Math.round((evDate-today)/86400000);
+    /* v55: l'orizzonte dipende dal fornitore (MET Norway ~10 giorni,
+       Open-Meteo 16, OpenWeatherMap 5); i giorni passati (fino a 60)
+       mostrano l'ultima previsione vista, conservata nella cache. */
+    if(window.KX&&KX.Weather)return diffDays>=-60&&diffDays<=KX.Weather.horizonDays();
     return diffDays>=0&&diffDays<=16;
   },
 
@@ -8817,6 +8820,13 @@ const WX={
     const cacheKey=`${lat.toFixed(3)}_${lon.toFixed(3)}_${dateKey}`;
     if(this.wxCache.has(cacheKey))return this.wxCache.get(cacheKey);
     if(this.wxPending.has(cacheKey))return this.wxPending.get(cacheKey);
+    /* v55: il meteo arriva dal fornitore scelto nelle impostazioni
+       (modulo src/modules/70-weather.js); il codice sotto resta solo
+       come riserva se il modulo mancasse. */
+    if(window.KX&&KX.Weather){
+      const viaProvider=KX.Weather.hourly(lat,lon,dateKey).then(r=>{if(r)this.wxCache.set(cacheKey,r);return r;}).catch(()=>null).finally(()=>this.wxPending.delete(cacheKey));
+      this.wxPending.set(cacheKey,viaProvider);return viaProvider;
+    }
     const pending=(async()=>{
       const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=weather_code,temperature_2m,precipitation_probability,precipitation,cloud_cover,wind_speed_10m&daily=sunrise,sunset&timezone=auto&start_date=${dateKey}&end_date=${dateKey}&cell_selection=land`;
       const data=await this.fetchJSON(url,{timeout:10000,retries:2,headers:{'Accept':'application/json'}});
@@ -8916,7 +8926,7 @@ const WX={
       const temp=temps.length?temps[Math.floor(temps.length/2)]:null;
       const chip=document.createElement('span');
       chip.className='wx-chip';
-      chip.textContent=(this.stateEmoji[dom]||'')+(temp!==null?` ${temp}°`:'');
+      chip.textContent=(this.stateEmoji[dom]||'')+(temp!==null?' '+(window.KX&&KX.Weather?KX.Weather.fmtTemp(temp):temp+'°'):'');  /* v55: °C/°F */
       barEl.appendChild(chip);
     }
     if(payload.fresh&&barEl.closest('.day-cell.is-wide')) this.scheduleWideRefresh(dayKey);
@@ -10248,7 +10258,7 @@ function showTooltip(ev,e,dayKey){
       const timeStr=hasTime?`${String(s.hour).padStart(2,'0')}:00`:'—';
       row.innerHTML=`<span style="color:var(--text-dim);width:34px;flex-shrink:0">${timeStr}</span>`+
         `<span>${WX.stateEmoji[s.state]||''}  ${T(WX.stateName[s.state]||s.state)}</span>`+
-        `${s.temp!==null?`<span style="margin-left:auto;color:var(--text-hi)">${s.temp}°</span>`:''}`;
+        `${s.temp!==null?`<span style="margin-left:auto;color:var(--text-hi)">${window.KX&&KX.Weather?KX.Weather.fmtTemp(s.temp):s.temp+'°'}</span>`:''}`;  /* v55: °C/°F */
       ttWx.appendChild(row);
     });
   } else {
@@ -15064,9 +15074,20 @@ const NowWx={
     if(!force){try{const c=JSON.parse(sessionStorage.getItem(key)||'null');if(c&&Date.now()-c.t<30*60e3){this.data=c.d;return c.d;}}catch(e){}}
     if(AppSettings.featMeteo===false)return null;
     try{
-      const txt=await Net.get(`https://api.open-meteo.com/v1/forecast?latitude=${h.lat}&longitude=${h.lon}&current=weather_code,temperature_2m,cloud_cover,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=7`,10000);
-      const j=JSON.parse(txt);const c=j.current||{};
-      const d={code:c.weather_code,temp:c.temperature_2m,cloud:c.cloud_cover,daily:(j.daily&&j.daily.time||[]).map((t,i)=>({k:t,code:j.daily.weather_code[i],max:j.daily.temperature_2m_max[i],min:j.daily.temperature_2m_min[i]}))};
+      let d;
+      if(window.KX&&KX.Weather){
+        /* v55: dal fornitore scelto (stessa forma di prima: code, temp, cloud, daily) */
+        d=await KX.Weather.now(h.lat,h.lon);if(!d)return null;
+      }else if(window.KX_NO_OPENMETEO_FREE!==false){
+        /* v55: senza il modulo (o prima che sia pronto) non si interroga
+           Open-Meteo gratuito, che vieta l'uso commerciale: il modulo
+           ricarica il meteo di casa appena parte. */
+        return null;
+      }else{
+        const txt=await Net.get(`https://api.open-meteo.com/v1/forecast?latitude=${h.lat}&longitude=${h.lon}&current=weather_code,temperature_2m,cloud_cover,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=7`,10000);
+        const j=JSON.parse(txt);const c=j.current||{};
+        d={code:c.weather_code,temp:c.temperature_2m,cloud:c.cloud_cover,daily:(j.daily&&j.daily.time||[]).map((t,i)=>({k:t,code:j.daily.weather_code[i],max:j.daily.temperature_2m_max[i],min:j.daily.temperature_2m_min[i]}))};
+      }
       this.data=d;try{sessionStorage.setItem(key,JSON.stringify({t:Date.now(),d}));}catch(e){}
       return d;
     }catch(e){return null;}
@@ -15076,7 +15097,10 @@ const WMO_ST=c=>{if(c==null)return null;if(c<=1)return'clear';if(c===2)return'pa
   if(c>=51&&c<=57)return'drizzle';if(c>=61&&c<=67||c>=80&&c<=82)return'rain';if(c>=71&&c<=77||c===85||c===86)return'snow';if(c>=95)return'thunder';return'cloudy';};
 const V25_ST={sun:'clear',clear:'clear',partly:'partly',cloudy:'cloudy',fog:'fog',rain:'rain',hail:'rain',snow:'snow',thunder:'thunder'};
 const ST_ICON={clear:'☀️',partly:'⛅',cloudy:'☁️',fog:'🌫️',drizzle:'🌦️',rain:'🌧️',snow:'❄️',thunder:'⛈️'};
-const fmtT=c=>{if(c==null||isNaN(c))return'';const f=(typeof L10N!=='undefined'&&/^en-US|^en$/.test(L10N.locale)&&AppSettings.country==='US');return f?Math.round(c*9/5+32)+'°F':Math.round(c)+'°';};
+const fmtT=c=>{if(c==null||isNaN(c))return'';
+  /* v55: unità per paese (USA, Bahamas, Belize…) o scelta manuale: modulo 70-weather.js */
+  if(window.KX&&KX.Weather)return KX.Weather.fmtTemp(c);
+  const f=(typeof L10N!=='undefined'&&/^en-US|^en$/.test(L10N.locale)&&AppSettings.country==='US');return f?Math.round(c*9/5+32)+'°F':Math.round(c)+'°';};
 
 /* ══════════════════════════════════════════════════════════════════
    8. CIELO VIVO IN TESTATA
@@ -19505,12 +19529,14 @@ async function forecast(loc,key){
     let g=WXC.get(ck);if(g===undefined){try{const j=JSON.parse(await KX.Net.get(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=${(L10N.resolvedLang||'en')}&format=json`,6000));g=(j.results||[])[0]||null;}catch(e){g=null;}WXC.set(ck,g);}
     if(g){lat=g.latitude;lon=g.longitude;name=g.name;}}
   if(lat==null){const h=KX.Home.get();lat=h.lat;lon=h.lon;}
+  /* v55: dal fornitore scelto nelle impostazioni (modulo 70-weather.js) */
+  if(KX.Weather){const d=await KX.Weather.day(lat,lon,key);return d?{ic:WICON(d.code),max:d.max,min:d.min,pp:d.pop,name}:null;}
   const fk='f|'+lat.toFixed(2)+'|'+lon.toFixed(2);let f=WXC.get(fk);
   if(!f||Date.now()-f.t>30*60e3){try{const j=JSON.parse(await KX.Net.get(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=16`,8000));f={t:Date.now(),d:j.daily};WXC.set(fk,f);}catch(e){return null;}}
   const i=(f.d.time||[]).indexOf(key);if(i<0)return null;
   return{ic:WICON(f.d.weather_code[i]),max:f.d.temperature_2m_max[i],min:f.d.temperature_2m_min[i],pp:f.d.precipitation_probability_max?f.d.precipitation_probability_max[i]:null,name};
 }
-const fmtDeg=c=>c==null?'':Math.round(c)+'°';
+const fmtDeg=c=>c==null?'':(window.KX&&KX.Weather?KX.Weather.fmtTemp(c):Math.round(c)+'°');  /* v55: °C/°F */
 function conflicts(P){
   if(P.allDay||P.start==null||!P.dates.length)return[];
   const out=[];P.dates.slice(0,60).forEach(k=>(S.events[k]||[]).forEach(e=>{if(!e||e._allday||e._notime||!(e.durationMin>0)||e.durationMin>=1440)return;
@@ -21460,7 +21486,7 @@ if(typeof WX!=='undefined'&&WX.fetchHourly){
   const _fh=WX.fetchHourly.bind(WX);
   WX.fetchHourly=async function(lat,lon,dateKey){const r=await _fh(lat,lon,dateKey);if(r&&dateKey){if(!NET.has(dateKey)){NET.add(dateKey);markSoon();}}return r;};
 }
-const TIP=()=>T('Meteo letto dalla rete (Open-Meteo)');
+const TIP=()=>(window.KX&&KX.Weather)?T('Meteo letto dalla rete ({s})',{s:KX.Weather.label()}):T('Meteo letto dalla rete (Open-Meteo)');  /* v55 */
 function mark(){
   NET.forEach(k=>{const c=document.querySelector(`.day-cell[data-key="${k}"]`);if(c&&!c.classList.contains('kx-wx-net')){c.classList.add('kx-wx-net');c.title=TIP();}});
   /* settimana: testate dei giorni */

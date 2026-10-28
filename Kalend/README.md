@@ -1,4 +1,4 @@
-# Kalend — calendario per Android (v54 "Mondo")
+# Kalend — calendario per Android (v55 "Mondo")
 
 Kalend è un'app Android fatta di **una sola pagina web** (`www/index.html`) caricata
 in una WebView, più un widget nativo. Questa cartella contiene il sorgente della
@@ -15,7 +15,7 @@ Kalend/
 │  │   30-calendars.js/css  calendario secondario (islamico, ebraico, lunare…) + festività offline
 │  │   40-widget.js         fasce libere e riepilogo del giorno nel widget
 │  │   50-ux.js/css         azioni rapide, menu, suggerimenti al momento giusto, localizzazione tardiva
-│  │   60-net.js            chiave API Open-Meteo per l'uso commerciale
+│  │   70-weather.js/css    meteo a fornitori: MET Norway (base), Open-Meteo e OpenWeatherMap con chiave personale
 │  └─ i18n/
 │      SCHEMA.md           ← come è fatto un pacchetto lingua
 │      it.json … uk.json   ← 20 pacchetti: traduzioni, lessico del parser, auto-tag, cultura
@@ -29,6 +29,7 @@ Kalend/
 │   i18n-audit.js          copertura delle traduzioni e testi rimasti in italiano
 │   i18n-merge.py          unisce file parziali in un pacchetto lingua
 │   nl-test.js             prova il parser in linguaggio naturale in una lingua
+│   wx-test.js             collaudo del meteo con risposte simulate dei tre fornitori
 ├─ android/Kalend-v53-original.apk   ← APK originale (parte nativa: widget, promemoria)
 ├─ dist/Kalend-unsigned.apk          ← APK nuovo, DA FIRMARE
 └─ docs/                   note, copertura traduzioni, screenshot
@@ -94,9 +95,12 @@ culturale) è in `src/i18n/SCHEMA.md`.
 
 ## Avvertenze per la commercializzazione
 
-* **Meteo**: Open-Meteo è gratuito solo per uso non commerciale. Nelle impostazioni
-  (Funzionalità) c'è il campo per la chiave del piano commerciale; con la chiave le
-  richieste passano dai server `customer-api.open-meteo.com`.
+* **Meteo** (v55): di serie **MET Norway**, gratuito anche per uso commerciale, senza
+  chiave (licenza CC BY 4.0, attribuzione nei crediti). Chi vuole di più inserisce in
+  Impostazioni → Funzionalità la **propria** chiave Open-Meteo o OpenWeatherMap: il
+  contratto è tra utente e fornitore, la chiave resta cifrata nel telefono.
+  L'app non contatta mai Open-Meteo gratuito. Da fare nel nativo: `User-Agent`
+  con contatto (richiesto da MET Norway).
 * **Geocodifica**: la ricerca singola usa OpenStreetMap Nominatim, che ha una
   politica d'uso restrittiva per le app commerciali con molto traffico.
 * **Festività**: Nager.Date è gratuito (licenza MIT); per i paesi non coperti ci sono

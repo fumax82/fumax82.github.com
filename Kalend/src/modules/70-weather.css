@@ -1,0 +1,15 @@
+/* v55 — scheda "Fonte del meteo" nelle impostazioni */
+#kx-wx-card .kx-wx-row{display:flex;gap:10px;align-items:flex-start;padding:8px 6px;border-radius:10px;cursor:pointer}
+#kx-wx-card .kx-wx-row:hover{background:var(--surface-2,rgba(127,127,127,.08))}
+#kx-wx-card .kx-wx-row input[type=radio]{margin-top:3px;flex-shrink:0}
+#kx-wx-card .kx-wx-row>div{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+#kx-wx-card .kx-wx-row b{font-size:13px}
+#kx-wx-card .kx-wx-row small{font-size:11px;color:var(--text-dim);line-height:1.4}
+#kx-wx-card .kx-wx-attr{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.02em}
+#kx-wx-card .kx-wx-key{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}
+#kx-wx-card .kx-wx-key input{flex:1 1 140px;min-width:0;font-family:var(--font-mono);font-size:12px}
+#kx-wx-card .kx-wx-eye,#kx-wx-card .kx-wx-test{border:1px solid var(--divider);background:var(--surface,transparent);color:var(--text-hi);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer}
+#kx-wx-card .kx-wx-test{font-weight:600}
+#kx-wx-card .kx-wx-site{font-size:11px;color:var(--accent);text-decoration:none;flex-basis:100%}
+#kx-wx-card .kx-wx-units{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 6px 4px;font-size:12px}
+#kx-wx-card .kx-wx-units select{max-width:55%}
