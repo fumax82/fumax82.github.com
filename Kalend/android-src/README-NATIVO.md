@@ -64,3 +64,19 @@ espressioni regolari; gli avvisi richiedono il token segreto `alert_tok`.
 - User-Agent con contatto (richiesto dalle condizioni di MET Norway), configurabile con `KALEND_CONTACT`;
 - nessuna libreria esterna (zero dipendenze da dichiarare nelle licenze);
 - firma di rilascio fuori dal repository.
+
+## Punti ricostruiti con un margine di dubbio
+
+Il sorgente decompilato è leggibile ma non perfetto: nei punti in cui il flusso
+era ambiguo la scelta è segnalata nel codice con un commento che inizia con
+`NOTA RICOSTRUZIONE:` (cercalo con *Find in files*). Sono dettagli di gestione
+degli errori e di layout del widget, non di sicurezza. Da ricollaudare su un
+telefono reale, nell'ordine:
+
+1. widget principale: cielo, lista eventi, modalità (mese/agenda/liste/statistiche), filtri, musica;
+2. widget «prossimo evento»;
+3. promemoria: notifica, posticipa, fatto, riavvio del telefono, cambio ora;
+4. dettatura dal vivo e con la finestra di sistema;
+5. calendario del telefono (permesso, elenco, eventi, nuovo evento);
+6. esportazione/condivisione file, apertura link, ricerca luoghi (Geocoder);
+7. gesto «indietro» e margini di sistema su Android 15/16, layout su tablet.
