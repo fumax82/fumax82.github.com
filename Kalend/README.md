@@ -19,6 +19,7 @@ Kalend/
 │  │   70-weather.js/css    meteo a fornitori: MET Norway (base), Open-Meteo e OpenWeatherMap con chiave personale
 │  │   80-geo.js            luoghi → coordinate a strati: memoria, atlante offline, Geocoder Android, chiave, Photon
 │  │   90-legal.js/css      pagina Informazioni legali, avviso di aggiornamento, informative prima dei permessi
+│  │   95-security.js/css   backup cifrati con password, lista bianca delle impostazioni al ripristino
 │  ├─ legal/               ← testi legali: it.json … th.json (termini, privacy, informative) + seller.json (dati venditore)
 │  └─ i18n/
 │      SCHEMA.md           ← come è fatto un pacchetto lingua
@@ -39,6 +40,7 @@ Kalend/
 │   geo-test.js            collaudo della geocodifica a strati
 │   hol-test.js            collaudo delle festività (date note del 2026)
 │   legal-test.js          collaudo di testi legali, informative e CSP
+│   sec-test.js            collaudo di sicurezza: backup cifrati, impostazioni, sincronizzazione QR, XSS
 │   build-legal.js         genera legal/*.html dai testi di src/legal/
 │   build-atlas.py         genera www/data/cities.json dal pacchetto npm all-the-cities (GeoNames)
 ├─ android/Kalend-v53-original.apk   ← APK originale (parte nativa: widget, promemoria)

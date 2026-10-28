@@ -48,11 +48,11 @@ Dove: **pagina** = `src/index.html` e `src/modules/` · **nativo** = progetto An
 | D5 | Nome e identificativo definitivi dell'app | 🟠 | D | — | — | — |
 | D6 | Tipo di account sviluppatore Google Play | 🟠 | D | — | — | — |
 | D7 | Dati nel backup cloud di Android: sì o no | 🟡 | D | — | — | — |
-| 1.1 | Sincronizzazione QR con codice di verifica e conferma | 🔴 | 1 | pagina | M | — |
-| 1.2 | Backup esportato cifrato con password | 🔴 | 1 | pagina | M | — |
-| 1.3 | Ripristino: lista bianca delle impostazioni | 🟠 | 1 | pagina | S | — |
-| 1.4 | Rimuovere il vecchio gestore di import | 🟠 | 1 | pagina | S | — |
-| 1.5 | Provenienza visibile degli eventi da calendari collegati | 🟡 | 1 | pagina | S | — |
+| 1.1 | Sincronizzazione QR con codice di verifica e conferma | ✅ fatto v55 | 1 | pagina | M | — |
+| 1.2 | Backup esportato cifrato con password | ✅ fatto v55 | 1 | pagina | M | — |
+| 1.3 | Ripristino: lista bianca delle impostazioni | ✅ fatto v55 | 1 | pagina | S | — |
+| 1.4 | Rimuovere il vecchio gestore di import | ✅ fatto v55 | 1 | pagina | S | — |
+| 1.5 | Provenienza visibile degli eventi da calendari collegati | ✅ già presente (verificato v55) | 1 | pagina | S | — |
 | 1.6 | Meteo con MET Norway (Open-Meteo opzionale) | ✅ fatto v55 | 1 | pagina | M | D3 |
 | 1.7 | Festività offline per tutti i paesi dei 20 mercati | ✅ fatto v55 | 1 | pagina | L | D4 |
 | 1.8 | Geocodifica senza Nominatim (parte pagina) | ✅ fatto v55 | 1 | pagina | S | 2.6 |
@@ -62,7 +62,7 @@ Dove: **pagina** = `src/index.html` e `src/modules/` · **nativo** = progetto An
 | 1.12 | Icona neutra per il calendario Minguo | 🟡 | 1 | pagina | S | — |
 | 1.13 | Dizionari caricati solo per la lingua in uso | 🟡 | 1 | pagina + build | M | — |
 | 1.14 | Opzione «testo grande» | 🟡 | 1 | pagina | M | — |
-| 1.15 | Test automatici di sicurezza nel collaudo | 🟠 | 1 | build | M | — |
+| 1.15 | Test automatici di sicurezza nel collaudo | ✅ fatto v55 | 1 | build | M | — |
 | 2.1 | Progetto Android nel repository, build riproducibile | 🔴 | 2 | nativo | M | D1 |
 | 2.2 | Ponte nativo: togliere `loadUrl` e `finish` | 🔴 | 2 | nativo | S | 2.1 |
 | 2.3 | Codifica di ogni valore passato alla pagina, Intent verificati | 🔴 | 2 | nativo | M | 2.1 |

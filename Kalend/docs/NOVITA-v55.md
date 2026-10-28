@@ -99,7 +99,25 @@ Collaudo: `node Kalend/tools/hol-test.js` (date note del 2026 per 20 paesi).
 
 Collaudo: `node Kalend/tools/legal-test.js`.
 
-## 5. Da fare nella parte nativa (Fase 2 del piano)
+## 5. Sicurezza della pagina
+* **Sincronizzazione QR autenticata**: certificato stabile per dispositivo, **codice di
+  verifica a 6 cifre** uguale sui due schermi, conferma esplicita prima del primo invio
+  (cellulare) e della prima ricezione (tablet), dispositivi accettati ricordati, QR
+  valido 2 minuti, il cellulare ignora stati in arrivo, le coordinate di casa non
+  viaggiano, il testo del QR non viene più salvato.
+* **Backup cifrato con password** (AES‑256‑GCM, PBKDF2‑SHA256 600.000 iterazioni):
+  all'esportazione si sceglie la password; senza password il file esce in chiaro ma
+  senza posizione di casa, località predefinita e chiavi. L'import riconosce i due
+  formati; i backup vecchi restano leggibili.
+* **Lista bianca delle impostazioni** al ripristino: solo chiavi note con tipo e
+  intervallo verificati; chiavi ignote, chiave API e festività scartate.
+* **Vecchio gestore dell'import** (senza verifiche) rimosso dal sorgente.
+* Gli eventi dei calendari collegati erano già marcati «🔒 evento di un calendario
+  collegato» e non generano promemoria; invariato.
+
+Collaudo: `node Kalend/tools/sec-test.js`.
+
+## 6. Da fare nella parte nativa (Fase 2 del piano)
 * `User-Agent` con nome, versione e contatto (es. `Kalend/55 (+https://…; email)`):
   MET Norway lo richiede per identificare l'app; oggi il nativo invia `Kalend/1.0`.
 * Metodo `geocode(id, testo, lingua)` nel ponte, con `android.location.Geocoder`,

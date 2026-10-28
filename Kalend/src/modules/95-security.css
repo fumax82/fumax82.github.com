@@ -1,0 +1,13 @@
+/* v55 — finestra password dei backup, codice di verifica della sincronizzazione */
+.kx-pw{position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:20px}
+.kx-pw-card{max-width:420px;width:100%;background:var(--bg,#fff);color:var(--text-hi,#111);border-radius:16px;padding:18px;box-shadow:0 10px 36px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:8px}
+.kx-pw-card b{font-size:15px;margin-bottom:4px}
+.kx-pw-card .form-input{font-family:var(--font-mono);font-size:14px}
+.kx-pw-show{font-size:12.5px;color:var(--text-mid);display:flex;gap:6px;align-items:center}
+.kx-pw-note{margin:0;font-size:12px;color:var(--text-dim);line-height:1.45}
+.kx-pw-b{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:4px}
+.kx-pw-b button{border:1px solid var(--divider);background:transparent;color:var(--text-hi);border-radius:10px;padding:9px 12px;font:inherit;font-size:13px;cursor:pointer}
+.kx-pw-b .kx-pw-ok{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+.kx-pw-b .kx-pw-plain{margin-inline-end:auto;color:var(--text-mid)}
+.kx-pw-err{font-size:12.5px;color:#c0392b}
+.sync-sas{margin:8px 0;padding:10px;border-radius:10px;background:var(--surface-2,rgba(42,171,184,.12));font-family:var(--font-mono);font-size:18px;font-weight:700;letter-spacing:.08em;text-align:center}

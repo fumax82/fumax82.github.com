@@ -13058,6 +13058,8 @@ function buildFullBackup(){
 }
 document.getElementById('set-export').addEventListener('click',()=>{
   try{localStorage.setItem('cal_last_backup',String(Date.now()));}catch(e){}
+  /* v55: backup cifrato con password, oppure in chiaro senza posizione e chiavi */
+  if(window.KX&&KX.Secure&&KX.Secure.exportBackup){KX.Secure.exportBackup(buildFullBackup(),deliverFile);return;}
   deliverFile(JSON.stringify(buildFullBackup(),null,2),
     `calendario_backup_${toDateStr(new Date())}.json`,
     'application/json',T('📦 Backup completo esportato'));
@@ -13076,72 +13078,9 @@ document.getElementById('set-reset-hints')?.addEventListener('click',()=>{
   HINTS.reset();
   toast(T('Suggerimenti riattivati'));
 });
-document.getElementById('import-file').addEventListener('change',e=>{
-  const file=e.target.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=()=>{
-    const text=String(reader.result||'').replace(/^\uFEFF/,'');
-    /* ── v21: riconoscimento automatico del formato ── */
-    if(/^BEGIN:VCALENDAR/m.test(text.slice(0,200))){
-      /* File ICS (Google Calendar, Outlook, iCal…) */
-      const{events,skippedRecurring}=ICS.parse(text);
-      let count=0;
-      events.forEach(({key,ev})=>{
-        if(!S.events[key])S.events[key]=[];
-        S.events[key].push(ev);count++;
-        (ev.tags||[]).forEach(t=>S.tagDB.add(t));
-      });
-      CHAIN.ensureEventIds();
-      EventsStore.scheduleSave();
-      updateTagDatalist();
-      renderAll();
-      toast(T('📥 Importati {n} eventi ICS',{n:count}));
-      const outIcs=events.filter(e=>!isKeyInGrid(e.key)).length;
-      if(outIcs)setTimeout(()=>toast(T('{n} eventi con data fuori dal calendario visibile',{n:outIcs})),2600);
-      if(skippedRecurring)setTimeout(()=>toast(T('{n} eventi ricorrenti saltati (import non supportato)',{n:skippedRecurring})),1400);
-    }else{
-      try{
-        const data=JSON.parse(text);
-        /* v23: backup completo → ripristino totale e ricarica.
-           Si riscrivono gli stessi archivi da cui l'app legge. */
-        if(data.app==='lavagna-cal'){
-          /* v25: un ripristino totale SOVRASCRIVE tutto — mai senza
-             una conferma esplicita dell'utente */
-          showConfirm(T('Ripristinare il backup?'),
-            T('Sovrascriverà eventi, attività, catene e impostazioni attuali con quelli del file.'),
-            ()=>{
-              try{
-                if(data.events)localStorage.setItem(EVENTS_STORE_KEY,JSON.stringify(data.events));
-                if(data.settings)localStorage.setItem('cal_settings',JSON.stringify(data.settings));
-                if(data.chains!==null&&data.chains!==undefined)localStorage.setItem(CHAIN_STORE_KEY,JSON.stringify(data.chains));
-                if(data.todo!==null&&data.todo!==undefined)localStorage.setItem(TODO_STORE_KEY,JSON.stringify(data.todo));
-                if(data.tagConfig&&typeof TAG_CONFIG!=='undefined')Object.assign(TAG_CONFIG,data.tagConfig);
-              }catch(err){}
-              toast(T('📦 Backup completo importato, ricarico…'));
-              setTimeout(()=>location.reload(),700);
-            });
-          return;
-        }
-        if(data.events){
-          let count=0;
-          Object.entries(data.events).forEach(([key,evs])=>{
-            if(!S.events[key])S.events[key]=[];
-            evs.forEach(ev=>{S.events[key].push(ev);count++;});
-          });
-          CHAIN.ensureEventIds();
-          EventsStore.scheduleSave(); /* v21: prima l'import NON veniva salvato! */
-          renderAll();
-          toast(T('📥 Importati {n} eventi',{n:count}));
-        }
-        if(data.tagConfig&&typeof TAG_CONFIG!=='undefined'){
-          Object.assign(TAG_CONFIG,data.tagConfig);
-        }
-      }catch(err){toast(T('File non riconosciuto (attesi .json o .ics)'));}
-    }
-  };
-  reader.readAsText(file);
-  e.target.value=''; /* Reset per permettere re-import */
-});
+/* v55: il vecchio gestore dell'import (senza verifiche) è stato rimosso.
+   L'unico è hookImport() più sotto: limiti di dimensione, validBackup,
+   sanificazione, copia di sicurezza, conferma, backup cifrati. */
 
 
 
@@ -20387,7 +20326,10 @@ function writeBackup(data){
   const ok=validBackup(data);if(!ok.ok)throw new Error(ok.why);
   const ev=sanitizeEventsObj(data.events);
   localStorage.setItem(EVENTS_STORE_KEY,JSON.stringify(ev));
-  if(data.settings&&typeof data.settings==='object'){const s=JSON.parse(JSON.stringify(data.settings));for(const k of Object.keys(s))if(BAD_KEYS.has(k))delete s[k];localStorage.setItem('cal_settings',JSON.stringify(s));}
+  if(data.settings&&typeof data.settings==='object'){let s=JSON.parse(JSON.stringify(data.settings));for(const k of Object.keys(s))if(BAD_KEYS.has(k))delete s[k];
+    /* v55: solo le impostazioni note, con tipo e intervallo verificati (modulo 95-security.js) */
+    if(window.KX&&KX.Secure&&KX.Secure.cleanSettings)s=KX.Secure.cleanSettings(s);
+    localStorage.setItem('cal_settings',JSON.stringify(s));}
   if(data.chains!=null&&typeof data.chains==='object'){deepFix(data.chains,0,new WeakSet());localStorage.setItem(CHAIN_STORE_KEY,JSON.stringify(data.chains));}
   if(data.todo!=null&&typeof data.todo==='object'){deepFix(data.todo,0,new WeakSet());localStorage.setItem(TODO_STORE_KEY,JSON.stringify(data.todo));}
   /* v43: famiglie di tag, numeri delle catene e (senza indirizzi segreti) i calendari collegati */
@@ -20462,6 +20404,8 @@ function hookImport(){
           return;
         }
         let data;try{data=JSON.parse(text);}catch(x){toast('⚠️ '+T('File non riconosciuto (attesi .json o .ics)'));return;}
+        /* v55: backup cifrato con password → si chiede la password e si decifra */
+        if(data&&data.app==='lavagna-cal-enc'){if(!(window.KX&&KX.Secure&&KX.Secure.decryptBackup))throw new Error('enc');data=await KX.Secure.decryptBackup(data);if(!data)return;}
         const chk=validBackup(data);if(!chk.ok){toast('⚠️ '+chk.why);return;}
         if(data.app==='lavagna-cal'){
           const n=Object.values(data.events||{}).reduce((a,b)=>a+(Array.isArray(b)?b.length:0),0);
@@ -23148,6 +23092,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     </div>
     <div class="sync-pair-body">
       <div id="sync-pair-status" class="sync-pair-status">Pronto.</div>
+      <div id="sync-sas" class="sync-sas" hidden></div>
       <div class="sync-pair-actions">
         <button id="sync-open-camera-btn" class="sync-btn secondary" type="button">Apri fotocamera</button>
         <button id="sync-stop-camera-btn" class="sync-btn secondary" type="button">Ferma fotocamera</button>
@@ -23197,22 +23142,55 @@ document.addEventListener('DOMContentLoaded',()=>{
   }); }
   function b64enc(obj){ return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))); }
   function b64dec(str){ return JSON.parse(decodeURIComponent(escape(atob(str)))); }
-  function getRtcConfig(){ return { iceServers:[], iceCandidatePoolSize:0 }; }
+  /* ── v55: sicurezza dell'abbinamento ──────────────────────────────
+     · certificato DTLS stabile (IndexedDB) → impronta stabile → i
+       dispositivi già accettati vengono ricordati (kx_sync_trust_v1);
+     · codice di verifica a 6 cifre ricavato dalle impronte dei due
+       dispositivi: uguale su entrambi gli schermi se nessuno si è
+       messo in mezzo;
+     · il cellulare NON invia nulla finché l'utente non conferma; il
+       tablet NON applica nulla finché l'utente non accetta;
+     · il QR scade dopo 2 minuti; il cellulare ignora stati in arrivo;
+     · le coordinate di casa non viaggiano. */
+  const QR_TTL=120000, TRUST_KEY='kx_sync_trust_v1';
+  function certStore(mode,fn){ return new Promise((res,rej)=>{ try{ const r=indexedDB.open('kalend-sync',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>{ const t=r.result.transaction('kv',mode); const q=fn(t.objectStore('kv')); t.oncomplete=()=>res(q&&q.result); t.onerror=()=>rej(t.error); }; r.onerror=()=>rej(r.error); }catch(e){ rej(e); } }); }
+  async function getCert(){ try{ let c=await certStore('readonly',s=>s.get('cert')); if(c&&c.expires>Date.now()+86400e3) return c; c=await RTCPeerConnection.generateCertificate({name:'ECDSA',namedCurve:'P-256'}); await certStore('readwrite',s=>s.put(c,'cert')); return c; }catch(e){ return null; } }
+  async function getRtcConfig(){ const cfg={ iceServers:[], iceCandidatePoolSize:0 }; const cert=await getCert(); if(cert) cfg.certificates=[cert]; return cfg; }
+  function fingerprintOf(desc){ const m=/a=fingerprint:sha-256 ([0-9A-Fa-f:]+)/.exec((desc&&desc.sdp)||''); return m?m[1].toUpperCase():''; }
+  async function sasFor(fpA,fpB){ if(!fpA||!fpB) return ''; const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode([fpA,fpB].sort().join('|'))); const v=new DataView(buf).getUint32(0)%1000000; return String(v).padStart(6,'0').replace(/^(\d{3})(\d{3})$/,'$1 $2'); }
+  async function sasCode(){ return rtcPc?sasFor(fingerprintOf(rtcPc.localDescription),fingerprintOf(rtcPc.remoteDescription)):''; }
+  function remoteId(){ return fingerprintOf(rtcPc&&rtcPc.remoteDescription); }
+  function trusted(id){ try{ return !!id&&(JSON.parse(localStorage.getItem(TRUST_KEY)||'[]')||[]).includes(id); }catch(_){ return false; } }
+  function trust(id){ try{ const l=(JSON.parse(localStorage.getItem(TRUST_KEY)||'[]')||[]).filter(x=>x!==id); l.push(id); localStorage.setItem(TRUST_KEY,JSON.stringify(l.slice(-10))); }catch(_){} }
+  function ask(title,body,okLabel){ if(window.KX&&KX.dialog) return KX.dialog(title,body,[{t:okLabel,v:'y',cls:'pri'},{t:T('Annulla'),v:null}]).then(v=>v==='y'); return Promise.resolve(confirm(title+'\n'+body)); }
+  async function showSas(){ const code=await sasCode(); const n=$('sync-sas'); if(n){ n.hidden=!code; n.textContent=code?T('Codice di verifica: {c}',{c:code}):''; } return code; }
+  function isExpired(decoded){ return !!(decoded&&decoded.exp&&Date.now()>decoded.exp); }
+  function stripPrivate(json){ try{ const o=JSON.parse(json); if(o&&typeof o==='object'){ delete o.homeGeo; delete o.openMeteoKey; } return JSON.stringify(o); }catch(_){ return json; } }
+  window.KX=window.KX||{}; KX.Sync={ sasFor, fingerprintOf, isExpired, stripPrivate, QR_TTL };
   function drawQr(text){
     const canvas=$('sync-qr-canvas'); if(!canvas||typeof QRious==='undefined') return;
     new QRious({ element:canvas, value:text, size:420, level:'L', background:'white', foreground:'black' });
     const ta=$('sync-textarea'); if(ta) ta.value=text;
-    try{ localStorage.setItem(LS_LAST,text); }catch(_){}
+    /* v55: il testo del QR non viene più salvato in localStorage */
   }
   function cleanupRtc(){ try{ rtcChannel&&rtcChannel.close(); }catch(_){} try{ rtcPc&&rtcPc.close(); }catch(_){} rtcChannel=null; rtcPc=null; }
   function bindChannel(ch){
-    ch.onopen=()=>{ updateSettingsStatus('Connesso in tempo reale.'); updateModalStatus('Canale dati aperto.'); if(syncRole==='phone') sendFullState(); notify('Dispositivo collegato'); };
+    ch.onopen=async()=>{ updateSettingsStatus('Connesso in tempo reale.'); updateModalStatus('Canale dati aperto.'); notify('Dispositivo collegato');
+      if(syncRole!=='phone') return;
+      /* v55: conferma esplicita prima del primo invio, salvo dispositivo già ricordato */
+      const code=await showSas(), id=remoteId();
+      if(!trusted(id)){
+        const ok=await ask(T('Inviare il calendario a questo dispositivo?'),T('Il codice mostrato sull\'altro dispositivo deve essere {c}. Se è diverso, annulla.',{c:code}),T('Invia'));
+        if(!ok){ cleanupRtc(); updateSettingsStatus(T('Invio annullato.')); return; }
+        trust(id); notify(T('Dispositivo ricordato: la prossima volta non chiederò conferma'));
+      }
+      sendFullState(); };
     ch.onclose=()=>updateSettingsStatus('Connessione chiusa.');
     ch.onerror=()=>updateSettingsStatus('Errore sul canale dati.');
     ch.onmessage=(ev)=>{
       try{
         const msg=JSON.parse(ev.data);
-        if(msg.type==='full_state') applySnapshot(msg);
+        if(msg.type==='full_state') acceptSnapshot(msg);
         if(msg.type==='ping' && rtcChannel && rtcChannel.readyState==='open') rtcChannel.send(JSON.stringify({type:'pong',ts:Date.now()}));
       }catch(err){ console.error(err); }
     };
@@ -23222,10 +23200,27 @@ document.addEventListener('DOMContentLoaded',()=>{
     pc.oniceconnectionstatechange=()=>{ updateModalStatus('ICE: '+(pc.iceConnectionState||'n/d')); };
     pc.ondatachannel=(ev)=>{ rtcChannel=ev.channel; bindChannel(rtcChannel); };
   }
+  /* v55: il tablet applica uno stato in arrivo solo dopo l'accettazione
+     dell'utente (una volta per dispositivo, poi ricordato); il cellulare
+     non applica mai stati in arrivo */
+  let pendingState=null, asking=false;
+  async function acceptSnapshot(msg){
+    if(syncRole!=='tablet') return;
+    const id=remoteId();
+    if(trusted(id)){ applySnapshot(msg); return; }
+    pendingState=msg; if(asking) return; asking=true;
+    try{
+      const code=await showSas();
+      const ok=await ask(T('Ricevere il calendario da questo dispositivo?'),T('Sostituirà eventi, attività e impostazioni di questo dispositivo. Il codice sull\'altro dispositivo deve essere {c}.',{c:code}),T('Accetta'));
+      if(ok){ trust(id); const m=pendingState; pendingState=null; if(m) applySnapshot(m); }
+      else { pendingState=null; cleanupRtc(); updateSettingsStatus(T('Ricezione rifiutata.')); }
+    }finally{ asking=false; }
+  }
   function getSnapshot(){
     const out={};
     const ALLOW=(window.KX&&KX.syncAllowed)?KX.syncAllowed():null;
     try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(!k||k===LS_ROLE||k===LS_LAST) continue; if(ALLOW&&!ALLOW.includes(k)) continue; out[k]=localStorage.getItem(k); } }catch(_){ }
+    if(out.cal_settings) out.cal_settings=stripPrivate(out.cal_settings);   /* v55: niente coordinate di casa */
     return { type:'full_state', ts:Date.now(), payload:{ localStorage:out } };
   }
   function applySnapshot(message, options){
@@ -23257,34 +23252,36 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   async function createOfferQr(){
     cleanupRtc(); setRole('phone');
-    rtcPc=new RTCPeerConnection(getRtcConfig()); bindPc(rtcPc);
+    rtcPc=new RTCPeerConnection(await getRtcConfig()); bindPc(rtcPc);
     rtcChannel=rtcPc.createDataChannel('calendar-sync'); bindChannel(rtcChannel);
     const offer=await rtcPc.createOffer();
     await rtcPc.setLocalDescription(offer); await waitIceComplete(rtcPc);
-    const payload={ kind:'tablet_sync_offer', sdp:rtcPc.localDescription };
+    const payload={ kind:'tablet_sync_offer', sdp:rtcPc.localDescription, exp:Date.now()+QR_TTL, v:55 };
     openModal('QR iniziale per tablet','Mostra questo QR al tablet. QR ingrandito e alleggerito.'); drawQr(b64enc(payload));
     updateSettingsStatus('QR creato. In attesa della risposta del tablet.');
   }
   async function createAnswerFromOffer(decoded){
     cleanupRtc(); setRole('tablet');
-    rtcPc=new RTCPeerConnection(getRtcConfig()); bindPc(rtcPc);
+    rtcPc=new RTCPeerConnection(await getRtcConfig()); bindPc(rtcPc);
     await rtcPc.setRemoteDescription(decoded.sdp);
     const answer=await rtcPc.createAnswer();
     await rtcPc.setLocalDescription(answer); await waitIceComplete(rtcPc);
-    const payload={ kind:'tablet_sync_answer', sdp:rtcPc.localDescription };
-    openModal('QR di risposta del tablet','Mostra questo QR al cellulare. Questo QR resta aperto finché non chiudi la finestra.'); drawQr(b64enc(payload));
+    const payload={ kind:'tablet_sync_answer', sdp:rtcPc.localDescription, exp:Date.now()+QR_TTL, v:55 };
+    openModal('QR di risposta del tablet','Mostra questo QR al cellulare. Questo QR resta aperto finché non chiudi la finestra.'); drawQr(b64enc(payload)); await showSas();
     updateSettingsStatus('Risposta generata. Falla leggere al cellulare.');
     updateModalStatus('QR di risposta pronto. Non si chiuderà da solo.');
   }
   async function applyAnswer(decoded){
     if(!rtcPc) throw new Error('QR iniziale non ancora creato sul cellulare.');
     await rtcPc.setRemoteDescription(decoded.sdp);
+    await showSas();
     updateSettingsStatus('Risposta ricevuta. In attesa di apertura canale.');
     updateModalStatus('Risposta letta correttamente.');
   }
   async function processPairingPayload(txt){
     try{
       const decoded=b64dec(txt.trim());
+      if(isExpired(decoded)) throw new Error(T('QR scaduto: creane uno nuovo'));
       if(decoded.kind==='tablet_sync_offer') await createAnswerFromOffer(decoded);
       else if(decoded.kind==='tablet_sync_answer') await applyAnswer(decoded);
       else throw new Error('Formato pairing non riconosciuto.');
