@@ -1,0 +1,27 @@
+/* v55 — informazioni legali, avviso di aggiornamento, informative sui permessi */
+#kx-legal-sheet{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center}
+#kx-legal-sheet.open{display:flex}
+#kx-legal-sheet .kx-legal-card{width:100%;max-width:640px;max-height:92vh;background:var(--bg,#fff);color:var(--text-hi,#111);border-radius:18px 18px 0 0;display:flex;flex-direction:column;box-shadow:0 -8px 30px rgba(0,0,0,.25)}
+#kx-legal-sheet .kx-legal-h{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;font-size:17px}
+#kx-legal-sheet .kx-legal-x{border:0;background:transparent;font-size:18px;color:var(--text-mid);cursor:pointer;padding:6px}
+#kx-legal-sheet .kx-legal-tabs{display:flex;gap:6px;padding:0 16px 8px}
+#kx-legal-sheet .kx-legal-tabs button{flex:1;border:1px solid var(--divider);background:transparent;color:var(--text-mid);border-radius:999px;padding:7px 10px;font:inherit;font-size:13px;cursor:pointer}
+#kx-legal-sheet .kx-legal-tabs button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+#kx-legal-sheet .kx-legal-b{overflow:auto;padding:4px 16px 24px;font-size:13.5px;line-height:1.55}
+#kx-legal-sheet .kx-legal-b h2{font-size:16px;margin:6px 0 10px}
+#kx-legal-sheet .kx-legal-b h3{font-size:13.5px;margin:14px 0 4px}
+#kx-legal-sheet .kx-legal-b p{margin:0;color:var(--text-mid)}
+#kx-legal-sheet .kx-legal-cr{padding:0 0 0 18px;margin:8px 0;color:var(--text-mid);font-family:var(--font-mono);font-size:11px;line-height:1.6}
+#kx-legal-bar{position:fixed;left:12px;right:12px;bottom:-80px;z-index:8900;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--bg,#fff);color:var(--text-hi,#111);box-shadow:0 6px 24px rgba(0,0,0,.25);font-size:13px;transition:bottom .4s}
+#kx-legal-bar.show{bottom:14px}
+#kx-legal-bar span{flex:1}
+#kx-legal-bar button{border:1px solid var(--divider);background:transparent;color:var(--text-hi);border-radius:8px;padding:6px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+#kx-legal-bar .kx-legal-read{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+.kx-disc{position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:20px}
+.kx-disc-card{max-width:420px;width:100%;background:var(--bg,#fff);color:var(--text-hi,#111);border-radius:16px;padding:20px 18px 14px;box-shadow:0 10px 36px rgba(0,0,0,.3);text-align:center}
+.kx-disc-ic{font-size:34px;margin-bottom:6px}
+.kx-disc-card b{display:block;font-size:16px;margin-bottom:8px}
+.kx-disc-card p{margin:0 0 14px;font-size:13.5px;line-height:1.5;color:var(--text-mid);text-align:start}
+.kx-disc-b{display:flex;gap:8px;justify-content:flex-end}
+.kx-disc-b button{border:1px solid var(--divider);background:transparent;color:var(--text-hi);border-radius:10px;padding:9px 14px;font:inherit;font-size:13.5px;cursor:pointer}
+.kx-disc-b .kx-disc-ok{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}

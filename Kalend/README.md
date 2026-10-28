@@ -18,12 +18,15 @@ Kalend/
 │  │   50-ux.js/css         azioni rapide, menu, suggerimenti al momento giusto, localizzazione tardiva
 │  │   70-weather.js/css    meteo a fornitori: MET Norway (base), Open-Meteo e OpenWeatherMap con chiave personale
 │  │   80-geo.js            luoghi → coordinate a strati: memoria, atlante offline, Geocoder Android, chiave, Photon
+│  │   90-legal.js/css      pagina Informazioni legali, avviso di aggiornamento, informative prima dei permessi
+│  ├─ legal/               ← testi legali: it.json … th.json (termini, privacy, informative) + seller.json (dati venditore)
 │  └─ i18n/
 │      SCHEMA.md           ← come è fatto un pacchetto lingua
 │      it.json … uk.json   ← 20 pacchetti: traduzioni, lessico del parser, auto-tag, cultura
 │      extra/*.json        ← stringhe dei moduli v54, già tradotte in tutte le lingue
 ├─ www/index.html          ← PAGINA COSTRUITA (non modificare a mano: è generata)
 ├─ www/data/cities.json    ← atlante offline (~24.000 città, GeoNames CC BY 4.0), da tools/build-atlas.py
+├─ legal/                  ← pagine web di privacy e termini in 20 lingue (da tools/build-legal.js), per Google Play
 ├─ tools/
 │   build.js               assembla www/index.html e ricalcola gli hash della Content-Security-Policy
 │   pack-apk.py            crea dist/Kalend-unsigned.apk (allineato, versionCode) dall'APK originale
@@ -35,6 +38,8 @@ Kalend/
 │   wx-test.js             collaudo del meteo con risposte simulate dei tre fornitori
 │   geo-test.js            collaudo della geocodifica a strati
 │   hol-test.js            collaudo delle festività (date note del 2026)
+│   legal-test.js          collaudo di testi legali, informative e CSP
+│   build-legal.js         genera legal/*.html dai testi di src/legal/
 │   build-atlas.py         genera www/data/cities.json dal pacchetto npm all-the-cities (GeoNames)
 ├─ android/Kalend-v53-original.apk   ← APK originale (parte nativa: widget, promemoria)
 ├─ dist/Kalend-unsigned.apk          ← APK nuovo, DA FIRMARE
@@ -45,9 +50,15 @@ Kalend/
 ## Come si costruisce
 
 ```bash
-node Kalend/tools/build.js          # → Kalend/www/index.html
+node Kalend/tools/build.js          # → Kalend/www/index.html (CSP ristretta, per l'app Android)
+node Kalend/tools/build.js --web    # variante per il browser (connect-src https:)
+node Kalend/tools/build-legal.js    # → Kalend/legal/*.html (privacy e termini, 20 lingue)
 python3 Kalend/tools/pack-apk.py    # → Kalend/dist/Kalend-unsigned.apk
 ```
+
+**Prima della pubblicazione** compilare `src/legal/seller.json` (nome, indirizzo,
+e‑mail, legge applicabile): i segnaposto vengono sostituiti nei testi legali
+dell'app e nelle pagine web al momento del build.
 
 Il build inserisce nella pagina i dizionari (`window.KX_I18N`), i pacchetti lingua
 (`window.KX_PACKS`) e i moduli di `src/modules/` (in ordine di nome), poi ricalcola

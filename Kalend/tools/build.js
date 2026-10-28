@@ -15,7 +15,17 @@
       script);
    5. scrive www/index.html e stampa un riepilogo.
 
-   USO:  node Kalend/tools/build.js
+   6. (v55) inserisce i testi legali di src/legal/*.json (window.KX_LEGAL)
+      con i dati del venditore di src/legal/seller.json al posto dei
+      segnaposto {{SELLER}} ecc.;
+   7. (v55) restringe la Content-Security-Policy «connect-src» ai soli
+      host dei servizi usati dall'app Android (nell'app le richieste di
+      rete passano dal ponte nativo: la pagina parla solo con l'atlante
+      locale e, nel browser, con i fornitori). Con --web resta «https:»
+      per la versione da browser, dove i calendari collegati si
+      scaricano dalla pagina stessa.
+
+   USO:  node Kalend/tools/build.js [--web]
    ══════════════════════════════════════════════════════════════════ */
 'use strict';
 const fs=require('fs');
@@ -27,6 +37,10 @@ const SRC=path.join(ROOT,'src','index.html');
 const I18N_DIR=path.join(ROOT,'src','i18n');
 const MOD_DIR=path.join(ROOT,'src','modules');
 const OUT=path.join(ROOT,'www','index.html');
+const LEGAL_DIR=path.join(ROOT,'src','legal');
+const WEB=process.argv.includes('--web');
+/* host che la pagina può contattare direttamente (build Android) */
+const CONNECT_HOSTS=['https://api.met.no','https://customer-api.open-meteo.com','https://customer-geocoding-api.open-meteo.com','https://api.openweathermap.org','https://photon.komoot.io'];
 
 /* ── 1. sorgente ── */
 let html=fs.readFileSync(SRC,'utf8');
@@ -99,6 +113,26 @@ if(mods.length){
   html=html.slice(0,end)+bundle+html.slice(end);
 }
 
+/* ── 3b. testi legali (v55): un oggetto per lingua, segnaposto sostituiti ── */
+let legal={},legalLangs=[];
+if(fs.existsSync(LEGAL_DIR)){
+  let seller={};try{seller=JSON.parse(fs.readFileSync(path.join(LEGAL_DIR,'seller.json'),'utf8'));}catch(e){}
+  const fill=s=>s.replace(/\{\{([A-Z_]+)\}\}/g,(m,k)=>seller[k]!=null?String(seller[k]):m);
+  for(const f of fs.readdirSync(LEGAL_DIR).filter(f=>/^[a-z]{2}\.json$/.test(f)).sort()){
+    const lang=f.slice(0,2);
+    const txt=fill(fs.readFileSync(path.join(LEGAL_DIR,f),'utf8'));
+    legal[lang]=JSON.parse(txt);legalLangs.push(lang);
+  }
+  const block=`<script id="kx-legal">\nwindow.KX_LEGAL=${safeJSON(legal)};\n</script>\n`;
+  const end=html.lastIndexOf('</body>');
+  html=html.slice(0,end)+block+html.slice(end);
+}
+
+/* ── 3c. CSP connect-src (v55) ── */
+if(!WEB){
+  html=html.replace(/connect-src 'self' https:;/,`connect-src 'self' ${CONNECT_HOSTS.join(' ')};`);
+}
+
 /* ── 4. CSP: un hash per ogni script inline ── */
 const scripts=[];
 html.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/g,(all,body)=>{scripts.push(body);return all;});
@@ -113,4 +147,5 @@ console.log(`build ok → ${path.relative(process.cwd(),OUT)}`);
 console.log(`  lingue: ${Object.keys(dict).length} (${Object.keys(dict).join(', ')||'nessuna'}) · stringhe extra dei moduli: ${extraCount}`);
 console.log(`  moduli: ${mods.length}${mods.length?' ('+mods.map(m=>m.f).join(', ')+')':''}`);
 console.log(`  script inline: ${scripts.length}, hash CSP: ${hashes.length}`);
+console.log(`  testi legali: ${legalLangs.length} lingue · CSP connect-src: ${WEB?'https: (web)':'host elencati (Android)'}`);
 console.log(`  dimensione: ${(Buffer.byteLength(html,'utf8')/1024/1024).toFixed(2)} MB`);

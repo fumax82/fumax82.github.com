@@ -1,0 +1,8 @@
+{
+  "_nota": "Dati del venditore inseriti nei testi legali al momento del build (segnaposto {{SELLER}}, {{ADDRESS}}, {{EMAIL}}, {{LAW}}, {{UPDATED}}). Compilare prima della pubblicazione.",
+  "SELLER": "[Nome o ragione sociale del venditore]",
+  "ADDRESS": "[Indirizzo del venditore]",
+  "EMAIL": "[indirizzo e-mail di contatto]",
+  "LAW": "[legge applicabile, es. italiana]",
+  "UPDATED": "2026-10-28"
+}

@@ -56,9 +56,9 @@ Dove: **pagina** = `src/index.html` e `src/modules/` · **nativo** = progetto An
 | 1.6 | Meteo con MET Norway (Open-Meteo opzionale) | ✅ fatto v55 | 1 | pagina | M | D3 |
 | 1.7 | Festività offline per tutti i paesi dei 20 mercati | ✅ fatto v55 | 1 | pagina | L | D4 |
 | 1.8 | Geocodifica senza Nominatim (parte pagina) | ✅ fatto v55 | 1 | pagina | S | 2.6 |
-| 1.9 | Restringere la CSP agli host necessari | 🟠 | 1 | pagina + build | S | D3, D4, 1.8 |
-| 1.10 | Informative in-app prima dei permessi | 🟠 | 1 | pagina | M | — |
-| 1.11 | Privacy policy in 20 lingue (bozza) | 🔴 | 1 | documenti | M | D3, D4, D7 |
+| 1.9 | Restringere la CSP agli host necessari | ✅ fatto v55 | 1 | pagina + build | S | D3, D4, 1.8 |
+| 1.10 | Informative in-app prima dei permessi | ✅ fatto v55 | 1 | pagina | M | — |
+| 1.11 | Privacy policy in 20 lingue (bozza) | ✅ bozza v55 (da far rileggere) | 1 | documenti | M | D3, D4, D7 |
 | 1.12 | Icona neutra per il calendario Minguo | 🟡 | 1 | pagina | S | — |
 | 1.13 | Dizionari caricati solo per la lingua in uso | 🟡 | 1 | pagina + build | M | — |
 | 1.14 | Opzione «testo grande» | 🟡 | 1 | pagina | M | — |

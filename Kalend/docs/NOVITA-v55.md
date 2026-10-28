@@ -78,7 +78,28 @@ Nager.Date non viene più interrogato (`src/modules/31-holidays.js`):
 
 Collaudo: `node Kalend/tools/hol-test.js` (date note del 2026 per 20 paesi).
 
-## 4. Da fare nella parte nativa (Fase 2 del piano)
+## 4. Testi legali, informative sui permessi, CSP
+* **Termini d'uso e Informativa sulla privacy in 20 lingue** (`src/legal/*.json`):
+  licenza, dati solo sul dispositivo, servizi di terzi a loro termini, natura
+  indicativa delle informazioni, responsabilità nei limiti di legge, diritti dei
+  consumatori, legge applicabile; privacy con l'elenco esatto di ciò che esce dal
+  telefono e verso chi. I dati del venditore stanno in `src/legal/seller.json` e
+  vengono inseriti al build. **Da far rileggere a un professionista.**
+* Pagina **Informazioni legali** (Impostazioni → Aiuto): Termini, Privacy, Crediti
+  (con le attribuzioni della fonte meteo e dei luoghi in uso).
+* **Avviso una tantum** dopo l'aggiornamento dei testi, non bloccante.
+* **Informative prima dei permessi** (posizione, microfono, calendario del telefono,
+  notifiche): schermata breve nella lingua dell'app con cosa serve, a cosa e cosa
+  esce dal telefono; «Non ora» non interroga il sistema. Valgono anche per la
+  richiesta di posizione all'avvio e aspettano la chiusura del sipario di benvenuto.
+* **Pagine web** `legal/privacy-<lingua>.html` e `terms-<lingua>.html`
+  (`tools/build-legal.js`), da pubblicare per l'indirizzo richiesto da Google Play.
+* **CSP ristretta**: la pagina può contattare solo gli host dei servizi (MET Norway,
+  Open‑Meteo con chiave, OpenWeatherMap, Photon); `--web` per la versione browser.
+
+Collaudo: `node Kalend/tools/legal-test.js`.
+
+## 5. Da fare nella parte nativa (Fase 2 del piano)
 * `User-Agent` con nome, versione e contatto (es. `Kalend/55 (+https://…; email)`):
   MET Norway lo richiede per identificare l'app; oggi il nativo invia `Kalend/1.0`.
 * Metodo `geocode(id, testo, lingua)` nel ponte, con `android.location.Geocoder`,
