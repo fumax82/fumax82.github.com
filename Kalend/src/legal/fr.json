@@ -1,33 +1,125 @@
 {
- "eula": {"title": "Conditions d'utilisation", "sections": [
-  ["Qui nous sommes et à quoi servent ces conditions", "Kalend est une application Android fournie par {{SELLER}} ({{ADDRESS}}, {{EMAIL}}). L'achat se fait via Google Play et est aussi soumis aux conditions de Google Play, y compris sa politique de remboursement. En utilisant l'application, vous acceptez ces conditions."],
-  ["Licence", "Nous vous accordons une licence personnelle, non exclusive et non transférable pour utiliser Kalend sur les appareils liés à votre compte Google Play. Il est interdit de redistribuer, vendre, décompiler ou modifier l'application, sauf dans les cas permis par la loi."],
-  ["Fonctionnement et emplacement des données", "Kalend fonctionne sur votre appareil. Il n'y a ni compte ni serveur de notre part : événements, tâches, réglages et clés restent sur le téléphone. Vous êtes responsable des contenus que vous saisissez et de vos sauvegardes ; l'application fournit des outils de sauvegarde et d'exportation."],
-  ["Services tiers", "Certaines fonctions utilisent des services tiers : la météo (MET Norway par défaut), la recherche de lieux (GeoNames, Photon sur données OpenStreetMap), les agendas que vous liez vous‑même (Google, Microsoft, Apple ou autres) et, si vous les choisissez, des services avec votre propre clé (Open‑Meteo, OpenWeatherMap). Ils sont fournis par leurs exploitants selon leurs propres conditions, peuvent changer ou cesser sans préavis, et Kalend n'y est pas partie. Le coût éventuel des clés personnelles relève de vous et du fournisseur."],
-  ["Caractère indicatif des informations", "Prévisions météo, jours fériés, dates religieuses, conversions de calendrier, calculs astronomiques et rappels sont indicatifs. N'utilisez pas Kalend comme seule référence pour des décisions touchant la sécurité, la santé ou des délais légaux. Les notifications dépendent du système (batterie, modes d'économie, autorisations) et peuvent être retardées ou absentes."],
-  ["Garantie et responsabilité", "Kalend est fournie « en l'état », dans les limites permises par la loi. Si vous êtes consommateur, les garanties impératives de la loi de votre pays demeurent (par exemple la garantie de conformité des contenus numériques dans l'Union européenne). Dans la mesure permise, nous excluons toute responsabilité pour les dommages indirects, le manque à gagner et la perte de données, et notre responsabilité totale est limitée à ce que vous avez payé pour l'application au cours des 12 derniers mois, sauf faute intentionnelle, faute lourde ou cas où la loi n'admet pas de limitation."],
-  ["Mises à jour et modifications", "Nous pouvons mettre à jour l'application et ces conditions. Les modifications importantes sont signalées dans l'application ; en continuant à l'utiliser après l'avis, vous les acceptez. Vous pouvez cesser à tout moment en désinstallant l'application."],
-  ["Propriété intellectuelle", "L'application, ses graphismes et ses textes nous appartiennent ou appartiennent à leurs titulaires. Les données et polices de tiers sont utilisées selon leurs licences, listées dans les crédits. Les noms d'autres produits et services ne sont cités que pour décrire la compatibilité."],
-  ["Droit applicable et juridiction", "Ces conditions sont régies par le droit {{LAW}}. Si vous êtes consommateur, vous conservez les protections et la juridiction prévues par la loi de votre pays de résidence. Dans l'Union européenne, vous pouvez aussi utiliser la plateforme de règlement en ligne des litiges de la Commission."],
-  ["Contact", "Questions sur ces conditions : {{EMAIL}}."]
- ]},
- "privacy": {"title": "Politique de confidentialité", "sections": [
-  ["En bref", "Kalend ne collecte aucune donnée sur vous : pas de compte, pas de publicité, pas de suivi, pas de statistiques d'usage, pas de serveur de notre part. Tout ce que vous saisissez reste sur votre appareil. Certaines fonctions, si vous les utilisez, envoient le strict nécessaire à des services tiers, décrits ci‑dessous."],
-  ["Responsable", "{{SELLER}}, {{ADDRESS}}, {{EMAIL}}. Nous ne recevons ni ne traitons vos données personnelles : elles ne nous parviennent jamais."],
-  ["Données qui restent sur l'appareil", "Événements, tâches, chaînes, listes, tags, réglages, sauvegardes automatiques, lieux déjà recherchés, clés personnelles et liens des agendas connectés (ces deux derniers chiffrés avec une clé qui ne quitte jamais le téléphone)."],
-  ["Ce qui quitte le téléphone et vers qui", "Uniquement lorsque vous utilisez la fonction : • Météo : des coordonnées arrondies à environ 1 km vers le service météo choisi (MET Norway, Norvège, par défaut) ; le fournisseur voit votre adresse IP comme tout serveur contacté. • Lieux : le texte du lieu recherché vers Photon (komoot, Allemagne) sur données OpenStreetMap, seulement si l'atlas du téléphone ne le connaît pas. • Services avec votre propre clé (Open‑Meteo, OpenWeatherMap) : coordonnées ou texte du lieu avec votre clé, selon la politique du fournisseur choisi. • Agendas connectés : le lien saisi est téléchargé depuis son exploitant (Google, Microsoft, Apple ou autres). • « Ouvrir dans Google Agenda » : les données de l'événement que vous choisissez d'ouvrir vont à Google. • Dictée : la reconnaissance vocale du système s'exécute sur le téléphone lorsqu'elle est disponible ; sinon, le service vocal du système peut envoyer l'audio aux serveurs de son fournisseur (par exemple Google) selon sa politique. Kalend n'enregistre ni ne conserve l'audio. • Synchronisation QR : les données transitent directement entre vos appareils sur le réseau local, sans serveur."],
-  ["Autorisations", "Position (facultative, seulement quand l'application est ouverte) : pour le ciel, le lever et le coucher du soleil et la météo là où vous êtes. Microphone (facultatif) : pour dicter des événements. Agenda du téléphone (facultatif) : pour lire ces événements à côté des vôtres ; Kalend ne les modifie pas. Notifications et alarmes exactes : pour les rappels à l'heure choisie. Chaque autorisation peut être refusée ou révoquée dans les réglages du système."],
-  ["Sauvegardes", "Android peut inclure les données de l'application dans la sauvegarde système (Google Drive), chiffrée avec le verrouillage de l'écran et gérée par Google selon sa politique ; les clés personnelles et les liens chiffrés en sont exclus. Les exportations manuelles, en clair ou protégées par mot de passe, sont décidées et conservées par vous."],
-  ["Conservation et suppression", "Les données sont conservées tant que vous gardez l'application. Vous pouvez tout supprimer depuis Réglages → Données ou en désinstallant l'application. Il n'existe aucune copie chez nous."],
-  ["Mineurs", "L'application n'est pas destinée aux moins de 13 ans (ou de l'âge fixé par la loi locale) et ne collecte de toute façon aucune donnée."],
-  ["Vos droits", "Les lois sur la protection des données (par exemple le RGPD) vous reconnaissent l'accès, la rectification, l'effacement, la portabilité et la réclamation auprès de l'autorité de contrôle. Comme les données ne sont que sur votre appareil, vous les exercez directement là ; pour les services tiers, adressez‑vous à leurs fournisseurs. Toute question : {{EMAIL}}."],
-  ["Modifications", "Dernière mise à jour : {{UPDATED}}. La version en vigueur est celle affichée dans l'application et publiée en ligne."]
- ]},
- "disclose": {
-  "location": ["Position", "Kalend utilise votre position, seulement quand l'application est ouverte, pour afficher le ciel, le lever et le coucher du soleil et la météo là où vous êtes. Les coordonnées, arrondies à environ 1 km, sont envoyées au service météo choisi (MET Norway par défaut). Aucun autre usage, aucun partage."],
-  "mic": ["Microphone", "Le microphone sert uniquement à dicter des événements. La reconnaissance s'exécute sur le téléphone lorsqu'elle est disponible ; sinon, le service vocal du système peut envoyer l'audio aux serveurs de son fournisseur. Kalend n'enregistre ni ne conserve l'audio."],
-  "calendar": ["Agenda du téléphone", "Kalend lit les événements de l'agenda du téléphone pour les afficher à côté des vôtres. Il ne les modifie pas et ne les envoie à personne."],
-  "notif": ["Notifications", "Les notifications servent aux rappels d'événements à l'heure choisie. Vous pouvez les désactiver quand vous voulez."]
- },
- "ui": {"legal": "Informations légales", "terms": "Conditions d'utilisation", "privacy": "Confidentialité", "credits": "Crédits", "continue": "Continuer", "notnow": "Pas maintenant", "updated": "Conditions d'utilisation et politique de confidentialité mises à jour.", "read": "Lire"}
+  "eula": {
+    "title": "Conditions d'utilisation",
+    "sections": [
+      [
+        "Qui nous sommes et à quoi servent ces conditions",
+        "Kalend est une application Android fournie par {{SELLER}} ({{ADDRESS}}, {{EMAIL}}). L'achat se fait via Google Play et est aussi soumis aux conditions de Google Play, y compris sa politique de remboursement. En utilisant l'application, vous acceptez ces conditions."
+      ],
+      [
+        "Licence",
+        "Nous vous accordons une licence personnelle, non exclusive et non transférable pour utiliser Kalend sur les appareils liés à votre compte Google Play. Il est interdit de redistribuer, vendre, décompiler ou modifier l'application, sauf dans les cas permis par la loi."
+      ],
+      [
+        "Fonctionnement et emplacement des données",
+        "Kalend fonctionne sur votre appareil. Il n'y a ni compte ni serveur de notre part : événements, tâches, réglages et clés restent sur le téléphone. Vous êtes responsable des contenus que vous saisissez et de vos sauvegardes ; l'application fournit des outils de sauvegarde et d'exportation."
+      ],
+      [
+        "Services tiers",
+        "Certaines fonctions utilisent des services tiers : la météo (MET Norway par défaut), la recherche de lieux (GeoNames, Photon sur données OpenStreetMap), les agendas que vous liez vous‑même (Google, Microsoft, Apple ou autres) et, si vous les choisissez, des services avec votre propre clé (Open‑Meteo, OpenWeatherMap). Ils sont fournis par leurs exploitants selon leurs propres conditions, peuvent changer ou cesser sans préavis, et Kalend n'y est pas partie. Le coût éventuel des clés personnelles relève de vous et du fournisseur."
+      ],
+      [
+        "Caractère indicatif des informations",
+        "Prévisions météo, jours fériés, dates religieuses, conversions de calendrier, calculs astronomiques et rappels sont indicatifs. N'utilisez pas Kalend comme seule référence pour des décisions touchant la sécurité, la santé ou des délais légaux. Les notifications dépendent du système (batterie, modes d'économie, autorisations) et peuvent être retardées ou absentes."
+      ],
+      [
+        "Garantie et responsabilité",
+        "Kalend est fournie « en l'état », dans les limites permises par la loi. Si vous êtes consommateur, les garanties impératives de la loi de votre pays demeurent (par exemple la garantie de conformité des contenus numériques dans l'Union européenne). Dans la mesure permise, nous excluons toute responsabilité pour les dommages indirects, le manque à gagner et la perte de données, et notre responsabilité totale est limitée à ce que vous avez payé pour l'application au cours des 12 derniers mois, sauf faute intentionnelle, faute lourde ou cas où la loi n'admet pas de limitation."
+      ],
+      [
+        "Mises à jour et modifications",
+        "Nous pouvons mettre à jour l'application et ces conditions. Les modifications importantes sont signalées dans l'application ; en continuant à l'utiliser après l'avis, vous les acceptez. Vous pouvez cesser à tout moment en désinstallant l'application."
+      ],
+      [
+        "Propriété intellectuelle",
+        "L'application, ses graphismes et ses textes nous appartiennent ou appartiennent à leurs titulaires. Les données et polices de tiers sont utilisées selon leurs licences, listées dans les crédits. Les noms d'autres produits et services ne sont cités que pour décrire la compatibilité."
+      ],
+      [
+        "Droit applicable et juridiction",
+        "Ces conditions sont régies par le droit {{LAW}}. Si vous êtes consommateur, vous conservez les protections et la juridiction prévues par la loi de votre pays de résidence. Dans l'Union européenne, vous pouvez aussi utiliser la plateforme de règlement en ligne des litiges de la Commission."
+      ],
+      [
+        "Contact",
+        "Questions sur ces conditions : {{EMAIL}}."
+      ]
+    ]
+  },
+  "privacy": {
+    "title": "Politique de confidentialité",
+    "sections": [
+      [
+        "En bref",
+        "Kalend ne collecte aucune donnée sur vous : pas de compte, pas de publicité, pas de suivi, pas de statistiques d'usage, pas de serveur de notre part. Tout ce que vous saisissez reste sur votre appareil. Certaines fonctions, si vous les utilisez, envoient le strict nécessaire à des services tiers, décrits ci‑dessous."
+      ],
+      [
+        "Responsable",
+        "{{SELLER}}, {{ADDRESS}}, {{EMAIL}}. Nous ne recevons ni ne traitons vos données personnelles : elles ne nous parviennent jamais."
+      ],
+      [
+        "Données qui restent sur l'appareil",
+        "Événements, tâches, chaînes, listes, tags, réglages, sauvegardes automatiques, lieux déjà recherchés, clés personnelles et liens des agendas connectés (ces deux derniers chiffrés avec une clé qui ne quitte jamais le téléphone)."
+      ],
+      [
+        "Ce qui quitte le téléphone et vers qui",
+        "Uniquement lorsque vous utilisez la fonction : • Météo : des coordonnées arrondies à environ 1 km vers le service météo choisi (MET Norway, Norvège, par défaut) ; le fournisseur voit votre adresse IP comme tout serveur contacté. • Lieux : le texte du lieu recherché vers Photon (komoot, Allemagne) sur données OpenStreetMap, seulement si l'atlas du téléphone ne le connaît pas. • Services avec votre propre clé (Open‑Meteo, OpenWeatherMap) : coordonnées ou texte du lieu avec votre clé, selon la politique du fournisseur choisi. • Agendas connectés : le lien saisi est téléchargé depuis son exploitant (Google, Microsoft, Apple ou autres). • « Ouvrir dans Google Agenda » : les données de l'événement que vous choisissez d'ouvrir vont à Google. • Dictée : la reconnaissance vocale du système s'exécute sur le téléphone lorsqu'elle est disponible ; sinon, le service vocal du système peut envoyer l'audio aux serveurs de son fournisseur (par exemple Google) selon sa politique. Kalend n'enregistre ni ne conserve l'audio. • Synchronisation QR : les données transitent directement entre vos appareils sur le réseau local, sans serveur."
+      ],
+      [
+        "Autorisations",
+        "Position (facultative, seulement quand l'application est ouverte) : pour le ciel, le lever et le coucher du soleil et la météo là où vous êtes. Microphone (facultatif) : pour dicter des événements. Agenda du téléphone (facultatif) : pour lire ces événements à côté des vôtres ; Kalend ne les modifie pas. Notifications et alarmes exactes : pour les rappels à l'heure choisie. Chaque autorisation peut être refusée ou révoquée dans les réglages du système."
+      ],
+      [
+        "Sauvegardes",
+        "Android peut inclure les données de l'application dans la sauvegarde système (Google Drive), chiffrée avec le verrouillage de l'écran et gérée par Google selon sa politique ; les clés personnelles et les liens chiffrés en sont exclus. Les exportations manuelles, en clair ou protégées par mot de passe, sont décidées et conservées par vous."
+      ],
+      [
+        "Conservation et suppression",
+        "Les données sont conservées tant que vous gardez l'application. Vous pouvez tout supprimer depuis Réglages → Données ou en désinstallant l'application. Il n'existe aucune copie chez nous."
+      ],
+      [
+        "Mineurs",
+        "L'application n'est pas destinée aux moins de 13 ans (ou de l'âge fixé par la loi locale) et ne collecte de toute façon aucune donnée."
+      ],
+      [
+        "Vos droits",
+        "Les lois sur la protection des données (par exemple le RGPD) vous reconnaissent l'accès, la rectification, l'effacement, la portabilité et la réclamation auprès de l'autorité de contrôle. Comme les données ne sont que sur votre appareil, vous les exercez directement là ; pour les services tiers, adressez‑vous à leurs fournisseurs. Toute question : {{EMAIL}}."
+      ],
+      [
+        "Modifications",
+        "Dernière mise à jour : {{UPDATED}}. La version en vigueur est celle affichée dans l'application et publiée en ligne."
+      ]
+    ]
+  },
+  "disclose": {
+    "location": [
+      "Position",
+      "Kalend utilise votre position, seulement quand l'application est ouverte, pour afficher le ciel, le lever et le coucher du soleil et la météo là où vous êtes. Les coordonnées, arrondies à environ 1 km, sont envoyées au service météo choisi (MET Norway par défaut). Aucun autre usage, aucun partage."
+    ],
+    "mic": [
+      "Microphone",
+      "Le microphone sert uniquement à dicter des événements. La reconnaissance s'exécute sur le téléphone lorsqu'elle est disponible ; sinon, le service vocal du système peut envoyer l'audio aux serveurs de son fournisseur. Kalend n'enregistre ni ne conserve l'audio."
+    ],
+    "calendar": [
+      "Agenda du téléphone",
+      "Kalend lit les événements de l'agenda du téléphone pour les afficher à côté des vôtres. Il ne les modifie pas et ne les envoie à personne."
+    ],
+    "notif": [
+      "Notifications",
+      "Les notifications servent aux rappels d'événements à l'heure choisie. Vous pouvez les désactiver quand vous voulez."
+    ],
+    "speechCloud": [
+      "Dictée via le service du téléphone",
+      "La reconnaissance vocale locale n'est pas disponible sur cet appareil : la dictée utilise le service vocal du système, qui peut envoyer l'audio aux serveurs de son fournisseur (par exemple Google) selon sa politique de confidentialité. Kalend n'enregistre ni ne conserve l'audio. Vous pouvez installer la langue pour l'usage hors ligne dans les réglages vocaux du téléphone, ou saisir l'événement à la main."
+    ]
+  },
+  "ui": {
+    "legal": "Informations légales",
+    "terms": "Conditions d'utilisation",
+    "privacy": "Confidentialité",
+    "credits": "Crédits",
+    "continue": "Continuer",
+    "notnow": "Pas maintenant",
+    "updated": "Conditions d'utilisation et politique de confidentialité mises à jour.",
+    "read": "Lire",
+    "ok": "Compris"
+  }
 }

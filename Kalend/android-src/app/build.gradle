@@ -63,10 +63,10 @@ android {
     }
 }
 
-// Copia Kalend/www/index.html e Kalend/www/data/* in assets/www/ prima di ogni build.
+// Copia Kalend/www/index.html, www/data/* e www/i18n/* in assets/www/ prima di ogni build.
 // Ricorda: prima di costruire l'app va eseguito `node tools/build.js` in Kalend/.
 tasks.register("copyWeb", Copy) {
-    from("../../www") { include "index.html", "data/**" }
+    from("../../www") { include "index.html", "data/**", "i18n/**" }
     into layout.buildDirectory.dir("www-assets/www")
 }
 preBuild.dependsOn copyWeb

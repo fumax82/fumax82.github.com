@@ -5,7 +5,9 @@
    COME FUNZIONA
    1. legge src/index.html (il sorgente "storico" dell'app, v53 + ritocchi);
    2. inserisce PRIMA del primo <script> il blocco <script id="kx-i18n">
-      con tutti i dizionari di src/i18n/*.json (window.KX_I18N);
+      con i dizionari di italiano e inglese (window.KX_I18N) e un
+      caricatore che legge la lingua in uso da i18n/<lingua>.json
+      (v55 · 1.13: un file per lingua accanto alla pagina);
    3. inserisce PRIMA di </body> i moduli di src/modules/, in ordine di
       nome file: ogni NN-nome.css diventa <style id="kx-mod-nome">,
       ogni NN-nome.js diventa <script id="kx-mod-nome">, ogni NN-nome.html
@@ -36,7 +38,14 @@ const ROOT=path.resolve(__dirname,'..');
 const SRC=path.join(ROOT,'src','index.html');
 const I18N_DIR=path.join(ROOT,'src','i18n');
 const MOD_DIR=path.join(ROOT,'src','modules');
-const OUT=path.join(ROOT,'www','index.html');
+/* --out <file>: pagina di uscita (di serie www/index.html); i dizionari per
+   lingua finiscono nella cartella i18n/ accanto alla pagina */
+const OUT_I=process.argv.indexOf('--out');
+const OUT=OUT_I>0&&process.argv[OUT_I+1]?path.resolve(process.argv[OUT_I+1]):path.join(ROOT,'www','index.html');
+const OUT_DIR=path.dirname(OUT);
+/* lingue incorporate nella pagina: l'italiano (sorgente) e l'inglese (riserva);
+   tutte le altre vengono caricate dal file i18n/<lingua>.json all'avvio */
+const INLINE_LANGS=['it','en'];
 const LEGAL_DIR=path.join(ROOT,'src','legal');
 const WEB=process.argv.includes('--web');
 /* host che la pagina può contattare direttamente (build Android) */
@@ -78,12 +87,72 @@ if(fs.existsSync(EXTRA_DIR)){
 }
 /* "</script" dentro una stringa chiuderebbe il blocco: si spezza in modo sicuro */
 const safeJSON=o=>JSON.stringify(o).replace(/<\/script/gi,'<\\/script').replace(/<!--/g,'<\\!--');
+
+/* ── 2b2. testi legali (v55): un oggetto per lingua, segnaposto sostituiti ── */
+let legal={},legalLangs=[];
+if(fs.existsSync(LEGAL_DIR)){
+  let seller={};try{seller=JSON.parse(fs.readFileSync(path.join(LEGAL_DIR,'seller.json'),'utf8'));}catch(e){}
+  const fill=s=>s.replace(/\{\{([A-Z_]+)\}\}/g,(m,k)=>seller[k]!=null?String(seller[k]):m);
+  for(const f of fs.readdirSync(LEGAL_DIR).filter(f=>/^[a-z]{2}\.json$/.test(f)).sort()){
+    const lang=f.slice(0,2);
+    const txt=fill(fs.readFileSync(path.join(LEGAL_DIR,f),'utf8'));
+    legal[lang]=JSON.parse(txt);legalLangs.push(lang);
+  }
+}
+
+/* ── 2c. (v55 · 1.13) un file per lingua: i18n/<lingua>.json accanto alla pagina.
+   La pagina incorpora solo italiano e inglese; la lingua in uso viene letta
+   all'avvio dal suo file (vedi il caricatore qui sotto). Così la pagina pesa
+   ~2 MB in meno e si avvia prima. ── */
+const I18N_OUT=path.join(OUT_DIR,'i18n');
+fs.mkdirSync(I18N_OUT,{recursive:true});
+let langFiles=0;
+for(const lang of Object.keys(dict)){
+  const file={lang,name:(packs[lang]||{}).name||lang,strings:dict[lang],lexicon:(packs[lang]||{}).lexicon||{},autotag:(packs[lang]||{}).autotag||{},culture:(packs[lang]||{}).culture||{},legal:legal[lang]||null};
+  fs.writeFileSync(path.join(I18N_OUT,lang+'.json'),JSON.stringify(file),'utf8');langFiles++;
+}
+const inlineDict={},inlinePacks={};
+INLINE_LANGS.forEach(l=>{if(dict[l])inlineDict[l]=dict[l];if(packs[l])inlinePacks[l]=packs[l];});
+const SUPPORTED=['it','en','zh','hi','es','fr','de','pt','ru','ja','ar','ko','tr','bn','pl','id','vi','th','he','uk'];
 const i18nBlock=`<script id="kx-i18n">
 /* generato da tools/build.js — NON modificare a mano: le traduzioni
    stanno in src/i18n/<lingua>.json (chiave = testo italiano sorgente) */
-window.KX_I18N=${safeJSON(dict)};
+window.KX_I18N=${safeJSON(inlineDict)};
 /* pacchetti per lingua: lessico del parser, parole chiave auto-tag, cultura */
-window.KX_PACKS=${safeJSON(packs)};
+window.KX_PACKS=${safeJSON(inlinePacks)};
+/* ── caricatore della lingua in uso (v55 · 1.13) ──
+   Le altre lingue stanno in i18n/<lingua>.json accanto alla pagina. La
+   lingua si decide come fa L10N.detect (impostazione salvata, altrimenti
+   quella del dispositivo) e il file viene letto in modo SINCRONO: deve
+   essere pronto prima che parta lo script principale, che traduce il
+   markup appena nasce. Se il file manca, l'interfaccia resta in inglese. */
+(function(){
+  var SUP=${JSON.stringify(SUPPORTED)},INLINE=${JSON.stringify(INLINE_LANGS)};
+  function pick(){
+    var pref='auto';try{var s=JSON.parse(localStorage.getItem('cal_settings')||'{}');if(s&&typeof s.language==='string')pref=s.language;}catch(e){}
+    var nav=(navigator.language||'it-IT');var loc=pref==='auto'?nav:(nav.toLowerCase().indexOf(pref)===0?nav:pref);
+    var l=String(loc).slice(0,2).toLowerCase();return SUP.indexOf(l)>=0?l:'en';
+  }
+  function read(l){
+    var url=new URL('i18n/'+l+'.json',location.href).href;
+    var x=new XMLHttpRequest();x.open('GET',url,false);x.send(null);
+    if(x.status&&x.status!==200)throw new Error('HTTP '+x.status);
+    if(!x.responseText)throw new Error('file vuoto');
+    return JSON.parse(x.responseText);
+  }
+  function merge(l,d){
+    window.KX_I18N[l]=d.strings||{};
+    window.KX_PACKS[l]={name:d.name||l,lexicon:d.lexicon||{},autotag:d.autotag||{},culture:d.culture||{}};
+    if(d.legal){window.KX_LEGAL_EXTRA=window.KX_LEGAL_EXTRA||{};window.KX_LEGAL_EXTRA[l]=d.legal;}
+  }
+  /* preferenze che devono valere PRIMA del primo disegno: dimensione del testo (v55 · 1.14) */
+  try{var ts=localStorage.getItem('kx_textsize_v1');if(ts==='big'||ts==='xl')document.documentElement.setAttribute('data-textsize',ts);}catch(e){}
+  var lang=pick();var info={lang:lang,inline:INLINE.indexOf(lang)>=0,loaded:false,error:''};
+  if(!info.inline){try{merge(lang,read(lang));info.loaded=true;}catch(e){info.error=String(e&&e.message||e);try{console.warn('[i18n] dizionario '+lang+' non caricato: '+info.error);}catch(_){}}}
+  window.KX_I18N_INFO=info;
+  /* per usi futuri (anteprime in un'altra lingua): carica un'altra lingua su richiesta */
+  window.KX_I18N_LOAD=function(l){return new Promise(function(res,rej){if(window.KX_I18N[l])return res(true);try{merge(l,read(l));res(true);}catch(e){rej(e);}});};
+})();
 </script>
 `;
 const firstScript=html.indexOf('<script');
@@ -113,17 +182,11 @@ if(mods.length){
   html=html.slice(0,end)+bundle+html.slice(end);
 }
 
-/* ── 3b. testi legali (v55): un oggetto per lingua, segnaposto sostituiti ── */
-let legal={},legalLangs=[];
-if(fs.existsSync(LEGAL_DIR)){
-  let seller={};try{seller=JSON.parse(fs.readFileSync(path.join(LEGAL_DIR,'seller.json'),'utf8'));}catch(e){}
-  const fill=s=>s.replace(/\{\{([A-Z_]+)\}\}/g,(m,k)=>seller[k]!=null?String(seller[k]):m);
-  for(const f of fs.readdirSync(LEGAL_DIR).filter(f=>/^[a-z]{2}\.json$/.test(f)).sort()){
-    const lang=f.slice(0,2);
-    const txt=fill(fs.readFileSync(path.join(LEGAL_DIR,f),'utf8'));
-    legal[lang]=JSON.parse(txt);legalLangs.push(lang);
-  }
-  const block=`<script id="kx-legal">\nwindow.KX_LEGAL=${safeJSON(legal)};\n</script>\n`;
+/* ── 3b. testi legali (v55): incorporati per italiano e inglese; le altre
+   lingue viaggiano nel file i18n/<lingua>.json (chiave "legal") ── */
+{
+  const inlineLegal={};INLINE_LANGS.forEach(l=>{if(legal[l])inlineLegal[l]=legal[l];});
+  const block=`<script id="kx-legal">\nwindow.KX_LEGAL=${safeJSON(inlineLegal)};\n</script>\n`;
   const end=html.lastIndexOf('</body>');
   html=html.slice(0,end)+block+html.slice(end);
 }
@@ -145,6 +208,7 @@ fs.mkdirSync(path.dirname(OUT),{recursive:true});
 fs.writeFileSync(OUT,html,'utf8');
 console.log(`build ok → ${path.relative(process.cwd(),OUT)}`);
 console.log(`  lingue: ${Object.keys(dict).length} (${Object.keys(dict).join(', ')||'nessuna'}) · stringhe extra dei moduli: ${extraCount}`);
+console.log(`  dizionari per lingua: ${langFiles} file in ${path.relative(process.cwd(),I18N_OUT)}/ · incorporate nella pagina: ${INLINE_LANGS.join(', ')}`);
 console.log(`  moduli: ${mods.length}${mods.length?' ('+mods.map(m=>m.f).join(', ')+')':''}`);
 console.log(`  script inline: ${scripts.length}, hash CSP: ${hashes.length}`);
 console.log(`  testi legali: ${legalLangs.length} lingue · CSP connect-src: ${WEB?'https: (web)':'host elencati (Android)'}`);

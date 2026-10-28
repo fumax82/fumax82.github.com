@@ -1,33 +1,125 @@
 {
- "eula": {"title": "Ketentuan Penggunaan", "sections": [
-  ["Siapa kami dan apa ketentuan ini", "Kalend adalah aplikasi Android yang disediakan oleh {{SELLER}} ({{ADDRESS}}, {{EMAIL}}). Pembelian dilakukan melalui Google Play dan juga tunduk pada ketentuan Google Play, termasuk kebijakan pengembalian dananya. Dengan menggunakan aplikasi, Anda menerima ketentuan ini."],
-  ["Lisensi", "Kami memberi Anda lisensi pribadi, non-eksklusif, dan tidak dapat dialihkan untuk menggunakan Kalend di perangkat yang terhubung dengan akun Google Play Anda. Dilarang mendistribusikan ulang, menjual, mendekompilasi, atau mengubah aplikasi, kecuali sejauh diizinkan hukum."],
-  ["Cara kerja dan tempat data disimpan", "Kalend bekerja di perangkat Anda. Tidak ada akun dan tidak ada server milik kami: acara, tugas, pengaturan, dan kunci tetap di ponsel. Anda bertanggung jawab atas konten yang Anda masukkan dan atas cadangan Anda; aplikasi menyediakan alat pencadangan dan ekspor."],
-  ["Layanan pihak ketiga", "Beberapa fitur menggunakan layanan pihak ketiga: cuaca (MET Norway secara bawaan), pencarian tempat (GeoNames, Photon dengan data OpenStreetMap), kalender yang Anda hubungkan sendiri (Google, Microsoft, Apple, atau lainnya) dan, jika Anda memilihnya, layanan dengan kunci Anda sendiri (Open‑Meteo, OpenWeatherMap). Layanan ini disediakan operatornya dengan ketentuan mereka sendiri, dapat berubah atau berhenti tanpa pemberitahuan, dan Kalend bukan pihak di dalamnya. Biaya kunci pribadi adalah urusan Anda dengan penyedia."],
-  ["Informasi bersifat indikatif", "Prakiraan cuaca, hari libur, tanggal keagamaan, konversi kalender, perhitungan astronomi, dan pengingat bersifat indikatif. Jangan mengandalkan Kalend sebagai satu-satunya acuan untuk keputusan yang menyangkut keselamatan, kesehatan, atau tenggat hukum. Notifikasi bergantung pada sistem operasi (baterai, mode hemat daya, izin) dan bisa terlambat atau tidak muncul."],
-  ["Jaminan dan tanggung jawab", "Kalend disediakan \"sebagaimana adanya\" sejauh diizinkan hukum. Jika Anda konsumen, jaminan wajib menurut hukum negara Anda tetap berlaku (misalnya jaminan kesesuaian konten digital di Uni Eropa). Sejauh diizinkan, kami mengecualikan tanggung jawab atas kerugian tidak langsung, kehilangan keuntungan, dan kehilangan data, dan tanggung jawab total kami terbatas pada jumlah yang Anda bayarkan untuk aplikasi dalam 12 bulan sebelumnya, kecuali dalam hal kesengajaan, kelalaian berat, atau bila hukum tidak mengizinkan pembatasan."],
-  ["Pembaruan dan perubahan", "Kami dapat memperbarui aplikasi dan ketentuan ini. Perubahan penting diumumkan di aplikasi; dengan terus menggunakannya setelah pemberitahuan, Anda menerimanya. Anda dapat berhenti kapan saja dengan mencopot aplikasi."],
-  ["Kekayaan intelektual", "Aplikasi, grafik, dan teksnya milik kami atau pemiliknya masing-masing. Data dan font pihak ketiga digunakan sesuai lisensinya, yang tercantum di kredit. Nama produk dan layanan lain disebut hanya untuk menjelaskan kompatibilitas."],
-  ["Hukum yang berlaku dan yurisdiksi", "Ketentuan ini diatur oleh hukum {{LAW}}. Jika Anda konsumen, Anda tetap mendapat perlindungan dan yurisdiksi menurut hukum negara tempat tinggal Anda. Di Uni Eropa Anda juga dapat menggunakan platform penyelesaian sengketa daring Komisi."],
-  ["Kontak", "Pertanyaan tentang ketentuan ini: {{EMAIL}}."]
- ]},
- "privacy": {"title": "Kebijakan Privasi", "sections": [
-  ["Singkatnya", "Kalend tidak mengumpulkan data tentang Anda: tanpa akun, tanpa iklan, tanpa pelacakan, tanpa statistik penggunaan, tanpa server milik kami. Semua yang Anda masukkan tetap di perangkat Anda. Beberapa fitur, jika Anda gunakan, mengirim data seperlunya ke layanan pihak ketiga yang dijelaskan di bawah."],
-  ["Penanggung jawab", "{{SELLER}}, {{ADDRESS}}, {{EMAIL}}. Kami tidak menerima maupun memproses data pribadi Anda: data itu tidak pernah sampai ke kami."],
-  ["Data yang tetap di perangkat", "Acara, tugas, rantai, daftar, tag, pengaturan, cadangan otomatis, tempat yang sudah dicari, kunci pribadi, dan tautan kalender terhubung (dua yang terakhir dienkripsi dengan kunci yang tidak pernah keluar dari ponsel)."],
-  ["Apa yang keluar dari ponsel dan ke siapa", "Hanya saat Anda memakai fiturnya: • Cuaca: koordinat yang dibulatkan ke sekitar 1 km dikirim ke layanan cuaca pilihan Anda (bawaan MET Norway, Norwegia); penyedia melihat alamat IP Anda seperti server mana pun yang Anda hubungi. • Tempat: teks tempat yang dicari dikirim ke Photon (komoot, Jerman) dengan data OpenStreetMap, hanya jika atlas di ponsel tidak mengenalnya. • Layanan dengan kunci Anda sendiri (Open‑Meteo, OpenWeatherMap): koordinat atau teks tempat bersama kunci Anda, sesuai kebijakan penyedia yang Anda pilih. • Kalender terhubung: tautan yang Anda masukkan diunduh dari operatornya (Google, Microsoft, Apple, atau lainnya). • \"Buka di Google Kalender\": data acara yang Anda pilih dikirim ke Google. • Dikte: pengenalan suara sistem berjalan di ponsel bila tersedia; jika tidak, layanan suara sistem dapat mengirim audio ke server penyedianya (misalnya Google) sesuai kebijakannya. Kalend tidak merekam atau menyimpan audio. • Sinkronisasi QR: data berpindah langsung antar perangkat Anda di jaringan lokal, tanpa server."],
-  ["Izin", "Lokasi (opsional, hanya saat aplikasi terbuka): untuk langit, matahari terbit, terbenam, dan cuaca di tempat Anda. Mikrofon (opsional): untuk mendiktekan acara. Kalender ponsel (opsional): untuk membaca acara tersebut di samping acara Anda; Kalend tidak mengubahnya. Notifikasi dan alarm tepat: untuk pengingat pada waktu yang Anda pilih. Setiap izin dapat ditolak atau dicabut di pengaturan sistem."],
-  ["Cadangan", "Android dapat menyertakan data aplikasi dalam cadangan sistem (Google Drive), yang dienkripsi dengan kunci layar Anda dan dikelola Google sesuai kebijakannya; kunci pribadi dan tautan terenkripsi tidak disertakan. Ekspor manual, polos atau dilindungi kata sandi, Anda yang menentukan dan menyimpannya."],
-  ["Penyimpanan dan penghapusan", "Data tetap ada selama Anda menyimpan aplikasi. Anda dapat menghapus semuanya dari Pengaturan → Data atau dengan mencopot aplikasi. Tidak ada salinan pada kami."],
-  ["Anak-anak", "Aplikasi tidak ditujukan untuk anak di bawah 13 tahun (atau usia yang ditetapkan hukum setempat) dan bagaimanapun tidak mengumpulkan data."],
-  ["Hak Anda", "Undang-undang perlindungan data (misalnya GDPR) memberi Anda hak akses, perbaikan, penghapusan, portabilitas, dan pengaduan ke otoritas pengawas. Karena data hanya ada di perangkat Anda, Anda menjalankan hak tersebut langsung di sana; untuk layanan pihak ketiga, hubungi penyedianya. Pertanyaan: {{EMAIL}}."],
-  ["Perubahan", "Terakhir diperbarui: {{UPDATED}}. Versi yang berlaku adalah yang ditampilkan di aplikasi dan dipublikasikan daring."]
- ]},
- "disclose": {
-  "location": ["Lokasi", "Kalend menggunakan lokasi Anda, hanya saat aplikasi terbuka, untuk menampilkan langit, matahari terbit, terbenam, dan cuaca di tempat Anda. Koordinat yang dibulatkan ke sekitar 1 km dikirim ke layanan cuaca pilihan Anda (bawaan MET Norway). Tidak ada penggunaan lain, tidak dibagikan."],
-  "mic": ["Mikrofon", "Mikrofon hanya untuk mendiktekan acara. Pengenalan berjalan di ponsel bila tersedia; jika tidak, layanan suara sistem dapat mengirim audio ke server penyedianya. Kalend tidak merekam atau menyimpan audio."],
-  "calendar": ["Kalender ponsel", "Kalend membaca acara kalender ponsel untuk menampilkannya di samping acara Anda. Tidak mengubahnya dan tidak mengirimnya ke siapa pun."],
-  "notif": ["Notifikasi", "Notifikasi dipakai untuk pengingat acara pada waktu yang Anda pilih. Anda dapat mematikannya kapan saja."]
- },
- "ui": {"legal": "Informasi hukum", "terms": "Ketentuan Penggunaan", "privacy": "Privasi", "credits": "Kredit", "continue": "Lanjutkan", "notnow": "Nanti saja", "updated": "Ketentuan Penggunaan dan Kebijakan Privasi diperbarui.", "read": "Baca"}
+  "eula": {
+    "title": "Ketentuan Penggunaan",
+    "sections": [
+      [
+        "Siapa kami dan apa ketentuan ini",
+        "Kalend adalah aplikasi Android yang disediakan oleh {{SELLER}} ({{ADDRESS}}, {{EMAIL}}). Pembelian dilakukan melalui Google Play dan juga tunduk pada ketentuan Google Play, termasuk kebijakan pengembalian dananya. Dengan menggunakan aplikasi, Anda menerima ketentuan ini."
+      ],
+      [
+        "Lisensi",
+        "Kami memberi Anda lisensi pribadi, non-eksklusif, dan tidak dapat dialihkan untuk menggunakan Kalend di perangkat yang terhubung dengan akun Google Play Anda. Dilarang mendistribusikan ulang, menjual, mendekompilasi, atau mengubah aplikasi, kecuali sejauh diizinkan hukum."
+      ],
+      [
+        "Cara kerja dan tempat data disimpan",
+        "Kalend bekerja di perangkat Anda. Tidak ada akun dan tidak ada server milik kami: acara, tugas, pengaturan, dan kunci tetap di ponsel. Anda bertanggung jawab atas konten yang Anda masukkan dan atas cadangan Anda; aplikasi menyediakan alat pencadangan dan ekspor."
+      ],
+      [
+        "Layanan pihak ketiga",
+        "Beberapa fitur menggunakan layanan pihak ketiga: cuaca (MET Norway secara bawaan), pencarian tempat (GeoNames, Photon dengan data OpenStreetMap), kalender yang Anda hubungkan sendiri (Google, Microsoft, Apple, atau lainnya) dan, jika Anda memilihnya, layanan dengan kunci Anda sendiri (Open‑Meteo, OpenWeatherMap). Layanan ini disediakan operatornya dengan ketentuan mereka sendiri, dapat berubah atau berhenti tanpa pemberitahuan, dan Kalend bukan pihak di dalamnya. Biaya kunci pribadi adalah urusan Anda dengan penyedia."
+      ],
+      [
+        "Informasi bersifat indikatif",
+        "Prakiraan cuaca, hari libur, tanggal keagamaan, konversi kalender, perhitungan astronomi, dan pengingat bersifat indikatif. Jangan mengandalkan Kalend sebagai satu-satunya acuan untuk keputusan yang menyangkut keselamatan, kesehatan, atau tenggat hukum. Notifikasi bergantung pada sistem operasi (baterai, mode hemat daya, izin) dan bisa terlambat atau tidak muncul."
+      ],
+      [
+        "Jaminan dan tanggung jawab",
+        "Kalend disediakan \"sebagaimana adanya\" sejauh diizinkan hukum. Jika Anda konsumen, jaminan wajib menurut hukum negara Anda tetap berlaku (misalnya jaminan kesesuaian konten digital di Uni Eropa). Sejauh diizinkan, kami mengecualikan tanggung jawab atas kerugian tidak langsung, kehilangan keuntungan, dan kehilangan data, dan tanggung jawab total kami terbatas pada jumlah yang Anda bayarkan untuk aplikasi dalam 12 bulan sebelumnya, kecuali dalam hal kesengajaan, kelalaian berat, atau bila hukum tidak mengizinkan pembatasan."
+      ],
+      [
+        "Pembaruan dan perubahan",
+        "Kami dapat memperbarui aplikasi dan ketentuan ini. Perubahan penting diumumkan di aplikasi; dengan terus menggunakannya setelah pemberitahuan, Anda menerimanya. Anda dapat berhenti kapan saja dengan mencopot aplikasi."
+      ],
+      [
+        "Kekayaan intelektual",
+        "Aplikasi, grafik, dan teksnya milik kami atau pemiliknya masing-masing. Data dan font pihak ketiga digunakan sesuai lisensinya, yang tercantum di kredit. Nama produk dan layanan lain disebut hanya untuk menjelaskan kompatibilitas."
+      ],
+      [
+        "Hukum yang berlaku dan yurisdiksi",
+        "Ketentuan ini diatur oleh hukum {{LAW}}. Jika Anda konsumen, Anda tetap mendapat perlindungan dan yurisdiksi menurut hukum negara tempat tinggal Anda. Di Uni Eropa Anda juga dapat menggunakan platform penyelesaian sengketa daring Komisi."
+      ],
+      [
+        "Kontak",
+        "Pertanyaan tentang ketentuan ini: {{EMAIL}}."
+      ]
+    ]
+  },
+  "privacy": {
+    "title": "Kebijakan Privasi",
+    "sections": [
+      [
+        "Singkatnya",
+        "Kalend tidak mengumpulkan data tentang Anda: tanpa akun, tanpa iklan, tanpa pelacakan, tanpa statistik penggunaan, tanpa server milik kami. Semua yang Anda masukkan tetap di perangkat Anda. Beberapa fitur, jika Anda gunakan, mengirim data seperlunya ke layanan pihak ketiga yang dijelaskan di bawah."
+      ],
+      [
+        "Penanggung jawab",
+        "{{SELLER}}, {{ADDRESS}}, {{EMAIL}}. Kami tidak menerima maupun memproses data pribadi Anda: data itu tidak pernah sampai ke kami."
+      ],
+      [
+        "Data yang tetap di perangkat",
+        "Acara, tugas, rantai, daftar, tag, pengaturan, cadangan otomatis, tempat yang sudah dicari, kunci pribadi, dan tautan kalender terhubung (dua yang terakhir dienkripsi dengan kunci yang tidak pernah keluar dari ponsel)."
+      ],
+      [
+        "Apa yang keluar dari ponsel dan ke siapa",
+        "Hanya saat Anda memakai fiturnya: • Cuaca: koordinat yang dibulatkan ke sekitar 1 km dikirim ke layanan cuaca pilihan Anda (bawaan MET Norway, Norwegia); penyedia melihat alamat IP Anda seperti server mana pun yang Anda hubungi. • Tempat: teks tempat yang dicari dikirim ke Photon (komoot, Jerman) dengan data OpenStreetMap, hanya jika atlas di ponsel tidak mengenalnya. • Layanan dengan kunci Anda sendiri (Open‑Meteo, OpenWeatherMap): koordinat atau teks tempat bersama kunci Anda, sesuai kebijakan penyedia yang Anda pilih. • Kalender terhubung: tautan yang Anda masukkan diunduh dari operatornya (Google, Microsoft, Apple, atau lainnya). • \"Buka di Google Kalender\": data acara yang Anda pilih dikirim ke Google. • Dikte: pengenalan suara sistem berjalan di ponsel bila tersedia; jika tidak, layanan suara sistem dapat mengirim audio ke server penyedianya (misalnya Google) sesuai kebijakannya. Kalend tidak merekam atau menyimpan audio. • Sinkronisasi QR: data berpindah langsung antar perangkat Anda di jaringan lokal, tanpa server."
+      ],
+      [
+        "Izin",
+        "Lokasi (opsional, hanya saat aplikasi terbuka): untuk langit, matahari terbit, terbenam, dan cuaca di tempat Anda. Mikrofon (opsional): untuk mendiktekan acara. Kalender ponsel (opsional): untuk membaca acara tersebut di samping acara Anda; Kalend tidak mengubahnya. Notifikasi dan alarm tepat: untuk pengingat pada waktu yang Anda pilih. Setiap izin dapat ditolak atau dicabut di pengaturan sistem."
+      ],
+      [
+        "Cadangan",
+        "Android dapat menyertakan data aplikasi dalam cadangan sistem (Google Drive), yang dienkripsi dengan kunci layar Anda dan dikelola Google sesuai kebijakannya; kunci pribadi dan tautan terenkripsi tidak disertakan. Ekspor manual, polos atau dilindungi kata sandi, Anda yang menentukan dan menyimpannya."
+      ],
+      [
+        "Penyimpanan dan penghapusan",
+        "Data tetap ada selama Anda menyimpan aplikasi. Anda dapat menghapus semuanya dari Pengaturan → Data atau dengan mencopot aplikasi. Tidak ada salinan pada kami."
+      ],
+      [
+        "Anak-anak",
+        "Aplikasi tidak ditujukan untuk anak di bawah 13 tahun (atau usia yang ditetapkan hukum setempat) dan bagaimanapun tidak mengumpulkan data."
+      ],
+      [
+        "Hak Anda",
+        "Undang-undang perlindungan data (misalnya GDPR) memberi Anda hak akses, perbaikan, penghapusan, portabilitas, dan pengaduan ke otoritas pengawas. Karena data hanya ada di perangkat Anda, Anda menjalankan hak tersebut langsung di sana; untuk layanan pihak ketiga, hubungi penyedianya. Pertanyaan: {{EMAIL}}."
+      ],
+      [
+        "Perubahan",
+        "Terakhir diperbarui: {{UPDATED}}. Versi yang berlaku adalah yang ditampilkan di aplikasi dan dipublikasikan daring."
+      ]
+    ]
+  },
+  "disclose": {
+    "location": [
+      "Lokasi",
+      "Kalend menggunakan lokasi Anda, hanya saat aplikasi terbuka, untuk menampilkan langit, matahari terbit, terbenam, dan cuaca di tempat Anda. Koordinat yang dibulatkan ke sekitar 1 km dikirim ke layanan cuaca pilihan Anda (bawaan MET Norway). Tidak ada penggunaan lain, tidak dibagikan."
+    ],
+    "mic": [
+      "Mikrofon",
+      "Mikrofon hanya untuk mendiktekan acara. Pengenalan berjalan di ponsel bila tersedia; jika tidak, layanan suara sistem dapat mengirim audio ke server penyedianya. Kalend tidak merekam atau menyimpan audio."
+    ],
+    "calendar": [
+      "Kalender ponsel",
+      "Kalend membaca acara kalender ponsel untuk menampilkannya di samping acara Anda. Tidak mengubahnya dan tidak mengirimnya ke siapa pun."
+    ],
+    "notif": [
+      "Notifikasi",
+      "Notifikasi dipakai untuk pengingat acara pada waktu yang Anda pilih. Anda dapat mematikannya kapan saja."
+    ],
+    "speechCloud": [
+      "Dikte melalui layanan ponsel",
+      "Di perangkat ini pengenalan suara lokal tidak tersedia: dikte menggunakan layanan suara sistem, yang dapat mengirim audio ke server penyedianya (misalnya Google) sesuai kebijakan privasinya. Kalend tidak merekam atau menyimpan audio. Anda dapat memasang bahasa untuk penggunaan offline di pengaturan suara ponsel, atau mengetik acara secara manual."
+    ]
+  },
+  "ui": {
+    "legal": "Informasi hukum",
+    "terms": "Ketentuan Penggunaan",
+    "privacy": "Privasi",
+    "credits": "Kredit",
+    "continue": "Lanjutkan",
+    "notnow": "Nanti saja",
+    "updated": "Ketentuan Penggunaan dan Kebijakan Privasi diperbarui.",
+    "read": "Baca",
+    "ok": "Mengerti"
+  }
 }

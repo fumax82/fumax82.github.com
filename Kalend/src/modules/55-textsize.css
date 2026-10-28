@@ -1,0 +1,61 @@
+/* ══════════════════════════════════════════════════════════════════
+   MODULO v55 · 1.14 — «Testo grande»
+   ------------------------------------------------------------------
+   Tre livelli: normale · grande (×1.15) · molto grande (×1.3).
+   L'attributo data-textsize sull'elemento <html> viene impostato PRIMA
+   del primo disegno (dal caricatore in testa alla pagina) e aggiornato
+   dalla scheda nelle impostazioni (55-textsize.js).
+
+   Come funziona: le schede, le finestre e le liste vengono ingrandite
+   con la proprietà CSS «zoom» applicata al loro CONTENUTO, non al
+   contenitore fisso (che mantiene altezza e posizione in viewport).
+   Nella giornata, dove le barre sono posizionate in pixel dallo script,
+   si ingrandiscono solo i caratteri. La griglia del calendario resta
+   com'è: deve mostrare un mese intero.
+══════════════════════════════════════════════════════════════════ */
+:root{--kx-ts:1}
+:root[data-textsize="big"]{--kx-ts:1.15}
+:root[data-textsize="xl"]{--kx-ts:1.3}
+
+/* schede dal basso (impostazioni, nuovo evento, ricerca, liste di cose…):
+   intestazione e contenuto ingranditi; la maniglia e il contenitore no */
+:root[data-textsize] .bottom-sheet>.sheet-header,
+:root[data-textsize] .bottom-sheet>.add-event-form,
+:root[data-textsize] .bottom-sheet>div:not(.sheet-handle):not(.sheet-header):not(.add-event-form){zoom:var(--kx-ts)}
+
+/* finestre e popup: il contenuto di ciascuno */
+:root[data-textsize] #ev-popup>*,
+:root[data-textsize] #confirm-box>*,
+:root[data-textsize] #hint-card>*,
+:root[data-textsize] #day-summary-box>*,
+:root[data-textsize] #kx-dlg>*,
+:root[data-textsize] #kx-tdlg>*,
+:root[data-textsize] #kx-alert>*,
+:root[data-textsize] .kx-disc-card,
+:root[data-textsize] .kx-pw-card,
+:root[data-textsize] #kx-menu-ov>.kx-menu,
+:root[data-textsize] #kx-lists>*,
+:root[data-textsize] #kx-av>*,
+:root[data-textsize] #kx-page>*,
+:root[data-textsize] #kx-fam-page>*,
+:root[data-textsize] #kx-legal-sheet>*,
+:root[data-textsize] #todo-screen>*,
+:root[data-textsize] #tooltip{zoom:var(--kx-ts)}
+
+/* giornata: solo i caratteri (le barre restano dove le mette lo script) */
+:root[data-textsize] #dd-title{font-size:calc(15px * var(--kx-ts))}
+:root[data-textsize="big"] .dd-ev-title{font-size:13.5px!important}
+:root[data-textsize="big"] .dd-ev-time,:root[data-textsize="big"] .dd-ev-loc,:root[data-textsize="big"] .dd-ev-desc{font-size:11px!important}
+:root[data-textsize="xl"] .dd-ev-title{font-size:15px!important}
+:root[data-textsize="xl"] .dd-ev-time,:root[data-textsize="xl"] .dd-ev-loc,:root[data-textsize="xl"] .dd-ev-desc{font-size:12.5px!important}
+:root[data-textsize] .dd-hour-label{font-size:calc(9px * var(--kx-ts))!important}
+:root[data-textsize] .dd-ev-bar{overflow:hidden}
+
+/* scheda nelle impostazioni */
+#kx-ts-card .kx-ts-seg{display:flex;border:1px solid var(--divider);border-radius:8px;overflow:hidden;margin:4px 0}
+#kx-ts-card .kx-ts-btn{flex:1;border:none;border-right:1px solid var(--divider);background:transparent;color:var(--text-mid);font-family:var(--font-ui);font-weight:700;padding:9px 4px;cursor:pointer}
+#kx-ts-card .kx-ts-btn:last-child{border-right:none}
+#kx-ts-card .kx-ts-btn[data-v="normal"]{font-size:12px}
+#kx-ts-card .kx-ts-btn[data-v="big"]{font-size:14px}
+#kx-ts-card .kx-ts-btn[data-v="xl"]{font-size:16px}
+#kx-ts-card .kx-ts-btn.on{background:rgba(var(--accent-rgb),.12);color:var(--accent)}

@@ -57,7 +57,7 @@ const STEPS=[
 ];
 
 (async()=>{
-  const browser=await chromium.launch();
+  const browser=await chromium.launch({args:['--allow-file-access-from-files']});
   const ctx=await browser.newContext({viewport:{width:412,height:915},locale:LANG||'it'});
   const page=await ctx.newPage();
   await page.addInitScript(STUB);

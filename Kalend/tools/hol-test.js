@@ -42,7 +42,7 @@ const CASES=[
   ['US',2026,'Independence Day','2026-07-04'],      /* la festa resta nel suo giorno */
 ];
 (async()=>{
-  const b=await chromium.launch();const p=await (await b.newContext({locale:'it'})).newPage();
+  const b=await chromium.launch({args:['--allow-file-access-from-files']});const p=await (await b.newContext({locale:'it'})).newPage();
   const errors=[];p.on('pageerror',e=>errors.push(String(e.message||e)));
   await p.addInitScript(STUB);await p.goto(PAGE);await p.waitForTimeout(2600);
   console.log('1. Date note del 2026');

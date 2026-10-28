@@ -16,7 +16,7 @@ const PAGE='file://'+path.join(__dirname,'..','www','index.html');
 const STUB=`window.KalendNative={httpGet:(id,u)=>setTimeout(()=>window.__knCb(id,false,'HTTP 404'),5),updateWidget:()=>{},setReminders:()=>{},vibrate:()=>{},setBarColor:()=>{},setSecure:()=>{},openSettings:()=>{},testReminder:()=>{},reliability:()=>'{}',vaultDel:()=>{},takeListQueue:()=>'[]',speechStop:()=>{},speechCancel:()=>{},snoozeAlert:()=>{}};try{localStorage.setItem('cal_onboard_v1','1');localStorage.setItem('kx_qs_v1','1');localStorage.setItem('kx_disclosed_v1','{"location":1,"mic":1,"calendar":1,"notif":1}');localStorage.setItem('kx_legal_seen_v1','x');}catch(e){}`;
 let fails=0;const check=(n,ok,i)=>{console.log((ok?'  ✔ ':'  ✘ ')+n+(ok?'':'   → '+i));if(!ok)fails++;};
 (async()=>{
-  const b=await chromium.launch();const p=await (await b.newContext({locale:'it'})).newPage();
+  const b=await chromium.launch({args:['--allow-file-access-from-files']});const p=await (await b.newContext({locale:'it'})).newPage();
   const errors=[];p.on('pageerror',e=>errors.push(String(e.message||e)));
   await p.addInitScript(STUB);await p.goto(PAGE);await p.waitForTimeout(2600);
   await p.evaluate(()=>{document.getElementById('kx-intro')?.click();});

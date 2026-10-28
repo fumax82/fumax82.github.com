@@ -68,7 +68,7 @@ let fails=0;
 function check(name,ok,info){console.log((ok?'  ✔ ':'  ✘ ')+name+(ok?'':'   → '+info));if(!ok)fails++;}
 
 (async()=>{
-  const browser=await chromium.launch();
+  const browser=await chromium.launch({args:['--allow-file-access-from-files']});
   const page=await (await browser.newContext({viewport:{width:412,height:915},locale:'it'})).newPage();
   const errors=[];page.on('pageerror',e=>errors.push(String(e.message||e)));
   await page.addInitScript(FIXTURES);

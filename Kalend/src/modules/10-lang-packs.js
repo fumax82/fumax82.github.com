@@ -396,12 +396,49 @@ function trimTitle(title,L){
   return t.replace(/^[\s,;:.·-]+|[\s,;:.·-]+$/g,'');
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   0. (v55) NORMALIZZAZIONE PRIMA DI TUTTO, in ogni lingua (italiano compreso):
+      · cifre di altri alfabeti → cifre arabe occidentali («٣٠ دقيقة», «१५»,
+        «১০», «๑๕», «１２時»): il parser ragiona solo su 0-9;
+      · date ISO «2026-03-05», con il punto «5.3.2026», orientali «2026/3/5»,
+        «2026年3月5日» → la forma «5/3/2026» che il parser conosce, nell'ordine
+        giorno/mese che la lingua usa davvero (lexicon.dateOrder);
+      · spazi "esotici" (non divisibili, ideografici) → spazi normali;
+      · «h» tra ora e minuti con la «H» maiuscola, «８：３０» a larghezza piena.
+══════════════════════════════════════════════════════════════════ */
+/* primo codice di ogni blocco di dieci cifre (0…9) negli alfabeti più diffusi */
+const DIGIT_ZEROS=[0x0660,0x06F0,0x07C0,0x0966,0x09E6,0x0A66,0x0AE6,0x0B66,0x0BE6,0x0C66,0x0CE6,0x0D66,0x0DE6,0x0E50,0x0ED0,0x0F20,0x1040,0x1090,0x17E0,0x1810,0x1946,0x19D0,0xA8D0,0xA9D0,0xAA50,0xABF0,0xFF10];
+function asciiDigits(t){
+  return String(t).replace(/\p{Nd}/gu,ch=>{const c=ch.codePointAt(0);if(c<128)return ch;for(const z of DIGIT_ZEROS){if(c>=z&&c<=z+9)return String(c-z);}return ch;});
+}
+function preNormalize(raw,l){
+  let t=asciiDigits(String(raw||''));
+  t=t.replace(/[\u00A0\u2007\u202F\u3000]/g,' ').replace(/[：]/g,':').replace(/[／]/g,'/');
+  const L=lexOf(l);
+  let us=false;try{us=/^en-US/.test(L10N.locale);}catch(e){}
+  const order=L.dateOrder||(us?'mdy':'dmy');          /* come la lingua scrive «5/3» */
+  const toSlash=(y,m,d)=>{if(+m<1||+m>12||+d<1||+d>31)return null;const D=String(+d),M=String(+m);
+    /* il parser legge «a/b» come giorno/mese, o mese/giorno solo con il locale en-US */
+    return ' '+(us?M+'/'+D:D+'/'+M)+(y?'/'+y:'')+' ';};
+  /* ISO 2026-03-05 · orientale 2026/3/5 · 2026年3月5日 */
+  t=t.replace(/(?<![\d/.-])(\d{4})[-/.年]\s*(\d{1,2})[-/.月]\s*(\d{1,2})日?(?![\d/.-])/g,(m,y,mo,d)=>toSlash(y,mo,d)||m);
+  /* 5.3.2026 · 5.3. · 05.03 (tedesco, russo, polacco, turco…): solo se la lingua scrive così */
+  if(order==='dmy')t=t.replace(/(?<![\d.:/])(\d{1,2})\.(\d{1,2})\.(?:(\d{4}|\d{2})(?![\d.:]))?(?![\d:])/g,(m,d,mo,y)=>{
+    if(+mo<1||+mo>12||+d<1||+d>31)return m;return toSlash(y?(y.length===2?'20'+y:y):'',mo,d)||m;});
+  /* la lingua scrive mese/giorno ma il parser (senza locale en-US) legge giorno/mese: si scambiano */
+  if(order==='mdy'&&!us)t=t.replace(/(?<![\d/.-])(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?(?![\d/])/g,(m,a,b,y)=>(+a>=1&&+a<=12&&+b>=1&&+b<=31)?' '+b+'/'+a+(y?'/'+y:'')+' ':m);
+  /* «8H30» → «8h30»; «8 h 30» → «8h30» */
+  t=t.replace(/(\d{1,2})\s*[hH]\s*(\d{2})(?![\d\p{L}])/gu,'$1h$2');
+  return t;
+}
+
 /* ── aggancio al parser ── */
 function hookParser(){
   if(!KX.NL2||KX.NL2._v54)return;
   const base=KX.NL2.parse.bind(KX.NL2);
-  KX.NL2.parse=function(raw){
+  KX.NL2.parse=function(raw0){
     const l=lang();
+    let raw=raw0;try{raw=preNormalize(raw0,l);}catch(e){}
     if(l==='it'||!pack(l))return base(raw);
     const tk=takeTags(raw);
     let canon=tk.text;try{canon=canonicalize(tk.text);}catch(e){console.warn('[v54 lingua]',e);}
@@ -482,7 +519,7 @@ function localizedPlaceholders(){
 }
 
 /* ── API pubblica ── */
-KX.Lang={lang,pack,lexicon:lexOf,canonicalize,packKeywords,normText,tr};
+KX.Lang={lang,pack,lexicon:lexOf,canonicalize,preNormalize,asciiDigits,packKeywords,normText,tr};
 
 /* avvio: dopo che tutti i moduli storici hanno agganciato il parser */
 function start(){

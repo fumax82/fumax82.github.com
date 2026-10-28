@@ -137,5 +137,26 @@ dall'APK v53** e riscritto in Java pulito e commentato in `android-src/`
 L'APK/AAB definitivo va prodotto in Android Studio (qui non c'è l'SDK Android):
 nel repository è verificata solo la compilazione del Java (`tools/native-check.sh`).
 
+## 7. Pagina più leggera, testo grande, dettatura trasparente
+* **Dizionari per lingua** (1.13): la pagina incorpora solo italiano e inglese;
+  le altre 19 lingue stanno in `www/i18n/<lingua>.json` (traduzioni, lessico del
+  parser, auto-tag, cultura e testi legali) e la lingua in uso viene letta
+  all'avvio da un caricatore in testa alla pagina. La pagina passa da 4,7 a
+  2,7 MB. Se il file manca, l'interfaccia resta in inglese senza errori.
+  L'APK e il progetto Android copiano la cartella `i18n/` negli asset.
+* **Testo grande** (1.14): in Impostazioni › Aspetto, tre livelli (normale,
+  grande, molto grande) per schede, giornata, liste, finestre e impostazioni;
+  la griglia del mese resta com'è. Salvato in `kx_textsize_v1`, applicato
+  prima del primo disegno (nessuno scatto all'avvio).
+* **Dettatura** (2.7): quando il telefono non ha il riconoscimento locale, la
+  finestra di dettatura lo dice («☁️ Riconoscimento tramite il servizio vocale
+  del telefono») e, una volta sola, un avviso in 20 lingue spiega che l'audio
+  può passare dal fornitore del servizio di sistema (testo in `src/legal/*.json`,
+  chiave `disclose.speechCloud`). Da dichiarare anche in Data safety.
+* **Parser**: cifre di ogni alfabeto (arabo-indiano, devanagari, bengalese,
+  thai, a larghezza piena) e date ISO/«5.3.2026»/«2026年3月5日» capite in
+  tutte le lingue; nuovo banco di prova `tools/nl-suite.js` con frasi e
+  risultati attesi per lingua (`tools/nl-suite/<lingua>.json`).
+
 ## Cosa NON è cambiato
 Grafica, viste, cielo vivo, parser, tag, calendari, widget: identici alla v54.

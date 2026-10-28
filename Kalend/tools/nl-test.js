@@ -11,7 +11,7 @@ const ROOT=path.resolve(__dirname,'..');
 const PAGE='file://'+path.join(ROOT,'www','index.html');
 const lang=process.argv[2]||'it';const extra=process.argv.slice(3);
 (async()=>{
-  const browser=await chromium.launch();
+  const browser=await chromium.launch({args:['--allow-file-access-from-files']});
   const page=await (await browser.newContext({viewport:{width:412,height:915},locale:lang})).newPage();
   await page.addInitScript(`window.KalendNative={updateWidget(){},setReminders(){},vibrate(){},setBarColor(){},setSecure(){},openSettings(){},testReminder(){},reliability(){return'{}'},vaultDel(){},takeListQueue(){return'[]'},speechStop(){},speechCancel(){},snoozeAlert(){}};`);
   await page.addInitScript(l=>{try{const k='cal_settings_v1';const c=JSON.parse(localStorage.getItem(k)||'{}');c.language=l;localStorage.setItem(k,JSON.stringify(c));localStorage.setItem('cal_onboard_v1','1');localStorage.setItem('kx_qs_v1','1');}catch(e){}},lang);

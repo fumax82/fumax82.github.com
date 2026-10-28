@@ -1,33 +1,125 @@
 {
- "eula": {"title": "Gebruiksvoorwaarden", "sections": [
-  ["Wie wij zijn en wat deze voorwaarden zijn", "Kalend is een Android-app van {{SELLER}} ({{ADDRESS}}, {{EMAIL}}). De aankoop verloopt via Google Play en valt ook onder de voorwaarden van Google Play, inclusief het terugbetalingsbeleid. Door de app te gebruiken aanvaard je deze voorwaarden."],
-  ["Licentie", "Wij verlenen je een persoonlijke, niet-exclusieve en niet-overdraagbare licentie om Kalend te gebruiken op de apparaten die aan je Google Play-account zijn gekoppeld. Het is niet toegestaan de app te verspreiden, verkopen, decompileren of wijzigen, behalve waar de wet dat toestaat."],
-  ["Hoe het werkt en waar de gegevens staan", "Kalend werkt op je apparaat. Er zijn geen accounts en geen servers van ons: afspraken, taken, instellingen en sleutels blijven op de telefoon. Je bent verantwoordelijk voor de inhoud die je invoert en voor je back-ups; de app biedt back-up- en exporthulpmiddelen."],
-  ["Diensten van derden", "Sommige functies gebruiken diensten van derden: weer (standaard MET Norway), plaatsen zoeken (GeoNames, Photon op OpenStreetMap-gegevens), agenda's die je zelf koppelt (Google, Microsoft, Apple of andere) en, als je ze kiest, diensten met je eigen sleutel (Open‑Meteo, OpenWeatherMap). Ze worden door hun beheerders onder hun eigen voorwaarden geleverd, kunnen zonder kennisgeving veranderen of stoppen, en Kalend is daar geen partij bij. Eventuele kosten van persoonlijke sleutels zijn een zaak tussen jou en de aanbieder."],
-  ["Informatie is indicatief", "Weersverwachtingen, feestdagen, religieuze data, kalenderomrekeningen, astronomische berekeningen en herinneringen zijn indicatief. Gebruik Kalend niet als enige referentie voor beslissingen over veiligheid, gezondheid of wettelijke termijnen. Meldingen hangen af van het besturingssysteem (batterij, spaarstanden, machtigingen) en kunnen te laat komen of uitblijven."],
-  ["Garantie en aansprakelijkheid", "Kalend wordt geleverd \"zoals ze is\", voor zover de wet dat toestaat. Ben je consument, dan blijven de dwingende garanties van de wet van je land gelden (bijvoorbeeld de conformiteitsgarantie voor digitale inhoud in de Europese Unie). Voor zover toegestaan sluiten wij aansprakelijkheid uit voor indirecte schade, gederfde winst en gegevensverlies, en is onze totale aansprakelijkheid beperkt tot wat je in de voorgaande 12 maanden voor de app hebt betaald, behalve bij opzet, grove nalatigheid of waar de wet geen beperking toelaat."],
-  ["Updates en wijzigingen", "Wij kunnen de app en deze voorwaarden bijwerken. Wezenlijke wijzigingen worden in de app aangekondigd; door de app na de kennisgeving te blijven gebruiken aanvaard je ze. Je kunt op elk moment stoppen door de app te verwijderen."],
-  ["Intellectuele eigendom", "De app, de vormgeving en de teksten zijn van ons of van de respectieve eigenaren. Gegevens en lettertypen van derden worden gebruikt volgens hun licenties, vermeld in de credits. Namen van andere producten en diensten worden alleen genoemd om compatibiliteit te beschrijven."],
-  ["Toepasselijk recht en bevoegde rechter", "Op deze voorwaarden is het recht van {{LAW}} van toepassing. Ben je consument, dan behoud je de bescherming en de bevoegde rechter volgens het recht van het land waar je woont. In de Europese Unie kun je ook het platform voor onlinegeschillenbeslechting van de Commissie gebruiken."],
-  ["Contact", "Vragen over deze voorwaarden: {{EMAIL}}."]
- ]},
- "privacy": {"title": "Privacybeleid", "sections": [
-  ["In het kort", "Kalend verzamelt geen gegevens over jou: geen account, geen reclame, geen tracking, geen gebruiksstatistieken, geen servers van ons. Alles wat je invoert blijft op je apparaat. Sommige functies sturen, als je ze gebruikt, het strikt noodzakelijke naar diensten van derden, hieronder beschreven."],
-  ["Wie verantwoordelijk is", "{{SELLER}}, {{ADDRESS}}, {{EMAIL}}. Wij ontvangen noch verwerken je persoonsgegevens: ze bereiken ons nooit."],
-  ["Gegevens die op het apparaat blijven", "Afspraken, taken, ketens, lijsten, tags, instellingen, automatische back-ups, eerder gezochte plaatsen, persoonlijke sleutels en links van gekoppelde agenda's (de laatste twee versleuteld met een sleutel die de telefoon nooit verlaat)."],
-  ["Wat de telefoon verlaat en naar wie", "Alleen wanneer je de functie gebruikt: • Weer: coördinaten afgerond op ongeveer 1 km naar de gekozen weerdienst (standaard MET Norway, Noorwegen); de aanbieder ziet je IP-adres zoals elke server die je benadert. • Plaatsen: de tekst van de gezochte plaats naar Photon (komoot, Duitsland) op OpenStreetMap-gegevens, alleen als de atlas op de telefoon die niet kent. • Diensten met je eigen sleutel (Open‑Meteo, OpenWeatherMap): coördinaten of plaatstekst samen met je sleutel, volgens het beleid van de gekozen aanbieder. • Gekoppelde agenda's: de door jou ingevoerde link wordt bij de beheerder opgehaald (Google, Microsoft, Apple of andere). • \"Openen in Google Agenda\": de gegevens van de afspraak die je kiest gaan naar Google. • Dicteren: de spraakherkenning van het systeem draait op de telefoon als die beschikbaar is; anders kan de spraakdienst van het systeem audio naar de servers van zijn aanbieder (bijvoorbeeld Google) sturen volgens diens beleid. Kalend neemt geen audio op en bewaart die niet. • QR-synchronisatie: gegevens gaan rechtstreeks tussen je apparaten via het lokale netwerk, zonder server."],
-  ["Machtigingen", "Locatie (optioneel, alleen terwijl de app open is): voor lucht, zonsopgang, zonsondergang en weer waar je bent. Microfoon (optioneel): om afspraken te dicteren. Telefoonagenda (optioneel): om die afspraken naast de jouwe te tonen; Kalend wijzigt ze niet. Meldingen en exacte alarmen: voor herinneringen op het door jou gekozen tijdstip. Elke machtiging kan in de systeeminstellingen worden geweigerd of ingetrokken."],
-  ["Back-ups", "Android kan de app-gegevens opnemen in de systeemback-up (Google Drive), versleuteld met je schermvergrendeling en beheerd door Google volgens zijn beleid; persoonlijke sleutels en versleutelde links zijn uitgesloten. Handmatige exports, onversleuteld of met wachtwoord, bepaal en bewaar je zelf."],
-  ["Bewaren en verwijderen", "De gegevens blijven zolang je de app houdt. Je kunt alles wissen via Instellingen → Gegevens of door de app te verwijderen. Bij ons bestaan geen kopieën."],
-  ["Kinderen", "De app is niet bedoeld voor kinderen onder 13 jaar (of de leeftijd volgens lokaal recht) en verzamelt hoe dan ook geen gegevens."],
-  ["Je rechten", "Wetten voor gegevensbescherming (bijvoorbeeld de AVG) geven je recht op inzage, rectificatie, wissing, overdraagbaarheid en klacht bij een toezichthouder. Omdat de gegevens alleen op je apparaat staan, oefen je die rechten daar rechtstreeks uit; voor diensten van derden wend je je tot hun aanbieders. Vragen: {{EMAIL}}."],
-  ["Wijzigingen", "Laatst bijgewerkt: {{UPDATED}}. De geldende versie is die in de app en online gepubliceerd."]
- ]},
- "disclose": {
-  "location": ["Locatie", "Kalend gebruikt je locatie, alleen terwijl de app open is, om lucht, zonsopgang, zonsondergang en het weer waar je bent te tonen. Coördinaten afgerond op ongeveer 1 km worden naar de gekozen weerdienst gestuurd (standaard MET Norway). Geen ander gebruik, geen delen."],
-  "mic": ["Microfoon", "De microfoon dient alleen om afspraken te dicteren. De herkenning draait op de telefoon als die beschikbaar is; anders kan de spraakdienst van het systeem audio naar de servers van zijn aanbieder sturen. Kalend neemt geen audio op en bewaart die niet."],
-  "calendar": ["Telefoonagenda", "Kalend leest de afspraken van de telefoonagenda om ze naast de jouwe te tonen. Het wijzigt ze niet en stuurt ze naar niemand."],
-  "notif": ["Meldingen", "Meldingen dienen voor herinneringen aan afspraken op het door jou gekozen tijdstip. Je kunt ze uitschakelen wanneer je wilt."]
- },
- "ui": {"legal": "Juridische informatie", "terms": "Gebruiksvoorwaarden", "privacy": "Privacy", "credits": "Credits", "continue": "Doorgaan", "notnow": "Niet nu", "updated": "Gebruiksvoorwaarden en privacybeleid bijgewerkt.", "read": "Lezen"}
+  "eula": {
+    "title": "Gebruiksvoorwaarden",
+    "sections": [
+      [
+        "Wie wij zijn en wat deze voorwaarden zijn",
+        "Kalend is een Android-app van {{SELLER}} ({{ADDRESS}}, {{EMAIL}}). De aankoop verloopt via Google Play en valt ook onder de voorwaarden van Google Play, inclusief het terugbetalingsbeleid. Door de app te gebruiken aanvaard je deze voorwaarden."
+      ],
+      [
+        "Licentie",
+        "Wij verlenen je een persoonlijke, niet-exclusieve en niet-overdraagbare licentie om Kalend te gebruiken op de apparaten die aan je Google Play-account zijn gekoppeld. Het is niet toegestaan de app te verspreiden, verkopen, decompileren of wijzigen, behalve waar de wet dat toestaat."
+      ],
+      [
+        "Hoe het werkt en waar de gegevens staan",
+        "Kalend werkt op je apparaat. Er zijn geen accounts en geen servers van ons: afspraken, taken, instellingen en sleutels blijven op de telefoon. Je bent verantwoordelijk voor de inhoud die je invoert en voor je back-ups; de app biedt back-up- en exporthulpmiddelen."
+      ],
+      [
+        "Diensten van derden",
+        "Sommige functies gebruiken diensten van derden: weer (standaard MET Norway), plaatsen zoeken (GeoNames, Photon op OpenStreetMap-gegevens), agenda's die je zelf koppelt (Google, Microsoft, Apple of andere) en, als je ze kiest, diensten met je eigen sleutel (Open‑Meteo, OpenWeatherMap). Ze worden door hun beheerders onder hun eigen voorwaarden geleverd, kunnen zonder kennisgeving veranderen of stoppen, en Kalend is daar geen partij bij. Eventuele kosten van persoonlijke sleutels zijn een zaak tussen jou en de aanbieder."
+      ],
+      [
+        "Informatie is indicatief",
+        "Weersverwachtingen, feestdagen, religieuze data, kalenderomrekeningen, astronomische berekeningen en herinneringen zijn indicatief. Gebruik Kalend niet als enige referentie voor beslissingen over veiligheid, gezondheid of wettelijke termijnen. Meldingen hangen af van het besturingssysteem (batterij, spaarstanden, machtigingen) en kunnen te laat komen of uitblijven."
+      ],
+      [
+        "Garantie en aansprakelijkheid",
+        "Kalend wordt geleverd \"zoals ze is\", voor zover de wet dat toestaat. Ben je consument, dan blijven de dwingende garanties van de wet van je land gelden (bijvoorbeeld de conformiteitsgarantie voor digitale inhoud in de Europese Unie). Voor zover toegestaan sluiten wij aansprakelijkheid uit voor indirecte schade, gederfde winst en gegevensverlies, en is onze totale aansprakelijkheid beperkt tot wat je in de voorgaande 12 maanden voor de app hebt betaald, behalve bij opzet, grove nalatigheid of waar de wet geen beperking toelaat."
+      ],
+      [
+        "Updates en wijzigingen",
+        "Wij kunnen de app en deze voorwaarden bijwerken. Wezenlijke wijzigingen worden in de app aangekondigd; door de app na de kennisgeving te blijven gebruiken aanvaard je ze. Je kunt op elk moment stoppen door de app te verwijderen."
+      ],
+      [
+        "Intellectuele eigendom",
+        "De app, de vormgeving en de teksten zijn van ons of van de respectieve eigenaren. Gegevens en lettertypen van derden worden gebruikt volgens hun licenties, vermeld in de credits. Namen van andere producten en diensten worden alleen genoemd om compatibiliteit te beschrijven."
+      ],
+      [
+        "Toepasselijk recht en bevoegde rechter",
+        "Op deze voorwaarden is het recht van {{LAW}} van toepassing. Ben je consument, dan behoud je de bescherming en de bevoegde rechter volgens het recht van het land waar je woont. In de Europese Unie kun je ook het platform voor onlinegeschillenbeslechting van de Commissie gebruiken."
+      ],
+      [
+        "Contact",
+        "Vragen over deze voorwaarden: {{EMAIL}}."
+      ]
+    ]
+  },
+  "privacy": {
+    "title": "Privacybeleid",
+    "sections": [
+      [
+        "In het kort",
+        "Kalend verzamelt geen gegevens over jou: geen account, geen reclame, geen tracking, geen gebruiksstatistieken, geen servers van ons. Alles wat je invoert blijft op je apparaat. Sommige functies sturen, als je ze gebruikt, het strikt noodzakelijke naar diensten van derden, hieronder beschreven."
+      ],
+      [
+        "Wie verantwoordelijk is",
+        "{{SELLER}}, {{ADDRESS}}, {{EMAIL}}. Wij ontvangen noch verwerken je persoonsgegevens: ze bereiken ons nooit."
+      ],
+      [
+        "Gegevens die op het apparaat blijven",
+        "Afspraken, taken, ketens, lijsten, tags, instellingen, automatische back-ups, eerder gezochte plaatsen, persoonlijke sleutels en links van gekoppelde agenda's (de laatste twee versleuteld met een sleutel die de telefoon nooit verlaat)."
+      ],
+      [
+        "Wat de telefoon verlaat en naar wie",
+        "Alleen wanneer je de functie gebruikt: • Weer: coördinaten afgerond op ongeveer 1 km naar de gekozen weerdienst (standaard MET Norway, Noorwegen); de aanbieder ziet je IP-adres zoals elke server die je benadert. • Plaatsen: de tekst van de gezochte plaats naar Photon (komoot, Duitsland) op OpenStreetMap-gegevens, alleen als de atlas op de telefoon die niet kent. • Diensten met je eigen sleutel (Open‑Meteo, OpenWeatherMap): coördinaten of plaatstekst samen met je sleutel, volgens het beleid van de gekozen aanbieder. • Gekoppelde agenda's: de door jou ingevoerde link wordt bij de beheerder opgehaald (Google, Microsoft, Apple of andere). • \"Openen in Google Agenda\": de gegevens van de afspraak die je kiest gaan naar Google. • Dicteren: de spraakherkenning van het systeem draait op de telefoon als die beschikbaar is; anders kan de spraakdienst van het systeem audio naar de servers van zijn aanbieder (bijvoorbeeld Google) sturen volgens diens beleid. Kalend neemt geen audio op en bewaart die niet. • QR-synchronisatie: gegevens gaan rechtstreeks tussen je apparaten via het lokale netwerk, zonder server."
+      ],
+      [
+        "Machtigingen",
+        "Locatie (optioneel, alleen terwijl de app open is): voor lucht, zonsopgang, zonsondergang en weer waar je bent. Microfoon (optioneel): om afspraken te dicteren. Telefoonagenda (optioneel): om die afspraken naast de jouwe te tonen; Kalend wijzigt ze niet. Meldingen en exacte alarmen: voor herinneringen op het door jou gekozen tijdstip. Elke machtiging kan in de systeeminstellingen worden geweigerd of ingetrokken."
+      ],
+      [
+        "Back-ups",
+        "Android kan de app-gegevens opnemen in de systeemback-up (Google Drive), versleuteld met je schermvergrendeling en beheerd door Google volgens zijn beleid; persoonlijke sleutels en versleutelde links zijn uitgesloten. Handmatige exports, onversleuteld of met wachtwoord, bepaal en bewaar je zelf."
+      ],
+      [
+        "Bewaren en verwijderen",
+        "De gegevens blijven zolang je de app houdt. Je kunt alles wissen via Instellingen → Gegevens of door de app te verwijderen. Bij ons bestaan geen kopieën."
+      ],
+      [
+        "Kinderen",
+        "De app is niet bedoeld voor kinderen onder 13 jaar (of de leeftijd volgens lokaal recht) en verzamelt hoe dan ook geen gegevens."
+      ],
+      [
+        "Je rechten",
+        "Wetten voor gegevensbescherming (bijvoorbeeld de AVG) geven je recht op inzage, rectificatie, wissing, overdraagbaarheid en klacht bij een toezichthouder. Omdat de gegevens alleen op je apparaat staan, oefen je die rechten daar rechtstreeks uit; voor diensten van derden wend je je tot hun aanbieders. Vragen: {{EMAIL}}."
+      ],
+      [
+        "Wijzigingen",
+        "Laatst bijgewerkt: {{UPDATED}}. De geldende versie is die in de app en online gepubliceerd."
+      ]
+    ]
+  },
+  "disclose": {
+    "location": [
+      "Locatie",
+      "Kalend gebruikt je locatie, alleen terwijl de app open is, om lucht, zonsopgang, zonsondergang en het weer waar je bent te tonen. Coördinaten afgerond op ongeveer 1 km worden naar de gekozen weerdienst gestuurd (standaard MET Norway). Geen ander gebruik, geen delen."
+    ],
+    "mic": [
+      "Microfoon",
+      "De microfoon dient alleen om afspraken te dicteren. De herkenning draait op de telefoon als die beschikbaar is; anders kan de spraakdienst van het systeem audio naar de servers van zijn aanbieder sturen. Kalend neemt geen audio op en bewaart die niet."
+    ],
+    "calendar": [
+      "Telefoonagenda",
+      "Kalend leest de afspraken van de telefoonagenda om ze naast de jouwe te tonen. Het wijzigt ze niet en stuurt ze naar niemand."
+    ],
+    "notif": [
+      "Meldingen",
+      "Meldingen dienen voor herinneringen aan afspraken op het door jou gekozen tijdstip. Je kunt ze uitschakelen wanneer je wilt."
+    ],
+    "speechCloud": [
+      "Dicteren via de dienst van de telefoon",
+      "Op dit toestel is lokale spraakherkenning niet beschikbaar: dicteren gebruikt de spraakdienst van het systeem, die audio volgens zijn privacybeleid naar de servers van zijn aanbieder (bijvoorbeeld Google) kan sturen. Kalend neemt geen audio op en bewaart niets. Je kunt de taal voor offline gebruik installeren in de spraakinstellingen van de telefoon, of de afspraak zelf typen."
+    ]
+  },
+  "ui": {
+    "legal": "Juridische informatie",
+    "terms": "Gebruiksvoorwaarden",
+    "privacy": "Privacy",
+    "credits": "Credits",
+    "continue": "Doorgaan",
+    "notnow": "Niet nu",
+    "updated": "Gebruiksvoorwaarden en privacybeleid bijgewerkt.",
+    "read": "Lezen",
+    "ok": "Begrepen"
+  }
 }

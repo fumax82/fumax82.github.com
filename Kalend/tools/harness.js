@@ -28,7 +28,7 @@ const NATIVE_STUB=`
 `;
 
 async function open({lang='it',w=412,h=915,settle=2500,stub=true}={}){
-  const browser=await chromium.launch();
+  const browser=await chromium.launch({args:['--allow-file-access-from-files']});
   const ctx=await browser.newContext({viewport:{width:w,height:h},locale:lang,deviceScaleFactor:2,isMobile:true,hasTouch:true});
   const page=await ctx.newPage();
   const errors=[];

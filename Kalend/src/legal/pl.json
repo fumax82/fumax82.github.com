@@ -1,33 +1,125 @@
 {
- "eula": {"title": "Warunki korzystania", "sections": [
-  ["Kim jesteśmy i czym są te warunki", "Kalend to aplikacja na Androida dostarczana przez {{SELLER}} ({{ADDRESS}}, {{EMAIL}}). Zakup odbywa się przez Google Play i podlega także warunkom Google Play, w tym zasadom zwrotów. Korzystając z aplikacji, akceptujesz te warunki."],
-  ["Licencja", "Udzielamy Ci osobistej, niewyłącznej i nieprzenoszalnej licencji na korzystanie z Kalend na urządzeniach powiązanych z Twoim kontem Google Play. Nie wolno rozpowszechniać, sprzedawać, dekompilować ani modyfikować aplikacji, z wyjątkiem przypadków dozwolonych prawem."],
-  ["Jak to działa i gdzie są dane", "Kalend działa na Twoim urządzeniu. Nie ma kont ani naszych serwerów: wydarzenia, zadania, ustawienia i klucze pozostają w telefonie. Odpowiadasz za wprowadzane treści i za kopie zapasowe; aplikacja oferuje narzędzia do kopii i eksportu."],
-  ["Usługi podmiotów trzecich", "Niektóre funkcje korzystają z usług zewnętrznych: pogoda (domyślnie MET Norway), wyszukiwanie miejsc (GeoNames, Photon na danych OpenStreetMap), kalendarze, które sam łączysz (Google, Microsoft, Apple lub inne) oraz, jeśli je wybierzesz, usługi z Twoim własnym kluczem (Open‑Meteo, OpenWeatherMap). Świadczą je ich operatorzy na własnych warunkach, mogą się zmienić lub zakończyć bez uprzedzenia, a Kalend nie jest ich stroną. Ewentualne koszty kluczy osobistych to sprawa między Tobą a dostawcą."],
-  ["Orientacyjny charakter informacji", "Prognozy pogody, święta, daty religijne, przeliczenia kalendarzy, obliczenia astronomiczne i przypomnienia mają charakter orientacyjny. Nie traktuj Kalend jako jedynego źródła przy decyzjach dotyczących bezpieczeństwa, zdrowia lub terminów prawnych. Powiadomienia zależą od systemu (bateria, tryby oszczędzania, uprawnienia) i mogą dotrzeć z opóźnieniem lub wcale."],
-  ["Gwarancja i odpowiedzialność", "Kalend jest dostarczana „taka, jaka jest”, w zakresie dozwolonym prawem. Jeśli jesteś konsumentem, zachowujesz bezwzględnie obowiązujące gwarancje prawa Twojego kraju (np. gwarancję zgodności treści cyfrowych w Unii Europejskiej). W dozwolonym zakresie wyłączamy odpowiedzialność za szkody pośrednie, utracone korzyści i utratę danych, a nasza łączna odpowiedzialność jest ograniczona do kwoty zapłaconej za aplikację w ciągu ostatnich 12 miesięcy, z wyjątkiem winy umyślnej, rażącego niedbalstwa lub przypadków, w których prawo nie dopuszcza ograniczeń."],
-  ["Aktualizacje i zmiany", "Możemy aktualizować aplikację i te warunki. Istotne zmiany są ogłaszane w aplikacji; dalsze korzystanie po ogłoszeniu oznacza ich akceptację. Możesz zrezygnować w każdej chwili, odinstalowując aplikację."],
-  ["Własność intelektualna", "Aplikacja, grafika i teksty należą do nas lub do ich właścicieli. Dane i czcionki podmiotów trzecich są używane zgodnie z ich licencjami, wymienionymi w podziękowaniach. Nazwy innych produktów i usług są wymieniane wyłącznie w celu opisania zgodności."],
-  ["Prawo właściwe i sąd", "Warunki te podlegają prawu {{LAW}}. Jeśli jesteś konsumentem, zachowujesz ochronę i właściwość sądu przewidziane prawem kraju zamieszkania. W Unii Europejskiej możesz też skorzystać z platformy internetowego rozstrzygania sporów Komisji."],
-  ["Kontakt", "Pytania dotyczące tych warunków: {{EMAIL}}."]
- ]},
- "privacy": {"title": "Polityka prywatności", "sections": [
-  ["W skrócie", "Kalend nie zbiera o Tobie żadnych danych: bez konta, bez reklam, bez śledzenia, bez statystyk użycia, bez naszych serwerów. Wszystko, co wpisujesz, zostaje na Twoim urządzeniu. Niektóre funkcje, jeśli ich używasz, wysyłają niezbędne minimum do usług zewnętrznych opisanych poniżej."],
-  ["Kto odpowiada", "{{SELLER}}, {{ADDRESS}}, {{EMAIL}}. Nie otrzymujemy ani nie przetwarzamy Twoich danych osobowych: nigdy do nas nie trafiają."],
-  ["Dane, które zostają na urządzeniu", "Wydarzenia, zadania, łańcuchy, listy, tagi, ustawienia, automatyczne kopie zapasowe, wyszukane już miejsca, klucze osobiste i linki połączonych kalendarzy (dwa ostatnie zaszyfrowane kluczem, który nigdy nie opuszcza telefonu)."],
-  ["Co opuszcza telefon i do kogo trafia", "Tylko gdy używasz funkcji: • Pogoda: współrzędne zaokrąglone do ok. 1 km do wybranej usługi pogodowej (domyślnie MET Norway, Norwegia); dostawca widzi Twój adres IP jak każdy serwer, z którym się łączysz. • Miejsca: tekst wyszukiwanego miejsca do Photon (komoot, Niemcy) na danych OpenStreetMap, tylko gdy atlas w telefonie go nie zna. • Usługi z własnym kluczem (Open‑Meteo, OpenWeatherMap): współrzędne lub tekst miejsca wraz z Twoim kluczem, zgodnie z polityką wybranego dostawcy. • Połączone kalendarze: wpisany link jest pobierany od jego operatora (Google, Microsoft, Apple lub innych). • „Otwórz w Kalendarzu Google”: dane wybranego wydarzenia trafiają do Google. • Dyktowanie: rozpoznawanie mowy systemu działa na telefonie, gdy jest dostępne; w przeciwnym razie usługa głosowa systemu może wysłać dźwięk na serwery swojego dostawcy (np. Google) zgodnie z jego polityką. Kalend nie nagrywa ani nie przechowuje dźwięku. • Synchronizacja QR: dane przechodzą bezpośrednio między Twoimi urządzeniami w sieci lokalnej, bez serwera."],
-  ["Uprawnienia", "Lokalizacja (opcjonalna, tylko przy otwartej aplikacji): niebo, wschód i zachód słońca oraz pogoda tam, gdzie jesteś. Mikrofon (opcjonalny): dyktowanie wydarzeń. Kalendarz telefonu (opcjonalny): odczyt tamtych wydarzeń obok Twoich; Kalend ich nie zmienia. Powiadomienia i dokładne alarmy: przypomnienia o wybranej porze. Każde uprawnienie można odmówić lub cofnąć w ustawieniach systemu."],
-  ["Kopie zapasowe", "Android może dołączyć dane aplikacji do kopii systemowej (Google Drive), zaszyfrowanej blokadą ekranu i zarządzanej przez Google zgodnie z jego polityką; klucze osobiste i zaszyfrowane linki są wyłączone. O eksportach ręcznych, jawnych lub chronionych hasłem, decydujesz i przechowujesz je Ty."],
-  ["Przechowywanie i usuwanie", "Dane pozostają, dopóki masz aplikację. Możesz usunąć wszystko w Ustawienia → Dane lub odinstalowując aplikację. U nas nie ma żadnych kopii."],
-  ["Dzieci", "Aplikacja nie jest przeznaczona dla dzieci poniżej 13 lat (lub wieku określonego prawem lokalnym) i w żadnym razie nie zbiera danych."],
-  ["Twoje prawa", "Przepisy o ochronie danych (np. RODO) dają Ci prawo dostępu, sprostowania, usunięcia, przenoszenia i skargi do organu nadzorczego. Ponieważ dane są tylko na Twoim urządzeniu, korzystasz z tych praw bezpośrednio tam; w sprawie usług zewnętrznych zwróć się do ich dostawców. Pytania: {{EMAIL}}."],
-  ["Zmiany", "Ostatnia aktualizacja: {{UPDATED}}. Obowiązuje wersja wyświetlana w aplikacji i opublikowana online."]
- ]},
- "disclose": {
-  "location": ["Lokalizacja", "Kalend używa Twojej lokalizacji tylko przy otwartej aplikacji, aby pokazać niebo, wschód i zachód słońca oraz pogodę tam, gdzie jesteś. Współrzędne zaokrąglone do ok. 1 km są wysyłane do wybranej usługi pogodowej (domyślnie MET Norway). Żadnego innego użycia, żadnego udostępniania."],
-  "mic": ["Mikrofon", "Mikrofon służy wyłącznie do dyktowania wydarzeń. Rozpoznawanie działa na telefonie, gdy jest dostępne; w przeciwnym razie usługa głosowa systemu może wysłać dźwięk na serwery swojego dostawcy. Kalend nie nagrywa ani nie przechowuje dźwięku."],
-  "calendar": ["Kalendarz telefonu", "Kalend odczytuje wydarzenia z kalendarza telefonu, aby pokazać je obok Twoich. Nie zmienia ich i nikomu nie wysyła."],
-  "notif": ["Powiadomienia", "Powiadomienia służą przypomnieniom o wydarzeniach o wybranej porze. Możesz je wyłączyć, kiedy chcesz."]
- },
- "ui": {"legal": "Informacje prawne", "terms": "Warunki korzystania", "privacy": "Prywatność", "credits": "Podziękowania", "continue": "Dalej", "notnow": "Nie teraz", "updated": "Zaktualizowano warunki korzystania i politykę prywatności.", "read": "Czytaj"}
+  "eula": {
+    "title": "Warunki korzystania",
+    "sections": [
+      [
+        "Kim jesteśmy i czym są te warunki",
+        "Kalend to aplikacja na Androida dostarczana przez {{SELLER}} ({{ADDRESS}}, {{EMAIL}}). Zakup odbywa się przez Google Play i podlega także warunkom Google Play, w tym zasadom zwrotów. Korzystając z aplikacji, akceptujesz te warunki."
+      ],
+      [
+        "Licencja",
+        "Udzielamy Ci osobistej, niewyłącznej i nieprzenoszalnej licencji na korzystanie z Kalend na urządzeniach powiązanych z Twoim kontem Google Play. Nie wolno rozpowszechniać, sprzedawać, dekompilować ani modyfikować aplikacji, z wyjątkiem przypadków dozwolonych prawem."
+      ],
+      [
+        "Jak to działa i gdzie są dane",
+        "Kalend działa na Twoim urządzeniu. Nie ma kont ani naszych serwerów: wydarzenia, zadania, ustawienia i klucze pozostają w telefonie. Odpowiadasz za wprowadzane treści i za kopie zapasowe; aplikacja oferuje narzędzia do kopii i eksportu."
+      ],
+      [
+        "Usługi podmiotów trzecich",
+        "Niektóre funkcje korzystają z usług zewnętrznych: pogoda (domyślnie MET Norway), wyszukiwanie miejsc (GeoNames, Photon na danych OpenStreetMap), kalendarze, które sam łączysz (Google, Microsoft, Apple lub inne) oraz, jeśli je wybierzesz, usługi z Twoim własnym kluczem (Open‑Meteo, OpenWeatherMap). Świadczą je ich operatorzy na własnych warunkach, mogą się zmienić lub zakończyć bez uprzedzenia, a Kalend nie jest ich stroną. Ewentualne koszty kluczy osobistych to sprawa między Tobą a dostawcą."
+      ],
+      [
+        "Orientacyjny charakter informacji",
+        "Prognozy pogody, święta, daty religijne, przeliczenia kalendarzy, obliczenia astronomiczne i przypomnienia mają charakter orientacyjny. Nie traktuj Kalend jako jedynego źródła przy decyzjach dotyczących bezpieczeństwa, zdrowia lub terminów prawnych. Powiadomienia zależą od systemu (bateria, tryby oszczędzania, uprawnienia) i mogą dotrzeć z opóźnieniem lub wcale."
+      ],
+      [
+        "Gwarancja i odpowiedzialność",
+        "Kalend jest dostarczana „taka, jaka jest”, w zakresie dozwolonym prawem. Jeśli jesteś konsumentem, zachowujesz bezwzględnie obowiązujące gwarancje prawa Twojego kraju (np. gwarancję zgodności treści cyfrowych w Unii Europejskiej). W dozwolonym zakresie wyłączamy odpowiedzialność za szkody pośrednie, utracone korzyści i utratę danych, a nasza łączna odpowiedzialność jest ograniczona do kwoty zapłaconej za aplikację w ciągu ostatnich 12 miesięcy, z wyjątkiem winy umyślnej, rażącego niedbalstwa lub przypadków, w których prawo nie dopuszcza ograniczeń."
+      ],
+      [
+        "Aktualizacje i zmiany",
+        "Możemy aktualizować aplikację i te warunki. Istotne zmiany są ogłaszane w aplikacji; dalsze korzystanie po ogłoszeniu oznacza ich akceptację. Możesz zrezygnować w każdej chwili, odinstalowując aplikację."
+      ],
+      [
+        "Własność intelektualna",
+        "Aplikacja, grafika i teksty należą do nas lub do ich właścicieli. Dane i czcionki podmiotów trzecich są używane zgodnie z ich licencjami, wymienionymi w podziękowaniach. Nazwy innych produktów i usług są wymieniane wyłącznie w celu opisania zgodności."
+      ],
+      [
+        "Prawo właściwe i sąd",
+        "Warunki te podlegają prawu {{LAW}}. Jeśli jesteś konsumentem, zachowujesz ochronę i właściwość sądu przewidziane prawem kraju zamieszkania. W Unii Europejskiej możesz też skorzystać z platformy internetowego rozstrzygania sporów Komisji."
+      ],
+      [
+        "Kontakt",
+        "Pytania dotyczące tych warunków: {{EMAIL}}."
+      ]
+    ]
+  },
+  "privacy": {
+    "title": "Polityka prywatności",
+    "sections": [
+      [
+        "W skrócie",
+        "Kalend nie zbiera o Tobie żadnych danych: bez konta, bez reklam, bez śledzenia, bez statystyk użycia, bez naszych serwerów. Wszystko, co wpisujesz, zostaje na Twoim urządzeniu. Niektóre funkcje, jeśli ich używasz, wysyłają niezbędne minimum do usług zewnętrznych opisanych poniżej."
+      ],
+      [
+        "Kto odpowiada",
+        "{{SELLER}}, {{ADDRESS}}, {{EMAIL}}. Nie otrzymujemy ani nie przetwarzamy Twoich danych osobowych: nigdy do nas nie trafiają."
+      ],
+      [
+        "Dane, które zostają na urządzeniu",
+        "Wydarzenia, zadania, łańcuchy, listy, tagi, ustawienia, automatyczne kopie zapasowe, wyszukane już miejsca, klucze osobiste i linki połączonych kalendarzy (dwa ostatnie zaszyfrowane kluczem, który nigdy nie opuszcza telefonu)."
+      ],
+      [
+        "Co opuszcza telefon i do kogo trafia",
+        "Tylko gdy używasz funkcji: • Pogoda: współrzędne zaokrąglone do ok. 1 km do wybranej usługi pogodowej (domyślnie MET Norway, Norwegia); dostawca widzi Twój adres IP jak każdy serwer, z którym się łączysz. • Miejsca: tekst wyszukiwanego miejsca do Photon (komoot, Niemcy) na danych OpenStreetMap, tylko gdy atlas w telefonie go nie zna. • Usługi z własnym kluczem (Open‑Meteo, OpenWeatherMap): współrzędne lub tekst miejsca wraz z Twoim kluczem, zgodnie z polityką wybranego dostawcy. • Połączone kalendarze: wpisany link jest pobierany od jego operatora (Google, Microsoft, Apple lub innych). • „Otwórz w Kalendarzu Google”: dane wybranego wydarzenia trafiają do Google. • Dyktowanie: rozpoznawanie mowy systemu działa na telefonie, gdy jest dostępne; w przeciwnym razie usługa głosowa systemu może wysłać dźwięk na serwery swojego dostawcy (np. Google) zgodnie z jego polityką. Kalend nie nagrywa ani nie przechowuje dźwięku. • Synchronizacja QR: dane przechodzą bezpośrednio między Twoimi urządzeniami w sieci lokalnej, bez serwera."
+      ],
+      [
+        "Uprawnienia",
+        "Lokalizacja (opcjonalna, tylko przy otwartej aplikacji): niebo, wschód i zachód słońca oraz pogoda tam, gdzie jesteś. Mikrofon (opcjonalny): dyktowanie wydarzeń. Kalendarz telefonu (opcjonalny): odczyt tamtych wydarzeń obok Twoich; Kalend ich nie zmienia. Powiadomienia i dokładne alarmy: przypomnienia o wybranej porze. Każde uprawnienie można odmówić lub cofnąć w ustawieniach systemu."
+      ],
+      [
+        "Kopie zapasowe",
+        "Android może dołączyć dane aplikacji do kopii systemowej (Google Drive), zaszyfrowanej blokadą ekranu i zarządzanej przez Google zgodnie z jego polityką; klucze osobiste i zaszyfrowane linki są wyłączone. O eksportach ręcznych, jawnych lub chronionych hasłem, decydujesz i przechowujesz je Ty."
+      ],
+      [
+        "Przechowywanie i usuwanie",
+        "Dane pozostają, dopóki masz aplikację. Możesz usunąć wszystko w Ustawienia → Dane lub odinstalowując aplikację. U nas nie ma żadnych kopii."
+      ],
+      [
+        "Dzieci",
+        "Aplikacja nie jest przeznaczona dla dzieci poniżej 13 lat (lub wieku określonego prawem lokalnym) i w żadnym razie nie zbiera danych."
+      ],
+      [
+        "Twoje prawa",
+        "Przepisy o ochronie danych (np. RODO) dają Ci prawo dostępu, sprostowania, usunięcia, przenoszenia i skargi do organu nadzorczego. Ponieważ dane są tylko na Twoim urządzeniu, korzystasz z tych praw bezpośrednio tam; w sprawie usług zewnętrznych zwróć się do ich dostawców. Pytania: {{EMAIL}}."
+      ],
+      [
+        "Zmiany",
+        "Ostatnia aktualizacja: {{UPDATED}}. Obowiązuje wersja wyświetlana w aplikacji i opublikowana online."
+      ]
+    ]
+  },
+  "disclose": {
+    "location": [
+      "Lokalizacja",
+      "Kalend używa Twojej lokalizacji tylko przy otwartej aplikacji, aby pokazać niebo, wschód i zachód słońca oraz pogodę tam, gdzie jesteś. Współrzędne zaokrąglone do ok. 1 km są wysyłane do wybranej usługi pogodowej (domyślnie MET Norway). Żadnego innego użycia, żadnego udostępniania."
+    ],
+    "mic": [
+      "Mikrofon",
+      "Mikrofon służy wyłącznie do dyktowania wydarzeń. Rozpoznawanie działa na telefonie, gdy jest dostępne; w przeciwnym razie usługa głosowa systemu może wysłać dźwięk na serwery swojego dostawcy. Kalend nie nagrywa ani nie przechowuje dźwięku."
+    ],
+    "calendar": [
+      "Kalendarz telefonu",
+      "Kalend odczytuje wydarzenia z kalendarza telefonu, aby pokazać je obok Twoich. Nie zmienia ich i nikomu nie wysyła."
+    ],
+    "notif": [
+      "Powiadomienia",
+      "Powiadomienia służą przypomnieniom o wydarzeniach o wybranej porze. Możesz je wyłączyć, kiedy chcesz."
+    ],
+    "speechCloud": [
+      "Dyktowanie przez usługę telefonu",
+      "Na tym urządzeniu lokalne rozpoznawanie mowy jest niedostępne: dyktowanie korzysta z systemowej usługi głosowej, która może wysyłać dźwięk na serwery swojego dostawcy (np. Google) zgodnie z jego polityką prywatności. Kalend nie nagrywa ani nie przechowuje dźwięku. Możesz zainstalować język do użytku offline w ustawieniach głosowych telefonu albo wpisać wydarzenie ręcznie."
+    ]
+  },
+  "ui": {
+    "legal": "Informacje prawne",
+    "terms": "Warunki korzystania",
+    "privacy": "Prywatność",
+    "credits": "Podziękowania",
+    "continue": "Dalej",
+    "notnow": "Nie teraz",
+    "updated": "Zaktualizowano warunki korzystania i politykę prywatności.",
+    "read": "Czytaj",
+    "ok": "Rozumiem"
+  }
 }

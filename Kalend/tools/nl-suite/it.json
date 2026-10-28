@@ -1,0 +1,22 @@
+{"lang":"it","cases":[
+ {"s":"Cena con Anna venerdì alle 20 a Roma #famiglia","expect":{"title":"Cena","date":"wd:5","start":"20:00","loc":"Roma","people":["Anna"],"tags":["famiglia"]}},
+ {"s":"domani dalle 9 alle 10 riunione assieme a Marco","expect":{"title":"Riunione","date":"+1","start":"09:00","end":"10:00","people":["Marco"]}},
+ {"s":"Corso di yoga ogni lunedì e giovedì alle 18:30 fino al 20 dicembre in via Roma 5, Milano #sport ricordamelo 30 minuti prima","expect":{"titleIncludes":"yoga","start":"18:30","rrule":{"freq":"WEEKLY","byday":[1,4],"until":"md:12-20"},"tags":["sport"],"rem":30,"loc":"via Roma 5, Milano"}},
+ {"s":"Dentista il 5/3 alle 15","expect":{"title":"Dentista","date":"md:3-5","start":"15:00"}},
+ {"s":"Dentista il 2027-03-05 alle 15","expect":{"title":"Dentista","date":"2027-03-05","start":"15:00"}},
+ {"s":"Compleanno di Luca il 12 maggio tutto il giorno","expect":{"titleIncludes":"Compleanno","date":"md:5-12","allDay":true}},
+ {"s":"Pagare bolletta tra 3 giorni urgente","expect":{"titleIncludes":"bolletta","date":"+3","pri":"urgent"}},
+ {"s":"Chiamare la mamma stasera alle otto e mezza","expect":{"titleIncludes":"mamma","date":"today","start":"20:30"}},
+ {"s":"Pranzo con Sara e Paolo sabato a mezzogiorno","expect":{"title":"Pranzo","date":"wd:6","start":"12:00","people":["Sara","Paolo"]}},
+ {"s":"Palestra ogni 2 giorni per 1 ora","expect":{"title":"Palestra","rrule":{"freq":"DAILY","interval":2}}},
+ {"s":"Riunione di lavoro il primo lunedì del mese alle 9","expect":{"titleIncludes":"Riunione","rrule":{"freq":"MONTHLY","nth":1},"start":"09:00"}},
+ {"s":"Visita medica 14/02/2027 dalle 10:30 alle 11:15 ricordamelo un'ora prima","expect":{"titleIncludes":"Visita","date":"2027-02-14","start":"10:30","end":"11:15","rem":60}},
+ {"s":"Aperitivo con Giulia giovedì alle 7 di sera","expect":{"title":"Aperitivo","date":"wd:4","start":"19:00","people":["Giulia"]}},
+ {"s":"Spesa settimana prossima","expect":{"title":"Spesa","date":"nextweek"}},
+ {"s":"Weekend al mare","expect":{"titleIncludes":"mare","date":"weekend"}},
+ {"s":"Nota: portare i documenti. Banca martedì alle 11","expect":{"titleIncludes":"Banca","date":"wd:2","start":"11:00","desc":"documenti"}},
+ {"s":"Riunione con il team ogni giorno feriale alle 9","expect":{"titleIncludes":"Riunione","rrule":{"freq":"WEEKLY","byday":[1,2,3,4,5]},"start":"09:00"}},
+ {"s":"Lezione di inglese ogni settimana per 5 volte","expect":{"titleIncludes":"inglese","rrule":{"freq":"WEEKLY","count":5}}},
+ {"s":"Concerto a Torino il 3 luglio alle 21","expect":{"title":"Concerto","date":"md:7-3","start":"21:00","loc":"Torino"}},
+ {"s":"Revisione auto tra 2 settimane","expect":{"titleIncludes":"Revisione","date":"+14"}}
+]}

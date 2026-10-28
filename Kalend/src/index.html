@@ -19193,7 +19193,7 @@ const NL2=(()=>{
     until:['fino al','fino a','fino alla','until','till','hasta el','jusqu\'au','bis','até'],
     with:['con','with','avec','mit','com'],
     and:[' e ',' ed ',' and ',' y ',' et ',' und ',', '],
-    weekdaysWord:['giorni feriali','giorni lavorativi','feriali','weekdays','días laborables','jours ouvrés','werktags','dias úteis'],
+    weekdaysWord:['ogni giorno feriale','ogni giorno lavorativo','tutti i giorni feriali','tutti i giorni lavorativi','nei giorni feriali','nei giorni lavorativi','giorni feriali','giorni lavorativi','giorno feriale','giorno lavorativo','feriali','every weekday','on weekdays','weekdays','días laborables','jours ouvrés','werktags','dias úteis'],
     moments:{mattina:540,mattino:540,morning:540,'stamattina':540,pranzo:780,lunch:780,pomeriggio:900,afternoon:900,sera:1200,stasera:1200,evening:1200,tonight:1200,notte:1320,night:1320,mezzogiorno:720,noon:720,mezzanotte:0,midnight:0,colazione:480,cena:1230,dinner:1230},
   };
   const B1='(?<![\\p{L}\\p{N}])',B2='(?![\\p{L}\\p{N}])';
@@ -19203,8 +19203,11 @@ const NL2=(()=>{
   function wdNames(){const loc=GIORNI_FULL.map(x=>x.toLowerCase());const shortL=DAY_LABELS.map(x=>x.toLowerCase());
     const plur={0:['domeniche'],6:['sabati']};const out=[];for(let i=0;i<7;i++){out.push([loc[i],i],[ENWD[i],i],[shortL[i],i],[ENWD[i]+'s',i]);(plur[i]||[]).forEach(p=>out.push([p,i]));
       if(loc[i].endsWith('ì'))out.push([loc[i].slice(0,-1)+'i',i]);}return out.filter(x=>x[0].length>=3);}
+  /* v55: ogni prefisso di almeno 3 lettere del nome del mese («set», «sett», «settem»…),
+     così «settimane» non viene più letto come «settembre» e «mar.» resta marzo */
   function monthNames(){const m=MESI.map(x=>x.toLowerCase());const en=['january','february','march','april','may','june','july','august','september','october','november','december'];
-    const out=[];m.forEach((x,i)=>{out.push([x,i],[x.slice(0,3),i]);});en.forEach((x,i)=>{out.push([x,i],[x.slice(0,3),i]);});return out;}
+    const out=[];const seen=new Set();const add=(w,i)=>{if(!seen.has(w)){seen.add(w);out.push([w,i]);}};
+    m.concat(en).forEach((x,i)=>{const idx=i%12;for(let n=3;n<=x.length;n++)add(x.slice(0,n),idx);});return out;}
   const remindSnap=v=>{const opts=[0,5,15,30,60,120,1440];return opts.reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);};
   function parse(raw){
     let s=' '+String(raw||'').replace(/\s+/g,' ').trim()+' ';
@@ -19212,7 +19215,9 @@ const NL2=(()=>{
     const take=(re,fn)=>{const m=s.match(re);if(m){fn(m);s=s.slice(0,m.index)+' '+s.slice(m.index+m[0].length);return true;}return false;};
     const R=(src)=>new RegExp(src,'iu');
     /* descrizione */
-    take(R(`${B1}(?:note|nota|notes|descrizione|description|dettagli|details)\\s*:\\s*(.+)$`),m=>{out.desc=m[1].trim();});
+    /* v55: «Nota: portare i documenti. Banca martedì alle 11» → la nota finisce al punto */
+    s=s.replace(R(`^\\s*(?:note|nota|notes|descrizione|description|dettagli|details)\\s*:\\s*(.+?[.;!])\\s+(?=\\p{Lu})`),(m,d)=>{out.desc=d.replace(/[.;!]$/,'').trim();return ' ';});
+    take(R(`${B1}(?:note|nota|notes|descrizione|description|dettagli|details)\\s*:\\s*(.+)$`),m=>{out.desc=(out.desc?out.desc+' · ':'')+m[1].trim();});
     take(/"([^"]{2,})"|“([^”]{2,})”/u,m=>{out.desc=(out.desc?out.desc+' ':'')+(m[1]||m[2]);});
     take(/\(([^)]{3,})\)/u,m=>{out.desc=(out.desc?out.desc+' ':'')+m[1];});
     /* tag e persone */
@@ -19231,7 +19236,7 @@ const NL2=(()=>{
       out.reminder=remindSnap(v);});
     /* ricorrenza */
     const wds=wdNames();
-    take(R(`${B1}(?:${alt(W.every)})\\s+(?:(\\d+|due|tre|quattro|two|three|other|altr[ao])\\s+)?(giorn[oi]|day|days|settiman[ae]|weeks?|mes[ei]|months?|ann[oi]|years?)${B2}`),m=>{
+    take(R(`${B1}(?:${alt(W.every)})\\s+(?:(\\d+|due|tre|quattro|two|three|other|altr[ao])\\s+)?(giorn[oi]|day|days|settiman[ae]|weeks?|mes[ei]|months?|ann[oi]|years?)${B2}(?!\\s+(?:ferial|lavorativ|weekday|laborab|ouvr|werktag|úte))`),m=>{
       const nmap={due:2,tre:3,quattro:4,two:2,three:3,other:2,altro:2,altra:2};const n=m[1]?(+m[1]||nmap[m[1].toLowerCase()]||1):1;const u=m[2].toLowerCase();
       out.rrule={freq:/^(giorn|day)/.test(u)?'DAILY':/^(settim|week)/.test(u)?'WEEKLY':/^(mes|month)/.test(u)?'MONTHLY':'YEARLY',interval:n};});
     if(!out.rrule)take(R(`${B1}(?:daily|quotidiano|giornaliero)${B2}`),()=>{out.rrule={freq:'DAILY',interval:1};});
@@ -19257,15 +19262,15 @@ const NL2=(()=>{
     take(/(?<![\p{L}\p{N}])(\d+)h(\d{2})(?![\p{L}\p{N}])/iu,m=>{out.dur=+m[1]*60+ +m[2];});
     /* date: intervallo, elenco, singola */
     const months=monthNames();const mre=alt(months.map(x=>x[0]));
-    const mOf=w=>{w=w.toLowerCase();const f=months.find(x=>w.startsWith(x[0]));return f?f[1]:null;};
+    const mOf=w=>{w=w.toLowerCase().replace(/\.$/,'');const f=months.find(x=>x[0]===w);return f?f[1]:null;};
     const mkDate=(d,mo,y)=>{let dt=new Date(y??today.getFullYear(),mo,d);if(y==null&&dt<today)dt=new Date(today.getFullYear()+1,mo,d);return dt;};
-    const done=take(R(`${B1}(?:dal|from|del|du|vom|de)\\s+(\\d{1,2})\\s*(?:(${mre})\\p{L}*\\s+)?(?:al|to|until|-|–|au|bis|a)\\s+(\\d{1,2})\\s+(${mre})\\p{L}*(?:\\s+(\\d{4}))?`),m=>{
+    const done=take(R(`${B1}(?:dal|from|del|du|vom|de)\\s+(\\d{1,2})\\s*(?:(${mre})\\.?\\s+)?(?:al|to|until|-|–|au|bis|a)\\s+(\\d{1,2})\\s+(${mre})\\.?${B2}(?:\\s+(\\d{4}))?`),m=>{
         const mo2=mOf(m[4]),mo1=m[2]?mOf(m[2]):mo2;const y=m[5]?+m[5]:null;let a=mkDate(+m[1],mo1,y),b=mkDate(+m[3],mo2,y);if(b<a)b=new Date(b.getFullYear()+1,b.getMonth(),b.getDate());
         for(let d=a;d<=b&&out.dates.length<62;d=addD(d,1))out.dates.push(dkey(d));})
-      ||take(R(`${B1}(?:il|l'|i|on|the|el|le|am)?\\s*(\\d{1,2}(?:\\s*(?:,|e|ed|and|y|et|und)\\s*\\d{1,2})+)\\s+(${mre})\\p{L}*(?:\\s+(\\d{4}))?`),m=>{
+      ||take(R(`${B1}(?:il|l'|i|on|the|el|le|am)?\\s*(\\d{1,2}(?:\\s*(?:,|e|ed|and|y|et|und)\\s*\\d{1,2})+)\\s+(${mre})\\.?${B2}(?:\\s+(\\d{4}))?`),m=>{
         const mo=mOf(m[2]);const y=m[3]?+m[3]:null;m[1].split(/\s*(?:,|e|ed|and|y|et|und)\s*/u).forEach(x=>{if(+x)out.dates.push(dkey(mkDate(+x,mo,y)));});})
-      ||take(R(`${B1}(?:il|l'|on|the|el|le|am)?\\s*(\\d{1,2})\\s+(?:di\\s+|de\\s+|of\\s+)?(${mre})\\p{L}*(?:\\s+(\\d{4}))?${B2}`),m=>{out.dates.push(dkey(mkDate(+m[1],mOf(m[2]),m[3]?+m[3]:null)));})
-      ||take(R(`${B1}(${mre})\\p{L}*\\s+(\\d{1,2})(?:st|nd|rd|th)?(?:,?\\s+(\\d{4}))?${B2}`),m=>{out.dates.push(dkey(mkDate(+m[2],mOf(m[1]),m[3]?+m[3]:null)));})
+      ||take(R(`${B1}(?:il|l'|on|the|el|le|am)?\\s*(\\d{1,2})\\s+(?:di\\s+|de\\s+|of\\s+)?(${mre})\\.?${B2}(?:\\s+(\\d{4}))?`),m=>{out.dates.push(dkey(mkDate(+m[1],mOf(m[2]),m[3]?+m[3]:null)));})
+      ||take(R(`${B1}(${mre})\\.?\\s+(\\d{1,2})(?:st|nd|rd|th)?(?:,?\\s+(\\d{4}))?${B2}`),m=>{out.dates.push(dkey(mkDate(+m[2],mOf(m[1]),m[3]?+m[3]:null)));})
       ||take(/(?<![\p{L}\p{N}])(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?(?![\p{L}\p{N}])/u,m=>{const us=/^en-US/.test(L10N.locale);const a=+m[1],b=+m[2];const y=m[3]?(+m[3]<100?2000+ +m[3]:+m[3]):null;out.dates.push(dkey(us?mkDate(b,a-1,y):mkDate(a,b-1,y)));})
       ||take(R(`${B1}(?:${alt(W.after)})${B2}`),()=>out.dates.push(dkey(addD(today,2))))
       ||take(R(`${B1}(?:${alt(W.tomorrow)})${B2}`),()=>out.dates.push(dkey(addD(today,1))))
@@ -19362,7 +19367,7 @@ const NL2=(()=>{
     /* numeri a parole davanti a giorni/settimane/volte e al mese: "tra due giorni", "il primo maggio" */
     t=t.replace(Rx(`${B1}(${NW})\\s+(giorni|settimane|mesi|volte|days|weeks|months|times)${B2}`),(m,w,u)=>{const v=num(w);return v==null?m:` ${v} ${u} `;});
     const mre=alt(monthNames().map(x=>x[0]));
-    t=t.replace(Rx(`${B1}(${NW})\\s+(?:di\\s+)?((?:${mre})\\p{L}*)${B2}`),(m,w,mo)=>{const v=num(w);return v==null||v>31?m:` ${v} ${mo} `;});
+    t=t.replace(Rx(`${B1}(${NW})\\s+(?:di\\s+)?((?:${mre})\\.?)${B2}`),(m,w,mo)=>{const v=num(w);return v==null||v>31?m:` ${v} ${mo} `;});
     return t.replace(/\s+/g,' ').trim();
   }
   /* il primo / l'ultimo lunedì del mese */
@@ -20175,7 +20180,9 @@ KX.voice={open:vOpen,
   level(v){if(V.ov)V.ov.style.setProperty('--lvl',Math.max(0,Math.min(1,+v||0)).toFixed(2));},
   ready(){vSet('live',T('Ti ascolto… parla pure'));haptic(10);},
   thinking(){vSet('think',T('Elaboro…'));},
-  mode(m){if(V.ov)V.ov.querySelector('.kx-v-mode').textContent=m==='device'?'🔒 '+T('Riconoscimento sul telefono · funziona anche offline'):'';}};
+  /* v55 · 2.7: quando il riconoscimento non è sul telefono lo si dice chiaramente
+     (e il modulo legale mostra una volta l'informativa) */
+  mode(m){V.mode=m;if(V.ov)V.ov.querySelector('.kx-v-mode').textContent=m==='device'?'🔒 '+T('Riconoscimento sul telefono · funziona anche offline'):m==='system'?T('☁️ Riconoscimento tramite il servizio vocale del telefono'):'';}};
 
 /* indietro di Android: chiude prima avviso e dettatura */
 function hookBack(){const _kb=window.kalendBack;if(_kb&&_kb._kx30)return;const f=function(){if(AL){closeAlert();return true;}if(V.ov){vCancel();return true;}return _kb?_kb.apply(this,arguments):false;};f._kx30=1;window.kalendBack=f;}
@@ -20628,7 +20635,8 @@ function pre(raw,ex){
   /* giorno senza mese: «il 15», «giorno tre» */
   const mre=MESI.map(m=>m.toLowerCase()).concat(['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic','january','february','march','april','may','june','july','august','september','october','november','december']).join('|');
   if(!new RegExp(`${B1}(?:${mre})`,'iu').test(t)&&!/\d{1,2}\/\d{1,2}/.test(t)){
-    t=t.replace(new RegExp(`${B1}(?:il|giorno|per il|entro il|on the)\\s+(\\d{1,2}|${Object.keys(NUMD).join('|')})(?![\\p{L}\\d:.])(?!\\s*(?:ore|minut|h${B2}|e mezz|e un quarto|:))`,'iu'),(m,d)=>{
+    const wdAlt=GIORNI_FULL.map(x=>x.toLowerCase()).concat(['sunday','monday','tuesday','wednesday','thursday','friday','saturday']).join('|');
+    t=t.replace(new RegExp(`${B1}(?:il|giorno|per il|entro il|on the)\\s+(\\d{1,2}|${Object.keys(NUMD).join('|')})(?![\\p{L}\\d:.])(?!\\s*(?:ore|minut|h${B2}|e mezz|e un quarto|:))(?!\\s+(?:${wdAlt}))`,'iu'),(m,d)=>{
       const n=/^\d/.test(d)?+d:NUMD[fold(d)];if(!n||n>31)return m;const now=new Date();now.setHours(0,0,0,0);
       let dt=new Date(now.getFullYear(),now.getMonth(),n);if(dt<now)dt=new Date(now.getFullYear(),now.getMonth()+1,n);
       return' '+n+' '+MESI[dt.getMonth()].toLowerCase()+' '+(dt.getFullYear()!==now.getFullYear()?dt.getFullYear():'')+' ';});

@@ -10,7 +10,7 @@
    · CSP connect-src ristretta agli host dei servizi
    Uso: node Kalend/tools/legal-test.js
 ══════════════════════════════════════════════════════════════════ */
-const path=require('path');const fs=require('fs');const {chromium}=require('playwright');
+const path=require('path');const fs=require('fs');const {chromium}=require('playwright');const ROOT=path.resolve(__dirname,'..');
 const PAGE='file://'+path.join(__dirname,'..','www','index.html');
 const STUB=`window.__native=[];
 window.KalendNative={httpGet:(id,u)=>setTimeout(()=>window.__knCb(id,false,'HTTP 404'),5),
@@ -23,16 +23,20 @@ Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition:(ok,err
 try{localStorage.setItem('cal_onboard_v1','1');localStorage.setItem('kx_qs_v1','1');}catch(e){}`;
 let fails=0;const check=(n,ok,i)=>{console.log((ok?'  ✔ ':'  ✘ ')+n+(ok?'':'   → '+i));if(!ok)fails++;};
 (async()=>{
-  const b=await chromium.launch();const p=await (await b.newContext({locale:'it'})).newPage();
+  const b=await chromium.launch({args:['--allow-file-access-from-files']});const p=await (await b.newContext({locale:'it'})).newPage();
   const errors=[];p.on('pageerror',e=>errors.push(String(e.message||e)));
   await p.addInitScript(STUB);await p.goto(PAGE);await p.waitForTimeout(2800);
   /* chiude il sipario di apertura come farebbe l'utente */
   await p.evaluate(()=>{document.getElementById('kx-intro')?.click();document.querySelector('#kx-tip button')?.click();});await p.waitForTimeout(900);
 
   console.log('1. Testi');
-  let r=await p.evaluate(()=>{const L=window.KX_LEGAL||{};const langs=Object.keys(L);const bad=langs.filter(l=>!(L[l].eula&&L[l].eula.sections.length===10&&L[l].privacy.sections.length===10&&Object.keys(L[l].disclose).length===4));
-    const ph=langs.filter(l=>/\{\{[A-Z_]+\}\}/.test(JSON.stringify(L[l])));return {n:langs.length,bad,ph,lang:KX.Legal.lang()};});
-  check('20 lingue, 10+10 sezioni e 4 informative ciascuna',r.n===20&&r.bad.length===0,JSON.stringify(r));
+  /* v55 · 1.13: italiano e inglese sono nella pagina, le altre lingue nel file i18n/<lingua>.json */
+  let r=await p.evaluate(()=>{const L=Object.assign({},window.KX_LEGAL||{});return {inline:Object.keys(L),lang:KX.Legal.lang()};});
+  {const L={};const dir=path.join(ROOT,'www','i18n');
+    for(const f of fs.readdirSync(dir).filter(f=>/^[a-z]{2}\.json$/.test(f))){const j=JSON.parse(fs.readFileSync(path.join(dir,f),'utf8'));if(j.legal)L[f.slice(0,2)]=j.legal;}
+    const langs=Object.keys(L);const bad=langs.filter(l=>!(L[l].eula&&L[l].eula.sections.length===10&&L[l].privacy.sections.length===10&&Object.keys(L[l].disclose).length===5&&L[l].ui&&L[l].ui.ok));
+    const ph=langs.filter(l=>/\{\{[A-Z_]+\}\}/.test(JSON.stringify(L[l])));r=Object.assign(r,{n:langs.length,bad,ph});}
+  check('20 lingue, 10+10 sezioni e 5 informative ciascuna (file per lingua)',r.n===20&&r.bad.length===0&&r.inline.length===2,JSON.stringify(r));
   check('nessun segnaposto {{…}} rimasto',r.ph.length===0,JSON.stringify(r.ph));
   check('lingua corrente riconosciuta (it)',r.lang==='it',r.lang);
 

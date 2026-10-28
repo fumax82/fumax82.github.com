@@ -45,9 +45,10 @@ fi
 
 rm -rf "$WORK"; mkdir -p "$WORK/assets/www" "$WORK/gen" "$WORK/classes" "$WORK/dex"
 
-# ── 1. asset: la pagina costruita e i dati (atlante città) ──
+# ── 1. asset: la pagina costruita, i dati (atlante città) e i dizionari per lingua ──
 cp "$ROOT/www/index.html" "$WORK/assets/www/"
 [ -d "$ROOT/www/data" ] && cp -r "$ROOT/www/data" "$WORK/assets/www/data"
+[ -d "$ROOT/www/i18n" ] && cp -r "$ROOT/www/i18n" "$WORK/assets/www/i18n"
 
 # ── 2. manifest: Gradle aggiunge da sé package/versione; qui li mettiamo noi ──
 sed "s#<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\">#<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" package=\"app.kalend\" android:versionCode=\"$VERSION_CODE\" android:versionName=\"$VERSION_NAME\">#" \

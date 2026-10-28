@@ -22,8 +22,17 @@
 'use strict';
 const KX=window.KX=window.KX||{};
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const lang=()=>{try{const l=L10N.resolvedLang||'en';return (window.KX_LEGAL&&KX_LEGAL[l])?l:'en';}catch(e){return 'en';}};
-const texts=()=>(window.KX_LEGAL&&(KX_LEGAL[lang()]||KX_LEGAL.en))||null;
+/* v55 · 1.13: i testi delle lingue non incorporate arrivano dal file i18n/<lingua>.json
+   (window.KX_LEGAL_EXTRA, riempito dal caricatore in testa alla pagina). Il blocco
+   KX_LEGAL viene definito DOPO questo modulo, quindi l'unione avviene al momento
+   dell'uso, non al caricamento. */
+function all(){
+  const L=window.KX_LEGAL||{};
+  try{const X=window.KX_LEGAL_EXTRA;if(X)Object.keys(X).forEach(l=>{if(!L[l])L[l]=X[l];});}catch(e){}
+  return L;
+}
+const lang=()=>{try{const l=L10N.resolvedLang||'en';return all()[l]?l:'en';}catch(e){return 'en';}};
+const texts=()=>{const L=all();return L[lang()]||L.en||null;};
 const ui=k=>{const t=texts();return (t&&t.ui&&t.ui[k])||k;};
 const isRTL=()=>['ar','he'].includes(lang());
 
@@ -125,7 +134,32 @@ function show(kind,d){
     ov.querySelector('.kx-disc-no').onclick=()=>{ov.remove();res(false);};
   });
 }
+/* ── v55 · 2.7: avviso informativo (un solo pulsante), mostrato una volta ── */
+function whenGone(sel){return new Promise(res=>{let n=0;const t=()=>{let on=false;try{on=!!document.querySelector(sel);}catch(e){}if(!on||n++>300)res();else setTimeout(t,250);};t();});}
+function notice(kind){
+  const t=texts();const d=t&&t.disclose&&t.disclose[kind];
+  if(!d||seen()[kind])return Promise.resolve(true);
+  const run=()=>whenIntroClosed().then(()=>whenGone('#kx-voice')).then(()=>seen()[kind]?true:new Promise(res=>{
+    const ov=document.createElement('div');ov.className='kx-disc';ov.dir=isRTL()?'rtl':'ltr';ov.setAttribute('role','alertdialog');ov.setAttribute('aria-modal','true');
+    ov.innerHTML=`<div class="kx-disc-card"><div class="kx-disc-ic">☁️</div><b>${esc(d[0])}</b><p>${esc(d[1])}</p>
+      <div class="kx-disc-b"><button type="button" class="kx-disc-ok">${esc(ui('ok')||ui('continue'))}</button></div></div>`;
+    document.body.appendChild(ov);
+    ov.querySelector('.kx-disc-ok').onclick=()=>{markSeen(kind);ov.remove();res(true);};
+  }));
+  const p=queue.then(run,run);queue=p.catch(()=>{});return p;
+}
+/* la dettatura segnala in che modo riconosce la voce: «system» = servizio
+   del telefono, che può mandare l'audio fuori dal dispositivo → informativa */
+function hookVoice(){
+  try{
+    const v=window.KX&&KX.voice;if(!v||typeof v.mode!=='function'||v.mode._kx55)return;
+    const orig=v.mode.bind(v);
+    const wrapped=function(m){try{orig(m);}catch(e){}if(m==='system')notice('speechCloud');};
+    wrapped._kx55=true;v.mode=wrapped;
+  }catch(e){}
+}
 function hookPermissions(){
+  hookVoice();
   /* posizione: tutte le chiamate dell'app passano da qui */
   try{
     const g=navigator.geolocation;
@@ -155,7 +189,7 @@ function hookPermissions(){
   }catch(e){}
 }
 
-KX.Legal={open,close,disclose,texts,lang};
+KX.Legal={open,close,disclose,notice,texts,lang};
 /* gli agganci ai permessi vanno messi SUBITO: l'app chiede la posizione
    già all'avvio, prima che il resto della pagina sia pronto */
 try{hookPermissions();}catch(e){}

@@ -60,8 +60,8 @@ Dove: **pagina** = `src/index.html` e `src/modules/` · **nativo** = progetto An
 | 1.10 | Informative in-app prima dei permessi | ✅ fatto v55 | 1 | pagina | M | — |
 | 1.11 | Privacy policy in 20 lingue (bozza) | ✅ bozza v55 (da far rileggere) | 1 | documenti | M | D3, D4, D7 |
 | 1.12 | Icona neutra per il calendario Minguo | ✅ | 1 | pagina | S | — |
-| 1.13 | Dizionari caricati solo per la lingua in uso | 🟡 | 1 | pagina + build | M | — |
-| 1.14 | Opzione «testo grande» | 🟡 | 1 | pagina | M | — |
+| 1.13 | Dizionari caricati solo per la lingua in uso | ✅ | 1 | pagina + build | M | — |
+| 1.14 | Opzione «testo grande» | ✅ | 1 | pagina | M | — |
 | 1.15 | Test automatici di sicurezza nel collaudo | ✅ fatto v55 | 1 | build | M | — |
 | 2.1 | Progetto Android nel repository, build riproducibile | ✅ ricostruito (da collaudare in Android Studio) | 2 | nativo | M | D1 |
 | 2.2 | Ponte nativo: inventario dei metodi esposti (rettifica: `loadUrl`/`finish` NON sono esposti) | ✅ verificato | 2 | nativo | S | 2.1 |
@@ -69,7 +69,7 @@ Dove: **pagina** = `src/index.html` e `src/modules/` · **nativo** = progetto An
 | 2.4 | Impostazioni WebView e filtro dei link esterni | ✅ | 2 | nativo | S | 2.1 |
 | 2.5 | Download sicuri: redirect, host privati, dimensione | ✅ | 2 | nativo | S | 2.1 |
 | 2.6 | Geocoder di Android nel ponte nativo | ✅ | 2 | nativo | S | 2.1 |
-| 2.7 | Dettatura: preferire il riconoscimento sul telefono | 🟡 | 2 | nativo + pagina | S | 2.1 |
+| 2.7 | Dettatura: preferire il riconoscimento sul telefono | ✅ | 2 | nativo + pagina | S | 2.1 |
 | 2.8 | Porting a target API 36 (Android 16) | 🟠 codice fatto, collaudo su dispositivi da fare | 2 | nativo + pagina | L | 2.1 |
 | 2.9 | Acquisti in-app con Play Billing (solo se Pro) | 🟠 | 2 | nativo + pagina | L | D2, 2.1 |
 | 2.10 | Test minimi della parte nativa | 🟡 | 2 | nativo | M | 2.1 |
@@ -265,14 +265,14 @@ Attendono una decisione: 1.6 (D3), 1.7 (D4), 1.9 (D3, D4), 1.11 (D3, D4, D7).
 - Sostituire la bandiera 🇹🇼 nell'elenco dei calendari secondari con un simbolo neutro.
   **Impegno**: S.
 
-### 1.13 · Dizionari caricati solo per la lingua in uso 🟡
+### 1.13 · Dizionari caricati solo per la lingua in uso ✅
 - **Problema**: la pagina pesa 4,3 MB, di cui ~1,8 MB di traduzioni sempre caricate.
 - **Cosa fare**: un file per lingua in `assets/www/i18n/`, caricato all'avvio; gli
   hash della CSP restano validi perché i file sono dati, non script.
 - **Dove**: build + pagina. **Impegno**: M.
 - **Fatto quando**: pagina sotto 2,7 MB; cambio lingua senza riavvio.
 
-### 1.14 · Opzione «testo grande» 🟡
+### 1.14 · Opzione «testo grande» ✅
 - Testi del mese oggi a 7–8 px: sotto le linee guida di accessibilità. Opzione che
   li ingrandisce senza rompere la griglia. **Impegno**: M.
 
@@ -339,7 +339,7 @@ perché cambia il comportamento dell'app e richiede settimane di collaudo.
 - Nuovo metodo `geocode(id, testo, lingua)` che usa il servizio di sistema
   (`Geo.java`); completa 1.8. La pagina lo usa già come terzo strato.
 
-### 2.7 · Dettatura sul telefono 🟡
+### 2.7 · Dettatura sul telefono ✅
 - L'app già usa il riconoscimento sul dispositivo quando c'è. Dove manca, il
   servizio di sistema può inviare l'audio a Google: mostrarlo nell'informativa
   (1.10) e scriverlo in Data safety.
