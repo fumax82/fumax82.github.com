@@ -1,5 +1,7 @@
 # Kalend v54 — Report di idoneità per Google Play (vendita mondiale)
 
+> **Nota (28/10/2026)**: il riferimento operativo è ora [`PIANO-INTERVENTI.md`](PIANO-INTERVENTI.md), che unisce questo report all'altro e corregge alcuni punti (sezione 7).
+
 Data: 28 ottobre 2026 · Stato: **analisi, nessuna modifica applicata**.
 Legenda: 🔴 blocca la pubblicazione · 🟠 da sistemare prima della vendita · 🟡 consigliato · 🟢 a posto.
 

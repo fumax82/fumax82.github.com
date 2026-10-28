@@ -32,6 +32,7 @@ Kalend/
 ├─ android/Kalend-v53-original.apk   ← APK originale (parte nativa: widget, promemoria)
 ├─ dist/Kalend-unsigned.apk          ← APK nuovo, DA FIRMARE
 └─ docs/                   note, copertura traduzioni, screenshot
+                           PIANO-INTERVENTI.md = piano unico per sicurezza e pubblicazione
 ```
 
 ## Come si costruisce

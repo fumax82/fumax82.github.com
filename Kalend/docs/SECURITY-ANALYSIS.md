@@ -1,5 +1,7 @@
 # Kalend — analisi di sicurezza a 360° (v54, pagina web + parte nativa v53)
 
+> **Nota (28/10/2026)**: il riferimento operativo è ora [`PIANO-INTERVENTI.md`](PIANO-INTERVENTI.md), che unisce questo report all'altro e corregge alcuni punti (sezione 7).
+
 Scopo: capire come un attaccante potrebbe rubare o alterare gli eventi di un utente,
 o compromettere il suo dispositivo attraverso Kalend, e che cosa va reso più solido.
 **Nessuna modifica è stata applicata**: questo è il report preliminare richiesto.
