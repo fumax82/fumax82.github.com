@@ -104,5 +104,15 @@ with zipfile.ZipFile(BASE) as src, zipfile.ZipFile(out, 'w') as dst:
                     pad += 4
                 ni.extra = struct.pack('<HH', 0xd935, pad - 4) + b'\x00' * (pad - 4)
         dst.writestr(ni, data)
+    # v55: file dati della pagina (atlante delle città…) → assets/www/data/
+    data_dir = os.path.join(ROOT, 'www', 'data')
+    if os.path.isdir(data_dir):
+        for fn in sorted(os.listdir(data_dir)):
+            fp = os.path.join(data_dir, fn)
+            if not os.path.isfile(fp):
+                continue
+            ni = zipfile.ZipInfo('assets/www/data/' + fn, date_time=(2026, 1, 1, 0, 0, 0))
+            ni.compress_type = zipfile.ZIP_DEFLATED
+            dst.writestr(ni, open(fp, 'rb').read())
 print('APK non firmato scritto in', os.path.relpath(out), ('(versionCode %d)' % version) if version else '')
 print('ora: apksigner sign --ks <keystore> …  oppure  python3 Kalend/tools/sign-apk.py (chiave di prova)')

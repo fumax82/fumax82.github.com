@@ -16,11 +16,13 @@ Kalend/
 │  │   40-widget.js         fasce libere e riepilogo del giorno nel widget
 │  │   50-ux.js/css         azioni rapide, menu, suggerimenti al momento giusto, localizzazione tardiva
 │  │   70-weather.js/css    meteo a fornitori: MET Norway (base), Open-Meteo e OpenWeatherMap con chiave personale
+│  │   80-geo.js            luoghi → coordinate a strati: memoria, atlante offline, Geocoder Android, chiave, Photon
 │  └─ i18n/
 │      SCHEMA.md           ← come è fatto un pacchetto lingua
 │      it.json … uk.json   ← 20 pacchetti: traduzioni, lessico del parser, auto-tag, cultura
 │      extra/*.json        ← stringhe dei moduli v54, già tradotte in tutte le lingue
 ├─ www/index.html          ← PAGINA COSTRUITA (non modificare a mano: è generata)
+├─ www/data/cities.json    ← atlante offline (~24.000 città, GeoNames CC BY 4.0), da tools/build-atlas.py
 ├─ tools/
 │   build.js               assembla www/index.html e ricalcola gli hash della Content-Security-Policy
 │   pack-apk.py            crea dist/Kalend-unsigned.apk (allineato, versionCode) dall'APK originale
@@ -30,6 +32,8 @@ Kalend/
 │   i18n-merge.py          unisce file parziali in un pacchetto lingua
 │   nl-test.js             prova il parser in linguaggio naturale in una lingua
 │   wx-test.js             collaudo del meteo con risposte simulate dei tre fornitori
+│   geo-test.js            collaudo della geocodifica a strati
+│   build-atlas.py         genera www/data/cities.json dal pacchetto npm all-the-cities (GeoNames)
 ├─ android/Kalend-v53-original.apk   ← APK originale (parte nativa: widget, promemoria)
 ├─ dist/Kalend-unsigned.apk          ← APK nuovo, DA FIRMARE
 └─ docs/                   note, copertura traduzioni, screenshot
@@ -101,7 +105,9 @@ culturale) è in `src/i18n/SCHEMA.md`.
   contratto è tra utente e fornitore, la chiave resta cifrata nel telefono.
   L'app non contatta mai Open-Meteo gratuito. Da fare nel nativo: `User-Agent`
   con contatto (richiesto da MET Norway).
-* **Geocodifica**: la ricerca singola usa OpenStreetMap Nominatim, che ha una
-  politica d'uso restrittiva per le app commerciali con molto traffico.
+* **Luoghi** (v55): a strati — memoria del telefono, atlante offline di ~24.000 città
+  (GeoNames, CC BY 4.0), Geocoder di Android (quando il ponte nativo lo offrirà),
+  chiave personale dell'utente, infine Photon (komoot, dati OpenStreetMap ODbL) per gli
+  indirizzi. Nominatim e Open-Meteo gratuito non vengono più interrogati.
 * **Festività**: Nager.Date è gratuito (licenza MIT); per i paesi non coperti ci sono
   regole offline nell'app.

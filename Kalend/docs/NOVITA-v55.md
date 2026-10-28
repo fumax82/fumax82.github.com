@@ -33,9 +33,34 @@ forma dei dati, cache, chiave rifiutata, cassaforte, unità, crediti, migrazione
 **Limite**: la rete di sviluppo non raggiunge i server veri; al primo avvio sul
 telefono verificare che MET Norway risponda (la scheda meteo mostra la fonte).
 
-## 2. Da fare nella parte nativa (Fase 2 del piano)
+## 2. Luoghi: la maggior parte delle ricerche non esce dal telefono
+Un luogo scritto diventa coordinate passando per strati, dal più economico
+(`src/modules/80-geo.js`):
+
+1. **coordinate scritte** («45.46, 9.19»);
+2. **memoria**: i luoghi già risolti restano nel telefono (400 voci);
+3. **atlante offline**: ~24.000 città del mondo con almeno 15.000 abitanti
+   (`www/data/cities.json`, da GeoNames CC BY 4.0, generato da
+   `tools/build-atlas.py`): «Milan», «Paris, Francia», «Springfield, US» (la più
+   popolosa), accenti e maiuscole ignorati; l'autocompletamento propone le città
+   per prefisso, ordinate per abitanti, senza rete. I nomi sono in inglese: un
+   nome locale («Milano», «東京») passa una volta dalla rete e poi resta in memoria;
+4. **Geocoder di Android** tramite il ponte nativo (metodo `geocode`, da aggiungere
+   nella Fase 2);
+5. **chiave personale** dell'utente, se ha scelto Open‑Meteo o OpenWeatherMap per
+   il meteo (la loro geocodifica è inclusa);
+6. **Photon** (komoot, dati OpenStreetMap, ODbL) per gli indirizzi: senza chiave,
+   «uso corretto», poche richieste grazie agli strati precedenti.
+
+Nominatim e Open‑Meteo gratuito non vengono più interrogati. Crediti aggiornati.
+Collaudo: `node Kalend/tools/geo-test.js`.
+
+## 3. Da fare nella parte nativa (Fase 2 del piano)
 * `User-Agent` con nome, versione e contatto (es. `Kalend/55 (+https://…; email)`):
   MET Norway lo richiede per identificare l'app; oggi il nativo invia `Kalend/1.0`.
+* Metodo `geocode(id, testo, lingua)` nel ponte, con `android.location.Geocoder`,
+  che risponde via `__knCb` con `[{name, display, lat, lon}]`: la pagina lo usa
+  già se c'è.
 
 ## Cosa NON è cambiato
 Grafica, viste, cielo vivo, parser, tag, calendari, widget: identici alla v54.

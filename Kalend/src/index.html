@@ -5155,7 +5155,7 @@ body.kx-land .day-cell.kx-fest-bday .kx-fest-em{top:2px;font-size:8px}
       <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Informazioni e crediti</div>
       <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);line-height:1.6">
         <div data-kx-wx-credit="1">Dati meteo: MET Norway (CC BY 4.0)</div>
-        <div>Geocodifica: Open-Meteo Geocoding (CC BY 4.0) · ricerca singola: OpenStreetMap Nominatim (ODbL)</div>
+        <div>Geocodifica: città da GeoNames (CC BY 4.0) · indirizzi da Photon (komoot), © OpenStreetMap contributors (ODbL)</div>
         <div>Font: Plus Jakarta Sans © 2020 The Plus Jakarta Sans Project Authors · IBM Plex Mono © 2017 IBM Corp., nome riservato «Plex» — entrambi SIL Open Font License 1.1 (openfontlicense.org), incorporati senza modifiche</div>
         <div>Festività: Nager.Date · mappe e indirizzi: © OpenStreetMap contributors (ODbL)</div>
         <div>Codici QR e musica: generati dall'app, senza librerie o campioni di terzi</div>
@@ -8442,8 +8442,8 @@ document.getElementById('btn-save-edit').addEventListener('click',()=>{
 
 /* ══════════════════════════════════════════════════════════════════
    SISTEMA METEO
-   — Nominatim geocoding (OpenStreetMap)
-   — Open-Meteo previsioni orarie (temperatura + codice WMO)
+   — geocodifica a strati (v55: modulo 80-geo.js)
+   — previsioni orarie dal fornitore scelto (v55: modulo 70-weather.js)
    — Particelle CSS animate sulle barre evento
 ══════════════════════════════════════════════════════════════════ */
 const WX={
@@ -8789,23 +8789,16 @@ const WX={
     if(!locKey)return null;
     if(this.geoCache.has(locKey))return this.geoCache.get(locKey);
     if(this.geoPending.has(locKey))return this.geoPending.get(locKey);
+    /* v55: geocodifica a strati (memoria → atlante offline → Geocoder
+       Android → chiave personale → Photon), nel modulo src/modules/80-geo.js.
+       Open-Meteo gratuito e Nominatim non vengono più interrogati. */
     const pending=(async()=>{
-      const omUrl=`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=8&language=${(L10N.resolvedLang||'en')}&format=json`;
-      const omData=await this.fetchJSON(omUrl,{timeout:9000,retries:1,headers:{'Accept':'application/json'}});
-      const omPick=this.pickOpenMeteoGeo(omData?.results||[],location);
-      if(omPick){
-        const geo={lat:parseFloat(omPick.latitude),lon:parseFloat(omPick.longitude),display:[omPick.name,omPick.admin1,omPick.country].filter(Boolean).join(', ')};
-        this.geoCache.set(locKey,geo);
-        return geo;
-      }
-      const nomUrl=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=jsonv2&limit=1&addressdetails=1&accept-language=${(L10N.resolvedLang||'en')}`;
-      const nomData=await this.fetchJSON(nomUrl,{timeout:10000,retries:0,headers:{'Accept':'application/json','Accept-Language':(L10N.resolvedLang||'en')}});
-      if(Array.isArray(nomData)&&nomData.length){
-        const geo={lat:parseFloat(nomData[0].lat),lon:parseFloat(nomData[0].lon),display:nomData[0].display_name};
-        this.geoCache.set(locKey,geo);
-        return geo;
-      }
-      return null;
+      if(!(window.KX&&KX.Geo))return null;
+      const g=await KX.Geo.resolve(location);
+      if(!g)return null;
+      const geo={lat:g.lat,lon:g.lon,display:g.display||location};
+      this.geoCache.set(locKey,geo);
+      return geo;
     })().finally(()=>this.geoPending.delete(locKey));
     this.geoPending.set(locKey,pending);
     return pending;
@@ -12062,19 +12055,12 @@ function getUsedLocations(){
 const nominatimCache=new Map();
 
 async function searchNominatim(query){
+  /* v55: il nome resta per compatibilità, ma la ricerca è a strati
+     (atlante offline prima, rete solo se serve) nel modulo 80-geo.js */
   if(nominatimCache.has(query)) return nominatimCache.get(query);
   try{
-    /* v26: Open-Meteo Geocoding — la policy di Nominatim vieta l'uso
-       per l'autocompletamento durante la digitazione */
-    const url=`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=6&language=${(L10N.resolvedLang||'en')}&format=json`;
-    const ctl=new AbortController();const tmo=setTimeout(()=>ctl.abort(),4000);
-    const resp=await fetch(url,{signal:ctl.signal}).finally(()=>clearTimeout(tmo));
-    if(!resp.ok) throw new Error('offline');
-    const data=await resp.json();
-    const results=(data.results||[]).map(r=>{
-      const region=r.admin1||'';const country=r.country||'';
-      return{n:r.name,r:region?`${region}, ${country}`:country,full:[r.name,region,country].filter(Boolean).join(', ')};
-    });
+    if(!(window.KX&&KX.Geo))return null;
+    const results=await KX.Geo.suggest(query,6);
     nominatimCache.set(query,results);
     return results;
   }catch(e){
@@ -19526,8 +19512,9 @@ const WICON=c=>c==null?'':c<=1?'☀️':c===2?'⛅':c===3?'☁️':(c===45||c===
 async function forecast(loc,key){
   let lat,lon,name='';
   if(loc){const city=(loc.split(',').pop()||loc).trim();const ck='g|'+city.toLowerCase();
-    let g=WXC.get(ck);if(g===undefined){try{const j=JSON.parse(await KX.Net.get(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=${(L10N.resolvedLang||'en')}&format=json`,6000));g=(j.results||[])[0]||null;}catch(e){g=null;}WXC.set(ck,g);}
-    if(g){lat=g.latitude;lon=g.longitude;name=g.name;}}
+    /* v55: geocodifica a strati (modulo 80-geo.js) */
+    let g=WXC.get(ck);if(g===undefined){try{g=KX.Geo?await KX.Geo.resolve(city):null;}catch(e){g=null;}WXC.set(ck,g);}
+    if(g){lat=g.lat;lon=g.lon;name=(g.display||city).split(',')[0];}}
   if(lat==null){const h=KX.Home.get();lat=h.lat;lon=h.lon;}
   /* v55: dal fornitore scelto nelle impostazioni (modulo 70-weather.js) */
   if(KX.Weather){const d=await KX.Weather.day(lat,lon,key);return d?{ic:WICON(d.code),max:d.max,min:d.min,pp:d.pop,name}:null;}
