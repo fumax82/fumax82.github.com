@@ -72,7 +72,7 @@ public class Reminders extends BroadcastReceiver {
     /** idem per i posticipi: 1 minuto */
     private static final long SNOOZE_WINDOW_MS = 60_000L;
     /** un posticipo scaduto da più di un minuto viene dimenticato */
-    private static final long SNOOZE_GRACE_MS = 60_000L;
+    static final long SNOOZE_GRACE_MS = 60_000L;
     /** minuti di posticipo del pulsante "posticipa" */
     private static final int SNOOZE_MINUTES = 10;
 
@@ -243,16 +243,24 @@ public class Reminders extends BroadcastReceiver {
     private static synchronized void snzStore(Context c, JSONObject o, long at, boolean add) {
         try {
             JSONArray old = new JSONArray(prefs(c).getString(KEY_SNZ, "[]"));
-            JSONArray out = new JSONArray();
-            long now = System.currentTimeMillis();
-            int id = o.optInt("id", 1);
-            for (int i = 0; i < old.length(); i++) {
-                JSONObject e = old.getJSONObject(i);
-                if (e.optInt("id") != id && e.optLong("at") > now - SNOOZE_GRACE_MS) out.put(e);
-            }
-            if (add) out.put(new JSONObject().put("id", id).put("at", at).put("j", o.toString()));
+            JSONArray out = snzMerge(old, o.optInt("id", 1), at, o.toString(), System.currentTimeMillis(), add);
             prefs(c).edit().putString(KEY_SNZ, out.toString()).apply();
         } catch (Exception ignored) {}
+    }
+
+    /**
+     * Il nuovo elenco dei posticipi (funzione pura, verificata da RemindersTest):
+     * toglie le voci con lo stesso id e quelle scadute da più di {@link #SNOOZE_GRACE_MS};
+     * se {@code add} è true aggiunge la voce {id, at, j}.
+     */
+    static JSONArray snzMerge(JSONArray old, int id, long at, String j, long now, boolean add) throws org.json.JSONException {
+        JSONArray out = new JSONArray();
+        for (int i = 0; old != null && i < old.length(); i++) {
+            JSONObject e = old.getJSONObject(i);
+            if (e.optInt("id") != id && e.optLong("at") > now - SNOOZE_GRACE_MS) out.put(e);
+        }
+        if (add) out.put(new JSONObject().put("id", id).put("at", at).put("j", j));
+        return out;
     }
 
     /* ────────────────────────────────────────────────────────────────

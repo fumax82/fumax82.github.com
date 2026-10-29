@@ -153,9 +153,12 @@ public class KalendWidget extends AppWidgetProvider {
         return PendingIntent.getActivity(c, rc, i, PI_FLAGS);
     }
 
-    /** broadcast verso questo stesso widget (azioni A_*) */
+    /** broadcast verso questo stesso widget (azioni A_*).
+     *  v55: porta il token segreto dell'app ("tok"): il ricevitore è esportato (lo esige il
+     *  sistema dei widget), quindi senza token qualunque app potrebbe premere i pulsanti. */
     static PendingIntent bc(Context c, int id, String action, int rc) {
-        Intent i = new Intent(c, KalendWidget.class).setAction(action).putExtra("appWidgetId", id);
+        Intent i = new Intent(c, KalendWidget.class).setAction(action).putExtra("appWidgetId", id)
+                .putExtra("tok", MainActivity.alertToken(c));
         return PendingIntent.getBroadcast(c, rc, i, PI_FLAGS);
     }
 
@@ -523,6 +526,18 @@ public class KalendWidget extends AppWidgetProvider {
             return;
         }
         if (id < 0 || action == null) return;
+
+        // v55: i pulsanti valgono solo con il token segreto messo dall'app nei suoi PendingIntent.
+        // Un tocco senza token viene da un'altra app, oppure da pulsanti disegnati da una versione
+        // precedente: in quel caso si ridisegna (al massimo ogni 20 s) così i pulsanti si aggiornano.
+        if (!Safe.sameToken(MainActivity.alertToken(c), intent.getStringExtra("tok"))) {
+            long now = System.currentTimeMillis();
+            if (now - lastTick >= TICK_MIN_GAP_MS) {
+                lastTick = now;
+                updateAll(c);
+            }
+            return;
+        }
 
         // si agisce solo se l'id appartiene davvero a un widget di questo tipo
         boolean mine = false;

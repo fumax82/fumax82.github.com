@@ -135,7 +135,15 @@ dall'APK v53** e riscritto in Java pulito e commentato in `android-src/`
   indirizzi privati rifiutati, 8 MB massimo);
 * firma di rilascio e AAB: fuori dal repository, con variabili d'ambiente.
 L'APK/AAB definitivo va prodotto in Android Studio (qui non c'è l'SDK Android):
-nel repository è verificata solo la compilazione del Java (`tools/native-check.sh`).
+nel repository si verificano la compilazione del Java (`tools/native-check.sh`) e
+i **56 test automatici** della parte nativa (`tools/native-test.sh`, gli stessi che
+Android Studio esegue con *Run 'Tests in app'*): ponte, Intent, rete, liste del
+widget, posticipi, manifest e impostazioni della WebView.
+Rinforzi emersi dai test: i pulsanti del widget accettano solo azioni con il token
+segreto dell'app (prima un'altra app poteva spuntare le voci delle liste); anche
+`speech`, `vibrate` ed `exactAlarms` controllano la pagina fidata; la vibrazione è
+limitata a 1 secondo; il controllo della pagina fidata è più stretto (nessuna
+porta né credenziale nell'indirizzo).
 
 ## 7. Pagina più leggera, testo grande, dettatura trasparente
 * **Dizionari per lingua** (1.13): la pagina incorpora solo italiano e inglese;

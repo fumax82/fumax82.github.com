@@ -56,6 +56,15 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
+    // TEST AUTOMATICI sul computer (cartella app/src/test, nessun telefono necessario):
+    //   ./gradlew testDebugUnitTest   oppure, in Android Studio, tasto destro su app/src/test → Run.
+    // I test leggono anche manifest, sorgenti e pagina: qui si indica dove sta il modulo.
+    testOptions {
+        unitTests.all { test ->
+            test.systemProperty "kalend.appDir", projectDir.absolutePath
+        }
+    }
+
     // la pagina costruita (Kalend/www) diventa l'asset www/ dell'app:
     // viene copiata in app/build/www-assets (cartella generata, non nel repository)
     sourceSets {
@@ -70,3 +79,10 @@ tasks.register("copyWeb", Copy) {
     into layout.buildDirectory.dir("www-assets/www")
 }
 preBuild.dependsOn copyWeb
+
+// Librerie usate SOLO dai test (non entrano nell'app): JUnit 4 e org.json di riferimento.
+// Le stesse versioni, con impronta verificata, le scarica tools/native-test.sh.
+dependencies {
+    testImplementation "junit:junit:4.13.2"
+    testImplementation "org.json:json:20250517"
+}

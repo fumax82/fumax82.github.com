@@ -83,9 +83,9 @@ final class WidgetLists {
     /** chiave prefs: JSON del widget */
     private static final String KEY_WIDGET = "widget";
     /** la coda non cresce oltre questo numero di voci */
-    private static final int QUEUE_MAX = 300;
+    static final int QUEUE_MAX = 300;
     /** lunghezza massima accettata per l'id di una voce */
-    private static final int ID_MAX = 64;
+    static final int ID_MAX = 64;
 
     /** testo di una voce fatta: bianco al 60% e barrato */
     private static final int DONE_TEXT = 0x99FFFFFF;
@@ -258,7 +258,8 @@ final class WidgetLists {
     /** PendingIntent che spunta una voce: broadcast A_LTOG a KalendWidget */
     private static PendingIntent tog(Context c, int widgetId, int rc, String listId, String itemId) {
         Intent i = new Intent(c, KalendWidget.class).setAction(A_LTOG)
-                .putExtra("appWidgetId", widgetId).putExtra("l", listId).putExtra("t", itemId);
+                .putExtra("appWidgetId", widgetId).putExtra("l", listId).putExtra("t", itemId)
+                .putExtra("tok", MainActivity.alertToken(c));   // v55: vedi KalendWidget.bc
         i.setData(Uri.parse("kalend://ltog/" + widgetId + "/" + rc));
         return PendingIntent.getBroadcast(c, rc, i, PI_FLAGS);
     }
@@ -345,28 +346,42 @@ final class WidgetLists {
         SharedPreferences p = KalendWidget.prefs(c);
         JSONObject data = KalendWidget.data(c);
         if (data == null) return;
-        JSONArray ls = lists(data);
-        int newState = -1;   // resta -1 se la voce non esiste
-        for (int i = 0; ls != null && i < ls.length() && newState < 0; i++) {
-            JSONObject l = ls.optJSONObject(i);
-            JSONArray items = l != null ? l.optJSONArray("it") : null;
-            for (int k = 0; items != null && k < items.length(); k++) {
-                JSONObject it = items.optJSONObject(k);
-                if (it != null && itemId.equals(it.optString("i"))) {
-                    newState = it.optInt("d") == 1 ? 0 : 1;
-                    break;
-                }
-            }
-        }
+        int newState = toggledState(data, itemId);
         if (newState < 0 || !setState(data, itemId, newState)) return;
         // NOTA RICOSTRUZIONE: il try/catch non è visibile nel decompilato (metodo synchronized), ma
         // new JSONArray/put lanciano eccezioni controllate e KalendWidget chiama toggle senza gestirle.
         try {
-            JSONArray q = new JSONArray(p.getString(KEY_QUEUE, "[]"));
-            q.put(new JSONObject().put("t", itemId).put("d", newState).put("at", System.currentTimeMillis()));
-            while (q.length() > QUEUE_MAX) q.remove(0);
-            p.edit().putString(KEY_WIDGET, data.toString()).putString(KEY_QUEUE, q.toString()).apply();
+            String q = enqueue(p.getString(KEY_QUEUE, "[]"), itemId, newState, System.currentTimeMillis());
+            p.edit().putString(KEY_WIDGET, data.toString()).putString(KEY_QUEUE, q).apply();
             KalendWidget.updateAll(c);
         } catch (Exception ignored) {}
+    }
+
+    /**
+     * Lo stato che una voce avrà dopo un tocco: 0 se ora è fatta, 1 se è da fare,
+     * -1 se la voce non esiste nel JSON (allora il tocco non fa nulla).
+     */
+    static int toggledState(JSONObject data, String itemId) {
+        JSONArray ls = lists(data);
+        for (int i = 0; ls != null && itemId != null && i < ls.length(); i++) {
+            JSONObject l = ls.optJSONObject(i);
+            JSONArray items = l != null ? l.optJSONArray("it") : null;
+            for (int k = 0; items != null && k < items.length(); k++) {
+                JSONObject it = items.optJSONObject(k);
+                if (it != null && itemId.equals(it.optString("i"))) return it.optInt("d") == 1 ? 0 : 1;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Aggiunge una spunta alla coda verso la pagina ({t: voce, d: stato, at: istante}) e la
+     * accorcia alle ultime {@link #QUEUE_MAX} voci. Ritorna la coda come testo JSON.
+     */
+    static String enqueue(String queueJson, String itemId, int state, long at) throws org.json.JSONException {
+        JSONArray q = new JSONArray(queueJson == null ? "[]" : queueJson);
+        q.put(new JSONObject().put("t", itemId).put("d", state).put("at", at));
+        while (q.length() > QUEUE_MAX) q.remove(0);
+        return q.toString();
     }
 }

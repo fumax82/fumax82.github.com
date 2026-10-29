@@ -27,6 +27,7 @@ non sta qui: al momento del build viene copiata automaticamente negli asset
 
 Senza l'SDK (ad esempio nell'ambiente di sviluppo di questo repository):
 - `bash Kalend/tools/native-check.sh` verifica che il Java compili;
+- `bash Kalend/tools/native-test.sh` esegue i **test automatici** (vedi sotto);
 - `bash Kalend/tools/build-apk.sh` costruisce un **APK di prova completo**
   (`dist/Kalend-native-test-signed.apk`) usando d8 e aapt2 scaricati dalle fonti
   ufficiali e la firma di prova: serve per installare e collaudare, **non** per il
@@ -36,6 +37,7 @@ Senza l'SDK (ad esempio nell'ambiente di sviluppo di questo repository):
 
 | File | Ruolo |
 |---|---|
+| `Safe.java` | **Nuovo v55**: le regole di sicurezza in forma pura (pagina fidata, extra degli Intent → JavaScript, schemi dei link esterni, token, vibrazione), verificate dai test. |
 | `MainActivity.java` | La WebView a schermo intero che mostra la pagina, il **ponte JavaScript** `KalendNative` (classe interna `Bridge`), la gestione di Intent, permessi, dettatura, file. |
 | `Net.java` | Scaricamento sicuro (`fetchPublic`): solo https, niente indirizzi privati, massimo 5 redirezioni e 8 MB, User-Agent con contatto. |
 | `Vault.java` | Cassaforte dei link ai calendari esterni (cifrati nell'Android Keystore). |
@@ -60,6 +62,32 @@ risponde solo se la pagina caricata è quella dell'app
 (`https://appassets.androidplatform.net/www/index.html`, servita dagli asset).
 Gli Intent dei widget e delle notifiche portano solo valori verificati con
 espressioni regolari; gli avvisi richiedono il token segreto `alert_tok`.
+Dalla v55 lo stesso token protegge anche i pulsanti del widget: il ricevitore
+del widget è esportato (lo esige Android), quindi senza token un'altra app
+potrebbe spuntare le voci delle liste o cambiare la vista del widget.
+
+## Test automatici (cartella `app/src/test`)
+
+Girano sul computer, senza telefono: in Android Studio con tasto destro su
+`app/src/test` → *Run 'Tests in app'*, oppure `./gradlew testDebugUnitTest`;
+senza SDK con `bash Kalend/tools/native-test.sh` (due giri: con la libreria JSON
+di Android e con quella di riferimento usata da Gradle).
+
+| Test | Cosa verifica |
+|---|---|
+| `SafeTest` | Solo la pagina dell'app usa il ponte; gli extra di widget e notifiche non diventano mai codice (anche con testi ostili); link esterni solo https/http/mailto/tel/geo; token confrontato per intero. |
+| `NetTest` | Solo https pubblico: rifiutati localhost, reti di casa, link-local, CGNAT, IPv6 privati, multicast; un server acceso sul computer non riceve nessuna richiesta. |
+| `WidgetListsTest` | Spunte dal widget: contatori sempre fra 0 e il totale, righe allineate, coda limitata a 300, spunte non perse se la pagina manda dati vecchi, ritiro della coda. |
+| `RemindersTest` | Posticipi: uno solo per promemoria, scaduti dimenticati dopo un minuto. |
+| `BridgeContractTest` | Elenco approvato dei 32 metodi del ponte; ognuno (tranne `version`) controlla `trusted()`; la pagina chiama solo metodi esistenti; il nativo chiama solo funzioni che la pagina definisce. |
+| `ManifestTest` | Permessi approvati, componenti esportati solo dove serve, niente http in chiaro, cassaforte esclusa dai backup, API 36, password di firma solo da variabili d'ambiente. |
+| `SourceRulesTest` | WebView chiusa verso file e contenuti, debug solo in prova, link esterni filtrati, token su notifiche e pulsanti del widget, PendingIntent immutabili, una sola connessione di rete, nessuna chiave nel codice. |
+
+Se un test fallisce dopo una modifica, il messaggio dice quale regola è stata
+violata. Aggiungere un metodo al ponte o un permesso al manifest fa fallire
+apposta `BridgeContractTest` o `ManifestTest`: si aggiorna l'elenco nel test solo
+dopo aver deciso che la novità è sicura (e, per i permessi, aggiornato privacy
+policy e modulo «Sicurezza dei dati»).
 
 ## Cosa è cambiato rispetto alla v53 (vedi `docs/PIANO-INTERVENTI.md`, fase 2)
 

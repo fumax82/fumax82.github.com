@@ -39,7 +39,6 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -256,27 +255,11 @@ public class MainActivity extends Activity {
     ──────────────────────────────────────────────────────────────── */
     private void handleIntent(Intent in) {
         if (in == null) return;
-        String js = null;
-        String date = in.getStringExtra("date");
-        boolean dateOk = date != null && date.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}");
-        if (dateOk) js = "try{KX.openDate('" + date + "')}catch(e){}";
-        else if (in.getStringExtra("add") != null) js = "try{document.getElementById('btn-add').click()}catch(e){}";
-
-        String list = in.getStringExtra("list");
-        if (list != null && list.matches("[A-Za-z0-9_\\-]{1,48}")) {
-            js = "try{setTimeout(function(){KX.openLists(" + JSONObject.quote(list) + ")},400)}catch(e){}";
-        } else if ("*".equals(list)) {
-            js = "try{setTimeout(function(){KX.openLists()},400)}catch(e){}";
-        }
-        String ev = in.getStringExtra("ev");
-        if (list == null && ev != null && ev.matches("[A-Za-z0-9_\\-]{1,64}") && dateOk) {
-            js = "try{KX.openEventById(" + JSONObject.quote(ev) + ",'" + date + "')}catch(e){}";
-        }
-        /* un avviso (promemoria) viene accettato solo con il token segreto dell'app */
-        String alert = in.getStringExtra("alert");
-        if (alert != null && alertToken(this).equals(in.getStringExtra("tok"))) {
-            js = "try{KX.alert(" + JSONObject.quote(alert) + ")}catch(e){}";
-        }
+        /* le regole (espressioni regolari, precedenze, token dell'avviso) stanno in Safe.intentJs,
+           così i test automatici le verificano senza telefono */
+        String js = Safe.intentJs(in.getStringExtra("date"), in.getStringExtra("add"), in.getStringExtra("list"),
+                in.getStringExtra("ev"), in.getStringExtra("alert"),
+                Safe.sameToken(alertToken(this), in.getStringExtra("tok")));
         for (String k : new String[]{"date", "add", "list", "ev", "alert", "tok"}) in.removeExtra(k);
         if (js == null) return;
         if (!pageReady) { pendingJs = js; return; }
@@ -284,7 +267,8 @@ public class MainActivity extends Activity {
         main.postDelayed(() -> web.evaluateJavascript(code, null), 250);
     }
 
-    /** token casuale, creato una volta: le notifiche lo portano con sé */
+    /** token casuale, creato una volta: le notifiche e i pulsanti del widget lo portano con sé
+     *  (nessun'altra app lo conosce, quindi non può fingersi una notifica o un tocco sul widget) */
     static String alertToken(Context c) {
         SharedPreferences p = c.getSharedPreferences("kalend", MODE_PRIVATE);
         String t = p.getString("alert_tok", null);
@@ -308,12 +292,7 @@ public class MainActivity extends Activity {
     ──────────────────────────────────────────────────────────────── */
     /** la pagina caricata è quella dell'app? Ogni metodo del ponte lo pretende. */
     boolean trusted() {
-        try {
-            Uri u = Uri.parse(pageUrl);
-            return "https".equals(u.getScheme()) && HOST.equals(u.getHost());
-        } catch (Exception e) {
-            return false;
-        }
+        return Safe.isAppPage(pageUrl, HOST);
     }
 
     private boolean has(String perm) { return checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED; }
@@ -329,9 +308,7 @@ public class MainActivity extends Activity {
 
     /** apre un indirizzo fuori dall'app: solo schemi innocui */
     private void openExternal(String url) {
-        String scheme;
-        try { scheme = String.valueOf(Uri.parse(url).getScheme()).toLowerCase(Locale.ROOT); } catch (Exception e) { scheme = ""; }
-        if (!(scheme.equals("https") || scheme.equals("http") || scheme.equals("mailto") || scheme.equals("tel") || scheme.equals("geo"))) return;
+        if (!Safe.externalAllowed(url)) return;
         try {
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         } catch (Exception e) {
@@ -542,7 +519,8 @@ public class MainActivity extends Activity {
        PONTE JAVASCRIPT — window.KalendNative
        Convenzione: i metodi con un "id" rispondono in modo asincrono con
        reply(id, ok, dato) → window.__knCb(id, ok, dato) nella pagina.
-       Ogni metodo controlla trusted().
+       Ogni metodo (tranne version) controlla trusted(): lo verifica il test
+       BridgeContractTest, che fallisce se un metodo nuovo se ne dimentica.
     ──────────────────────────────────────────────────────────────── */
     class Bridge {
         @android.webkit.JavascriptInterface public String version() { return "2"; }
@@ -676,6 +654,7 @@ public class MainActivity extends Activity {
             } catch (Exception ignored) {}
         }
         @android.webkit.JavascriptInterface public boolean exactAlarms() {
+            if (!trusted()) return false;
             if (Build.VERSION.SDK_INT < 31) return true;
             android.app.AlarmManager am = (android.app.AlarmManager) getSystemService(ALARM_SERVICE);
             return am != null && am.canScheduleExactAlarms();
@@ -719,6 +698,7 @@ public class MainActivity extends Activity {
 
         /* ── dettatura ── */
         @android.webkit.JavascriptInterface public void speech(int id, String lang) {   // finestra di sistema
+            if (!trusted()) { reply(id, false, "non consentito"); return; }
             main.post(() -> {
                 Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
                 i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
@@ -746,8 +726,9 @@ public class MainActivity extends Activity {
 
         /* ── varie ── */
         @android.webkit.JavascriptInterface public void vibrate(int ms) {
+            if (!trusted()) return;
             android.os.Vibrator v = (android.os.Vibrator) getSystemService(VIBRATOR_SERVICE);
-            if (v != null && Build.VERSION.SDK_INT >= 26) v.vibrate(android.os.VibrationEffect.createOneShot(Math.max(10, ms), android.os.VibrationEffect.DEFAULT_AMPLITUDE));
+            if (v != null && Build.VERSION.SDK_INT >= 26) v.vibrate(android.os.VibrationEffect.createOneShot(Safe.vibrateMs(ms), android.os.VibrationEffect.DEFAULT_AMPLITUDE));
         }
         @android.webkit.JavascriptInterface public void setSecure(boolean on) {
             if (!trusted()) return;

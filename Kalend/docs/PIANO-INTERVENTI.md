@@ -72,7 +72,7 @@ Dove: **pagina** = `src/index.html` e `src/modules/` · **nativo** = progetto An
 | 2.7 | Dettatura: preferire il riconoscimento sul telefono | ✅ | 2 | nativo + pagina | S | 2.1 |
 | 2.8 | Porting a target API 36 (Android 16) | 🟠 codice fatto, collaudo su dispositivi da fare | 2 | nativo + pagina | L | 2.1 |
 | 2.9 | Acquisti in-app con Play Billing (solo se Pro) | 🟠 | 2 | nativo + pagina | L | D2, 2.1 |
-| 2.10 | Test minimi della parte nativa | 🟡 | 2 | nativo | M | 2.1 |
+| 2.10 | Test minimi della parte nativa | ✅ 56 test (app/src/test, tools/native-test.sh) | 2 | nativo | M | 2.1 |
 | 3.1 | Verifica del livello API richiesto al momento | 🔴 | 3 | nativo | S | 2.8 |
 | 3.2 | Formato Android App Bundle (.aab) | 🔴 | 3 | nativo + build | S | 2.1 |
 | 3.3 | Chiave di caricamento e Play App Signing | 🔴 | 3 | console | S | D6 |
@@ -368,8 +368,13 @@ perché cambia il comportamento dell'app e richiede settimane di collaudo.
 - Libreria Google Play Billing nel nativo, verifica dell'acquisto, sblocco delle
   funzioni Pro nella pagina, ripristino degli acquisti.
 
-### 2.10 · Test minimi della parte nativa 🟡
+### 2.10 · Test minimi della parte nativa ✅
 - Ponte, Intent, promemoria, widget: test automatici di base per evitare regressioni.
+- **Stato**: 56 test JUnit in `android-src/app/src/test` (elenco in `README-NATIVO.md`),
+  eseguibili in Android Studio o con `tools/native-test.sh` senza SDK. Verificati con
+  17 errori introdotti di proposito: tutti rilevati. Durante il lavoro è emerso e
+  stato corretto un punto debole: i pulsanti del widget (esportato) accettavano
+  azioni da qualunque app; ora richiedono il token segreto dell'app.
 
 ---
 
