@@ -2138,6 +2138,16 @@
    "1 tag vorher",
    "einen tag zuvor",
    "am tag zuvor"
+  ],
+  "leadNoun": [
+   "einen termin",
+   "den termin",
+   "termin",
+   "ein ereignis",
+   "eine erinnerung",
+   "erinnerung",
+   "einen eintrag",
+   "eintrag"
   ]
  },
  "autotag": {

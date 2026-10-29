@@ -1526,7 +1526,13 @@
    "would you",
    "hey",
    "ok",
-   "okay"
+   "okay",
+   "remind me",
+   "remember",
+   "i must remember to",
+   "i've to",
+   "note to self",
+   "note to self:"
   ],
   "leadEnd": [
    "please",
@@ -1800,6 +1806,18 @@
    "the previous day",
    "day before",
    "1 day before"
+  ],
+  "leadNoun": [
+   "an event",
+   "the event",
+   "event",
+   "an appointment",
+   "the appointment",
+   "appointment",
+   "a reminder",
+   "reminder",
+   "a note",
+   "a meeting"
   ]
  },
  "autotag": {

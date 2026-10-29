@@ -2136,6 +2136,17 @@
    "o dia anterior",
    "um dia de antecedência",
    "um dia de antecedencia"
+  ],
+  "leadNoun": [
+   "um evento",
+   "o evento",
+   "evento",
+   "um compromisso",
+   "o compromisso",
+   "compromisso",
+   "um lembrete",
+   "lembrete",
+   "uma nota"
   ]
  },
  "autotag": {

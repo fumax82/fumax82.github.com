@@ -17214,7 +17214,9 @@ const Music=(()=>{
     [/spesa|shopping|negozi|acquist|supermerc|commission|errand|poste|banca/,'spesa'],[/natura|nature|escursion|hike|trekking|montagn|bosco|giardin|garden|orto|passeggiat|parco/,'natura'],
     [/bambin|kids|scuola|school|asilo|compiti|figli piccoli/,'bambini'],[/studio|study|esame|exam|lezion|corso|universit|lettur/,'lo-fi-beat'],[/viagg|travel|vacanz|volo|flight|treno|train|aeroporto/,'synth-wave'],
     [/mare|spiaggia|beach|piscina|sea/,'ocean-waves'],[/medita|relax|yoga|riposo|spa|massagg|benessere/,'deep-drone'],[/religi|messa|chiesa|preghier/,'strings-calm']];
-  function themeFor(tag){const s=String(tag||'').toLowerCase();for(const[r,p]of THEME_RULES)if(r.test(s))return p;return null;}
+  /* v56: le regole valgono dall'inizio di una parola («cena» in «cenare» sì, «mare» in «chiamare» no) */
+  const THEME_RE=THEME_RULES.map(([r,p])=>[new RegExp('(?<![\\p{L}])(?:'+r.source+')',r.flags.includes('u')?r.flags:r.flags+'u'),p]);
+  function themeFor(tag){const s=String(tag||'').toLowerCase();for(const[r,p]of THEME_RE)if(r.test(s))return p;return null;}
 
   /* ══════════════════════════════════════════════════════════════════
      v40 — MUSICHE DELLE OCCASIONI (melodie di pubblico dominio)
@@ -19284,7 +19286,7 @@ const NL2=(()=>{
       ||take(R(`${B1}(?:questo|this|el|ce)?\\s*(?:fine settimana|weekend|week-end|wochenende)${B2}`),()=>{let d=new Date(today);while(d.getDay()!==6)d=addD(d,1);out.dates.push(dkey(d));});
     if(!done&&!(out.rrule&&out.rrule.byday)){
       const wre=alt(wds.map(x=>x[0]));
-      take(R(`${B1}(?:(?:${alt(W.next)})\\s+)?(${wre})${B2}`),m=>{const w=wds.find(x=>x[0]===m[1].toLowerCase());if(!w)return;let d=addD(today,0);if(d.getDay()===w[1])d=addD(d,7);while(d.getDay()!==w[1])d=addD(d,1);out.dates.push(dkey(d));});
+      take(R(`${B1}(?:(?:${alt(W.next)})\\s+)?(${wre})(?:\\s+(?:${alt(W.next)}))?${B2}`),m=>{const w=wds.find(x=>x[0]===m[1].toLowerCase());   /* v56: anche «giovedì prossimo» */if(!w)return;let d=addD(today,0);if(d.getDay()===w[1])d=addD(d,7);while(d.getDay()!==w[1])d=addD(d,1);out.dates.push(dkey(d));});
     }
     /* orari */
     const tm='(\\d{1,2})(?:[:.h](\\d{2}))?\\s*(am|pm)?';
@@ -21678,7 +21680,7 @@ const fold=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''
 
 /* ── 1. persone nella dettatura ── */
 const REL=/^(mamma|madre|papa|papà|babbo|padre|moglie|marito|fidanzat[oaie]|ragazz[oaie]|compagn[oaie]|partner|nonn[oaie]|figlio|figlia|figli|figlie|fratell[oi]|sorell[ae]|zi[oaie]|cugin[oaie]|suocer[oaie]|cognat[oaie]|nipot[ei]|amic[oaie]|amici|collega|colleghi|colleghe|capo|vicin[oaie]|parenti|genitori|bambini|bimbi|ragazzi|famiglia|squadra|team|cliente|clienti)$/i;
-const STRONG='(?:(?:assieme|insieme)\\s+(?:a|ad|con|al|allo|alla|ai|agli|alle)|in\\s+compagnia\\s+(?:di|del|dello|della|dei|degli|delle)|accompagnat[oaie]\\s+(?:da|dal|dalla|dai|dalle)|con\\s+la\\s+compagnia\\s+di|(?:viene|vengono|verr[aà]|verranno|ci\\s+sar[aà]|ci\\s+saranno)\\s+(?:anche\\s+)?|porto|porta|portiamo|invit(?:o|iamo|ato|ati)|together\\s+with|along\\s+with|accompanied\\s+by)';
+const STRONG='(?:(?:assieme|insieme)\\s+(?:a|ad|con|al|allo|alla|ai|agli|alle)|in\\s+compagnia\\s+(?:di|del|dello|della|dei|degli|delle)|accompagnat[oaie]\\s+(?:da|dal|dalla|dai|dalle)|con\\s+la\\s+compagnia\\s+di|(?:viene|vengono|verr[aà]|verranno|ci\\s+sar[aà]|ci\\s+saranno)\\s+(?:anche\\s+)?|invit(?:o|iamo|ato|ati)|together\\s+with|along\\s+with|accompanied\\s+by)';
 const WEAK='(?:con|col|coi|with)';
 const ART=/^(il|lo|la|l'|i|gli|le|mio|mia|miei|mie|nostro|nostra|nostri|nostre|tuo|tua|suo|sua|loro|un|una|uno|anche|pure)$/i;
 const STOPW=new Set('alle,all,alla,al,ai,dalle,dal,dalla,a,ad,in,presso,per,da,di,del,della,oggi,domani,dopodomani,stasera,stamattina,lunedi,martedi,mercoledi,giovedi,venerdi,sabato,domenica,ore,ricordami,ricordamelo,avvisami,tag,partecipanti,e,ed,poi,che,dove,quando,fino,tra,fra,verso,mattina,pomeriggio,sera,notte,settimana,prossimo,prossima,the,at,on,to,and,for'.split(','));

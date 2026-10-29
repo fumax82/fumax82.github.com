@@ -146,11 +146,18 @@ function preProcess(text,l){
   const LD=arr(L.lead).slice().sort((a,b)=>b.length-a.length).map(w=>(NOSPACE.test(w[0])?'':LB)+esc(w)+(/['’]$/.test(w)||NOSPACE.test(w[w.length-1])?'':LA)).join('|');const ARTW=(ARTS[l]||'').trim();
   if(LD)for(let k=0;k<3;k++){const m=t.match(R('^\\s*(?:'+LD+')(?!\\s*[:：])\\s*(?=\\S)','iu'));if(!m||t.trim().length-m[0].trim().length<2)break;info.lead=((info.lead||'')+' '+m[0]).trim();t=' '+t.slice(m[0].length);
     /* «schedule a meeting» → «meeting»: l'articolo dopo il comando non serve */
-    if(ARTW){const a=t.match(R('^\\s*(?:'+ARTW.split(' ').map(esc).join('|')+')\\s+(?=\\S)','iu'));if(a&&!/['’]$/.test(a[0].trim()))t=' '+t.slice(a[0].length);}}
+    if(ARTW){const a=t.match(R('^\\s*(?:'+ARTW.split(' ').map(esc).join('|')+')\\s+(?=\\S)','iu'));if(a&&!/['’]$/.test(a[0].trim()))t=' '+t.slice(a[0].length);}
+    /* «aggiungi un evento spesa» → «spesa»: il sostantivo generico dopo il comando (lessico leadNoun) */
+    const LN=A(L.leadNoun);if(LN){const n=t.match(R('^\\s*(?:'+LN+')\\s+(?=\\S)','iu'));if(n&&t.trim().length-n[0].trim().length>=2)t=' '+t.slice(n[0].length);}}
   const LE=A(L.leadEnd);
   if(LE){const m=t.match(R('\\s*(?:'+LE+')\\s*[.!。]?\\s*$','iu'));if(m&&m.index>=2){info.leadEnd=m[0].trim();t=t.slice(0,m.index)+' ';}}
   const leadTxt=((info.lead||'')+' '+(info.leadEnd||'')).toLowerCase();
   if(leadTxt.trim()){info.remind=[...remindW].some(w=>w&&leadTxt.includes(w))||/ricord|remind|erinner|rappel|recu[eé]rd|lembr|напомн|нагада|hatırlat|ingatkan|nhắc|याद|মনে|思い出|リマインド|알려|提醒|เตือน|תזכיר|ذكّر|ذكر/u.test(leadTxt);}
+  /* «ricordami domani alle 8 DI prendere le medicine»: il «di/che/to/zu…» dell'infinito può restare dopo data e ora */
+  if(info.remind)t=t.replace(/^(\s*(?:\S+\s+){0,6}?)(di|d'|d’|ad|che|to|zu|de|que|om te|om|щоб|чтобы|для|untuk|để|कि|যে)\s+(?=\p{Ll}{3,})/iu,(m,a,w)=>{
+    if(/\b(?:alle|at|um|à|a las|às|dalle|from|von|de|desde)\s*$/i.test(a))return m;          /* «alle di»? mai: si lascia */
+    if(/^(?:to|de)$/i.test(w)&&/\d\s*$/.test(a))return m;                                   /* «from 8 to 9» non è l'infinito */
+    return a+' ';});
   /* 3. luoghi comuni in minuscolo */
   const V=altCI(L.venues),PL=altCI(L.place),ART=(ARTS[l]||'').trim();
   const after=L.noSpaces?'':'(?:\\s+\\p{Lu}[\\p{L}\\p{M}\'’.-]*){0,3}';
@@ -190,6 +197,14 @@ function preProcess(text,l){
       if(!done&&DOS)t=t.replace(R('(?<![\\d:.])(\\d{1,2})(?:'+DOS+')(?![\\p{L}\\p{N}])'+UNIT,'u'),(m,d)=>{const r=toDate(d);if(!r||done)return m;done=true;return r;});
     }
   }
+  /* «il primo del mese», «the first of the month», «am Ersten des Monats» → ogni mese, giorno 1 */
+  try{const OM=A(L.ofMonth);const o1=Object.keys(L.ordinals||{}).filter(k=>L.ordinals[k]===1);const O1=A(o1.concat(['1º','1°','1st','1er','1.']));
+    let WD='';try{const N=KX.Lang.namesFor(l);WD=A(N.wdn.concat((L.weekdays||[]).map(p=>Array.isArray(p)?p[0]:'').filter(Boolean)));}catch(e){}
+    if(OM&&O1){t=t.replace(R(LB+'(?:(?:'+(A(L.dayOf)||'(?!x)x')+'|il|the|le|el|am|den|o|a)\\s+)?(?:'+O1+')\\s+(?:'+OM+')'+LA,'iu'),(m,off,str)=>{
+      /* «il primo lunedì del mese», «ביום שני הראשון של החודש»: con un giorno della settimana vicino è un'altra regola (ennesimo giorno) */
+      if(WD&&(R('(?:'+WD+')\\s+(?:\\S+\\s+)?$','iu').test(str.slice(0,off))||R('^\\s*(?:\\S+\\s+)?(?:'+WD+')','iu').test(str.slice(off+m.length))))return m;
+      const now=new Date();now.setHours(0,0,0,0);let dt=new Date(now.getFullYear(),now.getMonth(),1);if(dt<now)dt=new Date(now.getFullYear(),now.getMonth()+1,1);
+      let M=[];try{M=MESI;}catch(e){}return ' ogni mese 1 '+String(M[dt.getMonth()]||'').toLowerCase()+' '+(dt.getFullYear()!==now.getFullYear()?dt.getFullYear():'')+' ';});}}catch(e){}
   /* 5. «… nota portare i documenti» senza i due punti (solo testo libero, senza orari o date dentro) */
   const NT=A(L.note);
   if(NT){t=t.replace(R('\\s(?:'+NT+')\\s+(?![:：])(\\S+(?:\\s+\\S+)+)\\s*$','iu'),(m,rest)=>{
@@ -224,8 +239,11 @@ function dayPart(L){
 function post(out,info,l,raw){
   if(!out)return;
   if(info.loc&&!out.location)out.location=info.loc;
-  /* «Weekend al mare»: senza il luogo il titolo resterebbe vuoto → la frase del luogo è anche il titolo */
-  if(info.locSpan&&!(out.title||'').trim())out.title=cap(info.locSpan.replace(/\s+/g,' '));
+  /* «Weekend al mare», «Andare dal dentista»: senza il luogo il titolo resterebbe vuoto o un verbo solo → la frase del luogo resta anche nel titolo */
+  {const tt=(out.title||'').trim();const nw=tt.split(/\s+/).filter(Boolean).length;
+   const OBLIG=/devo|dovrei|bisogna|need to|have to|must|should|gotta|got to|ich muss|ich soll|ich will|ich möchte|je dois|il faut|tengo que|debo|hay que|necesito|tenho que|tenho de|preciso|muszę|musze|должен|должна|нужно|треба|lazım|lazim|harus|phải|phai|צריך|צריכה|يجب|لازم|चाहिए|হবে/i;
+   const VERB=/(?:are|ere|ire|ar|er|ir|oir|re)$/i;
+   if(info.locSpan&&(nw===0||(nw===1&&info.lead&&(OBLIG.test(info.lead)||VERB.test(tt)))))out.title=cap((tt+' '+info.locSpan.replace(/\s+/g,' ')).trim());}
   /* «Spesa al supermercato domani pomeriggio alle 4»: «pomeriggio» ha già fatto il suo lavoro (ore 16) */
   try{if(out.start!=null&&out.title){const L=lex(l);const M=L.moments||{};const mw=A([].concat(arr(M.morning),arr(M.afternoon),arr(M.evening),arr(M.night),arr(L.tonight),arr(L.thisMorning)));
     if(mw){const t2=out.title.replace(R('(?:\\s+(?:'+mw+'))+\\s*$','iu'),'').replace(/\s+/g,' ').trim();if(t2)out.title=t2;}}}catch(e){}
@@ -240,6 +258,16 @@ function post(out,info,l,raw){
         const dur=out.end!=null?out.end-out.start:null;out.start+=720;if(dur!=null)out.end=out.start+(dur>0?dur:60);}
     }
   }catch(e){}
+  /* «Riunione, portare il contratto»: dopo una virgola, una frase che comincia con un verbo all'infinito o
+     un imperativo («porta», «bring», «apporter») è una nota, non parte del titolo */
+  try{if(out.title&&/,\s*\S/.test(out.title)){const V={it:/^(?:\p{L}+(?:are|ere|ire)|porta|prendi|compra|chiama|ricorda|ricordati|non dimenticare|non dimenticarti|controlla|stampa|invia|prenota|paga)\b/iu,
+      en:/^(?:bring|take|buy|call|remember|don't forget|dont forget|prepare|print|send|book|check|pay|pick up|get)\b/iu,
+      de:/^(?:\p{L}+(?:en|ern)\s+(?:nicht\s+)?vergessen|[\p{L}\s]+(?:mitbringen|mitnehmen|kaufen|anrufen|vorbereiten|drucken|schicken|bezahlen|abholen)$)/iu,
+      fr:/^(?:apporter|prendre|acheter|appeler|préparer|preparer|ne pas oublier|imprimer|envoyer|réserver|reserver|payer|penser à)\b/iu,
+      es:/^(?:llevar|traer|comprar|llamar|preparar|no olvidar|imprimir|enviar|reservar|pagar|recoger)\b/iu,
+      pt:/^(?:levar|trazer|comprar|ligar|preparar|não esquecer|nao esquecer|imprimir|enviar|reservar|pagar|buscar)\b/iu}[l];
+    if(V){const parts=out.title.split(/\s*,\s*/);const keep=[],note=[];parts.forEach((p,i)=>{if(i>0&&V.test(p.trim()))note.push(p.trim());else keep.push(p);});
+      if(note.length&&keep.length){out.title=keep.join(', ');out.desc=[out.desc,...note.map(n=>n.charAt(0).toUpperCase()+n.slice(1))].filter(Boolean).join(' · ');}}}}catch(e){}
   /* il titolo non resta mai con un comando davanti o un segno in coda */
   if(out.title){out.title=out.title.replace(/^[\s,;:.\-–]+|[\s,;:.\-–]+$/g,'').replace(/\s+/g,' ');if(out.title)out.title=out.title.charAt(0).toUpperCase()+out.title.slice(1);}
 }

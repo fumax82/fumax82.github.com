@@ -88,6 +88,7 @@ Includere varianti (con/senza accento, abbreviazioni, forme colloquiali). Ordine
 | chiave | significato | esempio |
 |---|---|---|
 | `lead` | COMANDI all'INIZIO della frase da togliere dal titolo: «ricordami di», «aggiungi», «devo», «per favore», «in agenda». Si possono concatenare («aggiungi in agenda …»). Se il comando contiene una parola di `remind`, l'evento riceve un avviso all'ora stessa | `["ricordami di","aggiungi","devo","per favore"]` |
+| `leadNoun` | sostantivo generico che segue un comando e non è il titolo: «aggiungi UN EVENTO spesa» → «spesa»; vale solo subito dopo una voce di `lead` | `["un evento","evento","un appuntamento","un promemoria"]` |
 | `leadEnd` | comandi alla FINE della frase (lingue con il verbo in coda: tedesco «eintragen», giapponese «を追加して», turco «ekle», hindi «याद दिलाना») | `["eintragen","bitte"]` |
 | `venues` | LUOGHI COMUNI in minuscolo che seguono una preposizione di `place` («in palestra», «at the gym», «im Büro»); il nome proprio che segue («al bar Centrale») o precede («at Luigi's restaurant») resta nel luogo. Per hindi/bengalese il luogo precede la posposizione; per il turco si accetta il suffisso locativo («ofiste»). Nelle lingue senza spazi (ja, zh, ko, th) non serve: le particelle で/에서/在/ที่ bastano | `["palestra","ufficio","bar","ristorante","casa"]` |
 | `cities` | città e quartieri, SOLO per ebraico e bengalese: servono a leggere «בירושלים» (ב + città) e «ঢাকায়» (città + suffisso locativo) senza prendere parole qualunque | `["ירושלים","תל אביב"]` |

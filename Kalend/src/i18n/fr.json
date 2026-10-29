@@ -2048,6 +2048,19 @@
    "le jour avant",
    "1 jour avant",
    "la veille au soir"
+  ],
+  "leadNoun": [
+   "un événement",
+   "un evenement",
+   "l'événement",
+   "événement",
+   "evenement",
+   "un rendez-vous",
+   "le rendez-vous",
+   "rendez-vous",
+   "un rappel",
+   "rappel",
+   "une note"
   ]
  },
  "autotag": {

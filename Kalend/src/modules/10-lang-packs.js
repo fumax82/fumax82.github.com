@@ -604,6 +604,8 @@ function canonicalize(raw){
   first.forEach(r=>{t=t.replace(r.re,r.to);});   /* nomi di giorni/mesi → segnaposto */
   /* v56 · «৫ই মার্চ», «20ú marzo»: suffisso ordinale del giorno attaccato alla cifra, davanti al mese */
   const DA2=altPlain(L.daySuffix);if(DA2)t=t.replace(R('(\\d{1,2})(?:'+DA2+')(?=\\s*\u2063M)'),'$1 ');
+  /* v56: «vendredi prochain», «jueves que viene», «Freitag nächste Woche»? no: solo il qualificatore DOPO il giorno → via */
+  {const nx=alt(L.next);if(nx)t=t.replace(R('(\u2063W\\d\u2063)\\s+(?:'+nx+')'+LA),'$1 ');}
   /* «lunedì E giovedì» in ogni lingua (и, و, และ, 和, ve, dan…) e anche solo con lo spazio (coreano) */
   const andW=alt(L.and);
   t=t.replace(R('(\u2063W\\d\u2063)\\s*(?:,|'+(andW||'(?!x)x')+')\\s*(?=\u2063W)'),'$1 e ');

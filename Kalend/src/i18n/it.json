@@ -428,7 +428,22 @@
    "nel",
    "nella",
    "sul",
-   "sulla"
+   "sulla",
+   "dal",
+   "dallo",
+   "dalla",
+   "dall'",
+   "dai",
+   "dagli",
+   "dalle",
+   "nei",
+   "nelle",
+   "negli",
+   "ai",
+   "agli",
+   "sullo",
+   "sugli",
+   "sulle"
   ],
   "streets": [
    "via",
@@ -693,7 +708,16 @@
    "puoi",
    "potresti",
    "mi puoi",
-   "mi potresti"
+   "mi potresti",
+   "ricordami",
+   "ricordati",
+   "ricorda",
+   "ricordarmi",
+   "avvisami",
+   "mi ricordi di",
+   "mi ricordi",
+   "puoi ricordarmi di",
+   "puoi ricordarmi"
   ],
   "leadEnd": [
    "per favore",
@@ -707,6 +731,25 @@
    "segnalo"
   ],
   "venues": [
+   "ufficio del personale",
+   "scuola guida",
+   "casa di riposo",
+   "casa dei nonni",
+   "studio legale",
+   "studio medico",
+   "ufficio postale",
+   "stazione centrale",
+   "centro anziani",
+   "centro medico",
+   "campo da tennis",
+   "campo da calcio",
+   "campo sportivo",
+   "sala operatoria",
+   "sala parto",
+   "sala consiliare",
+   "sala d'attesa",
+   "sala condominiale",
+   "sala conferenze",
    "palestra",
    "piscina",
    "ufficio",
@@ -926,7 +969,21 @@
     "priorita",
     "importanza"
    ]
-  }
+  },
+  "leadNoun": [
+   "un evento",
+   "l'evento",
+   "evento",
+   "un appuntamento",
+   "l'appuntamento",
+   "appuntamento",
+   "un promemoria",
+   "promemoria",
+   "un impegno",
+   "impegno",
+   "una nota",
+   "la nota"
+  ]
  },
  "autotag": {
   "lavoro": [

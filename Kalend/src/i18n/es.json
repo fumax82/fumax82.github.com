@@ -1942,6 +1942,17 @@
    "el dia de antes",
    "1 día antes",
    "1 dia antes"
+  ],
+  "leadNoun": [
+   "un evento",
+   "el evento",
+   "evento",
+   "una cita",
+   "la cita",
+   "cita",
+   "un recordatorio",
+   "recordatorio",
+   "una nota"
   ]
  },
  "autotag": {
