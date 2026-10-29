@@ -1,0 +1,58 @@
+/* ══════════════════════════════════════════════════════════════════
+   MODULO v55 — «Wow»: mese con più profondità, giornate espanse più
+   alte e vive (vedi 48-wow.js)
+   ------------------------------------------------------------------
+   Regole di prestazione:
+   · solo trasformazioni e opacità (lavorano sulla GPU), nessuna
+     animazione continua in più rispetto a prima: tutte le animazioni
+     qui sotto durano meno di un secondo e si eseguono una volta
+     all'apertura della giornata;
+   · le animazioni usano «animation-fill-mode: backwards» e fotogrammi
+     con il solo stato iniziale («from»): alla fine l'elemento torna
+     ai suoi stili normali, così nessuna regola storica (trasparenze,
+     trasformazioni del trascinamento) viene sovrascritta;
+   · tutto si spegne con «prefers-reduced-motion» o con l'impostazione
+     cielo «statico» (il modulo aggiunge body.kx-fx-off).
+══════════════════════════════════════════════════════════════════ */
+
+/* ── MESE: chip degli eventi con una luce in alto e un bordo chiaro a sinistra ── */
+#v-scroll .ev-bar-c{border-radius:4px;
+  box-shadow:0 1px 2px rgba(0,0,0,.10),inset 2px 0 0 rgba(255,255,255,.38),inset 0 1px 0 rgba(255,255,255,.28)}
+body:not(.kx-fx-off) #v-scroll .ev-bar-c::after{content:'';position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,0) 55%)}
+/* celle: un filo di rilievo in alto; tocco: leggero scurimento */
+body:not(.kx-fx-off) #v-scroll .day-cell:not(.is-wide){box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+#v-scroll .day-cell:not(.is-wide):active{filter:brightness(.965)}
+/* giorni con almeno un evento: numero in grassetto, si vede a colpo d'occhio dove c'è qualcosa */
+#v-scroll .day-cell:not(.today):has(.ev-bar-c) .day-num{font-weight:700}
+/* intestazione del mese: titolo con leggera ombra chiara (effetto inciso) */
+#v-scroll .month-label{text-shadow:0 1px 0 rgba(255,255,255,.6)}
+
+/* ── GIORNATA ESPANSA: apertura morbida, scena che si rivela a strati ── */
+@keyframes kxWideIn{from{opacity:0;transform:translateY(10px) scale(.985)}}
+@keyframes kxSkyIn{from{opacity:0}}
+@keyframes kxFloraIn{from{opacity:0;transform:translateY(14px)}}
+@keyframes kxBarIn{from{opacity:0;transform:translateY(8px)}}
+body:not(.kx-fx-off) .day-cell.is-wide .wide-inner{animation:kxWideIn .42s cubic-bezier(.2,.9,.25,1) backwards;transform-origin:50% 100%}
+body:not(.kx-fx-off) .day-cell.is-wide .sky-weather-svg,
+body:not(.kx-fx-off) .day-cell.is-wide .kx-scene{animation:kxSkyIn .9s ease backwards}
+body:not(.kx-fx-off) .day-cell.is-wide .sky-flora-svg{animation:kxFloraIn .7s cubic-bezier(.2,.9,.25,1) .15s backwards}
+/* le barre entrano una dopo l'altra: --kx-i è l'indice assegnato dal modulo */
+body:not(.kx-fx-off) .day-cell.is-wide .tl-bar{animation:kxBarIn .5s cubic-bezier(.2,.9,.25,1) backwards;animation-delay:calc(120ms + var(--kx-i,0)*45ms)}
+/* etichetta del giorno in rilievo sul cielo (vetro smerigliato) */
+.day-cell.is-wide .wide-day-label{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(255,252,249,.82)}
+/* vignetta leggera sui bordi del quadro: profondità senza costo (un solo gradiente statico) */
+body:not(.kx-fx-off) .day-cell.is-wide .tl-canvas.tl-canvas-sky::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:linear-gradient(90deg,rgba(0,0,0,.07),transparent 7%,transparent 93%,rgba(0,0,0,.07))}
+/* la riga espansa cambia altezza con la stessa curva del resto dell'app (vedi 48-wow.js) */
+
+/* ── SETTIMANA e GIORNO: barre con un filo di luce in alto ── */
+#dd-body .dd-ev-bar{box-shadow:0 2px 10px rgba(0,0,0,.10),inset 0 1px 0 rgba(255,255,255,.28)}
+
+/* ── spegnimento: meno movimento richiesto dal sistema, oppure cielo statico scelto nelle impostazioni ── */
+@media (prefers-reduced-motion:reduce){
+  .day-cell.is-wide .wide-inner,.day-cell.is-wide .sky-weather-svg,.day-cell.is-wide .kx-scene,
+  .day-cell.is-wide .sky-flora-svg,.day-cell.is-wide .tl-bar{animation:none!important}
+}
+body.kx-fx-off .day-cell.is-wide .wide-inner,body.kx-fx-off .day-cell.is-wide .sky-weather-svg,body.kx-fx-off .day-cell.is-wide .kx-scene,
+body.kx-fx-off .day-cell.is-wide .sky-flora-svg,body.kx-fx-off .day-cell.is-wide .tl-bar{animation:none!important}

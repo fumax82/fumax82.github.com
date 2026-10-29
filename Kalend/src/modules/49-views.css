@@ -1,0 +1,37 @@
+/* ══════════════════════════════════════════════════════════════════
+   MODULO v55 — «Viste»: settimana, giorno e anno più utili (49-views.js)
+══════════════════════════════════════════════════════════════════ */
+/* ── settimana: barre con orario completo, luogo, tag, provenienza ── */
+#wv-body .kx-wv-ev .kx-wv-loc,#wv-body .kx-wv-ev .kx-wv-tags,#wv-body .kx-wv-ev .kx-wv-ppl{
+  font:500 8.5px/1.2 var(--font-ui);opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+#wv-body .kx-wv-ev .kx-wv-tags{opacity:.8;font-family:var(--font-mono);font-size:8px}
+#wv-body .kx-wv-ev .kx-wv-src{position:absolute;top:2px;right:3px;font-size:9px;opacity:.85;line-height:1;font-style:normal}
+[dir="rtl"] #wv-body .kx-wv-ev .kx-wv-src{right:auto;left:3px}
+/* intestazione del giorno: pallini dei colori degli eventi e totale */
+.wv-day-col-hdr .kx-wv-dots{display:flex;justify-content:center;gap:2px;margin-top:2px;height:5px}
+.wv-day-col-hdr .kx-wv-dots b{width:5px;height:5px;border-radius:50%;display:block;box-shadow:0 0 0 1px rgba(255,255,255,.6)}
+.wv-day-col-hdr .kx-wv-n{font:700 8px var(--font-mono);color:var(--text-dim);margin-top:1px;line-height:1}
+.wv-day-col-hdr.today .kx-wv-n{color:#fff;opacity:.9}
+
+/* ── giorno: riga delle azioni rapide in fondo al pannello ── */
+#kx-dd-actions{display:flex;gap:6px;padding:6px 10px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--divider);
+  background:var(--bg-sheet);flex-shrink:0;position:relative;z-index:3;overflow-x:auto;scrollbar-width:none}
+#kx-dd-actions::-webkit-scrollbar{display:none}
+#kx-dd-actions button{flex:1 0 auto;min-width:0;border:1.5px solid var(--divider);background:transparent;color:var(--text-hi);border-radius:999px;
+  padding:7px 10px;font:700 11px var(--font-ui);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;justify-content:center}
+#kx-dd-actions button:active{transform:scale(.96)}
+#kx-dd-actions button.pri{background:linear-gradient(135deg,var(--accent),#F07856);border-color:transparent;color:#fff}
+#kx-dd-actions .kx-dd-free{font:600 10px var(--font-mono);color:var(--text-mid);align-self:center;padding:0 4px;white-space:nowrap}
+/* il tasto rotondo «+» esistente non serve più accanto alla riga delle azioni */
+#day-detail-panel.kx-has-actions #dd-add-event{display:none}
+:root[data-textsize] #kx-dd-actions{zoom:var(--kx-ts)}
+
+/* ── anno: pallini colorati degli eventi, festività in rosso ── */
+.yv-day{position:relative}
+.yv-day.kx-dots::after{display:none}
+.yv-day .kx-yv-d{position:absolute;left:0;right:0;bottom:-1px;display:flex;justify-content:center;gap:1px;pointer-events:none}
+.yv-day .kx-yv-d b{width:2.5px;height:2.5px;border-radius:50%;display:block}
+.yv-day.today .kx-yv-d b{background:#fff!important}
+.yv-day.kx-yv-hol{color:#D2445A;font-weight:700}
+.yv-day.kx-yv-wknd{color:#B86B50}
+.yv-month .kx-yv-sum{font:600 8px var(--font-mono);color:var(--text-dim);text-align:center;margin-top:3px;letter-spacing:.03em}

@@ -166,4 +166,5 @@ if(document.readyState==='complete')setTimeout(start,400);else addEventListener(
 /* alcuni moduli storici riassegnano le stesse funzioni poco dopo l'avvio: si riaggancia */
 setTimeout(()=>{try{hookPopup();hookSummary();hookMenu();}catch(e){}},2500);
 KX.UX={enqueueTip:enqueue,busy};
+KX.openAvail=openAvail;   /* v55: usata dalla riga delle azioni del giorno (49-views.js) */
 })();

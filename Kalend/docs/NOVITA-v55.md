@@ -207,5 +207,37 @@ Cosa è cambiato nel motore (`src/modules/10-lang-packs.js`):
   posposizioni, varianti colloquiali) con nuove chiavi documentate in
   `src/i18n/SCHEMA.md`.
 
+## 10. Interfaccia: barre di sistema, menu, orizzontale, viste, «wow»
+
+**Barre del telefono e menu che si aprono sotto** (modulo `46-shell.js`, parte nativa
+`MainActivity`): la pagina non si estende più sotto la barra di navigazione né sotto
+la tastiera. La parte nativa riserva due strisce (in alto per stato e notch, in basso
+per i tasti di sistema o la tastiera) e le colora come l'app; i menu non restano
+quindi mai coperti. Un «gestore della pila» osserva i fogli e i pannelli che si
+aprono e assegna a ciascuno un livello superiore a quello precedente: il secondo
+menu aperto da un primo si apre sempre sopra, anche i messaggi a comparsa.
+
+**Telefono in orizzontale** (`47-landscape.css`): il mese entra tutto nello schermo,
+dall'alto: sei righe di settimane che si dividono l'altezza, celle più fitte, intestazione
+compatta. Nessuna funzione sparisce (tocco, doppio tocco, pressione lunga, agenda
+laterale, menu); la giornata espansa prende metà schermo, la finestra del giorno
+diventa larga.
+
+**Viste più utili** (`49-views.js/css`): nella settimana le barre mostrano, se c'è spazio,
+orario completo, luogo, persone e tag, con il contrassegno di provenienza dei
+calendari collegati; le intestazioni dei giorni hanno i pallini dei colori e il numero
+degli eventi. Nel giorno, in fondo al pannello, una riga di azioni rapide (Libero,
+Liste, Detta con la data già pronta, Riepilogo, Nuovo) e le ore libere della giornata.
+Nell'anno, pallini colorati per gli eventi, festività in rosso, weekend evidenziati,
+totale eventi per mese. Stringhe in `src/i18n/extra/v55-viste.json` (19 lingue).
+
+**Mese e giornate espanse «wow»** (`48-wow.js/css`): chip degli eventi con luce e bordo
+chiaro, numero in grassetto nei giorni con eventi, celle con un filo di rilievo. La
+giornata espansa in verticale è più alta (circa un terzo dello schermo, massimo
+330 px) così la scena ha spazio; all'apertura cielo, paesaggio e barre compaiono a
+strati, una barra dopo l'altra. Prestazioni: solo trasformazioni e opacità, nessuna
+animazione continua in più; tutto si spegne con «riduci movimento» del sistema o
+con il cielo «statico» nelle impostazioni (classe `kx-fx-off`). Test: `tools/shell-test.js`.
+
 ## Cosa NON è cambiato
-Grafica, viste, cielo vivo, parser, tag, calendari, widget: identici alla v54.
+Cielo vivo, parser di base, tag, calendari, widget: come nella v54, salvo quanto sopra.

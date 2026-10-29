@@ -15,7 +15,13 @@ Kalend/
 │  │   30-calendars.js/css  calendario secondario (islamico, ebraico, lunare…) + feste calcolate
 │  │   31-holidays.js/css   festività offline per tutti i paesi dei 20 mercati, giorni sostitutivi, personalizzabili
 │  │   40-widget.js         fasce libere e riepilogo del giorno nel widget
+│  │   45-daycal.js/css     personalizzazioni per calendario nella vista del giorno
+│  │   46-shell.js          pila dei menu (ogni foglio sopra il precedente), colore della barra di navigazione
+│  │   47-landscape.css     telefono in orizzontale: mese intero dall'alto
+│  │   48-wow.js/css        mese con più profondità, giornate espanse più alte e animate (si spegne con «riduci movimento»)
+│  │   49-views.js/css      settimana, giorno e anno più utili: dettagli nelle barre, azioni rapide, pallini
 │  │   50-ux.js/css         azioni rapide, menu, suggerimenti al momento giusto, localizzazione tardiva
+│  │   55-textsize.js/css   opzione «testo grande»
 │  │   70-weather.js/css    meteo a fornitori: MET Norway (base), Open-Meteo e OpenWeatherMap con chiave personale
 │  │   80-geo.js            luoghi → coordinate a strati: memoria, atlante offline, Geocoder Android, chiave, Photon
 │  │   90-legal.js/css      pagina Informazioni legali, avviso di aggiornamento, informative prima dei permessi

@@ -285,6 +285,11 @@ Attendono una decisione: 1.6 (D3), 1.7 (D4), 1.9 (D3, D4), 1.11 (D3, D4, D7).
 
 ---
 
+### 1.16 · Interfaccia: barre di sistema, menu sovrapposti, orizzontale, viste, «wow» ✅
+Fatto nella v55 (moduli `46-shell.js`, `47-landscape.css`, `48-wow.js/css`,
+`49-views.js/css`; parte nativa `MainActivity` con strisce per stato e navigazione).
+Dettagli in `docs/NOVITA-v55.md` §10.
+
 ## 4. Fase 2 — Subito dopo aver avuto il sorgente nativo
 
 Sono **correzioni di sicurezza e lavoro tecnico** che servono comunque, anche prima
