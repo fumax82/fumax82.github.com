@@ -600,8 +600,8 @@
    "alle",
    "immer am",
    "immer",
-   "jeweils",
-   "jeweils am"
+   "jeweils am",
+   "jeweils"
   ],
   "until": [
    "bis",
@@ -618,7 +618,15 @@
    "taeglich",
    "jeden tag",
    "alle tage",
-   "tagtäglich"
+   "tagtäglich",
+   "jeden einzelnen tag",
+   "an jedem tag",
+   "tag für tag",
+   "tag fuer tag",
+   "einmal am tag",
+   "einmal täglich",
+   "einmal taeglich",
+   "jeden tag aufs neue"
   ],
   "weekly": [
    "wöchentlich",
@@ -626,13 +634,31 @@
    "jede woche",
    "einmal die woche",
    "einmal pro woche",
-   "wochenweise"
+   "wochenweise",
+   "jede einzelne woche",
+   "einmal wöchentlich",
+   "einmal woechentlich",
+   "in jeder woche",
+   "woche für woche",
+   "woche fuer woche",
+   "jede wo",
+   "allwöchentlich",
+   "allwoechentlich"
   ],
   "monthly": [
    "monatlich",
    "jeden monat",
    "einmal im monat",
-   "einmal pro monat"
+   "einmal pro monat",
+   "jeden einzelnen monat",
+   "jeden monat aufs neue",
+   "in jedem monat",
+   "monat für monat",
+   "monat fuer monat",
+   "einmal monatlich",
+   "jeden mon",
+   "allmonatlich",
+   "alle monate"
   ],
   "yearly": [
    "jährlich",
@@ -640,7 +666,16 @@
    "jedes jahr",
    "einmal im jahr",
    "alljährlich",
-   "alljaehrlich"
+   "alljaehrlich",
+   "jedes einzelne jahr",
+   "jahr für jahr",
+   "jahr fuer jahr",
+   "in jedem jahr",
+   "einmal jährlich",
+   "einmal jaehrlich",
+   "alle jahre",
+   "jedes jahr wieder",
+   "alle jahre wieder"
   ],
   "times": [
    "mal",
@@ -1354,18 +1389,13 @@
   ],
   "note": [
    "notiz",
-   "notiz:",
    "notizen",
    "beschreibung",
-   "beschreibung:",
    "details",
-   "details:",
    "anmerkung",
    "anmerkungen",
    "info",
-   "info:",
    "hinweis",
-   "hinweis:",
    "memo",
    "bemerkung",
    "zusatz",
@@ -1563,10 +1593,6 @@
     6
    ],
    [
-    "so",
-    0
-   ],
-   [
     "mo.",
     1
    ],
@@ -1713,14 +1739,6 @@
    [
     "sonntag",
     0
-   ],
-   [
-    "wochentag",
-    1
-   ],
-   [
-    "sa/so",
-    6
    ],
    [
     "pfinztag",

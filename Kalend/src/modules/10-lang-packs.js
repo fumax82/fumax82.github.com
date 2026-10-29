@@ -132,7 +132,8 @@ function rules(l){
   /* i nomi diventano SEGNAPOSTO (\u2063W3\u2063) finché tutte le regole non
      sono passate, così «金曜» non viene riletto dentro «金曜日» */
   const tokW=i=>' \u2063W'+i+'\u2063 ',tokM=i=>' \u2063M'+i+'\u2063 ';
-  wdn.forEach((n,i)=>{if(!n)return;first.push({re:R(bounded(n)),to:tokW(i)});if(lab[i]&&lab[i].length>=2&&lab[i].toLowerCase()!==n.toLowerCase())first.push({re:R(bounded(lab[i])),to:tokW(i)});
+  const weekWords=new Set(arr(L.weeks).map(x=>x.toLowerCase()));
+  wdn.forEach((n,i)=>{if(!n)return;first.push({re:R(bounded(n)),to:tokW(i)});if(lab[i]&&lab[i].length>=2&&lab[i].toLowerCase()!==n.toLowerCase()&&!weekWords.has(lab[i].toLowerCase()))first.push({re:R(bounded(lab[i])),to:tokW(i)});
     /* ebraico/arabo: «יום רביעי» si scrive anche «רביעי», «ורביעי» (e-mercoledì), «ברביעי» */
     if(['he','ar'].includes(l)){const last=n.split(/\s+/).pop();if(last&&last.length>=3&&last!==n){const pre=l==='he'?'(?:(?<![\\p{L}])[ובל])?':'(?:(?<![\\p{L}])و)?';first.push({re:R(pre+bounded(last)),to:m=>(/^[ו]|^و/.test(m)?' '+tok('e')+' ':' ')+tokW(i)});}}});
   (L.weekdays||[]).forEach(p=>{if(Array.isArray(p)&&typeof p[0]==='string'&&wdn[+p[1]]&&p[0].length>=2)first.push({re:R(bounded(p[0])),to:tokW(+p[1])});});
@@ -140,7 +141,9 @@ function rules(l){
   (L.months||[]).forEach(p=>{if(Array.isArray(p)&&typeof p[0]==='string'&&mon[+p[1]]&&p[0].length>=2)first.push({re:R(bounded(p[0])),to:tokM(+p[1])});});
   /* ordinali solo davanti a un giorno della settimana («first monday») */
   const dre='\u2063W\\d\u2063';
-  Object.entries(L.ordinals||{}).forEach(([w,n])=>{if(ORD[n])rest.push({re:R(bounded(w)+'(?=\\s+'+dre+')'),to:' '+tok(ORD[n])+' '});});
+  Object.entries(L.ordinals||{}).forEach(([w,n])=>{if(ORD[n]){rest.push({re:R(bounded(w)+'(?=\\s*'+dre+')'),to:' '+tok(ORD[n])+' '});
+    /* lingue con l'ordinale dopo il giorno («วันจันทร์แรก») */
+    rest.push({re:R('('+dre+')\\s*'+bounded(w)),to:' '+tok(ORD[n])+' $1 '});}});
   first.sort((a,b)=>b.re.source.length-a.re.source.length);rest.sort((a,b)=>b.re.source.length-a.re.source.length);
   CACHE[l]={first,rest,moments,L};
   return CACHE[l];
@@ -155,8 +158,9 @@ function numberWords(t,L){
   let months=[];try{months=MESI.map(m=>m.toLowerCase());}catch(e){}
   const mre=months.map(esc).join('|');
   const dig=w=>String(N[String(w).toLowerCase()]);
+  const tight=!!L.noSpaces;
   if(cues)t=t.replace(R(LB+'(?:'+cues+')\\s*'+nre+LA),(m,w)=>m.replace(w,dig(w)));
-  if(units)t=t.replace(R(LB+nre+'\\s*(?='+units+')'),(m,w)=>dig(w)+' ');
+  if(units)t=t.replace(R((tight?'(?<![\\p{N}])':LB)+nre+'\\s*(?='+units+')'),(m,w)=>dig(w)+' ');
   if(after)t=t.replace(R(LB+nre+'\\s+(?='+after+')'),(m,w)=>dig(w)+' ');
   if(mre){t=t.replace(R(LB+nre+'\\s+(?=(?:'+mre+'))'),(m,w)=>dig(w)+' ');
     t=t.replace(R(LB+'((?:'+mre+')\\s+)'+nre+LA),(m,a,w)=>a+dig(w));}
@@ -171,13 +175,23 @@ function suffixTimes(t,L){
   t=t.replace(/(\d{1,2})\s*ทุ่ม(?:\s*ครึ่ง)?/gu,(m,h)=>{const H=+h+18;if(H>24)return m;return ' '+tok('alle')+' '+two(H)+':'+(/ครึ่ง/.test(m)?'30':'00')+' ';});
   t=t.replace(/บ่าย\s*(\d{1,2})\s*โมง(?:\s*ครึ่ง)?/gu,(m,h)=>{let H=+h;if(H<12)H+=12;return ' '+tok('alle')+' '+two(H)+':'+(/ครึ่ง/.test(m)?'30':'00')+' ';});
   t=t.replace(/บ่ายโมง(?:\s*ครึ่ง)?/gu,m=>' '+tok('alle')+' 13:'+(/ครึ่ง/.test(m)?'30':'00')+' ');
+  t=t.replace(/(\d{1,2})\s*โมงเย็น(?:\s*ครึ่ง)?/gu,(m,h)=>{let H=+h;if(H<12)H+=12;return ' '+tok('alle')+' '+two(H)+':'+(/ครึ่ง/.test(m)?'30':'00')+' ';});
   t=t.replace(/เที่ยง(?:วัน)?(?![\p{L}])/gu,' '+tok('alle')+' 12:00 ');
   const hs=altPlain(arr(L.hourSuffix).filter(w=>!/\s/.test(w))),ms=altPlain(L.minuteSuffix),hf=altPlain(L.halfSuffix),pmP=altPlain(L.pmPrefix),amP=altPlain(L.amPrefix);
+  /* «今晚10点», «明早8点»: la parola del momento (stasera, stamattina) fa da prefisso
+     pomeriggio/mattina all'orario che segue, e il giorno resta nella frase */
+  const TIMEAHEAD='(?=\\s*\\d{1,2}(?:[:.]\\d{2})?\\s*(?:'+(hs||'(?!x)x')+'|:))';
+  const pm1=arr(L.pmPrefix)[0],am1=arr(L.amPrefix)[0];
+  if(pm1){const tn=altPlain(L.tonight);if(tn)t=t.replace(R('(?:'+tn+')'+TIMEAHEAD),' '+tok('oggi')+' '+pm1+' ');}
+  if(am1){const tm=altPlain(L.thisMorning);if(tm)t=t.replace(R('(?:'+tm+')'+TIMEAHEAD),' '+tok('oggi')+' '+am1+' ');}
+  /* unità che iniziano col suffisso dell'ora («時間», «시간»): dopo il suffisso non deve seguire la coda */
+  const tails=[];arr(L.hours).concat(arr(L.minutes),arr(L.days)).forEach(u=>arr(L.hourSuffix).forEach(h=>{if(u.length>h.length&&u.startsWith(h))tails.push(esc(u.slice(h.length)));}));
+  const HNOT=tails.length?'(?!'+tails.join('|')+')':'';
   if(hs){
     const pre='(?:('+(pmP||'(?!x)x')+')|('+(amP||'(?!x)x')+'))?\\s*';
     /* minuti: «18h30» (attaccati), «3点20分» (con suffisso), «15時半» (mezza) */
     const MIN='(?:(\\d{2})(?![\\p{N}])|\\s*(\\d{1,2})\\s*(?:'+(ms||'(?!x)x')+')|\\s*('+(hf||'(?!x)x')+'))?';
-    t=t.replace(R(pre+'(\\d{1,2})(?:[:.](\\d{2}))?\\s*(?:'+hs+')'+LATIN_NEXT+MIN),
+    t=t.replace(R(pre+'(\\d{1,2})(?:[:.](\\d{2}))?\\s*(?:'+hs+')'+HNOT+LATIN_NEXT+MIN),
       (m,pm,am,h,m2,ma,mb,half)=>{let H=+h;if(H>24)return m;if(pm&&H<12)H+=12;if(am&&H===12)H=0;const MI=m2?+m2:ma?+ma:mb?+mb:(half?30:0);if(MI>59)return m;return ' '+tok('alle')+' '+two(H)+':'+two(MI)+' ';});
   }
   /* «下午 3:30», «शाम 7:15» (prefisso + orario con i due punti) */
@@ -195,6 +209,8 @@ function ranges(t,L){
   t=t.replace(/(?<![\p{L}])מ-?(?=\d{1,2}(?::\d{2})?(?![\p{N}]))/gu,' '+tok('dalle')+' ');
   const ALLE=tok('alle'),DALLE=tok('dalle');
   const NOT_DATE='(?!\\s*(?:\u2063M|via|rue|\\p{Lu}))';   /* «au 20 décembre», «bis 5 Hauptstraße» non sono orari */
+  /* «alle 15:00 - alle 16:00» (da «15時〜16時») → «dalle 15:00 alle 16:00» */
+  t=t.replace(R(ALLE+'\\s+'+TM+'\\s*[-–]\\s*'+ALLE+'\\s+'+TM),' '+DALLE+' $1 '+ALLE+' $2 ');
   if(from&&to){
     t=t.replace(R(ALLE+'\\s+'+TM+'\\s*(?:'+from+')\\s*'+ALLE+'\\s+'+TM+'\\s*(?:'+to+')'),' '+DALLE+' $1 '+ALLE+' $2 ');
     t=t.replace(R('(?:'+from+')\\s*'+ALLE+'\\s+'+TM+'\\s*(?:'+to+')\\s*'+ALLE+'\\s+'+TM),' '+DALLE+' $1 '+ALLE+' $2 ');
@@ -203,12 +219,16 @@ function ranges(t,L){
   if(from){
     t=t.replace(R('(?:'+ALLE+'\\s+)?'+TM+'\\s*(?:'+from+')'+LA+'(?=\\s*'+ALLE+'\\s+\\d)'),' '+DALLE+' $1 ');
     t=t.replace(R(ALLE+'\\s+'+TM+'\\s*(?:'+from+')'+LA),' '+DALLE+' $1 ');
-    t=t.replace(R(LB+'(?:'+from+')\\s*(?=\\d{1,2}(?:[:.]\\d{2})?(?![\\p{N}])'+NOT_DATE+')'),' '+DALLE+' ');
+    t=t.replace(R(LB+'(?:'+from+')\\s*(?=\\d{1,2}(?:[:.]\\d{2})?(?![\\p{N}/])'+NOT_DATE+')'),' '+DALLE+' ');
   }
   if(to){
+    /* «9点到10点»: solo la parola «fino a» fra due orari → «dalle 9 alle 10» */
+    t=t.replace(R(ALLE+'\\s+'+TM+'\\s*(?:'+to+')\\s*'+ALLE+'\\s+'+TM),' '+DALLE+' $1 '+ALLE+' $2 ');
     t=t.replace(R(ALLE+'\\s+'+TM+'\\s*(?:'+to+')'+LA),' '+ALLE+' $1 ');
-    t=t.replace(R(LB+'(?:'+to+')\\s*(?=\\d{1,2}(?:[:.]\\d{2})?(?![\\p{N}])'+NOT_DATE+')'),' '+ALLE+' ');
+    t=t.replace(R(LB+'(?:'+to+')\\s*(?=\\d{1,2}(?:[:.]\\d{2})?(?![\\p{N}/])'+NOT_DATE+')'),' '+ALLE+' ');
   }
+  /* due orari di seguito («alle 9:00 alle 10:00») sono un intervallo */
+  t=t.replace(R(ALLE+'\\s+'+TM+'\\s+'+ALLE+'\\s+'+TM+'(?![\\p{N}:])'),' '+DALLE+' $1 '+ALLE+' $2 ');
   /* «9h», «20h30» → «9:00», «20:30» (francese, portoghese, vietnamita…) */
   t=t.replace(/(?<![\p{N}:])(\d{1,2})h(\d{2})?(?![\p{N}\p{L}])/giu,(m,h,mi)=>+h<=24?h+':'+(mi||'00'):m);
   /* ore «e mezza», «meno un quarto» */
@@ -224,15 +244,19 @@ function ranges(t,L){
 /* durate, relativi, preavvisi, luoghi, persone: con una "spia" che eviti falsi positivi */
 function guarded(t,L,l){
   const num='(?:\\d+(?:[.,]\\d+)?)';
+  /* nelle lingue senza spazi o a suffissi («3日後», «2주마다», «10 นาทีก่อน») dopo l'unità
+     può seguire subito un'altra parola: basta che non segua un'altra cifra */
+  const TIGHT=!!L.noSpaces||['ja','ko','zh','th'].includes(l);
+  const UA=TIGHT?'(?![\\p{N}])':LA;
   /* unità dopo un numero → italiano («2 hours» → «2 ore», «30分» → «30 minuti») */
   const HALF=tok("mezz'ora")+'|'+tok("un'ora");
-  UNITS.forEach(([k,it])=>{const a=altPlain(L[k]);if(a)t=t.replace(R('('+num+')\\s*(?:'+a+')'+LA),'$1 '+tok(it)+' ');});
-  const fr=alt(L.for);if(fr)t=t.replace(R(LB+'(?:'+fr+')\\s+(?='+num+'\\s*'+U_IT+')'),' '+tok('per')+' ');
+  UNITS.forEach(([k,it])=>{const a=altPlain(L[k]);if(a)t=t.replace(R('('+num+')\\s*(?:'+a+')'+UA),'$1 '+tok(it)+' ');});
+  const fr=alt(L.for);if(fr)t=t.replace(R(LB+'(?:'+fr+')\\s*(?='+num+'\\s*'+U_IT+')'),' '+tok('per')+' ');
   const inn=alt(L.in);
   if(inn)t=t.replace(R(LB+'(?:'+inn+')\\s+(?='+num+'\\s*'+U_IT+'|'+HALF+')'),' '+tok('tra')+' ');
   /* «10 minutes before» / «提前30分钟» → «30 minuti prima» */
   const bf=alt(L.before);
-  if(bf){t=t.replace(R('('+num+'\\s*'+U_IT+'|'+HALF+')\\s*(?:'+bf+')'+LA),'$1 '+tok('prima')+' ');t=t.replace(R(LB+'(?:'+bf+')\\s*('+num+'\\s*'+U_IT+')'),'$1 '+tok('prima')+' ');}
+  if(bf){t=t.replace(R('('+num+'\\s*'+U_IT+'|'+HALF+')\\s*(?:'+bf+')'+UA),'$1 '+tok('prima')+' ');t=t.replace(R(LB+'(?:'+bf+')\\s*('+num+'\\s*'+U_IT+')'),'$1 '+tok('prima')+' ');}
   /* persone */
   const withAll=[].concat(L.withStrong||[],L.with||[]);
   if(WITH_AFTER.has(l)){const w=alt(withAll);if(w)t=t.replace(R('(\\p{L}[\\p{L}\\p{M}\'’-]*)\\s+(?:'+w+')'+LA),' '+tok('con')+' $1 ');}
@@ -276,6 +300,12 @@ function atRule(t,L){
    «2 ore 后» → «tra 2 ore» */
 function postpositions(t,L){
   const PRIMA=tok('prima'),RIC=tok('ricordamelo'),FINO=tok('fino al');
+  /* «毎月第1月曜日», «매달 첫째 월요일», «每月第一个周一»: «ogni mese primo W» → «primo W del mese» */
+  const ORDS='(?:'+Object.values(ORD).map(tok).join('|')+')';
+  t=t.replace(R('(?:'+tok('ogni mese')+'|'+tok('del mese')+'|'+tok('ogni')+'\\s+'+tok('mese')+')\\s*('+ORDS+')\\s*(\u2063W\\d\u2063)'),' $1 $2 '+tok('del mese')+' ');
+  t=t.replace(R('('+ORDS+')\\s*(\u2063W\\d\u2063)\\s*(?:'+tok('ogni mese')+'|'+tok('ogni')+'\\s+'+tok('mese')+')'),' $1 $2 '+tok('del mese')+' ');
+  /* «settimana prossima の venerdì» → «settimana prossima venerdì» (il parser legge la coppia) */
+  t=t.replace(R(tok('settimana prossima')+'\\s*(?:の|의)?\\s*(?=\u2063W)'),tok('settimana prossima')+' ');
   /* «毎週月曜» → «ogni settimana lunedì» → «ogni lunedì» */
   t=t.replace(R(tok('ogni settimana')+'\\s+(?=\u2063W)'),tok('ogni')+' ');
   const HALF=tok("mezz'ora")+'|'+tok("un'ora");
@@ -299,27 +329,28 @@ function cjkPeople(raw,out,L,l){
   const W=sortLong(w).map(esc).join('|');
   const found=[];let m;
   const isDay=n=>/[曜週月日]|요일|วัน|จันทร์|อังคาร|พุธ|พฤหัส|ศุกร์|เสาร์|อาทิตย์|^(今日|明日|午前|午後|来週|今週|毎週|昨日|오늘|내일|오전|오후|다음주|이번주|พรุ่งนี้|วันนี้)$/.test(n);
-  if(l==='zh'){const re=R('(?:'+W+')([\\p{Script=Han}A-Za-z]{2,4}?)(?=一起|吃|去|开|见|聊|打|约|玩|喝|谈|讨论|[\\s,，。]|$)');while((m=re.exec(raw)))found.push(m[1]);}
+  if(l==='zh'){const re=R('(?:'+W+')([\\p{Script=Han}A-Za-z]{2,4}?(?:[、，,][\\p{Script=Han}A-Za-z]{2,4}?)*)(?=一起|吃|去|开|见|聊|打|约|玩|喝|谈|讨论|在|到|还有|[\\s,，。]|$)');while((m=re.exec(raw)))m[1].split(/[、，,]/).forEach(n=>{if(n)found.push(n);});}
   else if(l==='ja'){const re=R('(?:(?<![\\p{Script=Han}\\p{Script=Katakana}])([\\p{Script=Han}\\p{Script=Katakana}]{1,4})|(?<=^|[にでをはが、\\s\\d])([\\p{Script=Hiragana}]{2,4}?))(?:さん|様|さま|くん|ちゃん|先生|部長|課長)?(?:'+W+')');while((m=re.exec(raw))){const n=m[1]||m[2];if(n&&!isDay(n)&&!/[とにでをは]$/.test(n))found.push(n);}}
   else if(l==='th'){const re=R('(?:'+W+')([\\p{Script=Thai}]{2,10}?)(?=\\s|$|ที่|วัน|เวลา|ตอน|และ)');while((m=re.exec(raw))){if(!isDay(m[1]))found.push(m[1]);}}
   else{const re=R('(?<![\\p{Script=Hangul}])([\\p{Script=Hangul}]{2,4}?)(?:씨|님|선생님)?(?:'+W+')(?=[\\s,.]|$)');while((m=re.exec(raw))){if(!isDay(m[1]))found.push(m[1]);}}
   if(!found.length)return;
   out.people=out.people||[];
   found.forEach(n=>{if(!out.people.includes(n))out.people.push(n);});
-  if(out.title){let t=out.title;found.forEach(n=>{t=t.replace(new RegExp(esc(n)+'(?:さん|様|さま|くん|ちゃん|先生|部長|課長|씨|님|선생님)?(?:'+W+')(?:一起)?','gu'),' ');t=t.replace(new RegExp('(?:'+W+')'+esc(n),'gu'),' ');});
+  if(out.title){let t=out.title;found.forEach(n=>{t=t.replace(new RegExp(esc(n)+'(?:さん|様|さま|くん|ちゃん|先生|部長|課長|씨|님|선생님)?(?:'+W+')(?:一起)?','gu'),' ');t=t.replace(new RegExp('(?:'+W+'|[、，,])'+esc(n),'gu'),' ');});
     out.title=t.replace(/\s+/g,' ').trim();}
 }
 /* luoghi nelle lingue con particelle: «渋谷で», «강남에서», «在北京» */
 function cjkPlace(raw,out,l){
   if(out.location||!['ja','ko','zh','th','tr'].includes(l))return;
   let m=null;
-  if(l==='th')m=raw.match(/ที่([\p{Script=Thai}\d]{2,14}?)(?=\s|$|กับ|วัน|เวลา|ตอน)/u);
+  if(l==='th')m=raw.match(/(?<![\p{Script=Thai}])ที่([\p{Script=Thai}\d]{2,14}?(?:\s+\d+(?:\/\d+)?)?(?:\s+(?!กับ|วัน|เวลา|ตอน|และ|ทุก)[\p{Script=Thai}]{2,14})?)(?=\s|$|กับ|วัน|เวลา|ตอน|และ)/u);
   else if(l==='tr')m=raw.match(/(\p{Lu}[\p{L}]+(?:\s+\p{Lu}[\p{L}]+)?)'(?:de|da|te|ta)(?![\p{L}])/u);
-  else if(l==='ja')m=raw.match(/(?<![\p{Script=Han}\p{Script=Katakana}])([\p{Script=Han}\p{Script=Katakana}]{2,8})(?:で|にて)(?=[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\s]|$)/u);
+  else if(l==='ja')m=raw.match(/(?<![\p{Script=Han}\p{Script=Katakana}\d])([\p{Script=Han}\p{Script=Katakana}]{2,8}(?:[\d-]{1,9})?)(?:で|にて)(?=[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\s]|$)/u);
   else if(l==='ko')m=raw.match(/(?<![\p{L}\d])((?:[\p{Script=Hangul}]{2,}\s*){1,3}\d*)에서(?=[\s,.]|$)/u);
-  else m=raw.match(/在([\p{Script=Han}A-Za-z]{2,8}?)(?=和|跟|与|吃|开|见|的|一起|参加|[\s,，。]|$)/u);
+  else m=raw.match(/在([\p{Script=Han}A-Za-z]{2,8}?(?:\d{1,5}号?)?)(?=和|跟|与|吃|开|见|的|一起|参加|[\s,，。]|$)/u);
   if(!m)return;
   const loc=m[1].trim();if(/^(今日|明日|来週|今週|오늘|내일|明天|今天|下周|这周)$/.test(loc))return;
+  try{const rel=new Set(arr(lexOf(l).relatives).map(x=>x.toLowerCase()));if(rel.has(loc.toLowerCase()))return;}catch(e){}
   out.location=loc;
   if(out.title){out.title=out.title.replace(m[0],' ').replace(new RegExp(esc(loc)+"(?:'(?:de|da|te|ta))?",'u'),' ').replace(/\s+/g,' ').trim();}
 }
@@ -365,8 +396,8 @@ function canonicalize(raw){
   const l=lang();if(l==='it'||!pack(l))return raw;
   const {first,rest,moments,L}=rules(l);
   let t=' '+String(raw||'')+' ';
+  t=numberWords(t,L);     /* «八時半» → «8時半» prima di leggere i suffissi */
   t=suffixTimes(t,L);
-  t=numberWords(t,L);
   first.forEach(r=>{t=t.replace(r.re,r.to);});   /* nomi di giorni/mesi → segnaposto */
   /* «lunedì E giovedì» in ogni lingua (и, و, และ, 和, ve, dan…) e anche solo con lo spazio (coreano) */
   const andW=alt(L.and);
@@ -420,13 +451,16 @@ function preNormalize(raw,l){
   const toSlash=(y,m,d)=>{if(+m<1||+m>12||+d<1||+d>31)return null;const D=String(+d),M=String(+m);
     /* il parser legge «a/b» come giorno/mese, o mese/giorno solo con il locale en-US */
     return ' '+(us?M+'/'+D:D+'/'+M)+(y?'/'+y:'')+' ';};
-  /* ISO 2026-03-05 · orientale 2026/3/5 · 2026年3月5日 */
-  t=t.replace(/(?<![\d/.-])(\d{4})[-/.年]\s*(\d{1,2})[-/.月]\s*(\d{1,2})日?(?![\d/.-])/g,(m,y,mo,d)=>toSlash(y,mo,d)||m);
+  /* la lingua scrive mese/giorno ma il parser (senza locale en-US) legge giorno/mese: si scambiano.
+     Va fatto PRIMA delle conversioni qui sotto, che producono già l'ordine giusto. */
+  if(order==='mdy'&&!us)t=t.replace(/(?<![\d/.-])(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?(?![\d/])/g,(m,a,b,y)=>(+a>=1&&+a<=12&&+b>=1&&+b<=31)?' '+b+'/'+a+(y?'/'+y:'')+' ':m);
+  /* ISO 2026-03-05 · orientale 2026/3/5 · 2026.3.5 · 2026年3月5日 · 2026년 3월 5일 */
+  t=t.replace(/(?<![\d/.-])(\d{4})\s*[-/.年년]\s*(\d{1,2})\s*[-/.月월]\s*(\d{1,2})\s*[日일]?(?![\d/.-])/g,(m,y,mo,d)=>toSlash(y,mo,d)||m);
   /* 5.3.2026 · 5.3. · 05.03 (tedesco, russo, polacco, turco…): solo se la lingua scrive così */
   if(order==='dmy')t=t.replace(/(?<![\d.:/])(\d{1,2})\.(\d{1,2})\.(?:(\d{4}|\d{2})(?![\d.:]))?(?![\d:])/g,(m,d,mo,y)=>{
     if(+mo<1||+mo>12||+d<1||+d>31)return m;return toSlash(y?(y.length===2?'20'+y:y):'',mo,d)||m;});
-  /* la lingua scrive mese/giorno ma il parser (senza locale en-US) legge giorno/mese: si scambiano */
-  if(order==='mdy'&&!us)t=t.replace(/(?<![\d/.-])(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?(?![\d/])/g,(m,a,b,y)=>(+a>=1&&+a<=12&&+b>=1&&+b<=31)?' '+b+'/'+a+(y?'/'+y:'')+' ':m);
+  /* «15時〜16時», «9～10» → trattino fra i due orari */
+  t=t.replace(/(\d)\s*[〜～~]\s*(?=\d)/g,'$1-');
   /* «8H30» → «8h30»; «8 h 30» → «8h30» */
   t=t.replace(/(\d{1,2})\s*[hH]\s*(\d{2})(?![\d\p{L}])/gu,'$1h$2');
   return t;

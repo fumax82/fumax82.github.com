@@ -615,10 +615,7 @@
    "todos os",
    "todas as",
    "cada",
-   "a cada",
-   "sempre às",
-   "sempre as",
-   "sempre"
+   "a cada"
   ],
   "until": [
    "até",
@@ -673,7 +670,10 @@
    "todo ano",
    "todos os anos",
    "cada ano",
-   "por ano"
+   "por ano",
+   "todo o ano",
+   "uma vez por ano",
+   "uma vez ao ano"
   ],
   "times": [
    "vezes",
@@ -720,8 +720,6 @@
    "até às",
    "ate as",
    "ate às",
-   "até",
-   "ate",
    "e as",
    "e às",
    "a",
@@ -914,8 +912,7 @@
    "1h"
   ],
   "half": [
-   "meia",
-   "meio"
+   "meia"
   ],
   "quarter": [
    "um quarto",
@@ -1076,7 +1073,11 @@
    "com",
    "c/",
    "c/ o",
-   "c/ a"
+   "c/ a",
+   "com a",
+   "com o",
+   "com os",
+   "com as"
   ],
   "withStrong": [
    "junto com",
@@ -1105,7 +1106,11 @@
    "e mais a"
   ],
   "and": [
-   "e"
+   "e",
+   "e o",
+   "e a",
+   "e os",
+   "e as"
   ],
   "relatives": [
    "mãe",
@@ -1274,49 +1279,18 @@
    "sqn",
    "sqs",
    "qnm",
-   "conjunto",
-   "cj.",
-   "lote",
-   "km",
    "marginal",
-   "calçada",
-   "calcada",
    "calçadão",
    "calcadao",
-   "orla",
-   "bairro",
-   "condomínio",
-   "condominio",
-   "cond.",
-   "residencial",
-   "jardim",
-   "jd.",
-   "vila",
-   "parque",
-   "pq.",
    "ladeira",
    "rotunda",
-   "urbanização",
-   "urbanizacao",
-   "lugar",
-   "sítio",
-   "sitio",
-   "praceta",
-   "edifício",
-   "edificio",
-   "ed.",
-   "shopping",
-   "galeria",
-   "setor",
-   "asa norte",
-   "asa sul"
+   "praceta"
   ],
   "note": [
    "nota",
    "notas",
    "obs",
    "obs.",
-   "obs:",
    "observação",
    "observacao",
    "observações",
@@ -1415,17 +1389,8 @@
    "do mes",
    "de cada mês",
    "de cada mes",
-   "por mês",
-   "por mes",
-   "ao mês",
-   "ao mes",
    "em cada mês",
-   "em cada mes",
-   "todo mês",
-   "todo mes",
-   "todos os meses",
-   "mensal",
-   "mensalmente"
+   "em cada mes"
   ],
   "stopwords": [
    "o",
@@ -1477,7 +1442,9 @@
    "ne",
    "tipo",
    "só",
-   "so"
+   "so",
+   "dia",
+   "no dia"
   ],
   "weekdays": [
    [
@@ -1543,10 +1510,6 @@
    [
     "2ª-feira",
     1
-   ],
-   [
-    "ter",
-    2
    ],
    [
     "ter.",
@@ -1786,7 +1749,9 @@
    ]
   ],
   "dateOrder": "dmy",
-  "hourSuffix": [],
+  "hourSuffix": [
+   "h"
+  ],
   "minuteSuffix": [],
   "halfSuffix": [],
   "monthSuffix": [],

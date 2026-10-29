@@ -533,7 +533,6 @@
    "jours ouvres",
    "jours ouvrables",
    "en semaine",
-   "la semaine",
    "du lundi au vendredi",
    "jours de semaine",
    "lundi à vendredi",
@@ -668,7 +667,13 @@
   ],
   "times": [
    "fois",
-   "x"
+   "x",
+   "séances",
+   "seances",
+   "séance",
+   "seance",
+   "sessions",
+   "session"
   ],
   "at": [
    "à",
@@ -681,14 +686,12 @@
    "à partir de",
    "a partir de",
    "dès",
-   "des",
    "pour"
   ],
   "from": [
    "de",
    "du",
    "dès",
-   "des",
    "à partir de",
    "a partir de",
    "entre",
@@ -704,7 +707,6 @@
    "jusque",
    "et",
    "-",
-   "au",
    "jusqu'aux",
    "jusqu’aux"
   ],
@@ -989,7 +991,15 @@
    "après-midi",
    "apres-midi",
    "aprem",
-   "soir"
+   "soir",
+   "heures du soir",
+   "heure du soir",
+   "h du soir",
+   "heures de l'après-midi",
+   "heures de l’après-midi",
+   "heures de l'aprem",
+   "heures le soir",
+   "heures de la nuit"
   ],
   "am": [
    "du matin",
@@ -1000,7 +1010,11 @@
    "am",
    "matin",
    "dans la matinée",
-   "en matinée"
+   "en matinée",
+   "heures du matin",
+   "heure du matin",
+   "h du matin",
+   "heures de la matinée"
   ],
   "moments": {
    "morning": [
@@ -1346,7 +1360,6 @@
    "route",
    "rte",
    "quai",
-   "cours",
    "square",
    "passage",
    "promenade",
@@ -1355,16 +1368,11 @@
    "lieu-dit",
    "chaussée",
    "chaussee",
-   "cité",
-   "cite",
-   "résidence",
-   "residence",
    "sentier",
    "montée",
    "montee",
    "traverse",
    "parvis",
-   "mail",
    "venelle",
    "ruelle",
    "rang",
@@ -1372,15 +1380,6 @@
    "nationale",
    "départementale",
    "zone industrielle",
-   "zi",
-   "za",
-   "zac",
-   "centre commercial",
-   "galerie",
-   "hameau",
-   "domaine",
-   "clos",
-   "villa",
    "faubourg",
    "fbg",
    "placette",
@@ -1503,11 +1502,7 @@
   "ofMonth": [
    "du mois",
    "de chaque mois",
-   "par mois",
-   "de tous les mois",
-   "tous les mois",
-   "chaque mois",
-   "mensuel"
+   "de tous les mois"
   ],
   "stopwords": [
    "le",
@@ -1550,7 +1545,9 @@
    "son",
    "sa",
    "ses",
-   "son"
+   "son",
+   "prochain",
+   "prochaine"
   ],
   "weekdays": [
    [
@@ -1586,10 +1583,6 @@
     2
    ],
    [
-    "mer",
-    3
-   ],
-   [
     "mer.",
     3
    ],
@@ -1604,10 +1597,6 @@
    [
     "mercredis",
     3
-   ],
-   [
-    "jeu",
-    4
    ],
    [
     "jeu.",
@@ -1627,10 +1616,6 @@
    ],
    [
     "ven.",
-    5
-   ],
-   [
-    "vend",
     5
    ],
    [
@@ -1671,34 +1656,6 @@
    ],
    [
     "dimanches",
-    0
-   ],
-   [
-    "lu",
-    1
-   ],
-   [
-    "ma",
-    2
-   ],
-   [
-    "me",
-    3
-   ],
-   [
-    "je",
-    4
-   ],
-   [
-    "ve",
-    5
-   ],
-   [
-    "sa",
-    6
-   ],
-   [
-    "di",
     0
    ]
   ],

@@ -1164,7 +1164,8 @@
   "in": [
    "dalam",
    "dlm",
-   "dalam waktu"
+   "dalam waktu",
+   "lagi"
   ],
   "hours": [
    "jam"
@@ -1634,7 +1635,10 @@
    "kok",
    "tolong",
    "mendatang",
-   "berikutnya"
+   "berikutnya",
+   "tanggal",
+   "tgl",
+   "tgl."
   ],
   "weekdays": [
    [

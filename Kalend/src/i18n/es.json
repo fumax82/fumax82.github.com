@@ -681,7 +681,11 @@
   ],
   "times": [
    "veces",
-   "vez"
+   "vez",
+   "sesiones",
+   "sesión",
+   "sesion",
+   "clases"
   ],
   "at": [
    "a las",
@@ -730,13 +734,10 @@
   "for": [
    "durante",
    "por",
-   "de",
    "duración",
    "duracion",
    "que dura",
-   "dura",
-   "unos",
-   "unas"
+   "dura"
   ],
   "in": [
    "dentro de",
@@ -805,10 +806,6 @@
    [
     "febr",
     1
-   ],
-   [
-    "mar",
-    2
    ],
    [
     "mar.",
@@ -1350,32 +1347,6 @@
    "transversal",
    "callejón",
    "callejon",
-   "glorieta",
-   "rotonda",
-   "autopista",
-   "ruta",
-   "colonia",
-   "col.",
-   "barrio",
-   "urbanización",
-   "urbanizacion",
-   "urb",
-   "urb.",
-   "polígono",
-   "poligono",
-   "esquina",
-   "esq",
-   "esq.",
-   "km",
-   "kilómetro",
-   "kilometro",
-   "cerrada",
-   "privada",
-   "andador",
-   "circuito",
-   "periférico",
-   "periferico",
-   "eje",
    "calzada",
    "prolongación",
    "prolongacion",
@@ -1383,23 +1354,7 @@
    "malecón",
    "malecon",
    "rambla",
-   "alameda",
-   "parque",
-   "plazuela",
-   "plazoleta",
-   "manzana",
-   "mz",
-   "lote",
-   "piso",
-   "depto",
-   "dpto",
-   "oficina",
-   "local",
-   "edificio",
-   "torre",
-   "conjunto",
-   "condominio",
-   "fraccionamiento"
+   "alameda"
   ],
   "note": [
    "nota",
@@ -1413,9 +1368,7 @@
    "comentarios",
    "observaciones",
    "info",
-   "ojo",
-   "recordar que",
-   "llevar"
+   "ojo"
   ],
   "numbers": {
    "cero": 0,
@@ -1499,11 +1452,9 @@
   },
   "ofMonth": [
    "del mes",
+   "de mes",
    "de cada mes",
-   "al mes",
-   "de todos los meses",
-   "mensual",
-   "cada mes"
+   "de todos los meses"
   ],
   "stopwords": [
    "el",
@@ -1565,23 +1516,7 @@
     1
    ],
    [
-    "lu",
-    1
-   ],
-   [
-    "l",
-    1
-   ],
-   [
-    "mar",
-    2
-   ],
-   [
     "mar.",
-    2
-   ],
-   [
-    "ma",
     2
    ],
    [
@@ -1597,19 +1532,11 @@
     3
    ],
    [
-    "mi",
-    3
-   ],
-   [
     "mier",
     3
    ],
    [
     "miér",
-    3
-   ],
-   [
-    "x",
     3
    ],
    [
@@ -1625,27 +1552,11 @@
     4
    ],
    [
-    "ju",
-    4
-   ],
-   [
-    "j",
-    4
-   ],
-   [
     "vie",
     5
    ],
    [
     "vie.",
-    5
-   ],
-   [
-    "vi",
-    5
-   ],
-   [
-    "v",
     5
    ],
    [
@@ -1658,14 +1569,6 @@
    ],
    [
     "sáb.",
-    6
-   ],
-   [
-    "sa",
-    6
-   ],
-   [
-    "s",
     6
    ],
    [
@@ -1689,51 +1592,7 @@
     0
    ],
    [
-    "do",
-    0
-   ],
-   [
-    "d",
-    0
-   ],
-   [
     "domingos",
-    0
-   ],
-   [
-    "los lunes",
-    1
-   ],
-   [
-    "los martes",
-    2
-   ],
-   [
-    "los miércoles",
-    3
-   ],
-   [
-    "los miercoles",
-    3
-   ],
-   [
-    "los jueves",
-    4
-   ],
-   [
-    "los viernes",
-    5
-   ],
-   [
-    "los sábados",
-    6
-   ],
-   [
-    "los sabados",
-    6
-   ],
-   [
-    "los domingos",
     0
    ]
   ],

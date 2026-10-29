@@ -1040,7 +1040,17 @@
    "w tygodniu",
    "robocze",
    "powszednie",
-   "w każdy dzień roboczy"
+   "w każdy dzień roboczy",
+   "dzień roboczy",
+   "dzien roboczy",
+   "dzień powszedni",
+   "dzien powszedni",
+   "w każdy dzień powszedni",
+   "w kazdy dzien roboczy",
+   "każdego dnia roboczego",
+   "kazdego dnia roboczego",
+   "dni pracujące",
+   "w dni pracujące"
   ],
   "allday": [
    "cały dzień",
@@ -1152,7 +1162,16 @@
    "każdego dnia",
    "kazdego dnia",
    "co dziennie",
-   "dzień w dzień"
+   "dzień w dzień",
+   "w każdy dzień",
+   "w kazdy dzien",
+   "każdy dzień",
+   "kazdy dzien",
+   "raz dziennie",
+   "raz na dzień",
+   "raz na dzien",
+   "w każdym dniu",
+   "dzień po dniu"
   ],
   "weekly": [
    "co tydzień",
@@ -1166,7 +1185,13 @@
    "każdego tygodnia",
    "kazdego tygodnia",
    "co tyg",
-   "co tyg."
+   "co tyg.",
+   "w każdym tygodniu",
+   "w kazdym tygodniu",
+   "raz na tydzień",
+   "raz na tydzien",
+   "tydzień w tydzień",
+   "co każdy tydzień"
   ],
   "monthly": [
    "co miesiąc",
@@ -1182,7 +1207,12 @@
    "raz w miesiacu",
    "każdego miesiąca",
    "co mies",
-   "co mies."
+   "co mies.",
+   "w każdym miesiącu",
+   "w kazdym miesiacu",
+   "raz na miesiąc",
+   "raz na miesiac",
+   "miesiąc w miesiąc"
   ],
   "yearly": [
    "co rok",
@@ -1195,7 +1225,13 @@
    "raz w roku",
    "raz do roku",
    "każdego roku",
-   "kazdego roku"
+   "kazdego roku",
+   "rokrocznie",
+   "w każdym roku",
+   "w kazdym roku",
+   "raz na rok",
+   "rok w rok",
+   "co każdy rok"
   ],
   "times": [
    "razy",
@@ -1299,7 +1335,6 @@
    "minutą",
    "min",
    "min.",
-   "m",
    "minutki",
    "minutek"
   ],
@@ -1310,7 +1345,6 @@
    "dnia",
    "dniach",
    "dniu",
-   "d",
    "doba",
    "doby",
    "dób"
@@ -2093,16 +2127,11 @@
   "note": [
    "notatka",
    "notatki",
-   "notatka:",
    "opis",
-   "opis:",
    "szczegóły",
    "szczegoly",
-   "szczegóły:",
    "uwagi",
-   "uwagi:",
    "info",
-   "info:",
    "komentarz",
    "dodatkowo",
    "ps",
@@ -2390,7 +2419,24 @@
    "tak",
    "jak",
    "gdzie",
-   "kiedy"
+   "kiedy",
+   "najbliższy",
+   "najbliższą",
+   "najbliższe",
+   "najblizszy",
+   "najblizsza",
+   "przyszły",
+   "przyszłą",
+   "przyszłe",
+   "przyszly",
+   "przyszla",
+   "następny",
+   "następną",
+   "następne",
+   "nastepny",
+   "nastepna",
+   "kolejny",
+   "kolejną"
   ],
   "weekdays": [
    [

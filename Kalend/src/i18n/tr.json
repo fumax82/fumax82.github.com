@@ -991,7 +991,19 @@
    "iş günleri",
    "is gunleri",
    "pazartesiden cumaya",
-   "hafta içi her gün"
+   "hafta içi her gün",
+   "hafta içi günleri",
+   "hafta içi günlerinde",
+   "iş günlerinde",
+   "is gunlerinde",
+   "mesai günleri",
+   "mesai günlerinde",
+   "çalışma günleri",
+   "hafta içi hergün",
+   "haftaiçi hergün",
+   "haftaiçi her gün",
+   "pazartesi-cuma",
+   "pazartesiden cumaya her gün"
   ],
   "allday": [
    "tüm gün",
@@ -1079,15 +1091,24 @@
    "her hafta",
    "haftalık",
    "haftalik",
-   "haftada bir",
-   "her hafta sonu"
+   "her hafta sonu",
+   "haftada bir kez",
+   "haftada bir defa",
+   "haftada bir kere",
+   "haftada 1 kez",
+   "her haftanın",
+   "her hafta düzenli olarak"
   ],
   "monthly": [
    "her ay",
    "aylık",
    "aylik",
    "ayda bir",
-   "her ayın"
+   "her ayın",
+   "ayda bir kez",
+   "ayda bir defa",
+   "ayda bir kere",
+   "her ayın aynı günü"
   ],
   "yearly": [
    "her yıl",
@@ -1162,7 +1183,9 @@
    "süresince",
    "boyunca",
    "süreyle",
-   "sureyle"
+   "sureyle",
+   "toplam",
+   "toplamda"
   ],
   "in": [
    "sonra",
@@ -1175,8 +1198,7 @@
    "saat",
    "saatlik",
    "saatte",
-   "sa",
-   "s"
+   "sa"
   ],
   "minutes": [
    "dakika",
@@ -1870,47 +1892,9 @@
    "lokasyon",
    "nerede",
    "nerde",
-   "de",
-   "da",
-   "te",
-   "ta",
-   "'de",
-   "'da",
-   "'te",
-   "'ta",
-   "@",
-   "at"
+   "@"
   ],
-  "streets": [
-   "cadde",
-   "caddesi",
-   "cad",
-   "cd",
-   "sokak",
-   "sokağı",
-   "sokagi",
-   "sk",
-   "sok",
-   "bulvar",
-   "bulvarı",
-   "bulvari",
-   "blv",
-   "mahalle",
-   "mahallesi",
-   "mah",
-   "meydan",
-   "meydanı",
-   "meydani",
-   "site",
-   "sitesi",
-   "apartmanı",
-   "apt",
-   "plaza",
-   "avm",
-   "no",
-   "kat",
-   "daire"
-  ],
+  "streets": [],
   "note": [
    "not",
    "notlar",
@@ -1999,7 +1983,25 @@
    "elli": 50,
    "altmış": 60,
    "altmis": 60,
-   "yarım": 30
+   "yarım": 30,
+   "birde": 1,
+   "ikide": 2,
+   "üçte": 3,
+   "ucte": 3,
+   "dörtte": 4,
+   "dortte": 4,
+   "beşte": 5,
+   "beste": 5,
+   "altıda": 6,
+   "altida": 6,
+   "yedide": 7,
+   "sekizde": 8,
+   "dokuzda": 9,
+   "onda": 10,
+   "on birde": 11,
+   "onbirde": 11,
+   "on ikide": 12,
+   "onikide": 12
   },
   "ordinals": {
    "ilk": 1,
@@ -2023,17 +2025,11 @@
    "ayin",
    "her ayın",
    "her ayin",
-   "ayda bir",
-   "her ay",
    "ayının"
   ],
   "stopwords": [
    "ve",
    "ile",
-   "de",
-   "da",
-   "te",
-   "ta",
    "'de",
    "'da",
    "'te",
@@ -2084,9 +2080,6 @@
    "saat",
    "saatinde",
    "tarihinde",
-   "günü",
-   "gunu",
-   "günün",
    "ki",
    "mi",
    "mı",
@@ -2113,7 +2106,19 @@
    "yeri",
    "yer",
    "konum",
-   "adres"
+   "adres",
+   "akşamı",
+   "aksami",
+   "sabahı",
+   "sabahi",
+   "öğleni",
+   "gecesi",
+   "önümüzdeki",
+   "onumuzdeki",
+   "gelecek",
+   "sonraki",
+   "toplam",
+   "toplamda"
   ],
   "weekdays": [
    [
@@ -2331,16 +2336,91 @@
    [
     "pazar günü",
     0
+   ],
+   [
+    "pazartesisi",
+    1
+   ],
+   [
+    "salısı",
+    2
+   ],
+   [
+    "salisi",
+    2
+   ],
+   [
+    "çarşambası",
+    3
+   ],
+   [
+    "carsambasi",
+    3
+   ],
+   [
+    "perşembesi",
+    4
+   ],
+   [
+    "persembesi",
+    4
+   ],
+   [
+    "cuması",
+    5
+   ],
+   [
+    "cumasi",
+    5
+   ],
+   [
+    "cumartesisi",
+    6
+   ],
+   [
+    "pazarı",
+    0
+   ],
+   [
+    "pazari",
+    0
    ]
   ],
   "dateOrder": "dmy",
-  "hourSuffix": [],
+  "hourSuffix": [
+   "'de",
+   "'da",
+   "'te",
+   "'ta",
+   "’de",
+   "’da",
+   "’te",
+   "’ta"
+  ],
   "minuteSuffix": [],
   "halfSuffix": [],
   "monthSuffix": [],
   "daySuffix": [],
-  "pmPrefix": [],
-  "amPrefix": [],
+  "pmPrefix": [
+   "akşam",
+   "aksam",
+   "öğleden sonra",
+   "ogleden sonra",
+   "akşamüstü",
+   "aksamustu",
+   "ikindi",
+   "öğlen",
+   "oglen",
+   "öğle",
+   "ogle"
+  ],
+  "amPrefix": [
+   "sabah",
+   "sabahleyin",
+   "sabahtan",
+   "öğleden önce",
+   "ogleden once"
+  ],
   "noSpaces": false
  },
  "autotag": {
