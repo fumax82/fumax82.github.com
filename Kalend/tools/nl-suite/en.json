@@ -271,6 +271,152 @@
     "start": "10:00"
    },
    "note": "ora superato · IT_EDGE_RE in 10-lang-packs.js (flag i) toglie «Da» in testa al titolo perché coincide con la preposizione italiana «da». Ottenuto «Vinci exhibition». Stesso effetto per «In person meeting», «Per diem», «A level exams»."
+  },
+  {
+   "s": "Remind me to call the dentist tomorrow at half past nine",
+   "expect": {
+    "title": "Call the dentist",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0
+   },
+   "note": "v56 dictation: lead command, half past"
+  },
+  {
+   "s": "Add team meeting on Thursday from 2 to 4 pm in the conference room high priority",
+   "expect": {
+    "title": "Team meeting",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:00",
+    "loc": "Conference room",
+    "pri": "important"
+   },
+   "note": "v56: lead, common venue, priority phrase"
+  },
+  {
+   "s": "Gym on Monday at 7 in the evening for an hour and a half",
+   "expect": {
+    "title": "Gym",
+    "date": "wd:1",
+    "start": "19:00",
+    "end": "20:30"
+   },
+   "note": "v56: evening word before/after hour, spoken duration"
+  },
+  {
+   "s": "Dinner with Anna and Mark at Luigi's restaurant on Saturday at 8:30",
+   "expect": {
+    "title": "Dinner",
+    "date": "wd:6",
+    "start": "20:30",
+    "loc": "Luigi's restaurant",
+    "people": [
+     "Anna",
+     "Mark"
+    ]
+   },
+   "note": "v56: name before venue type, dinner context"
+  },
+  {
+   "s": "Call with the team on Teams Friday at 11 note bring the report",
+   "expect": {
+    "titleIncludes": "Call",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "Teams",
+    "desc": "bring the report"
+   },
+   "note": "v56: remote meeting, note without colon"
+  },
+  {
+   "s": "Dentist on the 5th at 3 pm no rush",
+   "expect": {
+    "title": "Dentist",
+    "date": "dom:5",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "rush"
+   },
+   "note": "v56: day without month, low priority"
+  },
+  {
+   "s": "Groceries at the supermarket tomorrow afternoon at 4",
+   "expect": {
+    "title": "Groceries",
+    "date": "+1",
+    "start": "16:00",
+    "loc": "Supermarket"
+   },
+   "note": "v56: venue with article, afternoon before hour"
+  },
+  {
+   "s": "Title check-up, date 12 November, start 9:30, end 10, location St Mary's hospital, priority high, participants Luke, description bring the test results",
+   "expect": {
+    "title": "Check-up",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "St Mary's hospital",
+    "pri": "urgent",
+    "people": [
+     "Luke"
+    ],
+    "desc": "bring the test results"
+   },
+   "note": "v56: field-by-field dictation in English"
+  },
+  {
+   "s": "I need to pay the electricity bill by Friday important",
+   "expect": {
+    "titleIncludes": "electricity bill",
+    "date": "wd:5",
+    "pri": "important",
+    "titleNot": "need to"
+   },
+   "note": "v56: «I need to» stripped"
+  },
+  {
+   "s": "Video call with mum on Sunday at quarter past six in the evening",
+   "expect": {
+    "titleIncludes": "Video call",
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "Mum"
+    ]
+   },
+   "note": "v56: quarter past + evening"
+  },
+  {
+   "s": "Yoga class every Tuesday and Thursday at 6:30 pm until December 20th at the gym remind me 30 minutes before",
+   "expect": {
+    "titleIncludes": "Yoga",
+    "start": "18:30",
+    "loc": "Gym",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ],
+     "until": "md:12-20"
+    }
+   },
+   "note": "v56: recurrence with venue and reminder"
+  },
+  {
+   "s": "Schedule a meeting with Bob at ten to nine",
+   "expect": {
+    "titleIncludes": "meeting",
+    "start": "08:50",
+    "people": [
+     "Bob"
+    ],
+    "titleNot": "schedule"
+   },
+   "note": "v56: «ten to nine» and lead with article"
   }
  ]
 }

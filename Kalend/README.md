@@ -11,6 +11,7 @@ Kalend/
 │  ├─ index.html          ← il sorgente storico dell'app (v53 + ritocchi v54), si modifica qui
 │  ├─ modules/            ← i moduli nuovi della v54, un file per tema, commentati in italiano
 │  │   10-lang-packs.js     parser multilingue e auto-tag per ogni alfabeto
+│  │   11-nl-smart.js/css   dettatura intelligente: lingua della frase riconosciuta, comandi, luoghi comuni, giorno senza mese, note, priorità, campi a voce, chip 🌐 e anteprima nella scheda vocale
 │  │   20-tags-culture.js   famiglie, parole chiave e tag culturali nella lingua in uso
 │  │   30-calendars.js/css  calendario secondario (islamico, ebraico, lunare…) + feste calcolate
 │  │   31-holidays.js/css   festività offline per tutti i paesi dei 20 mercati, giorni sostitutivi, personalizzabili

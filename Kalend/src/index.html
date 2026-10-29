@@ -12487,6 +12487,8 @@ const AppSettings={
   language:'auto',
   country:'',theme:'sky',accent:'#2AABB8',
   timeFormat:'auto',firstDay:'auto',defDuration:60,sound:'on',vibration:'on',
+  /* v56: lingua della dettatura ('' = la stessa dell'app; oppure un codice come 'en') */
+  voiceLang:'',
   /* Località meteo di default: se impostata, viene usata per gli eventi senza luogo */
   defaultLocation:'',
   confirmedOverlaps:new Set(),
@@ -19297,7 +19299,8 @@ const NL2=(()=>{
     const mk=Object.keys(W.moments);
     const mm=s.match(R(`${B1}(${alt(mk)})${B2}`));
     if(mm&&out.start==null&&!out.allDay){const key=mm[1].toLowerCase();out.start=W.moments[key];if(['mattina','mattino','morning','pomeriggio','afternoon','sera','evening','notte','night','stamattina','stasera','tonight'].includes(key))s=s.replace(mm[0],' ');}
-    if(out.start!=null&&out.start<8*60&&!/am/i.test(raw)&&out.start>=60&&!/(0\d|\d\d)[:.]/.test(raw)&&R(`${B1}(?:alle|at)\\s+[1-7]${B2}`).test(raw)&&/(sera|pomeriggio|evening|afternoon|cena|dinner)/i.test(raw))out.start+=720;
+    /* v56: «stasera alle 8:30», «tonight at 8:30» (anche 8–11; mai con lo zero iniziale, che è un orario esplicito) */
+    if(out.start!=null&&out.start<12*60&&!/am/i.test(raw)&&out.start>=60&&!/(0\d|\d\d)[:.]/.test(raw)&&R(`${B1}(?:alle|at)\\s+(?:[1-9]|1[01])(?:[:.]\\d{2})?${B2}`).test(raw)&&/(sera|stasera|serata|pomeriggio|evening|tonight|afternoon|cena|dinner|notte|night)/i.test(raw))out.start+=720;
     /* luogo: indirizzo (via/piazza/street…) poi "a/in/presso + Città" */
     const streets='via|viale|piazza|piazzale|corso|largo|vicolo|strada|lungomare|borgo|calle|avenida|plaza|rue|boulevard|avenue|place|straße|strasse|platz|rua|praça';
     const ci=w=>w.split('|').map(x=>'['+x[0].toUpperCase()+x[0]+']'+x.slice(1)).join('|');
@@ -19307,7 +19310,8 @@ const NL2=(()=>{
       if(pm){out.location=pm[1].trim();s=s.replace(pm[0],' ');}}
     /* partecipanti: "con Anna e Marco" (restano anche nel titolo) */
     const cap=a=>a.map(x=>x.charAt(0).toUpperCase()+x.slice(1));
-    const wm=s.match(new RegExp(`${B1}(?:${alt(W.with.concat(cap(W.with)))})\\s+((?:\\p{Lu}[\\p{L}'’-]*)(?:(?:${alt(W.and)})\\s*\\p{Lu}[\\p{L}'’-]*)*)`,'u'));
+    /* v56: la forma con l'iniziale maiuscola («Con Anna…») vale solo a inizio frase: «Comic Con Stuttgart» non è una compagnia */
+    const wm=s.match(new RegExp(`(?:${B1}(?:${alt(W.with)})|^\\s*(?:${alt(cap(W.with))}))\\s+((?:\\p{Lu}[\\p{L}'’-]*)(?:(?:${alt(W.and)})\\s*\\p{Lu}[\\p{L}'’-]*)*)`,'u'));
     if(wm)wm[1].split(new RegExp(alt(W.and),'iu')).map(x=>x.trim()).filter(Boolean).forEach(p=>{if(!out.people.includes(p))out.people.push(p);});
     /* titolo */
     out.title=s.replace(/\s+/g,' ').replace(/\s+([,;:.])/g,'$1').replace(/^[\s,;:.-]+|[\s,;:.-]+$/g,'').trim();
@@ -19349,7 +19353,7 @@ const NL2=(()=>{
     /* mezzogiorno / mezzanotte / noon */
     t=t.replace(Rx(`${B1}(?:a\\s+|at\\s+)?(mezzogiorno|mezzanotte|noon|midnight)(?:\\s+e\\s+(mezzo|mezza|un quarto))?${B2}`),(m,w,f)=>{const h=/mezzog|noon/i.test(w)?12:0;const mi=!f?0:/quarto/i.test(f)?15:30;return ` alle ${hm(h,mi)} `;});
     /* half past eight / quarter to nine */
-    t=t.replace(Rx(`${B1}(half|quarter)\\s+(past|to)\\s+(${NW}|\\d{1,2})${B2}`),(m,a,b,h)=>{let H=num(h);if(H==null)return m;let M=a.toLowerCase()==='half'?30:15;if(b.toLowerCase()==='to'){H=(H+23)%24;M=60-M;}return ` at ${hm(H,M)} `;});
+    t=t.replace(Rx(`${B1}(half|quarter)\\s+(past|to)\\s+(${NW}|\\d{1,2})${B2}`),(m,a,b,h)=>{let H=num(h);if(H==null)return m;let M=a.toLowerCase()==='half'?30:15;if(b.toLowerCase()==='to'){H=(H+23)%24;M=60-M;}return ` at ${H}:${pad2(M)} `;});   /* v56: senza zero iniziale */
     /* alle otto e mezza di sera · dalle 9 meno un quarto · at seven pm */
     t=t.replace(Rx(`${B1}(alle ore|alle|all'|alla|ore|dalle|dalla|verso le|at|from|until|to)\\s+(${NW}|\\d{1,2})(?![:.]\\d)(?:\\s+e\\s+(mezza|mezzo|un quarto|tre quarti|${NW}|\\d{1,2}))?(?:\\s+meno\\s+(un quarto|${NW}|\\d{1,2}))?(?:\\s+(di sera|della sera|di notte|della notte|del pomeriggio|di pomeriggio|del mattino|di mattina|della mattina|in the evening|in the afternoon|in the morning|pm|am))?${B2}`),
       (m,prep,hw,plus,minus,part)=>{
@@ -19549,7 +19553,7 @@ function installQuick(){
 }
 /* dettatura: nell'APK il riconoscimento vocale di Android (gratuito); nel browser Web Speech */
 function dictate(cb){
-  const lang=L10N.locale||'it-IT';
+  const lang=(window.KX&&KX.Smart&&KX.Smart.speechLang&&KX.Smart.speechLang())||L10N.locale||'it-IT';   /* v56 */
   if(KN.has&&KN.has('speech')){KN.call('speech',lang).then(t=>{if(t)cb(t);}).catch(()=>toast(T('Dettatura non disponibile')));return;}
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast(T('Dettatura non disponibile in questo browser'));return;}
   const r=new SR();r.lang=lang;r.interimResults=false;r.onresult=e=>cb(e.results[0][0].transcript);r.onerror=()=>toast(T('Dettatura non disponibile'));r.start();toast('🎤 '+T('Parla ora…'));
@@ -19937,7 +19941,9 @@ function extractRem(text){
 }
 const FK=[['title','titolo|title|oggetto|nome evento'],['desc','descrizione|description|dettagli|details|note|nota'],['day','giorno|data|date|day|quando'],
   ['start',"ora di inizio|ora d'inizio|ora inizio|orario di inizio|inizio|inizia alle|comincia alle|start|starts at"],['end','ora di fine|ora fine|orario di fine|fine|termina alle|finisce alle|end|ends at'],
-  ['rem','preavvisi|preavviso|promemoria|reminders|reminder|notifiche|avvisi|ricordamelo|ricordami|avvisami|preavvisami|notificami|avvisa'],['tags','tags|tag|etichette|etichetta|categorie|categoria|hashtag|tac|teg'],['people','partecipanti|partecipante|invitati|participants|persone|insieme a']];
+  ['rem','preavvisi|preavviso|promemoria|reminders|reminder|notifiche|avvisi|ricordamelo|ricordami|avvisami|preavvisami|notificami|avvisa'],['tags','tags|tag|etichette|etichetta|categorie|categoria|hashtag|tac|teg'],['people','partecipanti|partecipante|invitati|participants|persone|insieme a'],
+  /* v56: «luogo sala riunioni», «priorità alta» (in ogni lingua, tramite il lessico «fields» del pacchetto) */
+  ['place','luogo|posto|location|place|dove|where'],['pri','priorità|priorita|priority']];
 const PROTECT=/((?:un|uno|una|\d+|due|tre|quattro|cinque|sei|sette|otto|dieci|quindici|trenta)\s+giorn[oi]|fine settimana|tutto il giorno|il giorno prima|giorno prima|giorno precedente|giorno stesso|giorno dopo|fine del mese|end of)/giu;
 const TIMEVAL=new RegExp(`^\\s*(?:alle\\s+|le\\s+|at\\s+)?(\\d|${NW}|mezzogiorno|mezzanotte|noon|midnight|una|tredici|quattordici|sedici|diciassette|diciotto|diciannove|ventuno|ventidue|ventitre|ventitré)`,'iu');
 function fields(txt){
@@ -19973,7 +19979,8 @@ KX.NL2.parse=function(raw){
   /* "… e salva" detto alla fine: salvataggio immediato */
   let save=false;txt=txt.replace(/[\s,.]*(?:e\s+)?(?:salva(?:lo)?|salvare|conferma|save it|save)\s*[.!]?$/iu,()=>{save=true;return'';});
   const F=fields(txt);let rems=[],comp=txt;
-  if(F){comp=[F.free,F.day,F.start&&F.end?`dalle ${F.start} alle ${F.end}`:F.start?`alle ${F.start}`:''].filter(Boolean).join(' ');}
+  const tv=v=>String(v||'').replace(/^\s*(?:dalle ore|dalle|alle ore|alle|all'|ore|at|a las|à|um|às)\s+/i,'');   /* v56: la preposizione la mettiamo noi */
+  if(F){comp=[F.free,F.day,F.start&&F.end?`dalle ${tv(F.start)} alle ${tv(F.end)}`:F.start?`alle ${tv(F.start)}`:''].filter(Boolean).join(' ');}
   if(!F){/* frase libera: "tag lavoro e salute" → #tag, "partecipanti Anna e Luca" → con …, "giorno 5" → 5 */
     comp=comp.replace(new RegExp(`${B1}(?:tag|hashtag|etichetta)\\s+([\\p{L}\\p{N}_-]+)((?:\\s+(?:e|ed|and)\\s+[\\p{L}\\p{N}_-]+)*)`,'giu'),(m,a,rest)=>{
       const more=(rest||'').split(/\s+(?:e|ed|and)\s+/u).map(x=>x.trim()).filter(Boolean);const keep=[];const tg=['#'+a];
@@ -19990,6 +19997,9 @@ KX.NL2.parse=function(raw){
     if(F.tags)out.tags=out.tags.concat(splitTags(F.tags));
     if(F.people)out.people=out.people.concat(splitPeople(F.people));
     if(!F.title&&!out.title&&F.free)out.title=cap(F.free);
+    /* v56: luogo e priorità detti come campi */
+    if(F.place&&!out.location)out.location=cap(F.place.replace(/[.,;:]+$/,''));
+    if(F.pri){const v=(KX.Lang&&KX.Lang.priorityOf)?KX.Lang.priorityOf(F.pri):null;if(v)out.priority=v==='normal'?null:v;}
   }
   if(rems.length){
     rems=rems.map(r=>r==='eve'?(out.start!=null?out.start+240:1440):r).filter(r=>typeof r==='number'&&r>=0&&r<=60*24*30);
@@ -20143,7 +20153,8 @@ function vOpen(prefill){
   vStart();
 }
 function vStart(){
-  const lang=L10N.locale||'it-IT';V.busy=true;vSet('wait',T('Preparo il microfono…'));
+  const lang=(window.KX&&KX.Smart&&KX.Smart.speechLang&&KX.Smart.speechLang())||L10N.locale||'it-IT';   /* v56: lingua della dettatura scelta dall'utente */
+  V.busy=true;vSet('wait',T('Preparo il microfono…'));
   if(KN.has&&KN.has('speechLive')){
     KN.call('speechLive',lang).then(t=>vFinal(t)).catch(e=>vErr(String(e&&e.message||e)));return;}
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -21678,6 +21689,8 @@ function peopleFrom(text){
   const re=new RegExp(`(?:^|[\\s,;])(${STRONG}|${WEAK})\\s+`,'giu');let m;
   while((m=re.exec(text))){
     const strong=!new RegExp(`^${WEAK}$`,'iu').test(m[1].trim());
+    /* v56: «Con» con la maiuscola a metà frase («Comic Con Stuttgart») non introduce persone */
+    if(!strong&&/^\p{Lu}/u.test(m[1].trim())&&text.slice(0,m.index).trim()!=='')continue;
     let pos=m.index+m[0].length;const items=[];let rel=false;
     for(let g=0;g<8;g++){
       let rest=text.slice(pos);
@@ -22142,7 +22155,7 @@ function normTimes(txt){
   found.forEach(t=>{
     if(t.special==='midnight'){t.min=t.paired||isTo(t.prep)?1440:0;return;}
     let h=t.h;
-    if(t.q){if(PMQ.test(t.q)){if(h<12)h+=12;if(/notte/.test(t.q)&&t.h===12)h=0;}else if(h===12&&/mattin|a\.?m/.test(t.q))h=12;}
+    if(t.q){if(PMQ.test(t.q)){if(/notte/.test(t.q)){if(t.h===12)h=0;else if(h>=7&&h<12)h+=12;}else if(h<12)h+=12;}else if(h===12&&/mattin|a\.?m/.test(t.q))h=12;}   /* v56: «2 di notte» = 02:00 */
     else if(!t.lz&&!t.special&&h>=1&&h<=11){
       /* senza "mattina/pomeriggio": 1–6 sono quasi sempre pomeriggio; 7–11 di sera solo se il contesto è serale */
       if(h<=6&&!morn)h+=12;else if(h>=7&&eve&&!morn)h+=12;
@@ -22173,7 +22186,8 @@ function duration(txt){
     [/\b(?:per|di|durata(?: di)?|dura)\s+(?:un'?\s?|una\s+)ora(?:\s+e\s+(mezza|mezzo|un quarto|tre quarti|\d{1,2}(?:\s+minuti)?))?\b/,x=>60+(x[1]?(/mezz/.test(x[1])?30:/tre quarti/.test(x[1])?45:/quarto/.test(x[1])?15:parseInt(x[1],10)):0)],
     [new RegExp(`\\b(?:per|di|durata(?: di)?|dura)\\s+(\\d{1,2}|due|tre|quattro|cinque|sei|sette|otto)\\s+ore(?:\\s+e\\s+(mezza|mezzo|un quarto|tre quarti|\\d{1,2}))?\\b`),x=>num(x[1])*60+(x[2]?(/mezz/.test(x[2])?30:/tre quarti/.test(x[2])?45:/quarto/.test(x[2])?15:parseInt(x[2],10)):0)],
     [/\b(?:per|di|durata(?: di)?|dura)\s+(\d{1,3}|dieci|quindici|venti|trenta|quaranta|quarantacinque|cinquanta)\s+min(?:uti|uto)?\b/,x=>num(x[1])],
-    [/\bfor\s+(\d{1,2}|an?|one|two|three)\s+hours?\b/,x=>(/^an?$/.test(x[1])?1:num(x[1]))*60],
+    [/\bfor\s+(\d{1,2}|an?|one|two|three)\s+(?:hours?|hrs?)(?:\s+and\s+(?:a\s+)?half)?\b/,x=>(/^an?$/.test(x[1])?1:num(x[1]))*60+(/and\s+(?:a\s+)?half/.test(x[0])?30:0)],   /* v56: «for an hour and a half» */
+    [/\bfor\s+half\s+an\s+hour\b/,()=>30],
     [/\bfor\s+(\d{1,3})\s+min(?:ute)?s?\b/,x=>+x[1]],
   ];
   for(const[r,f]of D){if((m=t.match(r))){const v=f(m);if(v>0&&v<=24*60)return{min:v,span:m[0]};}}
@@ -22187,7 +22201,8 @@ function people(raw){
   const add=[],drop=[];let m;
   /* «mia moglie Laura» → Laura (la persona vera è il nome) */
   const r1=new RegExp(`(?:^|[^\\p{L}])(?:${ci('mi[oaie]|su[oaie]|tu[oaie]|nostr[oaie]|il|la|lo|i|le|gli')})?\\s*(${ci(REL)})\\s+(\\p{Lu}[\\p{L}'’-]+)`,'gu');
-  while((m=r1.exec(raw))){add.push(m[2]);drop.push(cap(m[1].toLowerCase()));}
+  let isIt=true;try{isIt=(window.KX&&KX.Lang&&KX.Lang.lang?KX.Lang.lang():L10N.resolvedLang)==='it';}catch(e){}   /* v56 */
+  if(isIt)while((m=r1.exec(raw))){add.push(m[2]);drop.push(cap(m[1].toLowerCase()));}
   /* «il dottor Rossi», «dalla dottoressa Bianchi», «avvocato Verdi» */
   const r2=new RegExp(`(?:^|[^\\p{L}])(${ci(TITLES)})\\s+(\\p{Lu}[\\p{L}'’-]+(?:\\s+\\p{Lu}[\\p{L}'’-]+)?)`,'gu');
   while((m=r2.exec(raw))){const t=m[1].replace(/\.$/,'');add.push(cap(t.toLowerCase())+' '+m[2]);drop.push(m[2]);}
@@ -22212,7 +22227,9 @@ function cleanTitle(t,info){
   const ART='(?:'+ci('il|lo|la|l\'|i|gli|le|mi[oaie]|su[oaie]|tu[oaie]|nostr[oaie]|un|una|uno|the|my|his|her')+')\\s+';
   const re=new RegExp(`\\s(?:${ci('con|col|coi|insieme a|insieme ad|insieme con|assieme a|assieme ad|in compagnia di|in compagnia del|in compagnia della|accompagnat[oaie] da|with|together with')})\\s+(?:${ART})*${PP}(?:\\s+\\p{Lu}[\\p{L}'’-]*)?(?:\\s*(?:,|\\s[eE]\\s|\\s[eE]d\\s|\\sand\\s)\\s*(?:${ART})*${PP}(?:\\s+\\p{Lu}[\\p{L}'’-]*)?)*`,'gu');
   /* «chiamare Luca»: il nome è l'oggetto dell'azione e resta nel titolo */
+  s=s.replace(/(\S\s+)(Con|Col|Coi|With)(?=\s+\p{Lu})/gu,'$1$2\u200B');   /* v56: «Comic Con Stuttgart» resta intero */
   if(!/\b(?:chiamare|richiamare|telefonare|sentire|scrivere a|messaggio a)\s/i.test(s))s=s.replace(re,' ');
+  s=s.replace(/\u200B/g,'');
   if(info.placeSpan)s=s.replace(new RegExp(escRe(info.placeSpan),'i'),' ');
   if(info.durSpan)s=s.replace(new RegExp(escRe(info.durSpan),'i'),' ');
   s=s.replace(/\s(?:all'una|all’una|a mezzogiorno|a mezzanotte|e mezz[ao]|e un quarto|e tre quarti|di un'?\s?ora|di mezz'?ora|per un'?\s?ora(?: e mezza)?|del pomeriggio|di sera|di mattina|stasera|stamattina)\b/gi,' ');

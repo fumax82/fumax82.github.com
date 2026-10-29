@@ -272,6 +272,149 @@
    },
    "skip": true,
    "note": "PARSER: il hook v44 people() di index.html applica a tutte le lingue la regola italiana «REL + Nome» («mia moglie Laura» → Laura): «Mamma Mia» produce la persona «Mia». Ottenuto persone [Mia]."
+  },
+  {
+   "s": "Recuérdame llamar al dentista mañana a las nueve y media",
+   "expect": {
+    "title": "Llamar al dentista",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0
+   },
+   "note": "v56 dictado: orden inicial, nueve y media"
+  },
+  {
+   "s": "Añade reunión de equipo el jueves de 2 a 4 de la tarde en la sala de reuniones prioridad alta",
+   "expect": {
+    "title": "Reunión de equipo",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:00",
+    "loc": "Sala de reuniones",
+    "pri": "urgent"
+   },
+   "note": "v56: orden, lugar común, prioridad"
+  },
+  {
+   "s": "Gimnasio el lunes a las 7 de la tarde durante 90 minutos",
+   "expect": {
+    "title": "Gimnasio",
+    "date": "wd:1",
+    "start": "19:00",
+    "end": "20:30"
+   },
+   "note": "v56: duración"
+  },
+  {
+   "s": "Cena con Ana y Marcos en el restaurante Da Mario el sábado a las ocho y media",
+   "expect": {
+    "title": "Cena",
+    "date": "wd:6",
+    "start": "20:30",
+    "loc": "Restaurante Da Mario",
+    "people": [
+     "Ana",
+     "Marcos"
+    ]
+   },
+   "note": "v56: local + nombre, contexto de cena"
+  },
+  {
+   "s": "Llamada con el equipo por Teams el viernes a las 11 nota llevar el informe",
+   "expect": {
+    "titleIncludes": "Llamada",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "Teams",
+    "desc": "llevar el informe"
+   },
+   "note": "v56: reunión a distancia, nota sin dos puntos"
+  },
+  {
+   "s": "Dentista el 5 a las 3 de la tarde sin prisa",
+   "expect": {
+    "title": "Dentista",
+    "date": "dom:5",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "prisa"
+   },
+   "note": "v56: día sin mes, prioridad baja"
+  },
+  {
+   "s": "Compra en el supermercado mañana por la tarde a las 4",
+   "expect": {
+    "title": "Compra",
+    "date": "+1",
+    "start": "16:00",
+    "loc": "Supermercado"
+   },
+   "note": "v56: lugar común, tarde antes de la hora"
+  },
+  {
+   "s": "Título revisión, fecha 12 de noviembre, inicio 9:30, fin 10, lugar hospital La Paz, prioridad alta, participantes Lucas, descripción llevar los análisis",
+   "expect": {
+    "title": "Revisión",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "Hospital La Paz",
+    "pri": "urgent",
+    "people": [
+     "Lucas"
+    ],
+    "desc": "llevar los análisis"
+   },
+   "note": "v56: dictado por campos"
+  },
+  {
+   "s": "Tengo que pagar la factura de la luz antes del viernes importante",
+   "expect": {
+    "titleIncludes": "factura",
+    "date": "wd:5",
+    "pri": "important",
+    "titleNot": "tengo que"
+   },
+   "note": "v56: «tengo que» quitado"
+  },
+  {
+   "s": "Videollamada con mamá el domingo a las seis y cuarto de la tarde",
+   "expect": {
+    "titleIncludes": "Videollamada",
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "Mamá"
+    ]
+   },
+   "note": "v56: seis y cuarto de la tarde"
+  },
+  {
+   "s": "Clase de yoga todos los martes y jueves a las 18:30 hasta el 20 de diciembre en el gimnasio recuérdame 30 minutos antes",
+   "expect": {
+    "titleIncludes": "yoga",
+    "start": "18:30",
+    "loc": "Gimnasio",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ],
+     "until": "md:12-20"
+    }
+   },
+   "note": "v56: recurrencia con lugar y aviso"
+  },
+  {
+   "s": "Dentista el viernes a las 10 y 30",
+   "expect": {
+    "title": "Dentista",
+    "date": "wd:5",
+    "start": "10:30"
+   },
+   "note": "v56: «10 y 30»"
   }
  ]
 }

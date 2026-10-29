@@ -1,0 +1,13 @@
+/* ══════════════════════════════════════════════════════════════════
+   MODULO v56 — «Dettatura intelligente» (11-nl-smart.js): chip delle lingue
+   e anteprima dal vivo nella scheda vocale
+══════════════════════════════════════════════════════════════════ */
+.kx-v-langs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;width:100%}
+.kx-v-lang{border:1.5px solid var(--divider);background:transparent;color:var(--text-mid);border-radius:999px;padding:5px 11px;font:700 11.5px var(--font-ui);cursor:pointer}
+.kx-v-lang.on{background:var(--accent);border-color:transparent;color:#fff}
+.kx-v-lang.more{color:var(--accent)}
+.kx-v-sel{border:1.5px solid var(--divider);border-radius:12px;padding:5px 8px;font:600 12px var(--font-ui);background:var(--bg-cell2);color:var(--text-hi);max-width:100%}
+.kx-v-prev{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;width:100%;font:600 11px/1.5 var(--font-ui);color:var(--text-mid)}
+.kx-v-prev b{font-weight:800;color:var(--text-dim)}
+.kx-v-prev span{background:var(--bg-cell2);color:var(--text-hi);border-radius:8px;padding:2px 7px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:root[data-textsize] .kx-v-prev,:root[data-textsize] .kx-v-langs{zoom:var(--kx-ts)}

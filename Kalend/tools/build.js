@@ -113,6 +113,26 @@ for(const lang of Object.keys(dict)){
 }
 const inlineDict={},inlinePacks={};
 INLINE_LANGS.forEach(l=>{if(dict[l])inlineDict[l]=dict[l];if(packs[l])inlinePacks[l]=packs[l];});
+/* ── 2d. (v56) INDICE PER IL RICONOSCIMENTO DELLA LINGUA della frase: per ogni lingua
+   un centinaio di parole "spia" del lessico (oggi, domani, alle, con, parenti, parole
+   funzionali, momenti, numeri…). Serve al modulo 11-nl-smart.js per capire in che
+   lingua è scritta o dettata una frase SENZA avere in memoria tutti i dizionari: solo
+   dopo il riconoscimento la lingua trovata viene caricata dal suo file. ── */
+const DETECT_KEYS={strong:['today','tomorrow','after','tonight','thisMorning','at','from','with','withStrong','every','remind','weekend','nextWeek','relatives'],
+  normal:['to','until','for','in','place','pm','am','half','quarter','plus','minus','before','and','note','urgent','important','stopwords','lead','venues','dayOf','lowPriority','oneDay','birthday','hours','minutes','days','weeks']};
+const detectIndex={};
+for(const lang of Object.keys(packs)){
+  const L=(packs[lang]||{}).lexicon||{};const take=(k,n)=>(Array.isArray(L[k])?L[k]:[]).filter(w=>typeof w==='string'&&w.trim().length>=2).slice(0,n);
+  const strong=new Set(),normal=new Set();
+  DETECT_KEYS.strong.forEach(k=>take(k,k==='relatives'?14:6).forEach(w=>strong.add(w.toLowerCase())));
+  DETECT_KEYS.normal.forEach(k=>take(k,k==='stopwords'?24:5).forEach(w=>normal.add(w.toLowerCase())));
+  Object.values(L.moments||{}).forEach(v=>(Array.isArray(v)?v:[]).slice(0,2).forEach(w=>normal.add(String(w).toLowerCase())));
+  Object.keys(L.numbers||{}).slice(0,12).forEach(w=>normal.add(w.toLowerCase()));
+  (L.weekdays||[]).forEach(p=>{if(Array.isArray(p)&&typeof p[0]==='string'&&p[0].length>=2)strong.add(p[0].toLowerCase());});
+  Object.values(L.fields||{}).forEach(v=>(Array.isArray(v)?v:[]).slice(0,2).forEach(w=>normal.add(String(w).toLowerCase())));
+  strong.forEach(w=>normal.delete(w));
+  detectIndex[lang]={s:[...strong],w:[...normal]};
+}
 const SUPPORTED=['it','en','zh','hi','es','fr','de','pt','ru','ja','ar','ko','tr','bn','pl','id','vi','th','he','uk'];
 const i18nBlock=`<script id="kx-i18n">
 /* generato da tools/build.js — NON modificare a mano: le traduzioni
@@ -120,6 +140,8 @@ const i18nBlock=`<script id="kx-i18n">
 window.KX_I18N=${safeJSON(inlineDict)};
 /* pacchetti per lingua: lessico del parser, parole chiave auto-tag, cultura */
 window.KX_PACKS=${safeJSON(inlinePacks)};
+/* v56: parole spia per riconoscere la lingua di una frase (vedi 11-nl-smart.js) */
+window.KX_DETECT=${safeJSON(detectIndex)};
 /* ── caricatore della lingua in uso (v55 · 1.13) ──
    Le altre lingue stanno in i18n/<lingua>.json accanto alla pagina. La
    lingua si decide come fa L10N.detect (impostazione salvata, altrimenti

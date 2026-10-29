@@ -279,11 +279,11 @@
    "expect": {
     "titleIncludes": "Da Vinci Code",
     "people": [],
-    "loc": "",
+    "loc": "Cinéma",
     "date": "wd:6",
     "start": "20:00"
    },
-   "note": "CONFLITTO: «Da» (italiano) in mezzo al titolo"
+   "note": "CONFLITTO: «Da» (italiano) in mezzo al titolo · v56: «au cinéma» è il luogo"
   },
   {
    "s": "Match PSG - OM dimanche à 21h",
@@ -305,6 +305,149 @@
     "start": "21:00"
    },
    "note": "CONFLITTO: «de» (es/pt) nel titolo non crea un luogo"
+  },
+  {
+   "s": "Rappelle-moi d'appeler le dentiste demain à neuf heures et demie",
+   "expect": {
+    "title": "Appeler le dentiste",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0
+   },
+   "note": "v56 dictée : commande initiale, «neuf heures et demie»"
+  },
+  {
+   "s": "Ajoute réunion d'équipe jeudi de 14h à 16h dans la salle de réunion priorité haute",
+   "expect": {
+    "title": "Réunion d'équipe",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:00",
+    "loc": "Salle de réunion",
+    "pri": "urgent"
+   },
+   "note": "v56 : commande, lieu courant, priorité"
+  },
+  {
+   "s": "Salle de sport lundi à 7 heures du soir pendant 90 minutes",
+   "expect": {
+    "title": "Salle de sport",
+    "date": "wd:1",
+    "start": "19:00",
+    "end": "20:30"
+   },
+   "note": "v56 : «7 heures du soir», durée"
+  },
+  {
+   "s": "Dîner avec Anna et Marc au restaurant Da Mario samedi à huit heures et demie",
+   "expect": {
+    "title": "Dîner",
+    "date": "wd:6",
+    "start": "20:30",
+    "loc": "Restaurant Da Mario",
+    "people": [
+     "Anna",
+     "Marc"
+    ]
+   },
+   "note": "v56 : lieu + nom, contexte du dîner"
+  },
+  {
+   "s": "Appel avec l'équipe sur Teams vendredi à 11h note apporter le rapport",
+   "expect": {
+    "titleIncludes": "Appel",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "Teams",
+    "desc": "apporter le rapport"
+   },
+   "note": "v56 : réunion à distance, note sans deux-points"
+  },
+  {
+   "s": "Dentiste le 5 à 15h pas urgent",
+   "expect": {
+    "title": "Dentiste",
+    "date": "dom:5",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "urgent"
+   },
+   "note": "v56 : jour sans mois, basse priorité"
+  },
+  {
+   "s": "Courses au supermarché demain après-midi à 16h",
+   "expect": {
+    "title": "Courses",
+    "date": "+1",
+    "start": "16:00",
+    "loc": "Supermarché"
+   },
+   "note": "v56 : lieu courant"
+  },
+  {
+   "s": "Titre contrôle, date 12 novembre, début 9h30, fin 10h, lieu hôpital Saint-Louis, priorité haute, participants Luc, description apporter les analyses",
+   "expect": {
+    "title": "Contrôle",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "Hôpital Saint-Louis",
+    "pri": "urgent",
+    "people": [
+     "Luc"
+    ],
+    "desc": "apporter les analyses"
+   },
+   "note": "v56 : dictée par champs"
+  },
+  {
+   "s": "Je dois payer la facture d'électricité avant vendredi important",
+   "expect": {
+    "titleIncludes": "facture",
+    "date": "wd:5",
+    "pri": "important",
+    "titleNot": "je dois"
+   },
+   "note": "v56 : «je dois» retiré"
+  },
+  {
+   "s": "Visio avec maman dimanche à six heures et quart du soir",
+   "expect": {
+    "titleIncludes": "Visio",
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "Maman"
+    ]
+   },
+   "note": "v56 : six heures et quart du soir"
+  },
+  {
+   "s": "Cours de yoga tous les mardis et jeudis à 18h30 jusqu'au 20 décembre à la salle de sport rappelle-moi 30 minutes avant",
+   "expect": {
+    "titleIncludes": "yoga",
+    "start": "18:30",
+    "loc": "Salle de sport",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ],
+     "until": "md:12-20"
+    }
+   },
+   "note": "v56 : récurrence avec lieu et rappel"
+  },
+  {
+   "s": "Dentiste vendredi à 10 heures 30",
+   "expect": {
+    "title": "Dentiste",
+    "date": "wd:5",
+    "start": "10:30"
+   },
+   "note": "v56 : «10 heures 30»"
   }
  ]
 }

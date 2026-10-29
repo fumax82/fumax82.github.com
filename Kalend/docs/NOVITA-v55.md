@@ -247,5 +247,55 @@ strati, una barra dopo l'altra. Prestazioni: solo trasformazioni e opacità, nes
 animazione continua in più; tutto si spegne con «riduci movimento» del sistema o
 con il cielo «statico» nelle impostazioni (classe `kx-fx-off`). Test: `tools/shell-test.js`.
 
+## 11. Dettatura intelligente in 20 lingue (v56)
+
+Due moduli nuovi, nessuna modifica al motore storico: `10-lang-packs.js` (le regole
+per lingua) e `11-nl-smart.js` (lo strato «intelligente» che sta davanti a tutto).
+La frase viene letta nella lingua in cui è stata detta o scritta e il parser compila
+titolo, data, orari precisi, luogo, persone, tag, promemoria, priorità e descrizione.
+
+**La lingua la capisce da sola.** Si può dettare in inglese con l'app in italiano, o
+in tedesco con l'app in inglese: la frase viene riconosciuta dall'alfabeto e dalle
+parole spia di ogni lingua (indice compatto generato dal build, `KX_DETECT`), poi il
+dizionario di quella lingua viene caricato dal suo file solo quando serve. In caso di
+dubbio resta la lingua dell'app. Nella scheda di dettatura ci sono i chip 🌐 per
+scegliere la lingua del riconoscitore vocale (ricordate le ultime usate), l'anteprima
+«capito finora» mentre si parla, e gli esempi del pacchetto della lingua; nelle
+Impostazioni › Lingua c'è «Lingua della dettatura» (di serie: come l'app).
+
+**Orari precisi, in ogni lingua.** «halb neun» (8:30), «setengah 8» (7:30),
+«в половине девятого», «Viertel nach sechs», «quarter past six», «ten to nine»,
+«à 8 heures et demie», «um 10 Uhr 30», «abends um 8», «por la tarde a las 4», «malam
+jam 8», «ce soir à 8»; le 1–6 dette senza altro sono pomeriggio anche in cinese,
+coreano e giapponese («三点半», «세 시», «3時»); le parole serali della frase
+(«stasera», «Abendessen», «dinner») portano alla sera un orario del mattino detto
+senza «di mattina».
+
+**Comandi, luoghi, giorni, note, priorità** (nuove chiavi del lessico, documentate
+in `src/i18n/SCHEMA.md`): «ricordami di…», «aggiungi in agenda…», «remind me to…»,
+«〜を追加して» spariscono dal titolo (e «ricordami» mette l'avviso all'ora
+dell'evento); «in palestra», «at the gym», «im Büro», «al bar Centrale», «at Luigi's
+restaurant», «su Zoom», «in videochiamata» diventano il luogo; «il 15», «on the 5th»,
+«am 15.», «dia 5» sono il prossimo giorno del mese; «… nota portare i documenti»
+senza i due punti è la descrizione; «quando puoi», «no rush» abbassano la priorità,
+«priorità alta», «high priority» la alzano; «un giorno prima», «la veille», «am
+Vortag» sono un preavviso di 24 ore.
+
+**Dettatura «a campi» in tutte le lingue.** L'aiuto della scheda vocale promette
+«Titolo …, giorno …, inizio …, fine …, preavviso …, tag …, partecipanti …,
+descrizione …»: prima funzionava solo in italiano; ora le parole dei campi di ogni
+lingua (chiave `fields`) vengono tradotte, e ci sono anche «luogo …» e «priorità …».
+
+**Limiti noti chiusi.** Dei 24 limiti documentati nella v55 ne restano aperti
+pochissimi (`docs/PARSER-LIMITI.md`, rigenerato): congiunzione attaccata in arabo ed
+ebraico («سارة وأحمد»), città con prefisso/suffisso in ebraico e bengalese
+(«בירושלים», «ঢাকায়», tramite la chiave `cities`), indirizzi thai, «3天后», «15時〜16時»,
+«Comic Con» non più una compagnia, «Mamma Mia» non più una persona, «Pociąg do
+Gdańska» intero nel titolo, «dzień wcześniej».
+
+**Collaudo.** Il banco di prova `tools/nl-suite/` è passato da 542 a oltre 800 frasi
+in 20 lingue (anche il vietnamita), con casi «dettatura» per ogni lingua: comando
+iniziale, luoghi comuni, giorno senza mese, note, priorità, campi, ricorrenze.
+
 ## Cosa NON è cambiato
 Cielo vivo, parser di base, tag, calendari, widget: come nella v54, salvo quanto sopra.

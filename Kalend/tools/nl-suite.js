@@ -19,7 +19,7 @@
      titleNot         il titolo NON contiene questo testo (prova di conflitto)
      date             "+N" (oggi+N giorni) · "wd:N" (prossimo giorno N, 0=dom)
                       · "YYYY-MM-DD" · "md:M-D" (prossimo M/D) · "nextweek"
-                      · "weekend" · "today" · "none" (nessuna data)
+                      · "weekend" · "today" · "dom:N" (prossimo giorno N del mese) · "none" (nessuna data)
      dates            numero di date attese (ricorrenze espanse)
      start, end       "HH:MM" (end "auto" = calcolata dalla durata predefinita)
      allDay           true/false
@@ -62,6 +62,7 @@ function expectDate(spec){
   let m;
   if((m=spec.match(/^wd:(\d)$/))){let d=addD(today,0);if(d.getDay()===+m[1])d=addD(d,7);while(d.getDay()!==+m[1])d=addD(d,1);return key(d);}
   if((m=spec.match(/^md:(\d{1,2})-(\d{1,2})$/))){let d=new Date(today.getFullYear(),+m[1]-1,+m[2]);if(d<today)d=new Date(today.getFullYear()+1,+m[1]-1,+m[2]);return key(d);}
+  if((m=spec.match(/^dom:(\d{1,2})$/))){const n=+m[1];let d=new Date(today.getFullYear(),today.getMonth(),n);if(d<today)d=new Date(today.getFullYear(),today.getMonth()+1,n);return key(d);}   /* v56: prossimo giorno N del mese */
   if(spec==='nextweek'){let d=addD(today,1);while(d.getDay()!==1)d=addD(d,1);return key(d);}
   if(spec==='weekend'){let d=new Date(today);while(d.getDay()!==6)d=addD(d,1);return key(d);}
   return spec;

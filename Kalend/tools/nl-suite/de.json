@@ -295,6 +295,150 @@
    },
    "skip": true,
    "note": "PARSER: il parser storico NL2 ha «con» (e «Con») in W.with per tutte le lingue: «Con Stuttgart» → persona «Stuttgart» e il titolo resta «Comic». Ottenuto titolo «Comic», persone [Stuttgart]."
+  },
+  {
+   "s": "Erinnere mich daran morgen um halb zehn den Zahnarzt anzurufen",
+   "expect": {
+    "titleIncludes": "Zahnarzt",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0,
+    "titleNot": "erinnere"
+   },
+   "note": "v56 Diktat: Befehl am Anfang, «halb zehn»"
+  },
+  {
+   "s": "Teammeeting am Donnerstag von 14 bis 16 Uhr im Besprechungsraum eintragen hohe Prio",
+   "expect": {
+    "title": "Teammeeting",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:00",
+    "loc": "Besprechungsraum",
+    "pri": "important"
+   },
+   "note": "v56: Verb am Ende, Ort, Priorität"
+  },
+  {
+   "s": "Fitnessstudio am Montag um 7 Uhr abends für 90 Minuten",
+   "expect": {
+    "title": "Fitnessstudio",
+    "date": "wd:1",
+    "start": "19:00",
+    "end": "20:30"
+   },
+   "note": "v56: «Uhr abends», Dauer"
+  },
+  {
+   "s": "Abendessen mit Anna und Markus im Restaurant Da Mario am Samstag um halb neun",
+   "expect": {
+    "title": "Abendessen",
+    "date": "wd:6",
+    "start": "20:30",
+    "loc": "Restaurant Da Mario",
+    "people": [
+     "Anna",
+     "Markus"
+    ]
+   },
+   "note": "v56: halb neun + Abendessen → 20:30"
+  },
+  {
+   "s": "Call mit dem Team über Teams am Freitag um 11 Notiz Bericht mitbringen",
+   "expect": {
+    "titleIncludes": "Call",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "Teams",
+    "desc": "Bericht mitbringen"
+   },
+   "note": "v56: Online-Treffen, Notiz ohne Doppelpunkt"
+  },
+  {
+   "s": "Zahnarzt am 5. um 15 Uhr keine Eile",
+   "expect": {
+    "title": "Zahnarzt",
+    "date": "dom:5",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "Eile"
+   },
+   "note": "v56: Tag ohne Monat, niedrige Priorität"
+  },
+  {
+   "s": "Einkaufen im Supermarkt morgen Nachmittag um 4",
+   "expect": {
+    "title": "Einkaufen",
+    "date": "+1",
+    "start": "16:00",
+    "loc": "Supermarkt"
+   },
+   "note": "v56: Ort, Nachmittag vor der Uhrzeit"
+  },
+  {
+   "s": "Titel Kontrolluntersuchung, Datum 12. November, Beginn 9:30, Ende 10, Ort Krankenhaus, Priorität hoch, Teilnehmer Lukas, Beschreibung Befunde mitbringen",
+   "expect": {
+    "title": "Kontrolluntersuchung",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "Krankenhaus",
+    "pri": "urgent",
+    "people": [
+     "Lukas"
+    ],
+    "desc": "Befunde mitbringen"
+   },
+   "note": "v56: Diktat nach Feldern"
+  },
+  {
+   "s": "Ich muss bis Freitag die Stromrechnung bezahlen wichtig",
+   "expect": {
+    "titleIncludes": "Stromrechnung",
+    "date": "wd:5",
+    "pri": "important",
+    "titleNot": "ich muss"
+   },
+   "note": "v56: «ich muss» entfernt"
+  },
+  {
+   "s": "Videoanruf mit Mama am Sonntag um Viertel nach sechs abends",
+   "expect": {
+    "titleIncludes": "Videoanruf",
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "Mama"
+    ]
+   },
+   "note": "v56: Viertel nach sechs + abends"
+  },
+  {
+   "s": "Yogakurs jeden Dienstag und Donnerstag um 18:30 bis zum 20. Dezember im Fitnessstudio erinnere mich 30 Minuten vorher",
+   "expect": {
+    "titleIncludes": "Yoga",
+    "start": "18:30",
+    "loc": "Fitnessstudio",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ],
+     "until": "md:12-20"
+    }
+   },
+   "note": "v56: Serie mit Ort und Erinnerung"
+  },
+  {
+   "s": "Zahnarzt am Freitag um 10 Uhr 30",
+   "expect": {
+    "title": "Zahnarzt",
+    "date": "wd:5",
+    "start": "10:30"
+   },
+   "note": "v56: «10 Uhr 30»"
   }
  ]
 }

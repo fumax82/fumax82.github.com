@@ -290,6 +290,13 @@ Fatto nella v55 (moduli `46-shell.js`, `47-landscape.css`, `48-wow.js/css`,
 `49-views.js/css`; parte nativa `MainActivity` con strisce per stato e navigazione).
 Dettagli in `docs/NOVITA-v55.md` §10.
 
+### 1.17 · Dettatura intelligente in 20 lingue ✅
+Fatto nella v56 (`10-lang-packs.js` + `11-nl-smart.js`, chiavi nuove del lessico in
+`src/i18n/SCHEMA.md`, banco di prova oltre 800 frasi): lingua della frase riconosciuta
+da sola, orari precisi detti a voce, comandi tolti dal titolo, luoghi comuni, giorno
+senza mese, note, priorità, dettatura a campi in ogni lingua, scelta della lingua nella
+scheda vocale. Dettagli in `docs/NOVITA-v55.md` §11.
+
 ## 4. Fase 2 — Subito dopo aver avuto il sorgente nativo
 
 Sono **correzioni di sicurezza e lavoro tecnico** che servono comunque, anche prima

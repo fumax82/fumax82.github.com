@@ -1,22 +1,352 @@
-{"lang":"it","cases":[
- {"s":"Cena con Anna venerdì alle 20 a Roma #famiglia","expect":{"title":"Cena","date":"wd:5","start":"20:00","loc":"Roma","people":["Anna"],"tags":["famiglia"]}},
- {"s":"domani dalle 9 alle 10 riunione assieme a Marco","expect":{"title":"Riunione","date":"+1","start":"09:00","end":"10:00","people":["Marco"]}},
- {"s":"Corso di yoga ogni lunedì e giovedì alle 18:30 fino al 20 dicembre in via Roma 5, Milano #sport ricordamelo 30 minuti prima","expect":{"titleIncludes":"yoga","start":"18:30","rrule":{"freq":"WEEKLY","byday":[1,4],"until":"md:12-20"},"tags":["sport"],"rem":30,"loc":"via Roma 5, Milano"}},
- {"s":"Dentista il 5/3 alle 15","expect":{"title":"Dentista","date":"md:3-5","start":"15:00"}},
- {"s":"Dentista il 2027-03-05 alle 15","expect":{"title":"Dentista","date":"2027-03-05","start":"15:00"}},
- {"s":"Compleanno di Luca il 12 maggio tutto il giorno","expect":{"titleIncludes":"Compleanno","date":"md:5-12","allDay":true}},
- {"s":"Pagare bolletta tra 3 giorni urgente","expect":{"titleIncludes":"bolletta","date":"+3","pri":"urgent"}},
- {"s":"Chiamare la mamma stasera alle otto e mezza","expect":{"titleIncludes":"mamma","date":"today","start":"20:30"}},
- {"s":"Pranzo con Sara e Paolo sabato a mezzogiorno","expect":{"title":"Pranzo","date":"wd:6","start":"12:00","people":["Sara","Paolo"]}},
- {"s":"Palestra ogni 2 giorni per 1 ora","expect":{"title":"Palestra","rrule":{"freq":"DAILY","interval":2}}},
- {"s":"Riunione di lavoro il primo lunedì del mese alle 9","expect":{"titleIncludes":"Riunione","rrule":{"freq":"MONTHLY","nth":1},"start":"09:00"}},
- {"s":"Visita medica 14/02/2027 dalle 10:30 alle 11:15 ricordamelo un'ora prima","expect":{"titleIncludes":"Visita","date":"2027-02-14","start":"10:30","end":"11:15","rem":60}},
- {"s":"Aperitivo con Giulia giovedì alle 7 di sera","expect":{"title":"Aperitivo","date":"wd:4","start":"19:00","people":["Giulia"]}},
- {"s":"Spesa settimana prossima","expect":{"title":"Spesa","date":"nextweek"}},
- {"s":"Weekend al mare","expect":{"titleIncludes":"mare","date":"weekend"}},
- {"s":"Nota: portare i documenti. Banca martedì alle 11","expect":{"titleIncludes":"Banca","date":"wd:2","start":"11:00","desc":"documenti"}},
- {"s":"Riunione con il team ogni giorno feriale alle 9","expect":{"titleIncludes":"Riunione","rrule":{"freq":"WEEKLY","byday":[1,2,3,4,5]},"start":"09:00"}},
- {"s":"Lezione di inglese ogni settimana per 5 volte","expect":{"titleIncludes":"inglese","rrule":{"freq":"WEEKLY","count":5}}},
- {"s":"Concerto a Torino il 3 luglio alle 21","expect":{"title":"Concerto","date":"md:7-3","start":"21:00","loc":"Torino"}},
- {"s":"Revisione auto tra 2 settimane","expect":{"titleIncludes":"Revisione","date":"+14"}}
-]}
+{
+ "lang": "it",
+ "cases": [
+  {
+   "s": "Cena con Anna venerdì alle 20 a Roma #famiglia",
+   "expect": {
+    "title": "Cena",
+    "date": "wd:5",
+    "start": "20:00",
+    "loc": "Roma",
+    "people": [
+     "Anna"
+    ],
+    "tags": [
+     "famiglia"
+    ]
+   }
+  },
+  {
+   "s": "domani dalle 9 alle 10 riunione assieme a Marco",
+   "expect": {
+    "title": "Riunione",
+    "date": "+1",
+    "start": "09:00",
+    "end": "10:00",
+    "people": [
+     "Marco"
+    ]
+   }
+  },
+  {
+   "s": "Corso di yoga ogni lunedì e giovedì alle 18:30 fino al 20 dicembre in via Roma 5, Milano #sport ricordamelo 30 minuti prima",
+   "expect": {
+    "titleIncludes": "yoga",
+    "start": "18:30",
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      1,
+      4
+     ],
+     "until": "md:12-20"
+    },
+    "tags": [
+     "sport"
+    ],
+    "rem": 30,
+    "loc": "via Roma 5, Milano"
+   }
+  },
+  {
+   "s": "Dentista il 5/3 alle 15",
+   "expect": {
+    "title": "Dentista",
+    "date": "md:3-5",
+    "start": "15:00"
+   }
+  },
+  {
+   "s": "Dentista il 2027-03-05 alle 15",
+   "expect": {
+    "title": "Dentista",
+    "date": "2027-03-05",
+    "start": "15:00"
+   }
+  },
+  {
+   "s": "Compleanno di Luca il 12 maggio tutto il giorno",
+   "expect": {
+    "titleIncludes": "Compleanno",
+    "date": "md:5-12",
+    "allDay": true
+   }
+  },
+  {
+   "s": "Pagare bolletta tra 3 giorni urgente",
+   "expect": {
+    "titleIncludes": "bolletta",
+    "date": "+3",
+    "pri": "urgent"
+   }
+  },
+  {
+   "s": "Chiamare la mamma stasera alle otto e mezza",
+   "expect": {
+    "titleIncludes": "mamma",
+    "date": "today",
+    "start": "20:30"
+   }
+  },
+  {
+   "s": "Pranzo con Sara e Paolo sabato a mezzogiorno",
+   "expect": {
+    "title": "Pranzo",
+    "date": "wd:6",
+    "start": "12:00",
+    "people": [
+     "Sara",
+     "Paolo"
+    ]
+   }
+  },
+  {
+   "s": "Palestra ogni 2 giorni per 1 ora",
+   "expect": {
+    "title": "Palestra",
+    "rrule": {
+     "freq": "DAILY",
+     "interval": 2
+    }
+   }
+  },
+  {
+   "s": "Riunione di lavoro il primo lunedì del mese alle 9",
+   "expect": {
+    "titleIncludes": "Riunione",
+    "rrule": {
+     "freq": "MONTHLY",
+     "nth": 1
+    },
+    "start": "09:00"
+   }
+  },
+  {
+   "s": "Visita medica 14/02/2027 dalle 10:30 alle 11:15 ricordamelo un'ora prima",
+   "expect": {
+    "titleIncludes": "Visita",
+    "date": "2027-02-14",
+    "start": "10:30",
+    "end": "11:15",
+    "rem": 60
+   }
+  },
+  {
+   "s": "Aperitivo con Giulia giovedì alle 7 di sera",
+   "expect": {
+    "title": "Aperitivo",
+    "date": "wd:4",
+    "start": "19:00",
+    "people": [
+     "Giulia"
+    ]
+   }
+  },
+  {
+   "s": "Spesa settimana prossima",
+   "expect": {
+    "title": "Spesa",
+    "date": "nextweek"
+   }
+  },
+  {
+   "s": "Weekend al mare",
+   "expect": {
+    "titleIncludes": "mare",
+    "date": "weekend"
+   }
+  },
+  {
+   "s": "Nota: portare i documenti. Banca martedì alle 11",
+   "expect": {
+    "titleIncludes": "Banca",
+    "date": "wd:2",
+    "start": "11:00",
+    "desc": "documenti"
+   }
+  },
+  {
+   "s": "Riunione con il team ogni giorno feriale alle 9",
+   "expect": {
+    "titleIncludes": "Riunione",
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ]
+    },
+    "start": "09:00"
+   }
+  },
+  {
+   "s": "Lezione di inglese ogni settimana per 5 volte",
+   "expect": {
+    "titleIncludes": "inglese",
+    "rrule": {
+     "freq": "WEEKLY",
+     "count": 5
+    }
+   }
+  },
+  {
+   "s": "Concerto a Torino il 3 luglio alle 21",
+   "expect": {
+    "title": "Concerto",
+    "date": "md:7-3",
+    "start": "21:00",
+    "loc": "Torino"
+   }
+  },
+  {
+   "s": "Revisione auto tra 2 settimane",
+   "expect": {
+    "titleIncludes": "Revisione",
+    "date": "+14"
+   }
+  },
+  {
+   "s": "Ricordami di chiamare il commercialista domani alle 9 e 30",
+   "expect": {
+    "title": "Chiamare il commercialista",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0
+   },
+   "note": "v56 dettatura: comando iniziale «ricordami di» → titolo pulito, avviso all'ora"
+  },
+  {
+   "s": "Aggiungi in agenda riunione di budget giovedì dalle 14 alle 16 in sala riunioni priorità alta",
+   "expect": {
+    "title": "Riunione di budget",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:00",
+    "loc": "Sala riunioni",
+    "pri": "urgent"
+   },
+   "note": "v56: comandi concatenati, luogo comune, priorità alta"
+  },
+  {
+   "s": "Palestra lunedì alle 7 di sera per un'ora e mezza",
+   "expect": {
+    "title": "Palestra",
+    "date": "wd:1",
+    "start": "19:00",
+    "end": "20:30"
+   },
+   "note": "v56: durata a voce"
+  },
+  {
+   "s": "Cena con Anna e Marco al ristorante Da Mario sabato alle otto e mezza",
+   "expect": {
+    "title": "Cena",
+    "date": "wd:6",
+    "start": "20:30",
+    "loc": "Ristorante Da Mario",
+    "people": [
+     "Anna",
+     "Marco"
+    ]
+   },
+   "note": "v56: locale + nome, ora a parole con contesto serale"
+  },
+  {
+   "s": "Call con il team su Zoom venerdì alle 11 nota portare il report",
+   "expect": {
+    "titleIncludes": "Call",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "Zoom",
+    "desc": "portare il report"
+   },
+   "note": "v56: incontro a distanza, nota senza due punti"
+  },
+  {
+   "s": "Dentista il 5 alle 15 quando puoi",
+   "expect": {
+    "title": "Dentista",
+    "date": "dom:5",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "quando puoi"
+   },
+   "note": "v56: giorno senza mese, priorità bassa via dal titolo"
+  },
+  {
+   "s": "Spesa al supermercato domani pomeriggio alle 4",
+   "expect": {
+    "title": "Spesa",
+    "date": "+1",
+    "start": "16:00",
+    "loc": "Supermercato"
+   },
+   "note": "v56: luogo comune + momento prima dell'ora"
+  },
+  {
+   "s": "Titolo visita di controllo, giorno 12 novembre, inizio 9 e mezza, fine 10, luogo ospedale San Raffaele, priorità alta, partecipanti Luca, descrizione portare le analisi",
+   "expect": {
+    "title": "Visita di controllo",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "Ospedale San Raffaele",
+    "pri": "urgent",
+    "people": [
+     "Luca"
+    ],
+    "desc": "portare le analisi"
+   },
+   "note": "v56: dettatura a campi con luogo e priorità"
+  },
+  {
+   "s": "Devo pagare la bolletta entro venerdì importante",
+   "expect": {
+    "titleIncludes": "bolletta",
+    "date": "wd:5",
+    "pri": "important",
+    "titleNot": "devo"
+   },
+   "note": "v56: «devo» tolto dal titolo"
+  },
+  {
+   "s": "Pranzo di lavoro con il dottor Rossi mercoledì a mezzogiorno in centro",
+   "expect": {
+    "titleIncludes": "Pranzo",
+    "date": "wd:3",
+    "start": "12:00",
+    "people": [
+     "Dottor Rossi"
+    ],
+    "loc": "Centro"
+   },
+   "note": "v56: titolo di cortesia, luogo comune"
+  },
+  {
+   "s": "Riunione in videochiamata martedì alle 10 e un quarto",
+   "expect": {
+    "title": "Riunione",
+    "date": "wd:2",
+    "start": "10:15",
+    "loc": "Videochiamata"
+   },
+   "note": "v56: «in videochiamata» è il luogo"
+  },
+  {
+   "s": "Segna aperitivo con Giulia venerdì alle sei e mezza di sera al bar Centrale",
+   "expect": {
+    "title": "Aperitivo",
+    "date": "wd:5",
+    "start": "18:30",
+    "people": [
+     "Giulia"
+    ],
+    "loc": "Bar Centrale"
+   },
+   "note": "v56: comando «segna», bar + nome"
+  }
+ ]
+}

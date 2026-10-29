@@ -83,6 +83,24 @@ Includere varianti (con/senza accento, abbreviazioni, forme colloquiali). Ordine
 | `pmPrefix`, `amPrefix` | SOLO lingue con il momento PRIMA dell'ora: «下午3点», «午後3時», «오후 3시» | `["下午","晚上"]`, `["上午","早上"]` |
 | `noSpaces` | `true` se la lingua non separa le parole con spazi (zh, ja, th) | `false` |
 
+### Chiavi aggiunte nella v56 («dettatura intelligente», moduli 10 e 11)
+
+| chiave | significato | esempio |
+|---|---|---|
+| `lead` | COMANDI all'INIZIO della frase da togliere dal titolo: «ricordami di», «aggiungi», «devo», «per favore», «in agenda». Si possono concatenare («aggiungi in agenda …»). Se il comando contiene una parola di `remind`, l'evento riceve un avviso all'ora stessa | `["ricordami di","aggiungi","devo","per favore"]` |
+| `leadEnd` | comandi alla FINE della frase (lingue con il verbo in coda: tedesco «eintragen», giapponese «を追加して», turco «ekle», hindi «याद दिलाना») | `["eintragen","bitte"]` |
+| `venues` | LUOGHI COMUNI in minuscolo che seguono una preposizione di `place` («in palestra», «at the gym», «im Büro»); il nome proprio che segue («al bar Centrale») o precede («at Luigi's restaurant») resta nel luogo. Per hindi/bengalese il luogo precede la posposizione; per il turco si accetta il suffisso locativo («ofiste»). Nelle lingue senza spazi (ja, zh, ko, th) non serve: le particelle で/에서/在/ที่ bastano | `["palestra","ufficio","bar","ristorante","casa"]` |
+| `cities` | città e quartieri, SOLO per ebraico e bengalese: servono a leggere «בירושלים» (ב + città) e «ঢাকায়» (città + suffisso locativo) senza prendere parole qualunque | `["ירושלים","תל אביב"]` |
+| `online` | incontri a distanza nella lingua («in videochiamata», «en visio», «по видеосвязи»): diventano il luogo se preceduti da una preposizione. «online», «zoom», «skype», «webex», «facetime», «whatsapp», «telegram», «discord» valgono da soli in ogni lingua; «meet», «teams», «slack», «call» solo dopo una preposizione («su Meet») | `["in videochiamata","da remoto"]` |
+| `dayOf` | parola PRIMA di un numero che è un giorno del mese senza mese: «il 15», «on the 15th», «am 15.», «dia 15», «el 5». Scatta solo se nella frase non c'è un mese né una data numerica | `["il","giorno","per il"]` |
+| `dayOrdinal` | suffissi ordinali attaccati al numero del giorno (inglese «5th», francese «1er») | `["st","nd","rd","th"]` |
+| `lowPriority` | frasi che ABBASSANO la priorità («quando puoi», «low priority»): priorità normale e via dal titolo. Le frasi di urgenza stanno in `urgent`/`important` (anche «priorità alta», «high priority») | `["quando puoi","non urgente"]` |
+| `fields` | oggetto: parole dei CAMPI per la dettatura «a campi» («Titolo …, giorno …, inizio …, fine …, preavviso …, tag …, partecipanti …, descrizione …, luogo …, priorità …»). Chiavi: `title`, `desc`, `day`, `start`, `end`, `rem`, `tags`, `people`, `place`, `pri`. Scatta solo con almeno DUE campi nella frase; mettere solo parole che nominano davvero il campo (non preposizioni come «con» o «dalle») | `{"title":["titolo"],"day":["giorno","data"],…}` |
+| `oneDay` | «un giorno prima» come frase intera («la veille», «am Vortag», «dzień wcześniej»): preavviso di 24 ore | `["la veille","un jour avant"]` |
+| `hourWord` | parola «ore» DOPO l'ora nelle lingue che la dicono («8 Uhr 30», «8 heures», «8 часов»): se manca si usa `hours` | `["uhr"]` |
+
+Regole generali aggiunte nel motore (valgono per tutte le lingue, senza chiavi nuove): «momento + ora» («abends um 8», «malam jam 8», «por la tarde a las 4»), «stasera/stamattina + ora», «frazione + ora» («Viertel nach sechs», «quarter past six», «kwart voor zeven» con `quarter`/`half` + `plus`/`minus`), «mezza PRIMA dell'ora» («halb neun», «setengah 8», «в половине девятого» con `half` seguito dall'ora: de, nl, ru, uk, id; «wpół do dziewiątej» con la parola di `to`), «ora + unità + minuti» («à 8 heures 30»), ore 1–6 senza altro = pomeriggio (anche «3時», «세 시», «三点半»), parole serali nella frase (`tonight`, `pm`, `moments.evening/night/dinner`) che portano alla sera un orario del mattino detto senza «di mattina».
+
 ## 3. `autotag` — parole chiave per famiglia
 L'auto-tag legge titolo e descrizione del nuovo evento e sceglie la famiglia.
 Per ciascuna delle 20 famiglie, 25-60 parole/espressioni in minuscolo, **nella lingua e

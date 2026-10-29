@@ -281,6 +281,149 @@
     "start": "20:30"
    },
    "note": "ora superato · il hook di index.html (~riga 20975) pulisce il titolo con /\\be\\b/ senza il flag u-aware: «\\b» è solo ASCII, quindi tra «ã» e «e» c'è un confine e la «e» finale di «mãe» viene tolta (ottenuto «Ligar para a mã»). Stesso effetto in francese: «Soirée» → «Soiré». Correzione: usare (?<![\\p{"
+  },
+  {
+   "s": "Me lembra de ligar para o dentista amanhã às nove e meia",
+   "expect": {
+    "title": "Ligar para o dentista",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0
+   },
+   "note": "v56 ditado: comando inicial, nove e meia"
+  },
+  {
+   "s": "Adiciona reunião de equipe quinta das 14 às 16 na sala de reunião prioridade alta",
+   "expect": {
+    "title": "Reunião de equipe",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:00",
+    "loc": "Sala de reunião",
+    "pri": "urgent"
+   },
+   "note": "v56: comando, lugar comum, prioridade"
+  },
+  {
+   "s": "Academia segunda às 7 da noite por 90 minutos",
+   "expect": {
+    "title": "Academia",
+    "date": "wd:1",
+    "start": "19:00",
+    "end": "20:30"
+   },
+   "note": "v56: duração"
+  },
+  {
+   "s": "Jantar com Ana e Marcos no restaurante Da Mario sábado às oito e meia",
+   "expect": {
+    "title": "Jantar",
+    "date": "wd:6",
+    "start": "20:30",
+    "loc": "Restaurante Da Mario",
+    "people": [
+     "Ana",
+     "Marcos"
+    ]
+   },
+   "note": "v56: local + nome, contexto de jantar"
+  },
+  {
+   "s": "Call com o time pelo Teams sexta às 11 nota levar o relatório",
+   "expect": {
+    "titleIncludes": "Call",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "Teams",
+    "desc": "levar o relatório"
+   },
+   "note": "v56: reunião a distância, nota sem dois-pontos"
+  },
+  {
+   "s": "Dentista dia 5 às 15h sem pressa",
+   "expect": {
+    "title": "Dentista",
+    "date": "dom:5",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "pressa"
+   },
+   "note": "v56: dia sem mês, prioridade baixa"
+  },
+  {
+   "s": "Compras no supermercado amanhã à tarde às 4",
+   "expect": {
+    "title": "Compras",
+    "date": "+1",
+    "start": "16:00",
+    "loc": "Supermercado"
+   },
+   "note": "v56: lugar comum, tarde antes da hora"
+  },
+  {
+   "s": "Título consulta de rotina, data 12 de novembro, início 9:30, fim 10, local hospital Sírio-Libanês, prioridade alta, participantes Lucas, descrição levar os exames",
+   "expect": {
+    "title": "Consulta de rotina",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "Hospital Sírio-Libanês",
+    "pri": "urgent",
+    "people": [
+     "Lucas"
+    ],
+    "desc": "levar os exames"
+   },
+   "note": "v56: ditado por campos"
+  },
+  {
+   "s": "Preciso pagar a conta de luz até sexta importante",
+   "expect": {
+    "titleIncludes": "conta de luz",
+    "date": "wd:5",
+    "pri": "important",
+    "titleNot": "preciso"
+   },
+   "note": "v56: «preciso» removido"
+  },
+  {
+   "s": "Videochamada com a mãe domingo às seis e quinze da tarde",
+   "expect": {
+    "titleIncludes": "Videochamada",
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "Mãe"
+    ]
+   },
+   "note": "v56: seis e quinze da tarde"
+  },
+  {
+   "s": "Aula de yoga toda terça e quinta às 18:30 até 20 de dezembro na academia me lembra 30 minutos antes",
+   "expect": {
+    "titleIncludes": "yoga",
+    "start": "18:30",
+    "loc": "Academia",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ],
+     "until": "md:12-20"
+    }
+   },
+   "note": "v56: recorrência com lugar e lembrete"
+  },
+  {
+   "s": "Dentista sexta às 10 e 30",
+   "expect": {
+    "title": "Dentista",
+    "date": "wd:5",
+    "start": "10:30"
+   },
+   "note": "v56: «10 e 30»"
   }
  ]
 }

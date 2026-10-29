@@ -123,6 +123,7 @@ const strList=(max,len)=>v=>Array.isArray(v)?v.filter(x=>typeof x==='string').ma
 const COLOR=/^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 const RULES={
   language:v=>typeof v==='string'&&/^(auto|[a-z]{2}(-[A-Za-z]{2,4})?)$/.test(v)?v:undefined,
+  voiceLang:v=>typeof v==='string'&&/^(|[a-z]{2})$/.test(v)?v:undefined,   /* v56: lingua della dettatura */
   country:v=>typeof v==='string'&&/^[A-Z]{2}$/.test(v)?v:undefined,
   theme:str(24),accent:v=>typeof v==='string'&&COLOR.test(v)?v:undefined,
   timeFormat:str(8),firstDay:str(8),defDuration:num(5,1440),sound:str(12),vibration:str(12),
