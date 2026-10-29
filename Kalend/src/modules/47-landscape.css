@@ -1,0 +1,45 @@
+/* ══════════════════════════════════════════════════════════════════
+   MODULO v55 — «Orizzontale»: vista d'insieme quando il telefono è girato
+   ------------------------------------------------------------------
+   In orizzontale (classe body.kx-land, già usata dall'app per l'agenda
+   laterale) il mese deve vedersi TUTTO, dall'alto: sei righe di
+   settimane che dividono equamente l'altezza disponibile, celle più
+   fitte, caratteri un po' più piccoli, intestazione compatta. Nessuna
+   funzione sparisce: tocco, doppio tocco, pressione lunga, agenda
+   laterale, menu restano. La variabile --kx-chrome (altezza di
+   intestazione + riga dei giorni) viene misurata dal modulo 46-shell.js.
+══════════════════════════════════════════════════════════════════ */
+:root{--kx-chrome:78px;--kx-land-rows:6}
+
+/* ogni settimana prende 1/6 dell'altezza utile: il mese intero è sullo schermo */
+body.kx-land #v-scroll .week-wrap{
+  height:calc((100dvh - var(--kx-chrome,78px)) / var(--kx-land-rows,6))!important;
+  min-height:44px!important;max-height:none!important;
+  contain-intrinsic-size:auto 56px;
+}
+body.kx-land #v-scroll .week-row{height:100%!important}
+body.kx-land #v-scroll .day-cell{padding:2px 2px 1px;gap:1px}
+body.kx-land #v-scroll .day-num-wrap{height:15px;width:15px}
+body.kx-land #v-scroll .day-num{font-size:9.5px}
+body.kx-land #v-scroll .ev-compact-wrap{gap:1px;max-height:100%!important}
+body.kx-land #v-scroll .ev-bar-c{min-height:10px;padding:0 3px;border-radius:2px}
+body.kx-land #v-scroll .ev-bar-c-text{font-size:7.5px}
+body.kx-land #v-scroll .more-dot{font-size:7.5px;bottom:1px}
+/* le celle non espanse non devono mai far scorrere la riga in verticale */
+body.kx-land #v-scroll .day-cell:not(.is-wide){overflow:hidden}
+/* una giornata espansa (wide) in orizzontale ha più spazio: la riga cresce fino a metà schermo */
+body.kx-land #v-scroll .week-wrap:has(.is-wide){height:calc((100dvh - var(--kx-chrome,78px)) * .55)!important}
+
+/* intestazione del mese: più bassa */
+body.kx-land #header{padding-top:2px!important;padding-bottom:2px!important;min-height:0!important}
+body.kx-land #header .sub{margin-top:0}
+body.kx-land #dh-wrap .dh-cell{height:14px!important;line-height:14px!important;font-size:8.5px!important}
+
+/* dettaglio del giorno: finestra larga, barre più ampie */
+body.kx-land #day-detail-panel{max-width:min(760px,calc(100vw - 32px));max-height:94vh}
+body.kx-land #day-detail-panel #dd-swipe-hint{display:none}
+/* anno: sei mesi per riga (già previsto), con margini ridotti */
+body.kx-land .yv-grid{gap:8px}
+/* agenda laterale: titoli un filo più piccoli, così entrano più righe */
+body.kx-land #kx-side header{min-height:54px;padding:10px 14px 8px}
+body.kx-land .kx-sd-ev .n{font-size:12px}

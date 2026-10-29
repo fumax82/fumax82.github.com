@@ -10940,7 +10940,9 @@ function openDayDetail(key,events){
     }
   }
 
-  const availW=Math.min(window.innerWidth-24,440)-HOUR_COL-12;
+  /* v55: in orizzontale il pannello è più largo (47-landscape.css): le barre seguono la sua larghezza reale */
+  const panelW=(()=>{try{return document.getElementById('day-detail-panel').getBoundingClientRect().width;}catch(e){return 0;}})();
+  const availW=(panelW>200?Math.min(panelW,900):Math.min(window.innerWidth-24,440))-HOUR_COL-12;
 
   /* ── Render barre ── */
   /* ── Render barre con altezza minima e estensione ── */

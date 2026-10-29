@@ -77,6 +77,11 @@ public class MainActivity extends Activity {
     static volatile MainActivity INST;
 
     private WebView web;
+    /* v55: la pagina sta fra due strisce colorate che occupano lo spazio delle barre di sistema
+       (stato in alto, navigazione/tastiera in basso): così nulla finisce sotto le barre */
+    private android.widget.LinearLayout root;
+    private View topStrip, bottomStrip;
+    private int topColor = 0xFF2D4C8C, bottomColor = 0xFFF5F0EB;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final ExecutorService pool = Executors.newFixedThreadPool(3);
     private final Map<Integer, Integer> permCb = new HashMap<>();   // richiesta permesso → id callback della pagina
@@ -127,7 +132,16 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new Bridge(), "KalendNative");
         web.setWebViewClient(new Client());
         web.setWebChromeClient(new Chrome());
-        setContentView(web);
+        /* contenitore: striscia superiore · pagina · striscia inferiore */
+        root = new android.widget.LinearLayout(this);
+        root.setOrientation(android.widget.LinearLayout.VERTICAL);
+        root.setBackgroundColor(bottomColor);
+        topStrip = new View(this); topStrip.setBackgroundColor(topColor);
+        bottomStrip = new View(this); bottomStrip.setBackgroundColor(bottomColor);
+        root.addView(topStrip, new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 0));
+        root.addView(web, new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
+        root.addView(bottomStrip, new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 0));
+        setContentView(root);
         applyInsets();                                   // API 35+: la finestra è a schermo intero (edge-to-edge)
         if (saved == null) web.loadUrl(START); else web.restoreState(saved);
         INST = this;
@@ -137,14 +151,36 @@ public class MainActivity extends Activity {
         handleIntent(getIntent());
     }
 
-    /** con target 35+ le barre di sistema sono trasparenti: la WebView riceve i margini come padding */
+    /** Con target 35+ le barre di sistema sono trasparenti e la finestra occupa tutto lo schermo.
+     *  Invece di dare un padding alla WebView (che non lo rispetta in modo affidabile), le due
+     *  strisce prendono l'altezza esatta della barra di stato e della barra di navigazione (o
+     *  della tastiera, quando è aperta): la pagina resta sempre interamente visibile e cliccabile. */
     private void applyInsets() {
         if (Build.VERSION.SDK_INT < 30) return;
-        web.setOnApplyWindowInsetsListener((v, insets) -> {
-            android.graphics.Insets bars = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.ime());
-            v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+        root.setOnApplyWindowInsetsListener((v, insets) -> {
+            android.graphics.Insets top = insets.getInsets(WindowInsets.Type.statusBars() | WindowInsets.Type.displayCutout());
+            android.graphics.Insets nav = insets.getInsets(WindowInsets.Type.navigationBars());
+            android.graphics.Insets ime = insets.getInsets(WindowInsets.Type.ime());
+            setHeight(topStrip, top.top);
+            setHeight(bottomStrip, Math.max(nav.bottom, ime.bottom));
+            root.setPadding(Math.max(top.left, nav.left), 0, Math.max(top.right, nav.right), 0);
             return WindowInsets.CONSUMED;
         });
+    }
+
+    private static void setHeight(View v, int h) {
+        android.view.ViewGroup.LayoutParams lp = v.getLayoutParams();
+        if (lp.height != h) { lp.height = h; v.setLayoutParams(lp); }
+    }
+
+    /** icone chiare o scure sulle barre, secondo la luminosità del colore sottostante */
+    private void barIcons(int color, boolean statusBar) {
+        double lum = (Color.red(color) * 0.299 + Color.green(color) * 0.587 + Color.blue(color) * 0.114) / 255.0;
+        if (Build.VERSION.SDK_INT >= 30) {
+            WindowInsetsController wic = getWindow().getInsetsController();
+            int mask = statusBar ? WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS : WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
+            if (wic != null) wic.setSystemBarsAppearance(lum > 0.7 ? mask : 0, mask);
+        }
     }
 
     /** gesto «indietro»: prima la pagina (chiude popup, dettatura, avvisi), poi il sistema */
@@ -724,12 +760,21 @@ public class MainActivity extends Activity {
             main.post(() -> {
                 try {
                     int c = Color.parseColor(hex);
-                    getWindow().setStatusBarColor(c);
-                    double lum = (Color.red(c) * 0.299 + Color.green(c) * 0.587 + Color.blue(c) * 0.114) / 255.0;
-                    if (Build.VERSION.SDK_INT >= 30) {
-                        WindowInsetsController wic = getWindow().getInsetsController();
-                        if (wic != null) wic.setSystemBarsAppearance(lum > 0.7 ? WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS : 0, WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS);
-                    }
+                    topColor = c; topStrip.setBackgroundColor(c);
+                    if (Build.VERSION.SDK_INT < 35) getWindow().setStatusBarColor(c);
+                    barIcons(c, true);
+                } catch (Exception ignored) {}
+            });
+        }
+        /** v55: colore della barra di navigazione in basso (segue lo sfondo della pagina: tema chiaro o scuro) */
+        @android.webkit.JavascriptInterface public void setNavColor(String hex) {
+            if (!trusted()) return;
+            main.post(() -> {
+                try {
+                    int c = Color.parseColor(hex);
+                    bottomColor = c; bottomStrip.setBackgroundColor(c); root.setBackgroundColor(c);
+                    if (Build.VERSION.SDK_INT < 35) getWindow().setNavigationBarColor(c);
+                    barIcons(c, false);
                 } catch (Exception ignored) {}
             });
         }
