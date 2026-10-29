@@ -1773,7 +1773,21 @@
    "in der früh um",
    "in der frueh um"
   ],
-  "noSpaces": false
+  "noSpaces": false,
+  "biweekly": [
+   "alle zwei wochen",
+   "alle 2 wochen",
+   "jede zweite woche",
+   "zweiwöchentlich",
+   "vierzehntägig"
+  ],
+  "birthday": [
+   "geburtstag",
+   "geburi",
+   "jahrestag",
+   "hochzeitstag",
+   "namenstag"
+  ]
  },
  "autotag": {
   "lavoro": [

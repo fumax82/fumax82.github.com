@@ -1750,7 +1750,19 @@
   "daySuffix": [],
   "pmPrefix": [],
   "amPrefix": [],
-  "noSpaces": false
+  "noSpaces": false,
+  "biweekly": [
+   "dua minggu sekali",
+   "setiap dua minggu",
+   "tiap dua minggu",
+   "dua pekan sekali"
+  ],
+  "birthday": [
+   "ulang tahun",
+   "ultah",
+   "hari jadi",
+   "anniversary"
+  ]
  },
  "autotag": {
   "lavoro": [

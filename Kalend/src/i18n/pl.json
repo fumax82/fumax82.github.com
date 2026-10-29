@@ -2676,7 +2676,18 @@
   "daySuffix": [],
   "pmPrefix": [],
   "amPrefix": [],
-  "noSpaces": false
+  "noSpaces": false,
+  "biweekly": [
+   "co dwa tygodnie",
+   "co drugi tydzień",
+   "dwutygodniowo"
+  ],
+  "birthday": [
+   "urodziny",
+   "imieniny",
+   "rocznica",
+   "rocznica ślubu"
+  ]
  },
  "autotag": {
   "lavoro": [

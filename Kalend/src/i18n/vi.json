@@ -2198,7 +2198,16 @@
    "buổi sáng",
    "sáng sớm"
   ],
-  "noSpaces": false
+  "noSpaces": false,
+  "biweekly": [
+   "hai tuần một lần",
+   "mỗi hai tuần"
+  ],
+  "birthday": [
+   "sinh nhật",
+   "kỷ niệm",
+   "ngày cưới"
+  ]
  },
  "autotag": {
   "lavoro": [

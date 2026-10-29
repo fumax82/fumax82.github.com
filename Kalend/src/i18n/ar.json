@@ -3087,7 +3087,27 @@
   "daySuffix": [],
   "pmPrefix": [],
   "amPrefix": [],
-  "noSpaces": false
+  "noSpaces": false,
+  "quantities": {
+   "أسبوعين": "2 settimane",
+   "اسبوعين": "2 settimane",
+   "يومين": "2 giorni",
+   "ساعتين": "2 ore",
+   "شهرين": "2 mesi",
+   "مرتين": "2 volte",
+   "سنتين": "2 anni"
+  },
+  "biweekly": [
+   "كل أسبوعين",
+   "كل اسبوعين"
+  ],
+  "birthday": [
+   "عيد ميلاد",
+   "عيد الميلاد",
+   "ذكرى زواج",
+   "ذكرى الزواج",
+   "عيد زواج"
+  ]
  },
  "autotag": {
   "lavoro": [

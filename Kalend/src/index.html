@@ -19200,14 +19200,14 @@ const NL2=(()=>{
   const alt=a=>a.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).sort((a,b)=>b.length-a.length).join('|');
   const ENWD=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
   const RRWD=['SU','MO','TU','WE','TH','FR','SA'];
-  function wdNames(){const loc=GIORNI_FULL.map(x=>x.toLowerCase());const shortL=DAY_LABELS.map(x=>x.toLowerCase());
+  function wdNames(){const loc=GIORNI_FULL.map(x=>x.toLowerCase());const noShort=!!(window.KX&&KX.Lang&&KX.Lang.noShortDayLabels&&KX.Lang.noShortDayLabels());const shortL=noShort?loc.slice():DAY_LABELS.map(x=>x.toLowerCase());
     const plur={0:['domeniche'],6:['sabati']};const out=[];for(let i=0;i<7;i++){out.push([loc[i],i],[ENWD[i],i],[shortL[i],i],[ENWD[i]+'s',i]);(plur[i]||[]).forEach(p=>out.push([p,i]));
       if(loc[i].endsWith('ì'))out.push([loc[i].slice(0,-1)+'i',i]);}return out.filter(x=>x[0].length>=3);}
   /* v55: ogni prefisso di almeno 3 lettere del nome del mese («set», «sett», «settem»…),
      così «settimane» non viene più letto come «settembre» e «mar.» resta marzo */
   function monthNames(){const m=MESI.map(x=>x.toLowerCase());const en=['january','february','march','april','may','june','july','august','september','october','november','december'];
     const out=[];const seen=new Set();const add=(w,i)=>{if(!seen.has(w)){seen.add(w);out.push([w,i]);}};
-    m.concat(en).forEach((x,i)=>{const idx=i%12;for(let n=3;n<=x.length;n++)add(x.slice(0,n),idx);});return out;}
+    m.concat(en).forEach((x,i)=>{const idx=i%12;for(let n=Math.min(3,x.length);n<=x.length;n++)add(x.slice(0,n),idx);});return out;}
   const remindSnap=v=>{const opts=[0,5,15,30,60,120,1440];return opts.reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);};
   function parse(raw){
     let s=' '+String(raw||'').replace(/\s+/g,' ').trim()+' ';
@@ -20648,7 +20648,7 @@ function pre(raw,ex){
   /* familiari e nomi in minuscolo dopo «con» */
   t.replace(new RegExp(`${B1}con\\s+(?:(?:il|la|lo|i|le|gli|mia|mio|miei|mie|nostra|nostro|nostri|nostre)\\s+)?((?:${FAM}))${B2}`,'giu'),(m,w)=>{ex.people.push(w.charAt(0).toUpperCase()+w.slice(1).toLowerCase());return m;});
   const cm=t.match(new RegExp(`${B1}con\\s+([\\p{Ll}][\\p{L}'’-]*(?:\\s*(?:,|e|ed)\\s*[\\p{L}][\\p{L}'’-]*)*)`,'u'));
-  if(cm)cm[1].split(/\s*(?:,|\be\b|\bed\b)\s*/u).forEach(w=>{const k=knownPerson(w);if(k)ex.people.push(k);});
+  if(cm)cm[1].split(/\s*(?:,|(?<![\p{L}])e(?![\p{L}])|(?<![\p{L}])ed(?![\p{L}]))\s*/u).forEach(w=>{const k=knownPerson(w);if(k)ex.people.push(k);});
   return t.replace(/\s+/g,' ').trim();
 }
 const base=KX.NL2.parse.bind(KX.NL2);
@@ -20659,7 +20659,7 @@ KX.NL2.parse=function(raw){
   if(ex.prio&&!out.priority)out.priority=ex.prio==='normal'?null:ex.prio;
   ex.people.forEach(p=>{if(!out.people.some(x=>fold(x)===fold(p)))out.people.push(p);});
   /* «per …» rimasto nel titolo → descrizione */
-  if(out.title&&!out.desc){const m=out.title.match(/^(.{3,}?)\s+per\s+(?!\d)(.{3,})$/i);if(m&&!/^(sempre|ora|oggi|domani|tutto|tutti|ogni)\b/i.test(m[2])){out.title=m[1].trim();out.desc=m[2].charAt(0).toUpperCase()+m[2].slice(1);}}
+  if(out.title&&!out.desc&&L10N.resolvedLang==='it'){const m=out.title.match(/^(.{3,}?)\s+per\s+(?!\d)(.{3,})$/i);if(m&&!/^(sempre|ora|oggi|domani|tutto|tutti|ogni)\b/i.test(m[2])){out.title=m[1].trim();out.desc=m[2].charAt(0).toUpperCase()+m[2].slice(1);}}   /* v55: solo in italiano («Per Bacco» resta nel titolo) */
   if(ex.desc.length)out.desc=[out.desc,...ex.desc].filter(Boolean).join(' · ');
   const th=Music.themeFor?Music.themeFor(out.title+' '+(ex.venue||'')):null;
   /* orario tipico */
@@ -20975,7 +20975,7 @@ KX.NL2.parse=function(raw){
   if(out.title){let t=' '+out.title+' ';
     [...T1.items,...P1.items].forEach(w=>{t=t.replace(new RegExp(`${B1}${w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}${B2}`,'iu'),' ');});
     t=t.replace(new RegExp(`${B1}${TAG_KW}${B2}\\s*:?`,'giu'),' ').replace(new RegExp(`${B1}${PPL_KW}${B2}`,'giu'),' ');
-    t=t.replace(/\s*(?:,|;|\be\b|\bed\b)\s*(?=(?:,|\be\b|\s)*$)/giu,' ').replace(/\s+/g,' ').trim().replace(/[,;:]+$/,'').replace(/\s+(con|e|ed|i|il|le)$/i,'').replace(/\s+(con|e|ed|i|il|le)$/i,'').trim();
+    t=t.replace(/\s*(?:,|;|(?<![\p{L}])e(?![\p{L}])|(?<![\p{L}])ed(?![\p{L}]))\s*(?=(?:,|(?<![\p{L}])e(?![\p{L}])|\s)*$)/giu,' ').replace(/\s+/g,' ').trim().replace(/[,;:]+$/,'').replace(/\s+(con|e|ed|i|il|le)$/i,'').replace(/\s+(con|e|ed|i|il|le)$/i,'').trim();
     if(t)out.title=t.charAt(0).toUpperCase()+t.slice(1);}
   /* nessun tag detto: proponi quello del tema riconosciuto (da confermare) */
   if(!(out.tags||[]).length&&out.title&&KX.Music.themeFor){const th=KX.Music.themeFor(out.title);

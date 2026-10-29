@@ -2363,7 +2363,29 @@
    "subah",
    "savere"
   ],
-  "noSpaces": false
+  "noSpaces": false,
+  "halfPrefix": [
+   "साढ़े",
+   "साढे"
+  ],
+  "quarterPrefix": [
+   "सवा"
+  ],
+  "threeQuartersPrefix": [
+   "पौने"
+  ],
+  "biweekly": [
+   "हर दो हफ्ते",
+   "हर दो सप्ताह",
+   "हर दूसरे हफ्ते"
+  ],
+  "birthday": [
+   "जन्मदिन",
+   "बर्थडे",
+   "सालगिरह",
+   "वर्षगांठ",
+   "एनिवर्सरी"
+  ]
  },
  "autotag": {
   "lavoro": [

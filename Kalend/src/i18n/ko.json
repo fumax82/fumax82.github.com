@@ -1854,7 +1854,19 @@
    "아침",
    "새벽"
   ],
-  "noSpaces": false
+  "noSpaces": false,
+  "biweekly": [
+   "격주",
+   "2주마다",
+   "2주에 한 번",
+   "두 주마다"
+  ],
+  "birthday": [
+   "생일",
+   "생신",
+   "기념일",
+   "결혼기념일"
+  ]
  },
  "autotag": {
   "lavoro": [

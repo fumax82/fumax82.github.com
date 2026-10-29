@@ -1,30 +1,310 @@
-{"lang":"fr","cases":[
- {"s":"Balade avec Anna vendredi à sept heures du soir au Bois de Boulogne #amis","expect":{"title":"Balade","date":"wd:5","start":"19:00","loc":"Bois de Boulogne","people":["Anna"],"tags":["amis"]},"note":"appuntamento tipico; ora a parole «sept heures du soir» (voce pm «heures du soir» aggiunta al lessico)"},
- {"s":"demain de 9h à 10h réunion avec Marc","expect":{"title":"Réunion","date":"+1","start":"09:00","end":"10:00","people":["Marc"]}},
- {"s":"Petit-déj avec papa samedi à 9h","expect":{"title":"Petit-déj","date":"wd:6","start":"09:00","people":["Papa"]},"note":"parente «papa» → Papa; suffisso «9h»"},
- {"s":"Appeler maman ce soir à huit heures et demie","expect":{"titleIncludes":"maman","date":"today","start":"20:30"},"skip":true,"note":"PARSER: la regola plus di ranges() («8 et demie» → «8 e mezza») gira prima che «demie» diventi «mezza» (regole SIMPLE), quindi la frazione si perde: canon «alle 8 ore et mezza», ottenuto 20:00. Stessa causa del caso spagnolo «ocho y media»."},
- {"s":"Dentiste le 5/3 à 15h","expect":{"title":"Dentiste","date":"md:3-5","start":"15:00"}},
- {"s":"Dentiste le 2027-03-05 à 15h rappelle-moi un jour avant","expect":{"title":"Dentiste","date":"2027-03-05","start":"15:00","rem":1440}},
- {"s":"Anniversaire de Lucas le 12 mai toute la journée","expect":{"titleIncludes":"Anniversaire","date":"md:5-12","allDay":true}},
- {"s":"Payer la facture d'électricité dans 3 jours urgent","expect":{"titleIncludes":"facture","date":"+3","pri":"urgent"}},
- {"s":"Déjeuner avec Sarah et Paul samedi prochain à midi","expect":{"title":"Déjeuner","date":"wd:6","start":"12:00","people":["Sarah","Paul"]}},
- {"s":"Salle de sport toutes les 2 semaines pendant 1 heure","expect":{"titleIncludes":"sport","rrule":{"freq":"WEEKLY","interval":2}}},
- {"s":"Réunion de travail le premier lundi du mois à 9h","expect":{"titleIncludes":"Réunion","start":"09:00","rrule":{"freq":"MONTHLY","nth":1}}},
- {"s":"Visite médicale le 14/02/2027 de 10h30 à 11h15 rappelle-moi une heure avant","expect":{"titleIncludes":"Visite","date":"2027-02-14","start":"10:30","end":"11:15","rem":60}},
- {"s":"Courses la semaine prochaine","expect":{"title":"Courses","date":"nextweek"}},
- {"s":"Week-end à la plage","expect":{"titleIncludes":"plage","date":"weekend"}},
- {"s":"Note : apporter les documents. Banque mardi à 11h important","expect":{"titleIncludes":"Banque","date":"wd:2","start":"11:00","desc":"documents","pri":"important"}},
- {"s":"Réunion avec l'équipe tous les jours ouvrés à 9h","expect":{"titleIncludes":"Réunion","start":"09:00","rrule":{"freq":"WEEKLY","byday":[1,2,3,4,5]}}},
- {"s":"Cours d'anglais chaque semaine pendant 5 séances","expect":{"titleIncludes":"anglais","rrule":{"freq":"WEEKLY","count":5}}},
- {"s":"Concert à Toulouse le 3 juillet à 21h","expect":{"title":"Concert","date":"md:7-3","start":"21:00","loc":"Toulouse"}},
- {"s":"Révision de la voiture dans 2 semaines","expect":{"titleIncludes":"voiture","date":"+14"}},
- {"s":"Cours de yoga tous les lundis et jeudis à 18h30 jusqu'au 20 décembre rue de Rivoli, Paris rappelle-moi 30 minutes avant","expect":{"titleIncludes":"yoga","start":"18:30","rrule":{"freq":"WEEKLY","byday":[1,4],"until":"md:12-20"},"rem":30,"loc":"rue de Rivoli, Paris"}},
- {"s":"Cours de yoga tous les lundis et jeudis à 18h30 jusqu'au 20 décembre au 5 rue de Rivoli, Paris","expect":{"title":"Cours de yoga","loc":"5 rue de Rivoli, Paris","rrule":{"freq":"WEEKLY","byday":[1,4],"until":"md:12-20"}},"skip":true,"note":"PARSER: la regex indirizzi di NL2 (riga ~19302) vuole il civico DOPO il nome della via (stile italiano); «au 5 rue de Rivoli» lascia «au 5» nel titolo e il luogo perde il numero. Ottenuto titolo «Cours de yoga au 5», luogo «rue de Rivoli, Paris»."},
- {"s":"Vendredi prochain rendez-vous chez le médecin à 10h","expect":{"titleIncludes":"rendez-vous","date":"wd:5","start":"10:00"},"note":"«prochain» dopo il giorno (ordine francese): tolto dal titolo via stopwords"},
- {"s":"Loyer à payer chaque mois","expect":{"titleIncludes":"Loyer","rrule":{"freq":"MONTHLY"}}},
- {"s":"Dîner avec Anna vendredi à 20h à Lyon #famille","expect":{"title":"Dîner","date":"wd:5","start":"20:00","loc":"Lyon","people":["Anna"],"tags":["famille"]},"skip":true,"note":"PARSER: in ranges() la regola «ALLE TM (to)» (pensata per le posposizioni まで/까지) cancella la parola di L.to che segue un orario: «à 20h à Lyon» → «alle 20:00 Lyon», luogo perso. «à» deve restare in L.to per «de 9h à 10h». Correzione proposta: limitare quella regola alle lingue con posposizioni (ja/ko/zh/th/hi) o escludere il caso in cui segue una Maiuscola. Nell'ordine «vendredi à Lyon à 20h» la frase passa."},
- {"s":"Réunion sur le projet Mitte avec Jonas lundi à 14h","expect":{"titleIncludes":"Mitte","people":["Jonas"],"loc":"","start":"14:00"},"note":"CONFLITTO: «mit» (tedesco) dentro «Mitte»"},
- {"s":"Voir Da Vinci Code au cinéma samedi à 20h","expect":{"titleIncludes":"Da Vinci Code","people":[],"loc":"","date":"wd:6","start":"20:00"},"note":"CONFLITTO: «Da» (italiano) in mezzo al titolo"},
- {"s":"Match PSG - OM dimanche à 21h","expect":{"titleIncludes":"PSG - OM","date":"wd:0","start":"21:00","loc":""},"note":"CONFLITTO: trattino tra sigle non è un intervallo orario"},
- {"s":"Soirée Casa de Papel samedi à 21h","expect":{"title":"Soirée Casa de Papel","loc":"","people":[],"date":"wd:6","start":"21:00"},"note":"CONFLITTO: «de» (es/pt) nel titolo non crea un luogo"}
-]}
+{
+ "lang": "fr",
+ "cases": [
+  {
+   "s": "Balade avec Anna vendredi à sept heures du soir au Bois de Boulogne #amis",
+   "expect": {
+    "title": "Balade",
+    "date": "wd:5",
+    "start": "19:00",
+    "loc": "Bois de Boulogne",
+    "people": [
+     "Anna"
+    ],
+    "tags": [
+     "amis"
+    ]
+   },
+   "note": "appuntamento tipico; ora a parole «sept heures du soir» (voce pm «heures du soir» aggiunta al lessico)"
+  },
+  {
+   "s": "demain de 9h à 10h réunion avec Marc",
+   "expect": {
+    "title": "Réunion",
+    "date": "+1",
+    "start": "09:00",
+    "end": "10:00",
+    "people": [
+     "Marc"
+    ]
+   }
+  },
+  {
+   "s": "Petit-déj avec papa samedi à 9h",
+   "expect": {
+    "title": "Petit-déj",
+    "date": "wd:6",
+    "start": "09:00",
+    "people": [
+     "Papa"
+    ]
+   },
+   "note": "parente «papa» → Papa; suffisso «9h»"
+  },
+  {
+   "s": "Appeler maman ce soir à huit heures et demie",
+   "expect": {
+    "titleIncludes": "maman",
+    "date": "today",
+    "start": "20:30"
+   },
+   "skip": true,
+   "note": "PARSER: la regola plus di ranges() («8 et demie» → «8 e mezza») gira prima che «demie» diventi «mezza» (regole SIMPLE), quindi la frazione si perde: canon «alle 8 ore et mezza», ottenuto 20:00. Stessa causa del caso spagnolo «ocho y media»."
+  },
+  {
+   "s": "Dentiste le 5/3 à 15h",
+   "expect": {
+    "title": "Dentiste",
+    "date": "md:3-5",
+    "start": "15:00"
+   }
+  },
+  {
+   "s": "Dentiste le 2027-03-05 à 15h rappelle-moi un jour avant",
+   "expect": {
+    "title": "Dentiste",
+    "date": "2027-03-05",
+    "start": "15:00",
+    "rem": 1440
+   }
+  },
+  {
+   "s": "Anniversaire de Lucas le 12 mai toute la journée",
+   "expect": {
+    "titleIncludes": "Anniversaire",
+    "date": "md:5-12",
+    "allDay": true
+   }
+  },
+  {
+   "s": "Payer la facture d'électricité dans 3 jours urgent",
+   "expect": {
+    "titleIncludes": "facture",
+    "date": "+3",
+    "pri": "urgent"
+   }
+  },
+  {
+   "s": "Déjeuner avec Sarah et Paul samedi prochain à midi",
+   "expect": {
+    "title": "Déjeuner",
+    "date": "wd:6",
+    "start": "12:00",
+    "people": [
+     "Sarah",
+     "Paul"
+    ]
+   }
+  },
+  {
+   "s": "Salle de sport toutes les 2 semaines pendant 1 heure",
+   "expect": {
+    "titleIncludes": "sport",
+    "rrule": {
+     "freq": "WEEKLY",
+     "interval": 2
+    }
+   }
+  },
+  {
+   "s": "Réunion de travail le premier lundi du mois à 9h",
+   "expect": {
+    "titleIncludes": "Réunion",
+    "start": "09:00",
+    "rrule": {
+     "freq": "MONTHLY",
+     "nth": 1
+    }
+   }
+  },
+  {
+   "s": "Visite médicale le 14/02/2027 de 10h30 à 11h15 rappelle-moi une heure avant",
+   "expect": {
+    "titleIncludes": "Visite",
+    "date": "2027-02-14",
+    "start": "10:30",
+    "end": "11:15",
+    "rem": 60
+   }
+  },
+  {
+   "s": "Courses la semaine prochaine",
+   "expect": {
+    "title": "Courses",
+    "date": "nextweek"
+   }
+  },
+  {
+   "s": "Week-end à la plage",
+   "expect": {
+    "titleIncludes": "plage",
+    "date": "weekend"
+   }
+  },
+  {
+   "s": "Note : apporter les documents. Banque mardi à 11h important",
+   "expect": {
+    "titleIncludes": "Banque",
+    "date": "wd:2",
+    "start": "11:00",
+    "desc": "documents",
+    "pri": "important"
+   }
+  },
+  {
+   "s": "Réunion avec l'équipe tous les jours ouvrés à 9h",
+   "expect": {
+    "titleIncludes": "Réunion",
+    "start": "09:00",
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ]
+    }
+   }
+  },
+  {
+   "s": "Cours d'anglais chaque semaine pendant 5 séances",
+   "expect": {
+    "titleIncludes": "anglais",
+    "rrule": {
+     "freq": "WEEKLY",
+     "count": 5
+    }
+   }
+  },
+  {
+   "s": "Concert à Toulouse le 3 juillet à 21h",
+   "expect": {
+    "title": "Concert",
+    "date": "md:7-3",
+    "start": "21:00",
+    "loc": "Toulouse"
+   }
+  },
+  {
+   "s": "Révision de la voiture dans 2 semaines",
+   "expect": {
+    "titleIncludes": "voiture",
+    "date": "+14"
+   }
+  },
+  {
+   "s": "Cours de yoga tous les lundis et jeudis à 18h30 jusqu'au 20 décembre rue de Rivoli, Paris rappelle-moi 30 minutes avant",
+   "expect": {
+    "titleIncludes": "yoga",
+    "start": "18:30",
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      1,
+      4
+     ],
+     "until": "md:12-20"
+    },
+    "rem": 30,
+    "loc": "rue de Rivoli, Paris"
+   }
+  },
+  {
+   "s": "Cours de yoga tous les lundis et jeudis à 18h30 jusqu'au 20 décembre au 5 rue de Rivoli, Paris",
+   "expect": {
+    "title": "Cours de yoga",
+    "loc": "5 rue de Rivoli, Paris",
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      1,
+      4
+     ],
+     "until": "md:12-20"
+    }
+   },
+   "skip": true,
+   "note": "PARSER: la regex indirizzi di NL2 (riga ~19302) vuole il civico DOPO il nome della via (stile italiano); «au 5 rue de Rivoli» lascia «au 5» nel titolo e il luogo perde il numero. Ottenuto titolo «Cours de yoga au 5», luogo «rue de Rivoli, Paris»."
+  },
+  {
+   "s": "Vendredi prochain rendez-vous chez le médecin à 10h",
+   "expect": {
+    "titleIncludes": "rendez-vous",
+    "date": "wd:5",
+    "start": "10:00"
+   },
+   "note": "«prochain» dopo il giorno (ordine francese): tolto dal titolo via stopwords"
+  },
+  {
+   "s": "Loyer à payer chaque mois",
+   "expect": {
+    "titleIncludes": "Loyer",
+    "rrule": {
+     "freq": "MONTHLY"
+    }
+   }
+  },
+  {
+   "s": "Dîner avec Anna vendredi à 20h à Lyon #famille",
+   "expect": {
+    "title": "Dîner",
+    "date": "wd:5",
+    "start": "20:00",
+    "loc": "Lyon",
+    "people": [
+     "Anna"
+    ],
+    "tags": [
+     "famille"
+    ]
+   },
+   "note": "ora superato · in ranges() la regola «ALLE TM (to)» (pensata per le posposizioni まで/까지) cancella la parola di L.to che segue un orario: «à 20h à Lyon» → «alle 20:00 Lyon», luogo perso. «à» deve restare in L.to per «de 9h à 10h». Correzione proposta: limitare quella regola alle lingue con posposizion"
+  },
+  {
+   "s": "Réunion sur le projet Mitte avec Jonas lundi à 14h",
+   "expect": {
+    "titleIncludes": "Mitte",
+    "people": [
+     "Jonas"
+    ],
+    "loc": "",
+    "start": "14:00"
+   },
+   "note": "CONFLITTO: «mit» (tedesco) dentro «Mitte»"
+  },
+  {
+   "s": "Voir Da Vinci Code au cinéma samedi à 20h",
+   "expect": {
+    "titleIncludes": "Da Vinci Code",
+    "people": [],
+    "loc": "",
+    "date": "wd:6",
+    "start": "20:00"
+   },
+   "note": "CONFLITTO: «Da» (italiano) in mezzo al titolo"
+  },
+  {
+   "s": "Match PSG - OM dimanche à 21h",
+   "expect": {
+    "titleIncludes": "PSG - OM",
+    "date": "wd:0",
+    "start": "21:00",
+    "loc": ""
+   },
+   "note": "CONFLITTO: trattino tra sigle non è un intervallo orario"
+  },
+  {
+   "s": "Soirée Casa de Papel samedi à 21h",
+   "expect": {
+    "title": "Soirée Casa de Papel",
+    "loc": "",
+    "people": [],
+    "date": "wd:6",
+    "start": "21:00"
+   },
+   "note": "CONFLITTO: «de» (es/pt) nel titolo non crea un luogo"
+  }
+ ]
+}

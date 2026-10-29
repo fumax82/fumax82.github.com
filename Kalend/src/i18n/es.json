@@ -1604,7 +1604,20 @@
   "daySuffix": [],
   "pmPrefix": [],
   "amPrefix": [],
-  "noSpaces": false
+  "noSpaces": false,
+  "biweekly": [
+   "cada dos semanas",
+   "cada 2 semanas",
+   "quincenal",
+   "quincenalmente",
+   "cada quincena"
+  ],
+  "birthday": [
+   "cumpleaños",
+   "cumple",
+   "aniversario",
+   "santo"
+  ]
  },
  "autotag": {
   "lavoro": [

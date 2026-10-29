@@ -2421,7 +2421,19 @@
    "öğleden önce",
    "ogleden once"
   ],
-  "noSpaces": false
+  "noSpaces": false,
+  "biweekly": [
+   "iki haftada bir",
+   "her iki haftada bir",
+   "15 günde bir"
+  ],
+  "birthday": [
+   "doğum günü",
+   "dogum gunu",
+   "yıl dönümü",
+   "yıldönümü",
+   "evlilik yıl dönümü"
+  ]
  },
  "autotag": {
   "lavoro": [

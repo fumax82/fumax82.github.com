@@ -75,7 +75,8 @@ pagina (l'APK e il progetto Android la copiano da soli). `node tools/build.js --
 
 Collaudi disponibili (Playwright): `wx-test.js`, `geo-test.js`, `hol-test.js`,
 `legal-test.js`, `sec-test.js`, `daycal-test.js`, `nl-suite.js <lingua|all>`
-(parser con frasi e risultati attesi per lingua in `tools/nl-suite/`).
+(parser con frasi e risultati attesi per lingua in `tools/nl-suite/`; `nl-limits.js`
+rigenera `docs/PARSER-LIMITI.md` dai limiti noti).
 
 ## Come si firma e si installa l'APK
 

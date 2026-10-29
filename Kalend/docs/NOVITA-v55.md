@@ -153,10 +153,8 @@ nel repository è verificata solo la compilazione del Java (`tools/native-check.
   del telefono») e, una volta sola, un avviso in 20 lingue spiega che l'audio
   può passare dal fornitore del servizio di sistema (testo in `src/legal/*.json`,
   chiave `disclose.speechCloud`). Da dichiarare anche in Data safety.
-* **Parser**: cifre di ogni alfabeto (arabo-indiano, devanagari, bengalese,
-  thai, a larghezza piena) e date ISO/«5.3.2026»/«2026年3月5日» capite in
-  tutte le lingue; nuovo banco di prova `tools/nl-suite.js` con frasi e
-  risultati attesi per lingua (`tools/nl-suite/<lingua>.json`).
+* **Parser in 20 lingue** (sezione 9 qui sotto): cifre di ogni alfabeto, date
+  in ogni formato, motore rivisto in tre passaggi e banco di prova di 542 frasi.
 
 ## 8. Calendari nella giornata (personalizzazioni per calendario)
 Aprendo una giornata, gli eventi dei vari calendari (i miei, quelli collegati
@@ -174,6 +172,40 @@ Le preferenze stanno in `kx_calprefs_v1`, entrano nel backup completo
 (sezione `calPrefs`, verificata al ripristino) e si applicano in memoria agli
 eventi collegati (colore e promemoria) senza modificare i calendari esterni.
 Collaudo: `node Kalend/tools/daycal-test.js` (12 controlli, tutti ok).
+
+## 9. Compilazione automatica in 20 lingue: banco di prova e motore rivisto
+Il parser in linguaggio naturale compila data, ora, luogo, persone, tag,
+promemoria e ricorrenza partendo da una frase. Per garantirne la qualità in
+tutte le lingue, senza conflitti fra lingue, ora esiste un **banco di prova**:
+`tools/nl-suite/<lingua>.json` con 542 frasi naturali (18-37 per lingua, scritte
+come le scriverebbe un madrelingua) e il risultato atteso di ciascuna, comprese
+**prove di conflitto** (titoli che contengono parole-chiave di altre lingue:
+«Comic Con», «Romeo i Julia», «In Time», «Da Vinci»…).
+Risultato: **518 frasi su 542** superate (italiano 20/20); le 24 restanti sono
+limiti noti, documentati con causa in `docs/PARSER-LIMITI.md` (generato da
+`tools/nl-limits.js`). Tutto avviene sul dispositivo, senza servizi esterni.
+Cosa è cambiato nel motore (`src/modules/10-lang-packs.js`):
+* cifre di ogni alfabeto (٠-٩, ०-९, ০-৯, ๐-๙, １２) → 0-9; date ISO, «5.3.2026»,
+  «05-03-2026», «2026年3月5日», «2027년 3월 5일», ordine giorno/mese della lingua;
+* numeri a parole prima dei suffissi («八時半», «세 시»), «1時間前» non è un orario,
+  «今晚10点» tiene il giorno; unità attaccate («3日後», «2주마다», «10 นาทีก่อน»);
+* intervalli con sola «fino a» («9点到10点»), «15時〜16時», due orari di seguito;
+  mezz'ora alla tedesca/polacca/russa («halb neun», «wpół do dziewiątej» = 8:30),
+  «ocho y media», «ثمانية ونص», frazione prima dell'ora in hindi/bengalese («साढ़े 7»);
+* ordinali del mese in ogni ordine («毎月第1月曜日», «हर महीने के पहले सोमवार»,
+  «วันจันทร์แรกของเดือน»), ricorrenze quindicinali (`biweekly`), «2 settimane ごとに»;
+* persone: parenti dopo «e», più nomi prima di «के साथ»/«ile», «和小雨、志强»,
+  «e» fra nomi solo dopo «con» (così «Romeo i Julia» resta un titolo);
+* luoghi con civico (giapponese, cinese, thai, turco «Bağdat Caddesi 10»), tipo di
+  via originale conservato («calle Mayor 5», «ul. Długiej 5»), duali arabi/ebraici
+  («أسبوعين» = 2 settimane), «fino a» solo davanti a date, «ogni» corto solo
+  davanti a giorni/unità («по проекту» resta nel titolo);
+* titoli: le parole scritte dall'utente non vengono mai tolte («In Time», «Da
+  Vinci»), i #tag espliciti escludono i tag proposti, compleanni e anniversari
+  in ogni lingua diventano eventi annuali di giornata intera (`birthday`);
+* lessici di 19 lingue rivisti dagli agenti (forme declinate, suffissi turchi,
+  posposizioni, varianti colloquiali) con nuove chiavi documentate in
+  `src/i18n/SCHEMA.md`.
 
 ## Cosa NON è cambiato
 Grafica, viste, cielo vivo, parser, tag, calendari, widget: identici alla v54.

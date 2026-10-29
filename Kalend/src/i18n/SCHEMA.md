@@ -51,6 +51,10 @@ Includere varianti (con/senza accento, abbreviazioni, forme colloquiali). Ordine
 | `until` | «fino al» (fine ricorrenza) | `["fino al","fino a","fino alla"]` |
 | `daily`,`weekly`,`monthly`,`yearly` | aggettivi di ricorrenza | `["giornaliero","quotidiano"]`… |
 | `times` | «volte» in «per 5 volte» | `["volte"]` |
+| `biweekly` | «ogni due settimane», «a settimane alterne» (v55) | `["ogni due settimane","quindicinale"]` |
+| `birthday` | parole di compleanno/anniversario: l'evento diventa di giornata intera e annuale (v55) | `["compleanno","anniversario","onomastico"]` |
+| `quantities` | oggetto parola → «N unità» per duali e quantità fisse (arabo, ebraico) (v55) | `{"أسبوعين":"2 settimane"}` |
+| `halfPrefix`, `quarterPrefix`, `threeQuartersPrefix` | frazione PRIMA dell'ora (hindi, bengalese): «साढ़े 7» = 7:30, «सवा 7» = 7:15, «पौने 8» = 7:45 (v55) | `["साढ़े"]`, `["सवा"]`, `["पौने"]` |
 | `at` | preposizione prima di UN orario | `["alle","alle ore","all'","ore","verso le"]` |
 | `from`, `to` | intervallo orario «dalle 9 alle 11» | `["dalle","dal","dalla"]`, `["alle","al","a","fino alle"]` |
 | `for` | durata «per 2 ore» | `["per","durata","durante"]` |

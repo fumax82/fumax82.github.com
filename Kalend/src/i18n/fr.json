@@ -536,7 +536,15 @@
    "du lundi au vendredi",
    "jours de semaine",
    "lundi à vendredi",
-   "lun-ven"
+   "lun-ven",
+   "tous les jours ouvrés",
+   "tous les jours ouvres",
+   "tous les jours ouvrables",
+   "tous les jours de semaine",
+   "les jours ouvrés",
+   "les jours ouvrables",
+   "jours de la semaine",
+   "du lundi au vendredi inclus"
   ],
   "allday": [
    "toute la journée",
@@ -1669,7 +1677,17 @@
   "daySuffix": [],
   "pmPrefix": [],
   "amPrefix": [],
-  "noSpaces": false
+  "noSpaces": false,
+  "biweekly": [
+   "toutes les deux semaines",
+   "tous les quinze jours",
+   "une semaine sur deux"
+  ],
+  "birthday": [
+   "anniversaire",
+   "anniv",
+   "fête"
+  ]
  },
  "autotag": {
   "lavoro": [

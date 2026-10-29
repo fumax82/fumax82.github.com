@@ -1,30 +1,301 @@
-{"lang":"ko","cases":[
- {"s":"금요일 저녁 7시 강남역에서 지수랑 저녁 식사 #친구","expect":{"title":"저녁 식사","date":"wd:5","start":"19:00","loc":"강남역","people":["지수"],"tags":["친구"]},"note":"appuntamento tipico: giorno + 저녁 7시 + luogo (에서) + persona (랑) + tag"},
- {"s":"내일 오전 9시부터 10시까지 민준이랑 같이 회의","expect":{"title":"회의","date":"+1","start":"09:00","end":"10:00","people":["민준"]},"note":"intervallo 부터…까지 con domani e persona (이랑 같이)"},
- {"s":"오후 3시 반에 치과","expect":{"title":"치과","start":"15:30"},"note":"오후 + 시 + 반 → 15:30"},
- {"s":"세 시에 치과","expect":{"title":"치과","start":"15:00"},"skip":true,"note":"PARSER: ora con numero nativo a parole («세 시»): numberWords() gira DOPO suffixTimes(), così «세 시에» diventa «3 시에» ma non un orario (e «시» finisce fra le unità ore). Correzione: in canonicalize() chiamare numberWords prima di suffixTimes. L'attesa 15:00 segue l'uso coreano (le 3 senza qualificatore = pomeriggio); 03:00 sarebbe comunque accettabile"},
- {"s":"3월 5일에 출장","expect":{"title":"출장","date":"md:3-5"},"note":"data con suffissi 월/일"},
- {"s":"5/3 10시 건강검진","expect":{"title":"건강검진","date":"md:5-3","start":"10:00"},"note":"data numerica nell'ordine coreano mese/giorno"},
- {"s":"2027-03-05 워크숍 13시부터 17시까지","expect":{"title":"워크숍","date":"2027-03-05","start":"13:00","end":"17:00"},"skip":true,"note":"PARSER: data ISO letta come 3 maggio: in preNormalize() la conversione ISO produce «5/3/2027» e la regola «mdy&&!us» la scambia di nuovo. Stessa causa per il formato coreano standard «2027.3.5» (→ 2027-05-03). Correzione: scambio mdy prima della conversione ISO, o marcare l'uscita di toSlash()"},
- {"s":"2027년 3월 5일 입학식","expect":{"title":"입학식","date":"2027-03-05"},"skip":true,"note":"PARSER: la regola 年月日 di preNormalize() non conosce i suffissi coreani 년/월/일: «2027년» resta come unità anni («2027 anni») e sporca il titolo («2027 입학식»); la data è giusta solo perché 5/3 cade nell'anno prossimo. Correzione: estendere la regex 年月日 a (\\d{4})\\s*[年년]\\s*(\\d{1,2})\\s*[月월]\\s*(\\d{1,2})\\s*[日일]?"},
- {"s":"5월 12일 유진이 생일 하루 종일","expect":{"titleIncludes":"생일","date":"md:5-12","allDay":true},"note":"compleanno con «하루 종일»"},
- {"s":"3일 후에 택배 수령","expect":{"title":"택배 수령","date":"+3"},"note":"«3일 후에» → tra 3 giorni (tolte dalle unità «일 후/일 뒤» che inghiottivano il «후»)"},
- {"s":"다음주에 장보기","expect":{"title":"장보기","date":"nextweek"}},
- {"s":"주말에 온천 여행","expect":{"title":"온천 여행","date":"weekend"}},
- {"s":"이번주 금요일 영화","expect":{"title":"영화","date":"wd:5"},"note":"«이번주» (questa settimana) tolto dal titolo con le stopwords"},
- {"s":"요가 수업 매주 월요일 목요일 저녁 6시 반 12월 20일까지 서울 강남구 테헤란로 5에서 #운동 30분 전에 알려줘","expect":{"titleIncludes":"요가","start":"18:30","rrule":{"freq":"WEEKLY","byday":[1,4],"until":"md:12-20"},"tags":["운동"],"rem":30,"loc":"서울 강남구 테헤란로 5"},"note":"ricorrenza su due giorni, fine 까지, indirizzo con numero civico (에서), preavviso"},
- {"s":"2주마다 대청소","expect":{"title":"대청소","rrule":{"freq":"WEEKLY","interval":2}},"skip":true,"note":"PARSER: «2주마다» (ogni 2 settimane): il suffisso 마다 è attaccato all'unità e in guarded() le unità pretendono il confine LA dopo «주», quindi niente «2 settimane»; inoltre «마다» posposto darebbe «2 settimane ogni» che NL2 non legge. Correzione: niente LA per le lingue a suffissi (SUFFIX_RE) e in postpositions() riordinare «N unità ogni» → «ogni N unità»"},
- {"s":"평일 아침 9시 회의","expect":{"title":"회의","rrule":{"freq":"WEEKLY","byday":[1,2,3,4,5]},"start":"09:00"},"note":"giorni feriali"},
- {"s":"영어 회화 매주 총 5번","expect":{"titleIncludes":"영어 회화","rrule":{"freq":"WEEKLY","count":5}},"note":"«총 5번» → per 5 volte (총 aggiunto a `for`; 매주 tolto da `every` così da dare «ogni settimana»)"},
- {"s":"일요일에 엄마랑 점심","expect":{"title":"점심","date":"wd:0","people":["엄마"]},"note":"parente «엄마» come persona"},
- {"s":"긴급 세금 납부 3일 후","expect":{"titleIncludes":"세금","date":"+3","pri":"urgent"}},
- {"s":"화요일 11시 은행 메모: 서류 챙기기","expect":{"title":"은행","date":"wd:2","start":"11:00","desc":"서류"},"note":"nota in coda"},
- {"s":"한 시간 전에 알려줘 치과 수요일 10시","expect":{"title":"치과","rem":60,"start":"10:00","date":"wd:3"},"note":"«한 시간 전» → un'ora prima"},
- {"s":"1시간 전에 알려줘 치과 수요일 10시","expect":{"title":"치과","rem":60,"start":"10:00","date":"wd:3"},"skip":true,"note":"PARSER: «1시간 전» viene letto da suffixTimes() come l'orario «1시» (01:00) + «간 전»: il suffisso 시 non esclude il seguito 간. Correzione: lookahead negativo in suffixTimes per le unità del lessico che iniziano col suffisso (시간), oppure unità di guarded() prima di suffixTimes"},
- {"s":"1일 전에 알려줘 여행 다음주","expect":{"title":"여행","rem":1440,"date":"nextweek"},"note":"un giorno prima"},
- {"s":"내일 오후 2시에 김과장님과 회의","expect":{"title":"회의","date":"+1","start":"14:00","people":["김과장"]},"note":"titolo onorifico 님 tolto, particella 과"},
- {"s":"토요일 저녁 7시 강남역에서 지수랑 민준이랑 저녁 식사","expect":{"title":"저녁 식사","date":"wd:6","start":"19:00","loc":"강남역","people":["지수","민준"]},"note":"due persone (랑 / 이랑)"},
- {"s":"Comic Con 참가 토요일","expect":{"titleIncludes":"Comic Con","date":"wd:6","people":[],"loc":""},"note":"CONFLITTO: «Con» (con) in un nome proprio: titolo intero, nessuna persona"},
- {"s":"Ed Sheeran 콘서트 토요일 저녁 8시","expect":{"titleIncludes":"Ed Sheeran","date":"wd:6","start":"20:00","people":[],"loc":""},"note":"CONFLITTO: «Ed» (ed = e) in un nome proprio"},
- {"s":"Plug in 하이브리드 시승 토요일","expect":{"titleIncludes":"Plug in","date":"wd:6","people":[],"loc":""},"note":"CONFLITTO: «in» seguito da hangul: nessun luogo spurio"}
-]}
+{
+ "lang": "ko",
+ "cases": [
+  {
+   "s": "금요일 저녁 7시 강남역에서 지수랑 저녁 식사 #친구",
+   "expect": {
+    "title": "저녁 식사",
+    "date": "wd:5",
+    "start": "19:00",
+    "loc": "강남역",
+    "people": [
+     "지수"
+    ],
+    "tags": [
+     "친구"
+    ]
+   },
+   "note": "appuntamento tipico: giorno + 저녁 7시 + luogo (에서) + persona (랑) + tag"
+  },
+  {
+   "s": "내일 오전 9시부터 10시까지 민준이랑 같이 회의",
+   "expect": {
+    "title": "회의",
+    "date": "+1",
+    "start": "09:00",
+    "end": "10:00",
+    "people": [
+     "민준"
+    ]
+   },
+   "note": "intervallo 부터…까지 con domani e persona (이랑 같이)"
+  },
+  {
+   "s": "오후 3시 반에 치과",
+   "expect": {
+    "title": "치과",
+    "start": "15:30"
+   },
+   "note": "오후 + 시 + 반 → 15:30"
+  },
+  {
+   "s": "세 시에 치과",
+   "expect": {
+    "title": "치과",
+    "start": "15:00"
+   },
+   "skip": true,
+   "note": "PARSER: ora con numero nativo a parole («세 시»): numberWords() gira DOPO suffixTimes(), così «세 시에» diventa «3 시에» ma non un orario (e «시» finisce fra le unità ore). Correzione: in canonicalize() chiamare numberWords prima di suffixTimes. L'attesa 15:00 segue l'uso coreano (le 3 senza qualificatore = pomeriggio); 03:00 sarebbe comunque accettabile"
+  },
+  {
+   "s": "3월 5일에 출장",
+   "expect": {
+    "title": "출장",
+    "date": "md:3-5"
+   },
+   "note": "data con suffissi 월/일"
+  },
+  {
+   "s": "5/3 10시 건강검진",
+   "expect": {
+    "title": "건강검진",
+    "date": "md:5-3",
+    "start": "10:00"
+   },
+   "note": "data numerica nell'ordine coreano mese/giorno"
+  },
+  {
+   "s": "2027-03-05 워크숍 13시부터 17시까지",
+   "expect": {
+    "title": "워크숍",
+    "date": "2027-03-05",
+    "start": "13:00",
+    "end": "17:00"
+   },
+   "note": "ora superato · data ISO letta come 3 maggio: in preNormalize() la conversione ISO produce «5/3/2027» e la regola «mdy&&!us» la scambia di nuovo. Stessa causa per il formato coreano standard «2027.3.5» (→ 2027-05-03). Correzione: scambio mdy prima della conversione ISO, o marcare l'uscita di toSlash("
+  },
+  {
+   "s": "2027년 3월 5일 입학식",
+   "expect": {
+    "title": "입학식",
+    "date": "2027-03-05"
+   },
+   "note": "ora superato · la regola 年月日 di preNormalize() non conosce i suffissi coreani 년/월/일: «2027년» resta come unità anni («2027 anni») e sporca il titolo («2027 입학식»); la data è giusta solo perché 5/3 cade nell'anno prossimo. Correzione: estendere la regex 年月日 a (\\d{4})\\s*[年년]\\s*(\\d{1,2})\\s*[月월]\\s*(\\d{1,2"
+  },
+  {
+   "s": "5월 12일 유진이 생일 하루 종일",
+   "expect": {
+    "titleIncludes": "생일",
+    "date": "md:5-12",
+    "allDay": true
+   },
+   "note": "compleanno con «하루 종일»"
+  },
+  {
+   "s": "3일 후에 택배 수령",
+   "expect": {
+    "title": "택배 수령",
+    "date": "+3"
+   },
+   "note": "«3일 후에» → tra 3 giorni (tolte dalle unità «일 후/일 뒤» che inghiottivano il «후»)"
+  },
+  {
+   "s": "다음주에 장보기",
+   "expect": {
+    "title": "장보기",
+    "date": "nextweek"
+   }
+  },
+  {
+   "s": "주말에 온천 여행",
+   "expect": {
+    "title": "온천 여행",
+    "date": "weekend"
+   }
+  },
+  {
+   "s": "이번주 금요일 영화",
+   "expect": {
+    "title": "영화",
+    "date": "wd:5"
+   },
+   "note": "«이번주» (questa settimana) tolto dal titolo con le stopwords"
+  },
+  {
+   "s": "요가 수업 매주 월요일 목요일 저녁 6시 반 12월 20일까지 서울 강남구 테헤란로 5에서 #운동 30분 전에 알려줘",
+   "expect": {
+    "titleIncludes": "요가",
+    "start": "18:30",
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      1,
+      4
+     ],
+     "until": "md:12-20"
+    },
+    "tags": [
+     "운동"
+    ],
+    "rem": 30,
+    "loc": "서울 강남구 테헤란로 5"
+   },
+   "note": "ricorrenza su due giorni, fine 까지, indirizzo con numero civico (에서), preavviso"
+  },
+  {
+   "s": "2주마다 대청소",
+   "expect": {
+    "title": "대청소",
+    "rrule": {
+     "freq": "WEEKLY",
+     "interval": 2
+    }
+   },
+   "note": "ora superato · «2주마다» (ogni 2 settimane): il suffisso 마다 è attaccato all'unità e in guarded() le unità pretendono il confine LA dopo «주», quindi niente «2 settimane»; inoltre «마다» posposto darebbe «2 settimane ogni» che NL2 non legge. Correzione: niente LA per le lingue a suffissi (SUFFIX_RE) e in p"
+  },
+  {
+   "s": "평일 아침 9시 회의",
+   "expect": {
+    "title": "회의",
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ]
+    },
+    "start": "09:00"
+   },
+   "note": "giorni feriali"
+  },
+  {
+   "s": "영어 회화 매주 총 5번",
+   "expect": {
+    "titleIncludes": "영어 회화",
+    "rrule": {
+     "freq": "WEEKLY",
+     "count": 5
+    }
+   },
+   "note": "«총 5번» → per 5 volte (총 aggiunto a `for`; 매주 tolto da `every` così da dare «ogni settimana»)"
+  },
+  {
+   "s": "일요일에 엄마랑 점심",
+   "expect": {
+    "title": "점심",
+    "date": "wd:0",
+    "people": [
+     "엄마"
+    ]
+   },
+   "note": "parente «엄마» come persona"
+  },
+  {
+   "s": "긴급 세금 납부 3일 후",
+   "expect": {
+    "titleIncludes": "세금",
+    "date": "+3",
+    "pri": "urgent"
+   }
+  },
+  {
+   "s": "화요일 11시 은행 메모: 서류 챙기기",
+   "expect": {
+    "title": "은행",
+    "date": "wd:2",
+    "start": "11:00",
+    "desc": "서류"
+   },
+   "note": "nota in coda"
+  },
+  {
+   "s": "한 시간 전에 알려줘 치과 수요일 10시",
+   "expect": {
+    "title": "치과",
+    "rem": 60,
+    "start": "10:00",
+    "date": "wd:3"
+   },
+   "note": "«한 시간 전» → un'ora prima"
+  },
+  {
+   "s": "1시간 전에 알려줘 치과 수요일 10시",
+   "expect": {
+    "title": "치과",
+    "rem": 60,
+    "start": "10:00",
+    "date": "wd:3"
+   },
+   "note": "ora superato · «1시간 전» viene letto da suffixTimes() come l'orario «1시» (01:00) + «간 전»: il suffisso 시 non esclude il seguito 간. Correzione: lookahead negativo in suffixTimes per le unità del lessico che iniziano col suffisso (시간), oppure unità di guarded() prima di suffixTimes"
+  },
+  {
+   "s": "1일 전에 알려줘 여행 다음주",
+   "expect": {
+    "title": "여행",
+    "rem": 1440,
+    "date": "nextweek"
+   },
+   "note": "un giorno prima"
+  },
+  {
+   "s": "내일 오후 2시에 김과장님과 회의",
+   "expect": {
+    "title": "회의",
+    "date": "+1",
+    "start": "14:00",
+    "people": [
+     "김과장"
+    ]
+   },
+   "note": "titolo onorifico 님 tolto, particella 과"
+  },
+  {
+   "s": "토요일 저녁 7시 강남역에서 지수랑 민준이랑 저녁 식사",
+   "expect": {
+    "title": "저녁 식사",
+    "date": "wd:6",
+    "start": "19:00",
+    "loc": "강남역",
+    "people": [
+     "지수",
+     "민준"
+    ]
+   },
+   "note": "due persone (랑 / 이랑)"
+  },
+  {
+   "s": "Comic Con 참가 토요일",
+   "expect": {
+    "titleIncludes": "Comic Con",
+    "date": "wd:6",
+    "people": [],
+    "loc": ""
+   },
+   "note": "CONFLITTO: «Con» (con) in un nome proprio: titolo intero, nessuna persona"
+  },
+  {
+   "s": "Ed Sheeran 콘서트 토요일 저녁 8시",
+   "expect": {
+    "titleIncludes": "Ed Sheeran",
+    "date": "wd:6",
+    "start": "20:00",
+    "people": [],
+    "loc": ""
+   },
+   "note": "CONFLITTO: «Ed» (ed = e) in un nome proprio"
+  },
+  {
+   "s": "Plug in 하이브리드 시승 토요일",
+   "expect": {
+    "titleIncludes": "Plug in",
+    "date": "wd:6",
+    "people": [],
+    "loc": ""
+   },
+   "note": "CONFLITTO: «in» seguito da hangul: nessun luogo spurio"
+  }
+ ]
+}
