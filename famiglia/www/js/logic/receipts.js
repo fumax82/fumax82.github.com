@@ -288,6 +288,7 @@
       items,
       itemsTotal,
       check: total ? (Math.abs(total - itemsTotal) <= 5 ? 'ok' : 'diff') : 'no-total',
+      payment: paymentMethod(text),
       body: items.length > 0
     };
   }
@@ -388,21 +389,60 @@
     };
   }
 
-  /** Pagamenti che potrebbero corrispondere allo scontrino (importo e data). */
-  function matchPayments(receipt, transactions) {
+  /**
+   * Movimenti a cui collegare lo scontrino: uscite con lo STESSO IMPORTO nei
+   * giorni dello scontrino. La banca può registrare il pagamento qualche
+   * giorno dopo (fino a 5) o, raramente, il giorno prima.
+   * Restituisce [{ tx, diff, days, exact, sameDay, label }] dal più probabile.
+   *   - stesso importo al centesimo; fino a 5 centesimi solo per gli
+   *     arrotondamenti dei pagamenti in contanti (es. 21,14 -> 21,15)
+   *   - senza data sullo scontrino: stesso importo negli ultimi 30 giorni
+   * excludeIds: movimenti già collegati ad altri scontrini
+   */
+  function matchPayments(receipt, transactions, excludeIds, todayIso) {
+    const total = Math.abs(receipt.total || 0);
+    if (!total) return [];
+    const skip = new Set(excludeIds || []);
+    const ref = receipt.date || todayIso || U.today();
     return transactions
-      .filter(t => t.state === 'active' && t.cents < 0)
+      .filter(t => t.state === 'active' && t.cents < 0 && !skip.has(t.id) && t.kind !== 'withdrawal' && t.kind !== 'transfer')
       .map(t => {
-        const diff = Math.abs(-t.cents - receipt.total);
-        const days = receipt.date ? Math.abs(U.daysBetween(t.date, receipt.date)) : 99;
-        return { tx: t, diff, days, score: diff / 10 + days * 3 };
+        const diff = Math.abs(-t.cents - total);
+        const delta = U.daysBetween(ref, t.date); // positivo = registrato dopo lo scontrino
+        return { tx: t, diff, days: Math.abs(delta), delta, exact: diff === 0, sameDay: delta === 0 };
       })
-      .filter(x => x.diff <= Math.max(5, receipt.total * 0.02) && x.days <= 4)
+      .filter(x => x.diff <= 5 && (receipt.date ? x.delta >= -1 && x.delta <= 5 : x.delta <= 0 && x.delta >= -30))
+      .map(x => Object.assign(x, {
+        label: (x.exact ? 'stesso importo' : 'importo quasi uguale (' + (x.diff / 100).toFixed(2).replace('.', ',') + ' € di differenza)')
+          + (!receipt.date ? '' : x.sameDay ? ', stesso giorno' : x.delta > 0 ? ', registrato ' + x.delta + (x.delta === 1 ? ' giorno' : ' giorni') + ' dopo' : ', il giorno prima'),
+        score: x.diff * 10 + x.days * 3 + (x.tx.status === 'NO' ? 1 : 0)
+      }))
       .sort((a, b) => a.score - b.score)
       .slice(0, 6);
   }
 
-  const Receipts = { DEPARTMENTS, SHOPS, productCategory, knownShop, findShop, parseText, mergeTexts, productKey, analyze, matchPayments, findDate, toCents };
+  /**
+   * Come è stato pagato secondo lo scontrino: 'cash' (contanti), 'card'
+   * (carta/bancomat) oppure '' se non si capisce o è misto.
+   * Guarda le righe "Pagamento contante 52,00", "Pagamento elettronico 13,65"...
+   * ignorando quelle a 0,00.
+   */
+  function paymentMethod(text) {
+    let cash = 0, card = 0;
+    for (const raw of String(text || '').split(/\r?\n/)) {
+      const l = fixNumbers(raw), n = U.norm(l);
+      const m = l.match(/(\d{1,4}[.,]\d{2})\s*(?:€|eur)?\s*$/i);
+      const v = m ? toCents(m[1]) : 0;
+      if (/resto|non riscosso/.test(n)) continue;
+      if (/(pagamento|pagato|pag\.)\s*(in\s*)?contant|^contant/.test(n) && v > 0) cash += v;
+      if (/(pagamento elettronico|pago ?bancomat|bancomat|carta di credito|carta di debito|pb banca|pos\b|contactless|visa|mastercard|maestro)/.test(n) && (v > 0 || /pago ?bancomat|transazione autorizzata/.test(n))) card += v || 1;
+    }
+    if (cash && !card) return 'cash';
+    if (card && !cash) return 'card';
+    return '';
+  }
+
+  const Receipts = { DEPARTMENTS, SHOPS, productCategory, knownShop, findShop, parseText, mergeTexts, productKey, analyze, matchPayments, paymentMethod, findDate, toCents };
   root.Receipts = Receipts;
   if (typeof module !== 'undefined') module.exports = Receipts;
 })(typeof window === 'undefined' ? globalThis : window);

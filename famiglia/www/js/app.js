@@ -121,9 +121,10 @@ window.receive = function (d) {
 window.onImported = function (summary) {
   notice('Importazione completata: ' + summary);
   setTimeout(() => {
-    if (S.todo.length || (S.gaps && S.gaps.gaps.length)) {
+    if (S.todo.length || (S.gaps && S.gaps.gaps.length) || receiptsReady()) {
       modal('Importazione completata', '<p class="sub">' + esc(summary) + '</p>'
         + (S.todo.length ? '<div class="hint warn">' + S.todo.length + ' movimenti hanno informazioni mancanti (famiglia, categoria o carta).</div><button class="btn wide" onclick="closeModal();nav(\'todo\')">Completa ora</button>' : '')
+        + (receiptsReady() ? '<div class="hint" style="margin-top:12px">' + receiptsReady() + ' scontrini ora corrispondono a un movimento importato.</div><button class="btn secondary wide" onclick="closeModal();nav(\'receipts\')">Collega gli scontrini</button>' : '')
         + (S.gaps && S.gaps.important ? '<div class="hint warn" style="margin-top:12px">Attenzione: ' + S.gaps.important + ' buchi importanti tra i file importati.</div><button class="btn secondary wide" onclick="closeModal();nav(\'imports\')">Vedi analisi dei buchi</button>' : ''));
     }
   }, 400);

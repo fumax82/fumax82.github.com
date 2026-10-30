@@ -37,6 +37,7 @@ Screens.home = function () {
       + '<p class="sub" style="margin:0">Il più grande: ' + Math.max(...gapsImportant.map(g => g.days)) + ' giorni senza file importati. Importa un estratto che li copra.</p></div>' : '')
     + (proposals.length ? '<div class="card" role="button" onclick="nav(\'todo\',\'proposals\')"><div class="row"><h3>↻ ' + proposals.length + ' spese ripetitive senza regola</h3><span>→</span></div>'
       + '<p class="sub" style="margin:0">Es. ' + esc(proposals.slice(0, 3).map(p => p.token).join(', ')) + '. Crea una regola e verranno classificate da sole.</p></div>' : '')
+    + (receiptsReady() ? '<div class="card" role="button" onclick="nav(\'receipts\')"><div class="row"><h3>🧾 ' + receiptsReady() + ' scontrini da collegare</h3><span>→</span></div><p class="sub" style="margin:0">Ora c\'è un movimento con lo stesso importo: collegali con un tocco.</p></div>' : '')
     + (unlinkedCash ? '<div class="card" role="button" onclick="nav(\'cash\')"><div class="row"><h3>💶 ' + unlinkedCash + ' pagamenti in contanti da collegare</h3><span>→</span></div><p class="sub" style="margin:0">Indica da quale prelievo vengono i contanti.</p></div>' : '')
 
     + '<div class="grid"><div class="card"><span class="eyebrow">MARGINE / ENTRATE</span><div class="value">' + (s.rate === null ? '—' : Math.round(s.rate * 100) + '%') + '</div><span class="mini">Capacità di risparmio</span></div>'
@@ -80,4 +81,9 @@ function showIds(ids, title) {
 function hideInsight(id) {
   put('hiddenInsights', pref('hiddenInsights', []).concat([id]));
   render();
+}
+
+/** Scontrini non collegati per cui adesso esiste un movimento corrispondente. */
+function receiptsReady() {
+  return pendingReceiptLinks().filter(x => x.matches.length).length;
 }

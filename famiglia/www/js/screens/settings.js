@@ -38,7 +38,7 @@ Screens.settings = function () {
     + '<details class="card"><summary>Registro delle ultime 100 azioni</summary>' + S.data.audit.map(a => '<p class="mini"><b>' + esc(a.action) + '</b> · ' + esc(a.date) + '<br>' + esc(a.detail) + '</p>').join('') + '</details>'
     + '<div class="card"><h2>Come leggere i risultati</h2><p class="sub">Accantonamenti, investimenti e giroconti non sono consumi. I rimborsi sono separati dalle entrate. I prelievi bancomat non sono spese: lo diventano i pagamenti in contanti che registri; la parte non registrata appare come "Contanti non tracciati".</p>'
     + '<p class="sub">Non essendoci un ID univoco nell\'Excel, due operazioni perfettamente identiche non sono sempre distinguibili. Si conserva la massima molteplicità osservata nei file sovrapposti.</p>'
-    + '<p class="mini">Famiglia 2.1 · build personale offline</p></div>';
+    + '<p class="mini">Famiglia 2.2 · build personale offline</p></div>';
 };
 
 function saveHouse() {

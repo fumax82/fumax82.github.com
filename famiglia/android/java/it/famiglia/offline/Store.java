@@ -499,8 +499,9 @@ public class Store extends SQLiteOpenHelper {
         v.put("date", o.optString("date", ""));
         v.put("total", o.optLong("total", 0));
         v.put("items", o.optJSONArray("items") == null ? "[]" : o.getJSONArray("items").toString());
-        v.put("ocr_text", o.optString("ocrText", ""));
         long id = o.optLong("id", 0);
+        // Il testo OCR si scrive alla creazione; in un aggiornamento solo se inviato
+        if (id == 0 || o.has("ocrText")) v.put("ocr_text", o.optString("ocrText", ""));
         db.beginTransaction();
         try {
             if (id > 0) {

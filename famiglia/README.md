@@ -1,9 +1,25 @@
-# Famiglia 2.1 — finanze di famiglia, offline
+# Famiglia 2.2 — finanze di famiglia, offline
 
 App Android per analizzare entrate e uscite importando gli estratti Excel di Intesa Sanpaolo.
 Tutto resta sul telefono: nessun permesso Internet, database locale, backup cifrato.
 
-**APK pronto da installare:** [`dist/Famiglia-2.1.apk`](dist/Famiglia-2.1.apk)
+**APK pronto da installare:** [`dist/Famiglia-2.2.apk`](dist/Famiglia-2.2.apk)
+Si installa sopra la 2.0 o la 2.1 senza disinstallare: i dati restano.
+
+---
+
+## Novità della versione 2.2: collegare lo scontrino al pagamento
+
+Dopo la lettura, l'app propone i movimenti con **lo stesso importo** nei giorni dello scontrino.
+La banca può registrare il pagamento fino a 5 giorni dopo, o il giorno prima.
+Sono ammessi al massimo 5 centesimi di differenza, solo per gli arrotondamenti dei contanti.
+Senza data sullo scontrino, cerca lo stesso importo negli ultimi 30 giorni.
+
+- **Scelta proposta**: se lo scontrino dice "pagamento contante", l'app propone *Pagato in contanti*. Il pagamento viene creato e collegato al prelievo bancomat con contanti sufficienti. Altrimenti propone il movimento con lo stesso importo.
+- **Correggi data o totale** e le proposte si aggiornano subito.
+- **Per ora nessun collegamento**: lo scontrino resta tra quelli "da collegare". Quando importi il periodo giusto, l'app ti avvisa in Home, dopo l'importazione e in *Scontrini*. Lo colleghi con un tocco.
+- Il nome del negozio letto sullo scontrino diventa il nome dell'esercizio del movimento collegato.
+
 
 ---
 
@@ -65,7 +81,7 @@ Android quindi non la installa sopra la vecchia app. Per non perdere i dati:
 
 1. Nella **1.0**: *Spazio › Backup cifrato*. Salva il file `.fmb` e ricorda la password.
 2. Disinstalla la 1.0.
-3. Installa `Famiglia-2.1.apk`. Android chiederà di consentire l'installazione da questa fonte.
+3. Installa `Famiglia-2.2.apk`. Android chiederà di consentire l'installazione da questa fonte.
 4. Nella **2.0**: *Altro › Impostazioni e backup › Ripristina* e scegli il file `.fmb`.
    Il database viene aggiornato automaticamente al nuovo formato.
 

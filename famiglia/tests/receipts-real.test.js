@@ -49,3 +49,23 @@ test('insegne lette con errori e date con orario', () => {
   assert.strictEqual(R.knownShop('mercato'), '');
   assert.strictEqual(R.findDate('L. 21.06.2017\n30.10.26 18:56 DOC'), '2026-10-30', 'preferisce la data con orario');
 });
+
+test('pagamento dello scontrino: contanti per NaturaSì, carta per Cadoro', () => {
+  assert.strictEqual(R.parseText(read('naturasi')).payment, 'cash');
+  assert.strictEqual(R.parseText(R.mergeTexts([read('cadoro-foto1'), read('cadoro-foto2')])).payment, 'card');
+});
+
+test('collegamento scontrino -> movimento: stesso importo nei giorni dello scontrino', () => {
+  let id = 1;
+  const tx = (date, cents, extra) => Object.assign({ id: id++, date, cents, state: 'active', status: 'SI', kind: 'expense', details: 'POS' }, extra);
+  const same = tx('2026-10-30', -1365), later = tx('2026-11-02', -1365), before = tx('2026-10-29', -1365);
+  const tooLate = tx('2026-11-06', -1365), otherAmount = tx('2026-10-30', -1370), wide = tx('2026-10-30', -1400);
+  const atm = tx('2026-10-30', -1365, { kind: 'withdrawal' }), linked = tx('2026-10-30', -1365);
+  const m = R.matchPayments({ date: '2026-10-30', total: 1365 }, [later, tooLate, otherAmount, wide, before, atm, linked, same], [linked.id]);
+  assert.deepStrictEqual(m.map(x => x.tx.id), [same.id, before.id, later.id, otherAmount.id], 'stesso giorno prima, poi i giorni vicini, poi 5 cent di differenza');
+  assert.ok(m[0].exact && m[0].sameDay);
+  assert.match(m[2].label, /registrato 3 giorni dopo/);
+  assert.ok(!m.some(x => x.tx.id === wide.id), 'mai importi diversi di 35 cent');
+  const noDate = R.matchPayments({ date: '', total: 1365 }, [tx('2026-10-20', -1365)], [], '2026-10-30');
+  assert.strictEqual(noDate.length, 1, 'senza data: stesso importo negli ultimi 30 giorni');
+});
