@@ -769,6 +769,28 @@
    },
    "skip": true,
    "note": "v56 MOTORE: momento PRIMA dell'ora con ore 1–6. Canon «Такси в аэропорт понедельник alle 6»: la regola amB di ranges() (10-lang-packs.js) scrive l'ora «nuda» (alle 6) e poi la regola «1–6 senza altro = pomeriggio» la porta alle 18:00. Ottenuto 18:00. Succede anche in inglese («in the morning at 6») e in ucraino («вранці о шостій»); «в 6 утра» (momento DOPO l'ora) va"
+  },
+  {
+   "s": "Обед с коллегами в столовой в час дня",
+   "expect": {
+    "title": "Обед",
+    "start": "13:00",
+    "loc": "Столовой"
+   },
+   "note": "v56 revisione 2: «в час дня» = 13:00 (senza numero: «час» = l'una). Aggirato nel lessico con numbers «час дня»/«часу дня» = 13 (prima: titolo «Обед в час», nessun orario)"
+  },
+  {
+   "s": "Встреча с Мариной 5 числа в 10",
+   "expect": {
+    "title": "Встреча",
+    "date": "dom:5",
+    "start": "10:00",
+    "people": [
+     "Мариной"
+    ]
+   },
+   "skip": true,
+   "note": "v56 MOTORE: giorno senza mese spento a torto. preProcess() di 11-nl-smart.js (parte 4) cerca i nomi dei mesi SENZA confini di parola: l'abbreviazione «мар» (марта) dentro «Мариной» fa credere che la frase abbia un mese. Ottenuto titolo «Встреча 5 числа», nessuna data. Stesso guaio in ucraino con «сер» dentro «середу/сервісі», «кві» dentro «квіти», «гру» dentro «групою»"
   }
  ]
 }

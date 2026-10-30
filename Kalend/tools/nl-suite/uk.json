@@ -746,6 +746,15 @@
    },
    "skip": true,
    "note": "v56 MOTORE: momento PRIMA dell'ora con ore 1–6. Canon «Таксі в аеропорт понеділок alle 6»: la regola amB di ranges() (10-lang-packs.js) scrive l'ora «nuda» e la regola «1–6 senza altro = pomeriggio» la porta alle 18:00. Ottenuto 18:00. «о 6 ранку» (momento DOPO l'ora) va"
+  },
+  {
+   "s": "Замовити квіти для мами 7 числа",
+   "expect": {
+    "title": "Замовити квіти для мами",
+    "date": "dom:7"
+   },
+   "skip": true,
+   "note": "v56 MOTORE: giorno senza mese spento a torto. preProcess() di 11-nl-smart.js (parte 4) cerca i nomi dei mesi SENZA confini di parola: l'abbreviazione «кві» (квітень) dentro «квіти» fa credere che la frase abbia un mese. Ottenuto titolo «Замовити квіти для мами 7 числа», nessuna data. Lo stesso con «сер» in «середу/сервісі» e «гру» in «групою»"
   }
  ]
 }
