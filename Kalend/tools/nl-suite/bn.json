@@ -260,8 +260,7 @@
     ],
     "loc": "ঢাকা"
    },
-   "skip": true,
-   "note": "PARSER: il suffisso locativo attaccato (ঢাকায়, গুলশানে, বনানীতে) non è riconosciuto; la regola PLACE_AFTER vuole la posposizione separata da uno spazio"
+   "note": "ora superato (v56, revisione) · attachedPlace() legge «ঢাকায়» (città + suffisso locativo, lessico cities) — prima: PARSER: il suffisso locativo attaccato (ঢাকায়, গুলশানে, বনানীতে) non è riconosciuto; la regola PLACE_AFTER vuole la posposizione separata da uno spazio"
   },
   {
    "s": "আনিকা ও রাহুলের সাথে ডিনার শুক্রবার রাত ৮টায়",
@@ -274,8 +273,7 @@
      "রাহুলের"
     ]
    },
-   "skip": true,
-   "note": "PARSER: la regola WITH_AFTER prende una sola parola prima di «সাথে»; «আনিকা ও» resta nel titolo"
+   "note": "ora superato (v56, revisione) · la regola WITH_AFTER legge «X ও Y-এর সাথে» — prima: PARSER: la regola WITH_AFTER prende una sola parola prima di «সাথে»; «আনিকা ও» resta nel titolo"
   },
   {
    "s": "৫ই মার্চ দুপুর ২টায় ডেন্টিস্ট",
@@ -284,8 +282,320 @@
     "date": "md:3-5",
     "start": "14:00"
    },
+   "note": "ora superato (v56, revisione) · il suffisso ordinale davanti al mese («৫ই মার্চ») cade in canonicalize() — prima: PARSER: il suffisso ordinale attaccato al giorno (৫ই, ২০শে, ১লা, ২রা, ৩রা, ৪ঠা) impedisce di leggere «5 marzo»; daySuffix è usato solo insieme a monthSuffix"
+  },
+  {
+   "s": "আমাকে মনে করিয়ে দিও যে কাল সকাল সাড়ে নটায় ডেন্টিস্টকে ফোন করতে হবে",
+   "expect": {
+    "title": "ডেন্টিস্টকে ফোন",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0
+   },
+   "note": "v56 dettatura: comando iniziale «আমাকে মনে করিয়ে দিও যে» → avviso all'ora; «সকাল সাড়ে নটায়» a parole = 9:30 (numero «ন» + suffisso «টায়»); «করতে হবে» fuori dal titolo"
+  },
+  {
+   "s": "বৃহস্পতিবার দুপুর ২টা থেকে ৪টা পর্যন্ত অফিসে টিম মিটিং, হাই প্রায়োরিটি, ক্যালেন্ডারে যোগ করো",
+   "expect": {
+    "title": "টিম মিটিং",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:00",
+    "loc": "অফিস",
+    "pri": "urgent"
+   },
+   "note": "v56: comando in coda «ক্যালেন্ডারে যোগ করো», luogo comune con suffisso locativo «অফিসে», «হাই প্রায়োরিটি»"
+  },
+  {
+   "s": "প্লিজ একটা ইভেন্ট যোগ করো কাল বিকেল ৫টায় ক্রিকেট খেলা",
+   "expect": {
+    "title": "ক্রিকেট খেলা",
+    "date": "+1",
+    "start": "17:00"
+   },
+   "note": "v56: comandi concatenati «প্লিজ» + «একটা ইভেন্ট» (leadNoun) + «যোগ করো»"
+  },
+  {
+   "s": "শনিবার রাত সাড়ে আটটায় তানভীর আর সাদিয়ার সাথে গুলশানে ডিনার",
+   "expect": {
+    "title": "ডিনার",
+    "date": "wd:6",
+    "start": "20:30",
+    "loc": "গুলশান",
+    "people": [
+     "তানভীর",
+     "সাদিয়ার"
+    ]
+   },
+   "note": "v56: quartiere con suffisso locativo «গুলশানে», due persone, «রাত সাড়ে আটটায়» = 20:30"
+  },
+  {
+   "s": "শনিবার রাত ৮টায় র‍্যাডিসন হোটেলে ডিনার",
+   "expect": {
+    "title": "ডিনার",
+    "date": "wd:6",
+    "start": "20:00",
+    "loc": "র‍্যাডিসন হোটেল"
+   },
    "skip": true,
-   "note": "PARSER: il suffisso ordinale attaccato al giorno (৫ই, ২০শে, ১লা, ২রা, ৩রা, ৪ঠা) impedisce di leggere «5 marzo»; daySuffix è usato solo insieme a monthSuffix"
+   "note": "MOTORE · v56: nome + luogo comune con il suffisso («র‍্যাডিসন হোটেলে»): attachedPlace() (10-lang-packs.js) legge solo la parola col suffisso e il suo tema («হোটেল») → luogo «হোটেল», titolo «র‍্যাডিসন ডিনার». Lo stesso per i luoghi comuni di due parole («কনফারেন্স রুমে» non viene letto, «পোস্ট অফিসে» → «অফিস»)"
+  },
+  {
+   "s": "শুক্রবার সকাল ১১টায় টিমের সাথে জুমে মিটিং, নোট রিপোর্টটা নিয়ে আসতে হবে",
+   "expect": {
+    "title": "মিটিং",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "জুম",
+    "people": [
+     "টিমের"
+    ],
+    "desc": "রিপোর্টটা নিয়ে আসতে হবে"
+   },
+   "note": "v56: incontro a distanza «জুমে» (Zoom + suffisso locativo), nota senza due punti «নোট …»"
+  },
+  {
+   "s": "15 তারিখে বিকাল 3টায় ডেন্টিস্ট, কোনো তাড়া নেই",
+   "expect": {
+    "title": "ডেন্টিস্ট",
+    "date": "dom:15",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "তাড়া"
+   },
+   "note": "v56: giorno senza mese «15 তারিখে», priorità bassa «কোনো তাড়া নেই»"
+  },
+  {
+   "s": "১৫ তারিখে বিকাল ৩টায় ডেন্টিস্ট",
+   "expect": {
+    "title": "ডেন্টিস্ট",
+    "date": "dom:15",
+    "start": "15:00"
+   },
+   "skip": true,
+   "note": "MOTORE · v56: con le cifre bengalesi il giorno senza mese non scatta: preProcess() (11-nl-smart.js) cerca \\d (solo 0-9) prima che preNormalize() trasformi «১৫» in «15» → titolo «15 তারিখে ডেন্টিস্ট», nessuna data. Vale anche per «৫ই», «২১শে» (dayOrdinal) e per il controllo «niente cifre» delle note senza due punti"
+  },
+  {
+   "s": "21শে বাড়িভাড়া দিতে হবে",
+   "expect": {
+    "title": "বাড়িভাড়া",
+    "date": "dom:21"
+   },
+   "note": "v56: giorno senza mese con il suffisso ordinale attaccato «21শে» (dayOrdinal)"
+  },
+  {
+   "s": "কাল বিকেল ৪টায় বাজারে সবজি কেনা",
+   "expect": {
+    "title": "সবজি কেনা",
+    "date": "+1",
+    "start": "16:00",
+    "loc": "বাজার"
+   },
+   "note": "v56: luogo comune «বাজারে», momento prima dell'ora «বিকেল ৪টায়» = 16:00"
+  },
+  {
+   "s": "শিরোনাম চেকআপ, তারিখ ১২ নভেম্বর, শুরু সকাল সাড়ে ৯টা, শেষ ১০টা, স্থান স্কয়ার হাসপাতাল, রিমাইন্ডার ১ ঘণ্টা আগে, অগ্রাধিকার উচ্চ, বিবরণ রিপোর্ট নিয়ে যেতে হবে",
+   "expect": {
+    "title": "চেকআপ",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "স্কয়ার হাসপাতাল",
+    "rem": 60,
+    "pri": "urgent",
+    "desc": "রিপোর্ট নিয়ে যেতে হবে"
+   },
+   "note": "v56: dettatura a campi con le parole dell'aiuto vocale (শিরোনাম, তারিখ, শুরু, শেষ, রিমাইন্ডার, বিবরণ) + স্থান, অগ্রাধিকার «উচ্চ»"
+  },
+  {
+   "s": "শিরোনাম বাজেট মিটিং, তারিখ ১২ নভেম্বর, শুরু সাড়ে ৯টা, শেষ ১১টা, রিমাইন্ডার ৩০ মিনিট ও ১০ মিনিট, ট্যাগ কাজ, অংশগ্রহণকারী রাহুল ও সারা, বিবরণ রিপোর্ট নিয়ে আসা, সেভ",
+   "expect": {
+    "title": "বাজেট মিটিং",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "11:00",
+    "tags": [
+     "কাজ"
+    ],
+    "people": [
+     "রাহুল",
+     "সারা"
+    ],
+    "desc": "রিপোর্ট নিয়ে আসা"
+   },
+   "skip": true,
+   "note": "MOTORE · v56: l'esempio di dettatura a campi dell'aiuto vocale. Titolo, data, ore e descrizione giusti, ma tag [কাজ, ক] e persone [রাহুল ও সারা, র]: (1) listAfter() in src/index.html legge la parola senza i segni vocalici \\p{M} («কাজ» → «ক», «রাহুল» → «র»); (2) splitPeople()/durList() separano solo con «e/and/y/et/und», non con «ও» → «রাহুল ও সারা» è una persona sola e del preavviso «৩০ মিনিট ও ১০ মিনিট» resta solo 30"
+  },
+  {
+   "s": "শুক্রবারের মধ্যে বিদ্যুৎ বিল দিতে হবে, খুবই গুরুত্বপূর্ণ",
+   "expect": {
+    "titleIncludes": "বিদ্যুৎ বিল",
+    "date": "wd:5",
+    "pri": "important",
+    "titleNot": "মধ্যে"
+   },
+   "note": "v56: «… দিতে হবে» (devo) fuori dal titolo, «শুক্রবারের মধ্যে» (entro venerdì), «খুবই গুরুত্বপূর্ণ»"
+  },
+  {
+   "s": "রবিবার সন্ধ্যা সোয়া ছটায় মায়ের সাথে ভিডিও কল",
+   "expect": {
+    "titleIncludes": "ভিডিও কল",
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "মায়ের"
+    ]
+   },
+   "note": "v56: videochiamata con la mamma, «সন্ধ্যা সোয়া ছটায়» = 18:15 (numero «ছ» + «টায়»)"
+  },
+  {
+   "s": "প্রতি মঙ্গলবার ও বৃহস্পতিবার সন্ধ্যা ৬:৩০টায় ২০ ডিসেম্বর পর্যন্ত জিমে যোগা ক্লাস, ৩০ মিনিট আগে মনে করিয়ে দিও",
+   "expect": {
+    "title": "যোগা ক্লাস",
+    "start": "18:30",
+    "loc": "জিম",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ],
+     "until": "md:12-20"
+    }
+   },
+   "note": "v56: ricorrenza con luogo comune «জিমে» e preavviso («মনে করিয়ে দিও» resta: porta il preavviso di 30 minuti); titolo esatto (revisione)"
+  },
+  {
+   "s": "শুক্রবার সকাল ১০:৩০টায় ব্যাংকে টাকা জমা দিতে হবে",
+   "expect": {
+    "title": "টাকা জমা",
+    "date": "wd:5",
+    "start": "10:30",
+    "loc": "ব্যাংক"
+   },
+   "note": "v56: «১০:৩০টায়» = 10:30, luogo comune «ব্যাংকে»"
+  },
+  {
+   "s": "সোমবার সকাল পৌনে নটায় স্কুলে প্যারেন্টস মিটিং",
+   "expect": {
+    "title": "প্যারেন্টস মিটিং",
+    "date": "wd:1",
+    "start": "08:45",
+    "loc": "স্কুল"
+   },
+   "note": "v56: «পৌনে নটায়» = 8:45 (meno un quarto), luogo comune «স্কুলে»"
+  },
+  {
+   "s": "রবিবার সকাল ১১টায় রহিম সাহেবের সাথে মিটিং",
+   "expect": {
+    "title": "মিটিং",
+    "date": "wd:0",
+    "start": "11:00",
+    "people": [
+     "রহিম"
+    ]
+   },
+   "note": "MOTORE · v56 (revisione): onorifico DOPO il nome («রহিম সাহেবের সাথে»). La regola WITH_AFTER (guarded(), 10-lang-packs.js) legge UNA parola prima di «সাথে» → persone [সাহেবের], titolo «রহিম মিটিং». Il primo agente lo aggirava con «সাহেবের সাথে» in with, ma la voce rompeva le frasi senza nome («অফিসে সাহেবের সাথে মিটিং» → persone [অফিসে], luogo perso; «বড় সাহেবের সাথে» → persona «বড়»): tolta. Serve NAME+(?:\\s+(?:সাহেব|সাহেবের|ভাই|ভাইয়ের|আপা|আপার|দা|দার))? nella regola",
+   "skip": true
+  },
+  {
+   "s": "কাল রহিমকে ৫০০ টাকা ফেরত দিতে হবে",
+   "expect": {
+    "titleIncludes": "টাকা",
+    "date": "+1",
+    "start": null
+   },
+   "skip": true,
+   "note": "MOTORE · v56 CONFLITTO: «৫০০ টাকা» (500 taka) → canon «রহিমকে 5 alle 0:00 কা ফেরত» → orario 00:00 e titolo «রহিমকে 5 কা ফেরত». In suffixTimes() (10-lang-packs.js) il suffisso dell'ora «টা» non ha confini: niente controllo di cifra prima («00» dentro «500») né di lettera dopo («টা» dentro «টাকা»); anche «৫ টাকা» → 17:00"
+  },
+  {
+   "s": "কাল দুপুর বারোটায় অফিসে লাঞ্চ মিটিং, নোট করে রাখো প্লিজ",
+   "expect": {
+    "title": "লাঞ্চ মিটিং",
+    "date": "+1",
+    "start": "12:00",
+    "loc": "অফিস",
+    "titleNot": "রাখো"
+   },
+   "note": "v56 revisione: comando in coda con «প্লিজ» DOPO («নোট করে রাখো প্লিজ», voce di leadEnd): senza la combinazione «নোট …» restava e la regola delle note ne faceva la descrizione «করে রাখো»; «দুপুর বারোটায়» = 12:00"
+  },
+  {
+   "s": "বৃহস্পতিবার সন্ধ্যা ৭টায় ক্লায়েন্টের সাথে Zoom এ কল, নোট প্রেজেন্টেশন পাঠাতে হবে",
+   "expect": {
+    "title": "কল",
+    "date": "wd:4",
+    "start": "19:00",
+    "loc": "Zoom",
+    "people": [
+     "ক্লায়েন্টের"
+    ],
+    "desc": "প্রেজেন্টেশন পাঠাতে হবে"
+   },
+   "note": "v56 revisione: piattaforma in alfabeto latino + posposizione staccata («Zoom এ»). Senza «zoom» fra i luoghi comuni restava «এ» orfano → luogo «ক্লায়েন্টের», persona persa. Persone al genitivo come negli altri casi (limite del motore)"
+  },
+  {
+   "s": "সময় পেলে আব্বুর ওষুধ কিনতে ফার্মেসিতে যেতে হবে",
+   "expect": {
+    "title": "আব্বুর ওষুধ কিনতে",
+    "loc": "ফার্মেসি",
+    "pri": null,
+    "date": "none"
+   },
+   "note": "v56 revisione: priorità bassa «সময় পেলে» in testa, luogo comune con suffisso «ফার্মেসিতে», «যেতে হবে» fuori dal titolo"
+  },
+  {
+   "s": "প্রতি শুক্রবার দুপুর একটায় মসজিদে জুম্মার নামাজ, আধা ঘণ্টা আগে মনে করিয়ে দিও",
+   "expect": {
+    "title": "জুম্মার নামাজ",
+    "start": "13:00",
+    "loc": "মসজিদ",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      5
+     ]
+    }
+   },
+   "note": "v56 revisione: ricorrenza + luogo comune «মসজিদে» + «আধা ঘণ্টা আগে মনে করিয়ে দিও» (30 minuti); «দুপুর একটায়» = 13:00"
+  },
+  {
+   "s": "যোগ করো কাল সকাল ১০টা থেকে ১২টা পর্যন্ত কোচিংয়ে ম্যাথ ক্লাস",
+   "expect": {
+    "title": "ম্যাথ ক্লাস",
+    "date": "+1",
+    "start": "10:00",
+    "end": "12:00",
+    "loc": "কোচিং"
+   },
+   "skip": true,
+   "note": "MOTORE · v56 revisione: canon «domani dalle 10:00 alle 12:00 কোচিংয়ে ম্যাথ ক্লাস»: orari giusti ma nessun luogo e «কোচিংয়ে» nel titolo. attachedPlace() (10-lang-packs.js) conosce i suffissi য়/য়/তে/ে ma non «য়ে» dopo ং (কোচিংয়ে, মিটিংয়ে, শপিংয়ে, পার্কিংয়ে): la radice letta è «কোচিংয়», che non è fra i luoghi comuni"
+  },
+  {
+   "s": "শনিবার সকাল ৭টায় জিমে ১ ঘণ্টা ওয়ার্কআউট",
+   "expect": {
+    "titleIncludes": "ওয়ার্কআউট",
+    "titleNot": "শনিবার",
+    "date": "wd:6",
+    "start": "07:00",
+    "loc": "জিম"
+   },
+   "skip": true,
+   "note": "MOTORE · v56 revisione (app in bengalese): data 2027-05-01 e titolo «শনিবার জি ওয়ার্কআউট». Il parser storico (src/index.html, parse(): regola «mese + giorno» `${B1}(${mre})\\.?\\s+(\\d{1,2})`) legge «মে» (maggio) DENTRO «জিমে» seguito da «1»: B1=(?<![\\p{L}\\p{N}]) non esclude i segni vocalici \\p{M} («ি» prima di «মে»). Vale per ogni parola in -মে seguita da un numero (জিমে, রুমে, জুমে …). Con l'app in italiano la data è giusta"
+  },
+  {
+   "s": "শনিবার সন্ধ্যা ৭টায় সাদিয়ার সাথে কফি",
+   "expect": {
+    "title": "কফি",
+    "date": "wd:6",
+    "start": "19:00",
+    "people": [
+     "সাদিয়া"
+    ]
+   },
+   "skip": true,
+   "note": "MOTORE · v56 revisione: il nome resta al genitivo richiesto da «সাথে» → persone [সাদিয়ার] (così anche আনিকার, রাহুলের, মায়ের negli altri casi, che registrano il comportamento attuale). La regola WITH_AFTER (guarded(), 10-lang-packs.js) per il bengalese dovrebbe togliere la desinenza del genitivo (-র/-এর/-য়ের/-দের) quando la posposizione la richiede"
   }
  ]
 }

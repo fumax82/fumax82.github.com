@@ -296,6 +296,345 @@
     "loc": ""
    },
    "note": "CONFLITTO: «in» seguito da hangul: nessun luogo spurio"
+  },
+  {
+   "s": "리마인더, 내일 아침 아홉 시 반에 치과에 전화하기",
+   "expect": {
+    "title": "치과에 전화하기",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0
+   },
+   "note": "v56 받아쓰기: comando iniziale «리마인더» (avviso all'ora), ora detta a parole «아홉 시 반» con 아침"
+  },
+  {
+   "s": "내일 아침 아홉 시 반에 치과에 전화하라고 알려줘",
+   "expect": {
+    "titleIncludes": "치과에 전화",
+    "titleNot": "라고",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: «~하라고 알려줘» (ricordami di…). «알려줘» non può stare in leadEnd: toglierebbe anche il verbo di «30분 전에 알려줘» e il preavviso andrebbe perso (caso 14 del banco); e «하라고» è attaccato al verbo, quindi nessuna voce che comincia con «하라고» supera il confine LB di preProcess(). Ottenuto titolo «치과에 전화하라고», preavviso 15 (predefinito) invece di 0"
+  },
+  {
+   "s": "캘린더에 새 일정 추가해 줘, 모레 12시에 강남역에서 지수랑 점심",
+   "expect": {
+    "title": "점심",
+    "date": "+2",
+    "start": "12:00",
+    "loc": "강남역",
+    "people": [
+     "지수"
+    ]
+   },
+   "note": "v56: comandi concatenati («캘린더에» + «새 일정» + «추가해 줘»), luogo con 에서, persona con 랑"
+  },
+  {
+   "s": "일정 추가해 줘. 목요일 오후 2시부터 4시까지 회의실에서 팀 회의, 중요도 높음",
+   "expect": {
+    "title": "팀 회의",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:00",
+    "loc": "회의실",
+    "pri": "urgent"
+   },
+   "note": "v56: comando iniziale, luogo comune (회의실에서), «중요도 높음» = priorità alta"
+  },
+  {
+   "s": "토요일 저녁 7시 한남동 마리오 식당에서 서연이랑 민호랑 저녁 식사",
+   "expect": {
+    "title": "저녁 식사",
+    "date": "wd:6",
+    "start": "19:00",
+    "loc": "한남동 마리오 식당",
+    "people": [
+     "서연",
+     "민호"
+    ]
+   },
+   "note": "v56: quartiere + nome + tipo di locale, due persone"
+  },
+  {
+   "s": "금요일 오전 11시에 온라인에서 팀 회의 메모 보고서 챙기기",
+   "expect": {
+    "title": "팀 회의",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "온라인",
+    "desc": "보고서 챙기기"
+   },
+   "note": "v56: incontro a distanza + nota senza due punti («메모 …»)"
+  },
+  {
+   "s": "금요일 오전 11시에 온라인으로 팀 회의 메모 보고서 챙기기",
+   "expect": {
+    "title": "팀 회의",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "온라인",
+    "desc": "보고서 챙기기"
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: «온라인으로/줌으로/화상으로» (modo, con la posposizione 으로/로). Il ramo «incontri a distanza» di preProcess() vuole la preposizione PRIMA della parola (ONLINE_PRE + spazio) e un confine LA dopo, quindi le voci `online` coreane (una parola con la particella attaccata) non scattano mai; cjkPlace() legge solo «…에서». Ottenuto titolo «온라인으로 팀 회의», luogo vuoto (nota, data e ora giuste)"
+  },
+  {
+   "s": "5일 오후 3시 치과 급한 거 아니야",
+   "expect": {
+    "title": "치과",
+    "date": "dom:5",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "급한"
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: giorno senza mese «5일». In preProcess() (punto 4) i suffissi del giorno passano da A() = KX.Lang.alt(), che mette il confine LB davanti a una parola in hangul: dopo la cifra («5일») LB fallisce sempre. Canon «5 giorni alle 15:00 치과»: nessuna data, titolo «5 치과» (la priorità bassa funziona). dayOrdinal non è un ripiego sicuro: non ha il filtro NOTDAY e trasformerebbe in data anche «3일 후», «1일 전에»"
+  },
+  {
+   "s": "모레 오후 3시 치과 정기 검진 급한 거 아님",
+   "expect": {
+    "title": "치과 정기 검진",
+    "date": "+2",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "급한"
+   },
+   "note": "v56: priorità bassa «급한 거 아님» (non diventa urgente) tolta dal titolo"
+  },
+  {
+   "s": "내일 오후 4시에 마트에서 장보기",
+   "expect": {
+    "title": "장보기",
+    "date": "+1",
+    "start": "16:00",
+    "loc": "마트"
+   },
+   "note": "v56: luogo comune (마트에서) + momento prima dell'ora (오후 4시)"
+  },
+  {
+   "s": "제목 건강검진, 날짜 11월 12일, 시작 9시 반, 종료 10시, 장소 서울대병원, 우선순위 높음, 참석자 지훈, 설명 검사 결과 챙기기",
+   "expect": {
+    "title": "건강검진",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "서울대병원",
+    "pri": "urgent",
+    "people": [
+     "지훈"
+    ],
+    "desc": "검사 결과 챙기기"
+   },
+   "note": "v56: dettatura a campi completa (제목, 날짜, 시작, 종료, 장소, 우선순위, 참석자, 설명)"
+  },
+  {
+   "s": "금요일까지 전기 요금 납부 꼭 해야 함",
+   "expect": {
+    "title": "전기 요금 납부",
+    "date": "wd:5",
+    "pri": "important",
+    "titleNot": "해야"
+   },
+   "note": "v56: «꼭 … 해야 함» (devo, assolutamente) → importante, obbligo fuori dal titolo"
+  },
+  {
+   "s": "일요일 저녁 6시 15분에 엄마랑 영상 통화",
+   "expect": {
+    "titleIncludes": "영상 통화",
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "엄마"
+    ]
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: «6시 15분» con lo spazio (grafia standard coreana). In suffixTimes() (10-lang-packs.js) MSP vale \\s* solo per le lingue noSpaces: per il coreano i minuti dopo uno spazio non sono letti. Canon «일요일 alle 18:00 e un quarto 에 엄마랑 영상 통화» → 18:00. Per «N시 30분» c'è il ripiego halfSuffix «30분» nel lessico; 15 e 45 restano persi"
+  },
+  {
+   "s": "매주 화요일 목요일 저녁 7시 헬스장에서 PT 12월 20일까지 30분 전에 알려줘",
+   "expect": {
+    "title": "PT",
+    "start": "19:00",
+    "loc": "헬스장",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ],
+     "until": "md:12-20"
+    }
+   },
+   "note": "v56: ricorrenza con luogo comune, fine (까지) e preavviso (30분 전에 알려줘)"
+  },
+  {
+   "s": "금요일 10시 30분에 치과",
+   "expect": {
+    "title": "치과",
+    "date": "wd:5",
+    "start": "10:30"
+   },
+   "note": "v56: «10시 30분» con lo spazio (ripiego lessicale: «30분» in halfSuffix)"
+  },
+  {
+   "s": "내일 정오에 강남역에서 지수랑 점심",
+   "expect": {
+    "title": "점심",
+    "date": "+1",
+    "start": "12:00",
+    "loc": "강남역",
+    "people": [
+     "지수"
+    ]
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: cjkPlace() (10-lang-packs.js, ramo ko) prende fino a 3 parole in hangul prima di «에서» sulla frase grezza, comprese quelle di data/ora: «내일 정오에 강남역» (stesso con «8시 반에 X에서» → «반에 X», «네 시에 마트에서» → «시에 마트»). Ottenuto luogo «내일 정오에 강남역», titolo «강남역에서 점심»"
+  },
+  {
+   "s": "내일 아침 7시에 분리수거 하라고 알려 줘",
+   "expect": {
+    "title": "분리수거",
+    "date": "+1",
+    "start": "07:00",
+    "rem": 0
+   },
+   "note": "v56 (revisione): «… 하라고 알려 줘» (ricordami di…) con il verbo staccato: voce nuova di leadEnd «하라고 알려 줘», avviso all'ora. Con il verbo attaccato («전화하라고 알려줘») resta il limite del caso 30"
+  },
+  {
+   "s": "내일 오후 3시 소아과 예약",
+   "expect": {
+    "title": "소아과 예약",
+    "date": "+1",
+    "start": "15:00",
+    "people": []
+   },
+   "note": "v56 (revisione): reparti medici in «-과» (소아과, 피부과, 이비인후과, 산부인과…). La voce «과» di with (preesistente) faceva di «소아» una persona e lasciava il titolo «예약»: tolta, al suo posto «님과» («김과장님과» resta una persona)"
+  },
+  {
+   "s": "토요일 오후 3시 피부과 진료 잊지 않게 알려줘",
+   "expect": {
+    "title": "피부과 진료",
+    "date": "wd:6",
+    "start": "15:00",
+    "rem": 0,
+    "people": []
+   },
+   "note": "v56 (revisione): comando in coda «잊지 않게 알려줘» (voce nuova di leadEnd) → avviso all'ora; «피부과» non è più una persona"
+  },
+  {
+   "s": "제목 치과 예약, 날짜 11월 20일, 시작 오후 3시, 종료 오후 4시, 장소 강남 연세치과, 우선순위 낮음, 참석자 엄마, 메모 보험증 챙기기",
+   "expect": {
+    "title": "치과 예약",
+    "date": "md:11-20",
+    "start": "15:00",
+    "end": "16:00",
+    "loc": "강남 연세치과",
+    "pri": null,
+    "people": [
+     "엄마"
+    ],
+    "desc": "보험증 챙기기"
+   },
+   "note": "v56 (revisione): dettatura a campi con priorità bassa («우선순위 낮음») e un luogo che finisce in «-과» (prima «연세치» diventava una persona)"
+  },
+  {
+   "s": "급한 건 아닌데 금요일 오후 3시에 은행 가기",
+   "expect": {
+    "titleIncludes": "은행",
+    "titleNot": "급한",
+    "date": "wd:5",
+    "start": "15:00",
+    "pri": null
+   },
+   "note": "v56 (revisione): priorità bassa in testa «급한 건 아닌데» (voce nuova di lowPriority); prima «급한» di urgent rendeva l'evento URGENTE"
+  },
+  {
+   "s": "매달 첫째 월요일 오전 10시 본사에서 정기 회의 한 시간 전에 알려줘",
+   "expect": {
+    "title": "정기 회의",
+    "start": "10:00",
+    "loc": "본사",
+    "rem": 60,
+    "rrule": {
+     "freq": "MONTHLY",
+     "nth": 1
+    }
+   },
+   "note": "v56 (revisione): ricorrenza «primo lunedì del mese», luogo con 에서 subito dopo l'ora in cifre, preavviso di un'ora"
+  },
+  {
+   "s": "토요일 오후 2시 강남역에서 민수랑 지영이랑 영화 메모 팝콘 쿠폰 챙기기",
+   "expect": {
+    "title": "영화",
+    "date": "wd:6",
+    "start": "14:00",
+    "loc": "강남역",
+    "people": [
+     "민수",
+     "지영"
+    ],
+    "desc": "팝콘 쿠폰 챙기기"
+   },
+   "note": "v56 (revisione): luogo con 에서 subito dopo l'ora in cifre, due persone con 랑/이랑 (지영이 → 지영), nota senza due punti «메모 …»"
+  },
+  {
+   "s": "다음 주 수요일 저녁 7시에 여자친구랑 영화",
+   "expect": {
+    "title": "영화",
+    "date": "wd:3",
+    "start": "19:00",
+    "people": [
+     "여자친구"
+    ]
+   },
+   "skip": true,
+   "note": "v56 · MOTORE (E10): «다음 주 수요일» (mercoledì della settimana prossima; l'attesa wd:3 vale se il banco gira da mercoledì a domenica). Canon «settimana prossima 수요일 alle 19:00 에 여자친구랑 영화»: il parser legge solo «settimana prossima» (lunedì 2 novembre) e il giorno resta nel titolo («수요일 영화»). Stesso limite in italiano"
+  },
+  {
+   "s": "금요일 저녁 7시 운동하고 저녁 먹기",
+   "expect": {
+    "titleIncludes": "운동",
+    "date": "wd:5",
+    "start": "19:00",
+    "people": []
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: «-하고» è sia «con» («지수하고 점심») sia il connettivo dei verbi in 하다 («운동하고», «청소하고», «공부하고»). cjkPeople() (ramo ko) prende «운동» come persona e il titolo resta «저녁 먹기». La voce «하고» di with non si toglie (perderebbe «엄마하고», «지수하고»): serve un filtro nel motore"
+  },
+  {
+   "s": "11월 12일 오전 9시 건강검진 하루 전에 알려줘",
+   "expect": {
+    "title": "건강검진",
+    "date": "md:11-12",
+    "start": "09:00",
+    "rem": 1440
+   },
+   "skip": true,
+   "note": "v56 · MOTORE (E14): «하루 전에» (un giorno prima), la forma normale. Senza oneDay resta nel titolo («건강검진 하루 전에») e il preavviso è quello predefinito (15); con oneDay «하루» il canone «un giorno prima ricordamelo» non viene riordinato (postpositions(): HALF contiene solo mezz'ora e un'ora) e «Un giorno» resta nel titolo. Un ripiego con quantities («하루 전에» → «1 일전에») funziona qui ma rovina «하루 전에 도착» («1 도착»): non messo. «1일 전에 알려줘» passa"
+  },
+  {
+   "s": "제목 예산 회의, 날짜 11월 12일, 시작 9시 반, 종료 11시, 미리 알림 30분 그리고 10분, 태그 업무, 참석자 서준이랑 지우, 설명 보고서 챙기기, 저장",
+   "expect": {
+    "title": "예산 회의",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "11:00",
+    "rem": 30,
+    "tags": [
+     "업무"
+    ],
+    "people": [
+     "서준",
+     "지우"
+    ],
+    "desc": "보고서 챙기기"
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: l'esempio dell'aiuto vocale coreano, parola per parola. Titolo, data, orari, descrizione giusti e «저장» tolto (voce nuova di leadEnd), ma: fields()/splitPeople() in index.html dividono i partecipanti solo su , ; e/and, non su «이랑/랑/하고» → persone [서준이랑 지우, 서준이랑, 서준]; il secondo preavviso («그리고 10분») si perde (solo [30]); il tag esce doppio [업무, 업무]"
   }
  ]
 }

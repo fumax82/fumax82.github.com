@@ -312,6 +312,336 @@
     "loc": ""
    },
    "note": "CONFLITTO: «Ed» (ed = e) in un nome proprio"
+  },
+  {
+   "s": "提醒我明天上午九点半给牙医打电话",
+   "expect": {
+    "title": "给牙医打电话",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0
+   },
+   "note": "v56 dettatura: comando iniziale «提醒我» (avviso all'ora dell'evento), «上午九点半» a parole"
+  },
+  {
+   "s": "帮我加个日程下周四下午两点到四点在三楼会议室开部门例会优先级高",
+   "expect": {
+    "title": "开部门例会",
+    "titleNot": "日程",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:00",
+    "loc": "三楼会议室",
+    "pri": "urgent"
+   },
+   "note": "v56: comandi concatenati «帮我加个»+«日程», intervallo «两点到四点» dopo «下午», luogo con 在, «优先级高»"
+  },
+  {
+   "s": "麻烦帮我记一下下周一早上八点送孩子去打疫苗",
+   "expect": {
+    "title": "送孩子去打疫苗",
+    "titleNot": "帮我",
+    "date": "wd:1",
+    "start": "08:00"
+   },
+   "note": "v56: comandi concatenati «麻烦»+«帮我记一下», «早上八点»"
+  },
+  {
+   "s": "周六晚上七点半和小芳、阿杰在海底捞吃火锅",
+   "expect": {
+    "title": "吃火锅",
+    "date": "wd:6",
+    "start": "19:30",
+    "loc": "海底捞",
+    "people": [
+     "小芳",
+     "阿杰"
+    ]
+   },
+   "note": "v56: luogo (在 + nome del locale) e due persone separate da «、», «晚上七点半»"
+  },
+  {
+   "s": "周五上午十一点在线上跟客户开会",
+   "expect": {
+    "title": "开会",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "线上",
+    "people": [
+     "客户"
+    ]
+   },
+   "note": "v56: incontro a distanza «在线上» (letto da cjkPlace)"
+  },
+  {
+   "s": "周五上午十一点用腾讯会议跟客户开会，备注带上报价单",
+   "expect": {
+    "title": "开会",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "腾讯会议",
+    "people": [
+     "客户"
+    ],
+    "desc": "带上报价单"
+   },
+   "skip": true,
+   "note": "v56 MOTORE: canon «星期五 alle 11:00 用腾讯会议跟客户开会， note 带上报价单» → titolo «用腾讯会议 开会， 带上报价单», nessun luogo, nessuna descrizione. Mancano: (1) in 11-nl-smart.js preProcess le parole di `online` senza spazi vanno solo dopo ONLINE_PRE + spazio e con confine LA: niente preposizioni cinesi (用/通过/在) e niente confini in una lingua senza spazi; (2) la nota senza due punti pretende uno spazio prima di «备注» e almeno due parole separate da spazi dopo; (3) la virgola cinese «，» non è normalizzata e resta nel titolo"
+  },
+  {
+   "s": "15号下午三点去理发 不急",
+   "expect": {
+    "title": "理发",
+    "date": "dom:15",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "不急"
+   },
+   "note": "v56: giorno senza mese «15号» (suffisso daySuffix), priorità bassa «不急». Detto tutto attaccato («去理发不急») «不急» non viene tolto: la regola lowPriority di 11-nl-smart.js mette confini di parola LB/LA che il cinese non ha (vedi rapporto)"
+  },
+  {
+   "s": "标题体检日期11月12日开始时间上午九点半结束时间十点地点协和医院优先级高参与人小李备注带上化验单",
+   "expect": {
+    "title": "体检",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "协和医院",
+    "pri": "urgent",
+    "people": [
+     "小李"
+    ],
+    "desc": "带上化验单"
+   },
+   "note": "v56: dettatura a campi come la restituisce il riconoscitore (senza punteggiatura): 标题/日期/开始时间/结束时间/地点/优先级/参与人/备注"
+  },
+  {
+   "s": "我得周五把电费交了很重要",
+   "expect": {
+    "title": "把电费交了",
+    "titleNot": "我得",
+    "date": "wd:5",
+    "pri": "important"
+   },
+   "note": "v56: «我得» (devo) tolto, «很重要»"
+  },
+  {
+   "s": "周日傍晚6点15跟妈妈打视频电话",
+   "expect": {
+    "title": "打视频电话",
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "妈妈"
+    ]
+   },
+   "note": "v56: videochiamata con la mamma, «傍晚» + «6点15» → 18:15"
+  },
+  {
+   "s": "周日傍晚六点一刻跟妈妈打视频电话",
+   "expect": {
+    "title": "打视频电话",
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "妈妈"
+    ]
+   },
+   "skip": true,
+   "note": "v56 MOTORE: canon «星期日 alle 18:00 e un quarto 跟妈妈打视频电话» → inizio 18:00. suffixTimes() chiude l'ora a «18:00» (MIN conosce solo cifre, 分 e 半) e il «e un quarto» che segue non si somma più a un orario con i minuti; stessa causa per «八点四十五», «十点三十» (minuti a parole dopo 点 senza 分: restano nel titolo)"
+  },
+  {
+   "s": "每周二和周四晚上六点半瑜伽课 在健身房 一直到12月20号 提前半小时提醒我",
+   "expect": {
+    "title": "瑜伽课",
+    "start": "18:30",
+    "loc": "健身房",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ],
+     "until": "md:12-20"
+    }
+   },
+   "note": "v56: ricorrenza su due giorni con luogo, fine «一直到12月20号» e preavviso «提前半小时提醒我»"
+  },
+  {
+   "s": "每周二周四晚上六点半在健身房上瑜伽课一直到12月20号提前半小时提醒我",
+   "expect": {
+    "titleIncludes": "瑜伽",
+    "start": "18:30",
+    "loc": "健身房",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ],
+     "until": "md:12-20"
+    }
+   },
+   "skip": true,
+   "note": "v56 MOTORE: la stessa frase detta senza pause → titolo «健身房上瑜伽课», nessun luogo. cjkPlace() per zh chiude il luogo dopo 在 solo davanti a 和/跟/与/吃/开/见/的/一起/参加 o punteggiatura: «上(课)» non c'è, e il lessico venues non viene usato per fermarsi dopo «健身房»"
+  },
+  {
+   "s": "周五上午十点三十分看牙医",
+   "expect": {
+    "title": "看牙医",
+    "date": "wd:5",
+    "start": "10:30"
+   },
+   "skip": true,
+   "note": "v56 MOTORE: «十点三十分» (10 e 30 detto) → canon «alle 10:30 分看牙医»: l'orario è giusto ma «分» resta nel titolo («分看牙医»). In suffixTimes() l'alternativa MIN «(\\d{2})» viene provata prima di «(\\d{1,2})\\s*分» e non consuma il suffisso; stesso difetto con le cifre («3点20分开会» → «分开会»). La forma «10点30» funziona"
+  },
+  {
+   "s": "明天晚上八点给奶奶打电话到时候提醒我",
+   "expect": {
+    "title": "给奶奶打电话",
+    "date": "+1",
+    "start": "20:00",
+    "rem": 0
+   },
+   "note": "v56: comando in coda «到时候提醒我» → avviso all'ora dell'evento"
+  },
+  {
+   "s": "后天中午十二点半和王总在全聚德吃烤鸭",
+   "expect": {
+    "title": "吃烤鸭",
+    "date": "+2",
+    "start": "12:30",
+    "loc": "全聚德",
+    "people": [
+     "王总"
+    ]
+   },
+   "note": "v56: «中午十二点半» (mezzogiorno e mezza), persona e luogo"
+  },
+  {
+   "s": "提醒我明早八点半去银行办卡 谢谢",
+   "expect": {
+    "titleIncludes": "银行办卡",
+    "titleNot": "谢谢",
+    "date": "+1",
+    "start": "08:30",
+    "rem": 0
+   },
+   "note": "v56 revisione: «明早» (domani mattina, contratto) davanti all'ora: l'amPrefix «明早» mangiava la data (nessuna data). Aggirato con quantities «明早»→«1 天后早上» (vedi rapporto); comando iniziale «提醒我» e finale «谢谢»"
+  },
+  {
+   "s": "大后天下午三点去学校开家长会",
+   "expect": {
+    "titleIncludes": "家长会",
+    "date": "+3",
+    "start": "15:00"
+   },
+   "note": "v56 revisione: «大后天» = fra TRE giorni (prima stava in «after» = dopodomani, +2); ora quantities «大后天»→«3 天后»"
+  },
+  {
+   "s": "明天半夜两点起床看球赛",
+   "expect": {
+    "title": "起床看球赛",
+    "date": "+1",
+    "start": "02:00"
+   },
+   "note": "v56 revisione: «半夜两点» = 02:00. Con «半夜» solo in amPrefix la sicurezza serale (半夜 è anche moments.night) lo spostava alle 14:00: «半夜» aggiunto anche ad «am»"
+  },
+  {
+   "s": "下周三下午三点跟同事开合同评审会",
+   "expect": {
+    "title": "开合同评审会",
+    "date": "wd:3",
+    "start": "15:00",
+    "people": [
+     "同事"
+    ]
+   },
+   "note": "v56 revisione: «同» tolto da «with» (in «合同» dava la persona «评审会» e il titolo «合»; in «同事聚会» la persona «事聚会»)"
+  },
+  {
+   "s": "标题预算会议日期11月12日开始9点半结束11点提前30分钟提醒标签工作参与者志强备注带上报表",
+   "expect": {
+    "title": "预算会议",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "11:00",
+    "rem": 30,
+    "tags": [
+     "工作"
+    ],
+    "people": [
+     "志强"
+    ],
+    "desc": "带上报表"
+   },
+   "note": "v56 revisione: l'esempio di dettatura a campi della guida dell'app (stringa zh), senza punteggiatura. «提醒» da solo tolto da fields.rem: trasformava «提前30分钟提醒» in «30 minuti prima preavviso» (nessun preavviso) e faceva scattare i campi in frasi libere con 开始+结束+提醒"
+  },
+  {
+   "s": "标题预算会议，日期11月12日，开始9点半，结束11点，提前30分钟提醒，标签工作，参与者志强和小雨，备注带上报表",
+   "expect": {
+    "title": "预算会议",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "11:00",
+    "rem": 30,
+    "tags": [
+     "工作"
+    ],
+    "people": [
+     "志强",
+     "小雨"
+    ],
+    "desc": "带上报表"
+   },
+   "skip": true,
+   "note": "v56 MOTORE: la stessa frase come la scrive la guida dell'app, con la virgola cinese «，». canon «titolo 预算会议， giorno 12/11 ， inizio alle 9:30 ， fine alle 11:00 ，ricordamelo 30 minuti prima ， tag 工作， partecipanti 志强和小雨， descrizione 带上报表» → titolo «预算会议，», fine 10:30 (non 11:00), tag [工作，, 工作], persone [志强和小雨，, 志强和小雨, 小雨] (data, inizio, preavviso e descrizione giusti). Manca: preNormalize() deve portare «，、；。» a «, » e listAfter() deve separare i nomi anche su «和/、»"
+  },
+  {
+   "s": "下周一上午十点体检 优先级一般",
+   "expect": {
+    "title": "体检",
+    "date": "wd:1",
+    "start": "10:00",
+    "pri": null
+   },
+   "note": "v56 revisione: «优先级一般»/«普通优先级» (priorità normale) stavano in «important»: spostati in «lowPriority», come l'italiano «priorità normale»"
+  },
+  {
+   "s": "帮我设个闹钟明天早上六点起床",
+   "expect": {
+    "title": "起床",
+    "date": "+1",
+    "start": "06:00",
+    "rem": 0
+   },
+   "note": "v56 revisione: comando «帮我设个闹钟» (sveglia all'ora dell'evento); prima restava «闹钟» → preavviso predefinito 15"
+  },
+  {
+   "s": "周五下午交报告不紧急",
+   "expect": {
+    "title": "交报告",
+    "date": "wd:5",
+    "pri": null
+   },
+   "skip": true,
+   "note": "v56 MOTORE: priorità bassa detta attaccata. 11-nl-smart.js preProcess passo 6 mette LB/LA attorno a lowPriority: in cinese «不紧急» dopo un ideogramma non viene tolto, poi «紧急» (urgent) scatta → canon «星期五 pomeriggio 交报告不 urgente» → titolo «交报告不» e priorità URGENTE (il contrario). Stesso effetto con «不重要» → importante, «不是很急» → urgente"
+  },
+  {
+   "s": "周三晚上八点跟爸爸和妈妈视频通话",
+   "expect": {
+    "title": "视频通话",
+    "date": "wd:3",
+    "start": "20:00",
+    "people": [
+     "爸爸",
+     "妈妈"
+    ]
+   },
+   "skip": true,
+   "note": "v56 MOTORE: due persone unite da «和». cjkPeople() zh accetta come separatori solo «、，,» e chiude il nome solo davanti a 一起|吃|去|开|见|聊|打|约|玩|喝|谈|讨论|在|到|还有: «爸爸和妈妈视频通话» → nessuna persona, titolo «爸爸和妈妈视频通话»"
   }
  ]
 }

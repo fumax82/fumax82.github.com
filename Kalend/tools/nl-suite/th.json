@@ -301,6 +301,307 @@
     "loc": ""
    },
    "note": "CONFLITTO: «MIT» = «mit» tedesco (con)"
+  },
+  {
+   "s": "เตือนให้โทรหาหมอฟัน พรุ่งนี้ เก้าโมงครึ่ง",
+   "expect": {
+    "title": "โทรหาหมอฟัน",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0
+   },
+   "note": "v56 dettatura: comando iniziale «เตือนให้» (avviso all'ora dell'evento), «เก้าโมงครึ่ง» a parole"
+  },
+  {
+   "s": "รบกวนช่วยลงนัดประชุมทีม ที่ห้องประชุมใหญ่ วันพฤหัส บ่ายสองโมงถึงบ่ายสี่โมง ความสำคัญสูง",
+   "expect": {
+    "title": "ประชุมทีม",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:00",
+    "loc": "ห้องประชุมใหญ่",
+    "pri": "urgent"
+   },
+   "note": "v56: comandi concatenati «รบกวนช่วย»+«ลงนัด», luogo con ที่, intervallo «บ่ายสองโมงถึงบ่ายสี่โมง», «ความสำคัญสูง»"
+  },
+  {
+   "s": "กินข้าวเย็นกับแนน ที่ร้านส้มตำนัว วันเสาร์ หนึ่งทุ่มครึ่ง",
+   "expect": {
+    "title": "กินข้าวเย็น",
+    "date": "wd:6",
+    "start": "19:30",
+    "loc": "ร้านส้มตำนัว",
+    "people": [
+     "แนน"
+    ]
+   },
+   "note": "v56: luogo (ร้าน + nome) e persona, «หนึ่งทุ่มครึ่ง» = 19:30"
+  },
+  {
+   "s": "ประชุมกับทีม ผ่าน Zoom วันศุกร์ สิบเอ็ดโมง หมายเหตุ เตรียมสไลด์ เอารายงานไปด้วย",
+   "expect": {
+    "title": "ประชุม",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "Zoom",
+    "people": [
+     "ทีม"
+    ],
+    "desc": "เตรียมสไลด์ เอารายงานไปด้วย"
+   },
+   "note": "v56: incontro a distanza «ผ่าน Zoom», nota senza due punti «หมายเหตุ …»"
+  },
+  {
+   "s": "ตัดผม วันที่ 5 บ่ายสามโมง ไม่รีบ",
+   "expect": {
+    "title": "ตัดผม",
+    "date": "dom:5",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "รีบ"
+   },
+   "note": "v56: giorno senza mese «วันที่ 5» (dayOf) nell'ordine naturale, prima dell'ora; priorità bassa «ไม่รีบ». Revisione: prima il giorno si perdeva perché «บ่าย» stava in «pm» (UNIT di preProcess lo esclude): tolte da «pm» le parole che in thai vengono PRIMA dell'ora (già in pmPrefix)"
+  },
+  {
+   "s": "พรุ่งนี้บ่ายสี่โมง ซื้อของเข้าบ้าน ที่ห้าง",
+   "expect": {
+    "title": "ซื้อของเข้าบ้าน",
+    "date": "+1",
+    "start": "16:00",
+    "loc": "ห้าง"
+   },
+   "note": "v56: luogo comune «ที่ห้าง», momento prima dell'ora «บ่ายสี่โมง»"
+  },
+  {
+   "s": "ชื่อเรื่อง ตรวจสุขภาพ วันที่ 12 พฤศจิกายน เริ่ม เก้าโมงครึ่ง เลิก สิบโมง สถานที่ โรงพยาบาลบำรุงราษฎร์ ความสำคัญ สูง ผู้เข้าร่วม แนน รายละเอียด เอาผลเลือดไปด้วย",
+   "expect": {
+    "title": "ตรวจสุขภาพ",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "โรงพยาบาลบำรุงราษฎร์",
+    "pri": "urgent",
+    "people": [
+     "แนน"
+    ],
+    "desc": "เอาผลเลือดไปด้วย"
+   },
+   "note": "v56: dettatura a campi ชื่อเรื่อง/วันที่/เริ่ม/เลิก/สถานที่/ความสำคัญ/ผู้เข้าร่วม/รายละเอียด (โรงพยาบาล non diventa più «novembre»: tolta l'abbreviazione «พย»)"
+  },
+  {
+   "s": "ต้องจ่ายค่าไฟ วันศุกร์นี้ สำคัญมาก",
+   "expect": {
+    "title": "จ่ายค่าไฟ",
+    "titleNot": "ต้อง",
+    "date": "wd:5",
+    "pri": "important"
+   },
+   "note": "v56: «ต้อง» (devo) tolto, «สำคัญมาก»"
+  },
+  {
+   "s": "วิดีโอคอลกับแม่ วันอาทิตย์ 18.15 น.",
+   "expect": {
+    "title": "วิดีโอคอล",
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "แม่"
+    ]
+   },
+   "note": "v56: videochiamata con la mamma alle 18.15 น. (forma con cifre del riconoscitore)"
+  },
+  {
+   "s": "วิดีโอคอลกับแม่ วันอาทิตย์ หกโมงเย็นสิบห้านาที",
+   "expect": {
+    "title": "วิดีโอคอล",
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "แม่"
+    ]
+   },
+   "skip": true,
+   "note": "v56 MOTORE: «หกโมงเย็นสิบห้านาที» (sei e un quarto di sera, detto) → canon «alle 18:00 15 minuti» → inizio 18:00 e «15» nel titolo. La regola thai «N โมงเย็น» di suffixTimes() non legge i minuti che seguono; «หกโมงสิบห้า» dà «6:00 e un quarto» (il quarto non si somma a un orario con i minuti)"
+  },
+  {
+   "s": "คลาสโยคะ ที่ฟิตเนส ทุกวันอังคารกับวันพฤหัส จนถึง 20 ธันวาคม หกโมงครึ่ง เตือนก่อน 30 นาที",
+   "expect": {
+    "title": "คลาสโยคะ",
+    "start": "18:30",
+    "loc": "ฟิตเนส",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ],
+     "until": "md:12-20"
+    }
+   },
+   "note": "v56: ricorrenza con luogo e preavviso «เตือนก่อน 30 นาที»; «หกโมงครึ่ง» → 18:30 (regola 1–6 = pomeriggio). La fine «จนถึง…» va prima dell'ora: dopo un orario il motore la legge come posposizione (vedi rapporto)"
+  },
+  {
+   "s": "หาหมอฟัน วันศุกร์ สิบโมงสามสิบนาที",
+   "expect": {
+    "title": "หาหมอฟัน",
+    "date": "wd:5",
+    "start": "10:30"
+   },
+   "skip": true,
+   "note": "v56 MOTORE: «สิบโมงสามสิบนาที» (10 e 30 detto) → canon «alle 10:30 นาที»: orario giusto ma «นาที» resta nel titolo. In suffixTimes() l'alternativa MIN «(\\d{2})» viene prima di «(\\d{1,2})\\s*นาที» e non consuma il suffisso. «สิบโมงครึ่ง» funziona"
+  },
+  {
+   "s": "พรุ่งนี้สองทุ่ม โทรหายาย เตือนด้วยนะ",
+   "expect": {
+    "title": "โทรหายาย",
+    "date": "+1",
+    "start": "20:00",
+    "rem": 0
+   },
+   "note": "v56: comando in coda «เตือนด้วยนะ», «สองทุ่ม» = 20:00"
+  },
+  {
+   "s": "พรุ่งนี้เที่ยงคืน ออกเดินทางไปเชียงใหม่",
+   "expect": {
+    "title": "ออกเดินทางไปเชียงใหม่",
+    "date": "+1",
+    "start": "00:00"
+   },
+   "note": "v56: «เที่ยงคืน» = mezzanotte (prima diventava «mezzogiorno notte» → 12:00)"
+  },
+  {
+   "s": "ตีห้า ไปวิ่งที่สวนลุมพินี",
+   "expect": {
+    "title": "ไปวิ่ง",
+    "start": "05:00",
+    "loc": "สวนลุมพินี"
+   },
+   "note": "v56: «ตีห้า» = 05:00, luogo attaccato «ที่สวน…»"
+  },
+  {
+   "s": "พรุ่งนี้เที่ยงครึ่ง กินข้าวกับลูกค้า ที่ร้านสุกี้",
+   "expect": {
+    "title": "กินข้าว",
+    "date": "+1",
+    "start": "12:30",
+    "loc": "ร้านสุกี้",
+    "people": [
+     "ลูกค้า"
+    ]
+   },
+   "skip": true,
+   "note": "v56 MOTORE: «เที่ยงครึ่ง» (mezzogiorno e mezza) → canon «domani mezzogiorno mezza …» → inizio 12:00. In suffixTimes() la regola «เที่ยง(?:วัน)?(?![\\p{L}])» non scatta se segue «ครึ่ง», e il momento «mezzogiorno» + «mezza» non viene letto come 12:30"
+  },
+  {
+   "s": "พรุ่งนี้มีคนมาซ่อมแอร์ บ่ายสองโมง",
+   "expect": {
+    "title": "มีคนมาซ่อมแอร์",
+    "date": "+1",
+    "start": "14:00"
+   },
+   "note": "v56 revisione: l'abbreviazione di mese senza punto «มีค» (marzo) veniva trovata dentro «มีคน»/«มีความ»/«มีค่า» (titolo «มีนาคม นมาซ่อมแอร์»; «…มีความสำคัญ» dava una data del 2027): tolta, resta «มีค.»"
+  },
+  {
+   "s": "ไปวิ่งที่สวนจตุจักร ทุกวันเสาร์ หกโมงเช้า เตือนก่อน 15 นาที",
+   "expect": {
+    "title": "ไปวิ่ง",
+    "start": "06:00",
+    "loc": "สวนจตุจักร",
+    "rem": 15,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      6
+     ]
+    }
+   },
+   "note": "v56 revisione: «หกโมงเช้า» = 06:00 esplicito; con «โมงเช้า» fra i suffissi dell'ora diventava «alle 6:00» senza mattina e la regola 1–6 = pomeriggio dava 18:00. Tolto «โมงเช้า» da hourSuffix: «เช้า» resta dopo l'ora e (lessico am) diventa «di mattina»"
+  },
+  {
+   "s": "อบรม วันเสาร์ เก้าโมงถึงสี่โมงเย็น",
+   "expect": {
+    "title": "อบรม",
+    "date": "wd:6",
+    "start": "09:00",
+    "end": "16:00"
+   },
+   "note": "v56 revisione: intervallo mattina→sera. La sicurezza serale di post() vedeva «เย็น» (dell'ora di fine) e spostava l'inizio: 21:00–04:00 (fine 28:00). Aggirato mettendo in «am» le ore del mattino «เจ็ดโมง…สิบเอ็ดโมง», «7 โมง…11 โมง» (vedi rapporto)"
+  },
+  {
+   "s": "ชื่อ ประชุมงบประมาณ วันที่ 12 พฤศจิกายน เริ่ม 9 โมงครึ่ง เลิก 11 โมง เตือนล่วงหน้า 30 นาที แท็ก งาน ผู้เข้าร่วม แนน รายละเอียด เอารายงานมาด้วย",
+   "expect": {
+    "title": "ประชุมงบประมาณ",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "11:00",
+    "rem": 30,
+    "tags": [
+     "งาน"
+    ],
+    "people": [
+     "แนน"
+    ],
+    "desc": "เอารายงานมาด้วย"
+   },
+   "note": "v56 revisione: l'esempio di dettatura a campi della guida dell'app (stringa th) comincia con «ชื่อ», che mancava in fields.title (il titolo diventava «ชื่อ ประชุมงบประมาณ»). Una sola persona: con «ต้นและแนน» vedi rapporto"
+  },
+  {
+   "s": "ช่วยเตือนว่าต้องไปธนาคาร พรุ่งนี้แปดโมงเช้า ด้วยนะครับ",
+   "expect": {
+    "title": "ไปธนาคาร",
+    "date": "+1",
+    "start": "08:00",
+    "rem": 0
+   },
+   "note": "v56 revisione: comandi concatenati «ช่วยเตือนว่า»+«ต้อง», comando finale «ด้วยนะครับ», «แปดโมงเช้า»"
+  },
+  {
+   "s": "ไปตลาดนัดกับแม่ เสาร์นี้ เจ็ดโมงเช้า",
+   "expect": {
+    "title": "ไปตลาดนัด",
+    "date": "wd:6",
+    "start": "07:00",
+    "people": [
+     "แม่"
+    ]
+   },
+   "note": "v56 revisione: tolte da withStrong le voci verbo+«กับ» («นัดกับ», «คุยกับ», «เจอกับ», «ไปกับ», «พบกับ»…): toglievano il verbo dal titolo («ไปตลาดนัดกับแม่» → «ไปตลาด», «คุยกับลูกค้า» → titolo vuoto). «กับ» in with basta per la persona"
+  },
+  {
+   "s": "ส่งงานวันศุกร์ไม่ด่วน",
+   "expect": {
+    "title": "ส่งงาน",
+    "date": "wd:5",
+    "pri": null
+   },
+   "skip": true,
+   "note": "v56 MOTORE: priorità bassa detta attaccata. 11-nl-smart.js preProcess passo 6 mette LB/LA attorno a lowPriority: «ไม่ด่วน» dopo una lettera thai non viene tolto e poi «ด่วน» (urgent) scatta → canon «ส่งงาน วันศุกร์ ไม่ urgente» → titolo «ส่งงาน ไม่», priorità URGENTE (il contrario). Uguale con «ไม่สำคัญ» → importante. Con lo spazio («ส่งงาน วันศุกร์ ไม่ด่วน») funziona"
+  },
+  {
+   "s": "วิดีโอคอลกับพ่อและแม่ คืนนี้สองทุ่มครึ่ง",
+   "expect": {
+    "title": "วิดีโอคอล",
+    "date": "today",
+    "start": "20:30",
+    "people": [
+     "พ่อ",
+     "แม่"
+    ]
+   },
+   "skip": true,
+   "note": "v56 MOTORE: due persone unite da «และ». Le persone sono giuste [พ่อ, แม่] ma il titolo resta «วิดีโอคอลกับ แม่»: cjkPeople() thai toglie dal titolo un nome alla volta («กับพ่อ», poi «และแม่» non combacia con W+nome) invece dell'intero tratto «กับ X และ Y»"
+  },
+  {
+   "s": "นัดหมอฟันที่คลินิกทันตกรรมสไมล์ วันพุธ สิบโมงครึ่ง",
+   "expect": {
+    "title": "นัดหมอฟัน",
+    "date": "wd:3",
+    "start": "10:30",
+    "loc": "คลินิกทันตกรรมสไมล์"
+   },
+   "skip": true,
+   "note": "v56 MOTORE: luogo lungo dopo «ที่». cjkPlace() thai accetta al massimo 14 lettere thai ({2,14}?): «คลินิกทันตกรรมสไมล์» (19) non viene preso, il titolo resta «นัดหมอฟันที่คลินิกทันตกรรมสไมล์». Uguale «ร้านอาหารญี่ปุ่น» (16)"
   }
  ]
 }

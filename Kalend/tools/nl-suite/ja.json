@@ -303,6 +303,339 @@
     "loc": ""
    },
    "note": "CONFLITTO: «del» (dal/del delle date in NL2) dentro un nome proprio: titolo intero, nessuna data spuria"
+  },
+  {
+   "s": "明日の9時半に歯医者に電話するってリマインドして",
+   "expect": {
+    "title": "歯医者に電話する",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0
+   },
+   "note": "v56 dettatura: comando in coda «ってリマインドして» tolto dal titolo, avviso all'ora dell'evento; «明日の» + 9時半"
+  },
+  {
+   "s": "リマインダー 明日の朝7時にゴミ出し",
+   "expect": {
+    "title": "ゴミ出し",
+    "date": "+1",
+    "start": "07:00",
+    "rem": 0
+   },
+   "note": "v56: comando iniziale «リマインダー» (avviso all'ora), 朝 prima dell'ora"
+  },
+  {
+   "s": "えーと カレンダーに追加して 月曜の10時に田中さんと打ち合わせ",
+   "expect": {
+    "title": "打ち合わせ",
+    "date": "wd:1",
+    "start": "10:00",
+    "people": [
+     "田中"
+    ]
+   },
+   "note": "v56: comandi concatenati (riempitivo «えーと» + «カレンダーに追加して»), persona con さん"
+  },
+  {
+   "s": "予定を追加 木曜の午後2時から4時まで会議室でチーム定例 優先度高",
+   "expect": {
+    "title": "チーム定例",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:00",
+    "loc": "会議室",
+    "pri": "urgent"
+   },
+   "note": "v56: comando iniziale, luogo comune (会議室で), «優先度高» = priorità alta"
+  },
+  {
+   "s": "土曜の夜7時にスタバ渋谷店でさくらと待ち合わせ",
+   "expect": {
+    "title": "待ち合わせ",
+    "date": "wd:6",
+    "start": "19:00",
+    "loc": "スタバ渋谷店",
+    "people": [
+     "さくら"
+    ]
+   },
+   "note": "v56: luogo comune + nome (catena + filiale), 夜 prima dell'ora"
+  },
+  {
+   "s": "金曜の正午からオンラインでチーム定例",
+   "expect": {
+    "title": "チーム定例",
+    "date": "wd:5",
+    "start": "12:00",
+    "loc": "オンライン"
+   },
+   "note": "v56: incontro a distanza (オンラインで) e mezzogiorno detto (正午)"
+  },
+  {
+   "s": "金曜11時からオンラインで定例会議 メモ 報告書を持ってくる",
+   "expect": {
+    "title": "定例会議",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "オンライン",
+    "desc": "報告書を持ってくる"
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: nota detta senza due punti. preProcess() (11-nl-smart.js, punto 5) vuole dopo «メモ» almeno DUE parole separate da spazi (\\S+(?:\\s+\\S+)+), ma in giapponese «報告書を持ってくる» è un solo blocco; inoltre la spia `cue` (at/with: に, と, から…) scarterebbe quasi ogni frase giapponese. Canon «金曜日 alle 11:00 からオンラインで定例会議 note 報告書を持ってくる»: titolo «定例会議 報告書を持ってくる», nessuna descrizione (luogo e ora giusti)"
+  },
+  {
+   "s": "5日の午後3時に歯医者 急ぎじゃない",
+   "expect": {
+    "title": "歯医者",
+    "date": "dom:5",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "急ぎ"
+   },
+   "note": "v56: giorno senza mese (5日の) + priorità bassa «急ぎじゃない» (non diventa urgente)"
+  },
+  {
+   "s": "急ぎじゃないけど5日の午後3時に歯医者",
+   "expect": {
+    "title": "歯医者",
+    "date": "dom:5",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "じゃない"
+   },
+   "note": "v56 (revisione): priorità bassa in testa «急ぎじゃないけど» (voce nuova di lowPriority) attaccata alla data: passa perché il passo «giorno senza mese» di preProcess() riscrive «5日の» come « 5 11月 » con gli spazi, e il confine LA dopo «けど» torna valido. Con un'altra data attaccata («急ぎじゃないけど明日…») il limite resta: vedi il caso skip più sotto"
+  },
+  {
+   "s": "明日の夕方4時にジムで筋トレ",
+   "expect": {
+    "title": "筋トレ",
+    "date": "+1",
+    "start": "16:00",
+    "loc": "ジム"
+   },
+   "note": "v56: luogo comune (ジムで) + momento prima dell'ora (夕方4時 → 16:00)"
+  },
+  {
+   "s": "明日の夕方4時にスーパーで買い物",
+   "expect": {
+    "title": "買い物",
+    "date": "+1",
+    "start": "16:00",
+    "loc": "スーパー"
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: «ー» (U+30FC, segno di vocale lunga) ha Script=Common, non Katakana: la regex di cjkPlace() (10-lang-packs.js, ramo ja) [\\p{Script=Han}\\p{Script=Katakana}]{2,8} si ferma su «スーパ» e «スーパーで» non è letto come luogo (stesso problema per センター, デパート, プール, ズーム, リモート…). Ottenuto titolo «スーパーで買い物», luogo vuoto (data e ora giuste)"
+  },
+  {
+   "s": "タイトル 健康診断 日付 11月12日 開始 9時半 終了 10時 場所 市民病院 優先度 高 参加者 ゆうき 説明 検査結果を持っていく",
+   "expect": {
+    "title": "健康診断",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "市民病院",
+    "pri": "urgent",
+    "people": [
+     "ゆうき"
+    ],
+    "desc": "検査結果を持っていく"
+   },
+   "note": "v56: dettatura a campi completa (タイトル, 日付, 開始, 終了, 場所, 優先度, 参加者, 説明)"
+  },
+  {
+   "s": "タイトル 健康診断、日付 11月12日、開始 9時半、終了 10時、場所 市民病院、優先度 高、参加者 ゆうき、説明 検査結果を持っていく",
+   "expect": {
+    "title": "健康診断",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "市民病院",
+    "pri": "urgent",
+    "people": [
+     "ゆうき"
+    ],
+    "desc": "検査結果を持っていく"
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: la virgola giapponese «、» (inserita da sola dalla dettatura iOS) non separa i campi: fields() in index.html ripulisce i valori solo da [\\s,;:.], splitPeople() divide solo su , ; e/and, e priorityOf(«高、») non riconosce «高». Canon «titolo 健康診断、 giorno 12/11 、 inizio alle 9:30 、 fine alle 10:00 、 luogo 市民病院、 priorità 高、 partecipanti ゆうき、 note …»: titolo «健康診断、», luogo «市民病院、», persone [ゆうき、, ゆうき], fine 10:30 invece di 10:00, priorità nulla. La stessa frase con gli spazi (caso precedente) passa"
+  },
+  {
+   "s": "大事 金曜までに電気代の支払いしなきゃ",
+   "expect": {
+    "title": "電気代の支払い",
+    "date": "wd:5",
+    "pri": "important",
+    "titleNot": "しなきゃ"
+   },
+   "note": "v56: obbligo in coda «しなきゃ» tolto (leadEnd) + «大事» = importante"
+  },
+  {
+   "s": "日曜の夜6時15分に母とビデオ通話",
+   "expect": {
+    "title": "ビデオ通話",
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "母"
+    ]
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: «N時MM分» lascia «分» nel titolo. In suffixTimes() (10-lang-packs.js) l'alternativa MIN `(\\d{2})(?![\\p{N}:])` (minuti senza suffisso) viene provata PRIMA di quella con il suffisso `(\\d{1,2})\\s*(?:分)`, così «15分» consuma solo «15». Canon «日曜日 の alle 18:15 分に母とビデオ通話»: ora giusta (18:15) ma titolo «分に ビデオ通話». Vale per ogni «10時30分», «6時15分»"
+  },
+  {
+   "s": "12月20日まで毎週火曜と木曜の18時半にジムでヨガ 30分前に通知して",
+   "expect": {
+    "title": "ヨガ",
+    "start": "18:30",
+    "loc": "ジム",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ],
+     "until": "md:12-20"
+    }
+   },
+   "note": "v56: ricorrenza con fine, luogo comune e preavviso (30分前に通知して)"
+  },
+  {
+   "s": "明日の朝8時に燃えるゴミを出すのを忘れないようにリマインドして",
+   "expect": {
+    "title": "燃えるゴミを出す",
+    "date": "+1",
+    "start": "08:00",
+    "rem": 0
+   },
+   "note": "v56 (revisione): comando in coda «のを忘れないようにリマインドして» (voce nuova di leadEnd) tolto dal titolo e avviso all'ora; prima restava «燃えるゴミを出すのを忘れないよう» con preavviso 15"
+  },
+  {
+   "s": "土曜の夜7時に実家で晩ごはん",
+   "expect": {
+    "title": "晩ごはん",
+    "date": "wd:6",
+    "start": "19:00",
+    "loc": "実家"
+   },
+   "note": "v56 (revisione): «ごはん» resta intero. La voce «はん» di half (preesistente) si leggeva dentro «ごはん» → «ご mezza», titolo «晩ご» (anche 朝ごはん, 昼ごはん): tolta"
+  },
+  {
+   "s": "毎月15日の朝9時に家賃を振り込む 1日前に通知して",
+   "expect": {
+    "title": "家賃を振り込む",
+    "date": "dom:15",
+    "start": "09:00",
+    "rem": 1440,
+    "rrule": {
+     "freq": "MONTHLY"
+    }
+   },
+   "note": "v56 (revisione): ricorrenza mensile con il giorno («毎月15日の») e preavviso di un giorno detto «1日前に»"
+  },
+  {
+   "s": "金曜の夜9時にビデオ通話で田中さんと打ち合わせ",
+   "expect": {
+    "title": "打ち合わせ",
+    "date": "wd:5",
+    "start": "21:00",
+    "loc": "ビデオ通話",
+    "people": [
+     "田中"
+    ]
+   },
+   "note": "v56 (revisione): videochiamata come luogo («ビデオ通話で», letto da cjkPlace), persona con さん, 夜 prima dell'ora"
+  },
+  {
+   "s": "明日の朝に銀行で振り込み",
+   "expect": {
+    "title": "振り込み",
+    "date": "+1",
+    "start": "09:00",
+    "loc": "銀行"
+   },
+   "note": "v56 (revisione): momento con particella «朝に» (voce nuova di moments.morning): prima il «に» restava attaccato al titolo («に銀行» / «に振り込み», limite E1 del motore)"
+  },
+  {
+   "s": "タイトル 予算会議 日付 11月12日 開始 9時半 終了 11時 リマインダー 30分前 タグ 仕事 参加者 ゆうき 説明 レポートを持参 保存",
+   "expect": {
+    "title": "予算会議",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "11:00",
+    "rem": 30,
+    "tags": [
+     "仕事"
+    ],
+    "people": [
+     "ゆうき"
+    ],
+    "desc": "レポートを持参"
+   },
+   "note": "v56 (revisione): l'esempio dell'aiuto vocale giapponese detto con le pause come spazi; «保存» (salva) in coda è un comando (voce nuova di leadEnd) e non finisce nella descrizione. Con le virgole «、» dell'esempio originale vedi il caso 41 (E9)"
+  },
+  {
+   "s": "急ぎじゃないけど明日の午後3時に銀行で振り込み",
+   "expect": {
+    "title": "振り込み",
+    "date": "+1",
+    "start": "15:00",
+    "loc": "銀行",
+    "pri": null,
+    "titleNot": "じゃない"
+   },
+   "skip": true,
+   "note": "v56 · MOTORE (E7): priorità bassa attaccata alla parola seguente. preProcess() punto 6 (11-nl-smart.js) cerca lowPriority con i confini espliciti LB/LA, che in giapponese senza spazi falliscono («けど» seguito da «明»); poi «急ぎ» di urgent scatta dentro «急ぎじゃない». Canon «urgente じゃないけど domani の alle 15:00 銀行で振り込み»: priorità URGENTE (il contrario del detto) e «じゃないけど» nel titolo"
+  },
+  {
+   "s": "来週の水曜日の夜7時に彼女と映画",
+   "expect": {
+    "title": "映画",
+    "date": "wd:3",
+    "start": "19:00",
+    "people": [
+     "彼女"
+    ]
+   },
+   "skip": true,
+   "note": "v56 · MOTORE (E10): «来週の水曜日» (mercoledì della settimana prossima; l'attesa wd:3 vale se il banco gira da mercoledì a domenica). Canon «settimana prossima 水曜日 の alle 19:00 彼女と映画»: il parser legge solo «settimana prossima» (lunedì 2 novembre) e il giorno resta nel titolo («水曜日 映画»; con l'app in italiano «Mercoledì 映画»). Uguale in italiano: «settimana prossima mercoledì alle 10 riunione» → lunedì, titolo «Mercoledì riunione»"
+  },
+  {
+   "s": "あさって午後2時に区役所で手続き メモ:印鑑と身分証を持っていく",
+   "expect": {
+    "title": "手続き",
+    "date": "+2",
+    "start": "14:00",
+    "loc": "区役所",
+    "people": [],
+    "desc": "印鑑と身分証を持っていく"
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: persona falsa. cjkPeople() (10-lang-packs.js, ramo ja) prende qualunque parola in kanji/katakana davanti a «と» come persona, anche nella descrizione: «印鑑と身分証» → persona «印鑑» (stesso con «歯医者と買い物» → persona «歯医者»). Titolo, data, ora, luogo e descrizione sono giusti"
+  },
+  {
+   "s": "今週の土曜日の昼12時半にお母さんとお姉ちゃんとランチ",
+   "expect": {
+    "title": "ランチ",
+    "date": "wd:6",
+    "start": "12:30",
+    "people": [
+     "母",
+     "姉"
+    ]
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: prefisso di cortesia «お». cjkPeople() (ramo ja) cattura solo la parte in kanji («母», «姉») e lascia «お» nel titolo: «お お ランチ». Persone, data e ora giuste"
+  },
+  {
+   "s": "健康診断 11月12日の朝9時 前日にリマインドして",
+   "expect": {
+    "title": "健康診断",
+    "date": "md:11-12",
+    "start": "09:00",
+    "rem": 1440
+   },
+   "note": "v56 (revisione): «前日に» (il giorno prima) + verbo di promemoria → 1440. Ripiego lessicale per E14 (oneDay «前日» lascerebbe «un giorno» nel titolo): quantities riscrive solo le frasi complete «前日に通知して / リマインドして / 知らせて» in «1 日前に…»; «前日に東京へ移動» resta intatto"
   }
  ]
 }

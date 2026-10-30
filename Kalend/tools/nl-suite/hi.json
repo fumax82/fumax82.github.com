@@ -282,8 +282,7 @@
      "रोहित"
     ]
    },
-   "skip": true,
-   "note": "PARSER: la regola WITH_AFTER prende una sola parola prima di «के साथ»; «प्रिया और» resta nel titolo"
+   "note": "ora superato (v56, revisione) · la regola WITH_AFTER legge «X और Y के साथ» — prima: PARSER: la regola WITH_AFTER prende una sola parola prima di «के साथ»; «प्रिया और» resta nel titolo"
   },
   {
    "s": "कल रात 8 बजे दिल्ली में डिनर",
@@ -294,6 +293,293 @@
     "loc": "दिल्ली"
    },
    "note": "ora superato · in guarded() la regola prefissa dei luoghi per le lingue senza maiuscole («में» + parola) scatta anche in hindi/bengalese (PLACE_AFTER) e fa di «डिनर» il luogo"
+  },
+  {
+   "s": "मुझे याद दिलाना कि कल सुबह साढ़े नौ बजे डेंटिस्ट को फ़ोन करना है",
+   "expect": {
+    "title": "डेंटिस्ट को फ़ोन करना",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0,
+    "loc": ""
+   },
+   "note": "v56 dettatura: comando iniziale «मुझे याद दिलाना कि» → avviso all'ora dell'evento; «सुबह साढ़े नौ बजे» a parole = 9:30; «है» finale fuori dal titolo; loc \"\" (revisione): «फ़ोन» è fra i luoghi comuni (piattaforme) ma «फ़ोन करना» non è un luogo"
+  },
+  {
+   "s": "टीम मीटिंग गुरुवार दोपहर 2 से 4 बजे तक कॉन्फ़्रेंस रूम में, हाई प्रायोरिटी, कैलेंडर में जोड़ दो",
+   "expect": {
+    "title": "टीम मीटिंग",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:00",
+    "loc": "कॉन्फ़्रेंस रूम",
+    "pri": "urgent"
+   },
+   "note": "v56: comando in coda «कैलेंडर में जोड़ दो», luogo comune + posposizione «कॉन्फ़्रेंस रूम में», «हाई प्रायोरिटी»"
+  },
+  {
+   "s": "प्लीज़ एक इवेंट जोड़ो कल शाम 5 बजे क्रिकेट मैच",
+   "expect": {
+    "title": "क्रिकेट मैच",
+    "date": "+1",
+    "start": "17:00"
+   },
+   "note": "v56: comandi concatenati «प्लीज़» + «एक इवेंट» (leadNoun) + «जोड़ो»"
+  },
+  {
+   "s": "शनिवार रात साढ़े आठ बजे प्रिया और रोहित के साथ होटल ताज में डिनर",
+   "expect": {
+    "title": "डिनर",
+    "date": "wd:6",
+    "start": "20:30",
+    "loc": "होटल ताज",
+    "people": [
+     "प्रिया",
+     "रोहित"
+    ]
+   },
+   "note": "v56: tipo di locale + nome («होटल ताज में»), due persone con «और … के साथ», «रात साढ़े आठ बजे» = 20:30"
+  },
+  {
+   "s": "डिनर हल्दीराम रेस्टोरेंट में शनिवार रात 8 बजे",
+   "expect": {
+    "title": "डिनर",
+    "date": "wd:6",
+    "start": "20:00",
+    "loc": "हल्दीराम रेस्टोरेंट"
+   },
+   "note": "v56 CONFLITTO: nome + tipo di locale («हल्दीराम रेस्टोरेंट में») resta intero nel luogo e fuori dal titolo: i tipi di locale che hanno quasi sempre un nome davanti NON sono nei luoghi comuni (il luogo comune prenderebbe solo «रेस्टोरेंट»)"
+  },
+  {
+   "s": "शुक्रवार 11 बजे टीम के साथ ज़ूम पर कॉल, नोट रिपोर्ट लेकर आना",
+   "expect": {
+    "title": "कॉल",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "ज़ूम",
+    "people": [
+     "टीम"
+    ],
+    "desc": "रिपोर्ट लेकर आना"
+   },
+   "note": "v56: incontro a distanza «ज़ूम पर» (la posposizione cade), nota senza due punti «नोट …»"
+  },
+  {
+   "s": "15 तारीख़ को दोपहर 3 बजे डेंटिस्ट, कोई जल्दी नहीं",
+   "expect": {
+    "title": "डेंटिस्ट",
+    "date": "dom:15",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "जल्दी"
+   },
+   "note": "v56: giorno senza mese «15 तारीख़ को», priorità bassa «कोई जल्दी नहीं» (non diventa urgente per «जल्दी»)"
+  },
+  {
+   "s": "कल दोपहर 4 बजे बाज़ार में सब्ज़ी लेना",
+   "expect": {
+    "title": "सब्ज़ी लेना",
+    "date": "+1",
+    "start": "16:00",
+    "loc": "बाज़ार"
+   },
+   "note": "v56: luogo comune «बाज़ार में», momento prima dell'ora «दोपहर 4 बजे» = 16:00"
+  },
+  {
+   "s": "टाइटल चेकअप, तारीख़ 12 नवंबर, शुरू 9:30, ख़त्म 10, जगह अपोलो हॉस्पिटल, रिमाइंडर 1 घंटा पहले, प्राथमिकता उच्च, विवरण रिपोर्ट ले जाना",
+   "expect": {
+    "title": "चेकअप",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "अपोलो हॉस्पिटल",
+    "rem": 60,
+    "pri": "urgent",
+    "desc": "रिपोर्ट ले जाना"
+   },
+   "note": "v56: dettatura a campi con le parole dell'aiuto vocale (टाइटल, तारीख़, शुरू, ख़त्म, रिमाइंडर, विवरण) + जगह, प्राथमिकता «उच्च»"
+  },
+  {
+   "s": "टाइटल बजट मीटिंग, तारीख़ 12 नवंबर, शुरू साढ़े 9, ख़त्म 11, रिमाइंडर 30 मिनट और 10 मिनट, टैग काम, प्रतिभागी राहुल और नेहा, विवरण रिपोर्ट लाना, सेव",
+   "expect": {
+    "title": "बजट मीटिंग",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "11:00",
+    "tags": [
+     "काम"
+    ],
+    "people": [
+     "राहुल",
+     "नेहा"
+    ],
+    "desc": "रिपोर्ट लाना"
+   },
+   "skip": true,
+   "note": "MOTORE · v56: l'esempio di dettatura a campi dell'aiuto vocale. Canon: «titolo बजट मीटिंग, giorno 12 नवंबर , inizio alle 9:30 , fine 11, preavviso 30 minuti और 10 minuti , tag काम, partecipanti राहुल और नेहा, descrizione रिपोर्ट लाना,». Titolo, data, ore e descrizione giusti, ma tag [काम, क] e persone [राहुल और नेहा, र]: (1) listAfter() in src/index.html legge la parola con /[\\p{L}\\d][\\p{L}\\d_'’-]*/u, senza i segni vocalici \\p{M} → «काम» diventa «क», «राहुल» «र»; (2) splitPeople()/durList() separano solo con «e/and/y/et/und», non con «और» → «राहुल और नेहा» è una persona sola e del preavviso «30 मिनट और 10 मिनट» resta solo 30"
+  },
+  {
+   "s": "मुझे शुक्रवार तक बिजली का बिल भरना है, बहुत ज़रूरी",
+   "expect": {
+    "titleIncludes": "बिजली का बिल",
+    "date": "wd:5",
+    "pri": "important",
+    "titleNot": "मुझे"
+   },
+   "note": "v56: «मुझे … है» (devo) fuori dal titolo, «बहुत ज़रूरी» = importante"
+  },
+  {
+   "s": "रविवार शाम सवा छह बजे मम्मी के साथ वीडियो कॉल",
+   "expect": {
+    "titleIncludes": "वीडियो कॉल",
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "मम्मी"
+    ]
+   },
+   "note": "v56: videochiamata con la mamma, «शाम सवा छह बजे» = 18:15"
+  },
+  {
+   "s": "हर मंगलवार और गुरुवार शाम 6:30 बजे 20 दिसंबर तक जिम में योगा क्लास, 30 मिनट पहले याद दिलाना",
+   "expect": {
+    "title": "योगा क्लास",
+    "start": "18:30",
+    "loc": "जिम",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ],
+     "until": "md:12-20"
+    }
+   },
+   "note": "v56: ricorrenza con luogo comune «जिम में» e preavviso («याद दिलाना» resta: porta il preavviso di 30 minuti); titolo esatto (revisione)"
+  },
+  {
+   "s": "शुक्रवार को 10 बजकर 30 मिनट पर बैंक जाना है",
+   "expect": {
+    "title": "बैंक जाना",
+    "date": "wd:5",
+    "start": "10:30"
+   },
+   "note": "v56: «10 बजकर 30 मिनट» = 10:30 («बजकर» = e)"
+  },
+  {
+   "s": "पौने दस बजे अमित के साथ कॉफ़ी, थैंक्स",
+   "expect": {
+    "title": "कॉफ़ी",
+    "start": "09:45",
+    "people": [
+     "अमित"
+    ]
+   },
+   "note": "v56: «पौने दस बजे» = 9:45 (meno un quarto), ringraziamento in coda"
+  },
+  {
+   "s": "सोमवार सुबह 11 बजे शर्मा जी के साथ मीटिंग",
+   "expect": {
+    "title": "मीटिंग",
+    "date": "wd:1",
+    "start": "11:00",
+    "people": [
+     "शर्मा"
+    ]
+   },
+   "note": "v56: onorifico «जी» dopo il cognome (lessico «जी के साथ»: la regola «X के साथ» legge una sola parola e prendeva «जी»)"
+  },
+  {
+   "s": "कल सुबह 9 बजकर 15 मिनट पर स्कूल में पेरेंट-टीचर मीटिंग",
+   "expect": {
+    "titleIncludes": "मीटिंग",
+    "date": "+1",
+    "start": "09:15",
+    "loc": "स्कूल"
+   },
+   "skip": true,
+   "note": "MOTORE · v56: canon «domani alle 09:00 e 15 minuti पर पेरेंट-टीचर मीटिंग» → 09:00 invece di 09:15. In suffixTimes() (10-lang-packs.js) la regola «momento + ora» (amPrefix «सुबह» + 9, senza suffisso) scatta perché «बजकर» non è un suffisso dell'ora; «बजकर 15» diventa poi «e 15» (plus) ma resta staccato dall'orario già scritto. Senza «सुबह» («10 बजकर 30 मिनट») funziona"
+  },
+  {
+   "s": "कल दस बजने में पंद्रह मिनट पर बस पकड़नी है",
+   "expect": {
+    "titleIncludes": "बस",
+    "date": "+1",
+    "start": "09:45",
+    "loc": ""
+   },
+   "skip": true,
+   "note": "MOTORE · v56: «दस बजने में पंद्रह मिनट» (le 10 meno 15 minuti) → 14:50 e luogo «मिनट». In numberWords() (10-lang-packs.js) la regola inglese «ten to nine» (minuti PRIMA, ora DOPO: «nre minus nre») legge «दस बजने में पंद्रह» come «10 minuti alle 15» → «alle 14:50»; in hindi (e in bengalese «দশটা বাজতে পনেরো মিনিট») l'ora viene PRIMA e i minuti dopo. Il «मिनट» rimasto solo diventa poi un luogo («मिनट पर»). La forma colloquiale «पौने दस» funziona"
+  },
+  {
+   "s": "कल दोपहर बारह बजे ऑफ़िस में लंच मीटिंग, नोट कर लो प्लीज़",
+   "expect": {
+    "title": "लंच मीटिंग",
+    "date": "+1",
+    "start": "12:00",
+    "loc": "ऑफ़िस",
+    "titleNot": "कर लो"
+   },
+   "note": "v56 revisione: comando in coda con «प्लीज़» DOPO («नोट कर लो प्लीज़», voce di leadEnd): leadEnd toglie una sola voce e senza la combinazione restava «नोट कर लो», che la regola delle note faceva diventare la descrizione «कर लो»; «दोपहर बारह बजे» = 12:00"
+  },
+  {
+   "s": "गुरुवार शाम 7 बजे क्लाइंट के साथ Zoom पर कॉल, नोट प्रेज़ेंटेशन भेजना",
+   "expect": {
+    "title": "कॉल",
+    "date": "wd:4",
+    "start": "19:00",
+    "loc": "Zoom",
+    "people": [
+     "क्लाइंट"
+    ],
+    "desc": "प्रेज़ेंटेशन भेजना"
+   },
+   "note": "v56 revisione: piattaforma scritta in alfabeto latino + posposizione («Zoom पर»). Senza «zoom» fra i luoghi comuni la regola universale toglieva «Zoom» e lasciava «पर» orfano → luogo «क्लाइंट», persona persa"
+  },
+  {
+   "s": "जब टाइम मिले तब पापा की दवाई लेने केमिस्ट जाना",
+   "expect": {
+    "title": "पापा की दवाई लेने केमिस्ट जाना",
+    "pri": null,
+    "titleNot": "तब",
+    "date": "none"
+   },
+   "note": "v56 revisione: priorità bassa «जब टाइम मिले तब» (con il correlativo «तब», che prima restava in testa al titolo)"
+  },
+  {
+   "s": "कल शाम 5 बजे क्रिकेट मैच का इवेंट जोड़ दो",
+   "expect": {
+    "title": "क्रिकेट मैच",
+    "date": "+1",
+    "start": "17:00"
+   },
+   "note": "v56 revisione: comando in coda con il sostantivo («… का इवेंट जोड़ दो», leadEnd «इवेंट जोड़ दो»; «का» cade fra le parole funzionali); prima il titolo era «क्रिकेट मैच का इवेंट»"
+  },
+  {
+   "s": "टाइटल प्रोजेक्ट रिव्यू, तारीख़ 3 दिसंबर, शुरू 3 बजे, ख़त्म 5 बजे, जगह मीटिंग रूम, प्राथमिकता हाई, विवरण स्लाइड तैयार रखना",
+   "expect": {
+    "title": "प्रोजेक्ट रिव्यू",
+    "date": "md:12-3",
+    "start": "15:00",
+    "end": "17:00",
+    "loc": "मीटिंग रूम",
+    "pri": "urgent",
+    "desc": "स्लाइड तैयार रखना"
+   },
+   "skip": true,
+   "note": "MOTORE · v56 revisione: dettatura a campi con la priorità detta «हाई» (la forma più comune nel parlato). Canon «… priorità हाई, descrizione …»: tutto giusto tranne la priorità (nessuna). priorityOf() (10-lang-packs.js) conosce उच्च/मध्यम/कम ma non हाई/मीडियम/लो; «हाई» da solo non può stare in urgent (हाई कोर्ट, हाई स्कूल) e «प्राथमिकता हाई» in urgent non scatta perché fieldsRule() cambia prima «प्राथमिकता» in «priorità». Con «प्राथमिकता उच्च» passa (caso 35)"
+  },
+  {
+   "s": "शुक्रवार को दोपहर ढाई बजे बैंक में लोन की मीटिंग",
+   "expect": {
+    "title": "लोन की मीटिंग",
+    "date": "wd:5",
+    "start": "14:30",
+    "loc": "बैंक"
+   },
+   "skip": true,
+   "note": "MOTORE · v56 revisione: «ढाई बजे» = 2:30 (come «डेढ़ बजे» = 1:30). Canon «शुक्रवार pomeriggio ढाई बजे लोन की मीटिंग» → 15:00 (pomeriggio senza ora) e «ढाई बजे» nel titolo. Le frazioni-numero ढाई/डेढ़ non hanno una chiave di lessico: numbers accetta solo interi e halfPrefix vuole un numero dopo"
   }
  ]
 }

@@ -64,8 +64,7 @@
      "Димой"
     ]
    },
-   "skip": true,
-   "note": "PARSER: «в половине девятого» = 8:30 (mezza PRIMA dell'ora, come «wpół do»); nessuna regola «half + ordinale» → ore -1:30"
+   "note": "«в половине девятого» = 8:30 (mezza PRIMA dell'ora) · v56: risolto dalla regola «half + ora» di ranges() con «половине/в половине» nel lessico"
   },
   {
    "s": "Кофе с Аней и Мишей в четверг в 15",
@@ -358,14 +357,14 @@
   {
    "s": "Ужин в ресторане Da Vinci в пятницу в 20",
    "expect": {
-    "title": "Ужин в ресторане Da Vinci",
-    "titleIncludes": "Da Vinci",
+    "title": "Ужин",
+    "titleNot": "Vinci",
+    "loc": "Ресторане Da Vinci",
     "date": "wd:5",
     "start": "20:00",
-    "people": [],
-    "loc": ""
+    "people": []
    },
-   "note": "CONFLITTO: «Da» (italiano/portoghese) nel nome del ristorante"
+   "note": "CONFLITTO: «Da» (italiano/portoghese) nel nome del ristorante · v56: «в ресторане» è un luogo comune → luogo «Ресторане Da Vinci» intero (prima: titolo «Ужин в ресторане Da Vinci» e nessun luogo)"
   },
   {
    "s": "Доклад о районе Mitte в четверг в 17",
@@ -388,6 +387,290 @@
     "start": "15:00"
    },
    "note": "ora superato · «по» è in every (per «по понедельникам») e viene sostituito con «ogni» ovunque, anche in «по проекту» → titolo «Встреча проекту»; servirebbe every-preposizione solo davanti a giorno/numero"
+  },
+  {
+   "s": "Напомни мне завтра в половине десятого позвонить стоматологу",
+   "expect": {
+    "title": "Позвонить стоматологу",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0
+   },
+   "note": "v56 dettatura: comando iniziale «напомни мне» (avviso all'ora stessa), «в половине десятого» = 9:30"
+  },
+  {
+   "s": "Пожалуйста, добавь в календарь совещание в четверг с двух до четырёх дня в переговорке, высокий приоритет",
+   "expect": {
+    "title": "Совещание",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:00",
+    "loc": "Переговорке",
+    "pri": "urgent"
+   },
+   "note": "v56: comandi concatenati con la virgola («пожалуйста, добавь в календарь»), orari a parole «с двух до четырёх дня», luogo comune, «высокий приоритет»"
+  },
+  {
+   "s": "Спортзал в понедельник в семь вечера на полтора часа",
+   "expect": {
+    "title": "Спортзал",
+    "date": "wd:1",
+    "start": "19:00",
+    "end": "20:30"
+   },
+   "note": "v56: «в семь вечера», durata «на полтора часа» (numbers: полтора = 1,5)"
+  },
+  {
+   "s": "Ужин с Аней и Максимом в кафе Шоколадница в субботу в полдевятого вечера",
+   "expect": {
+    "title": "Ужин",
+    "date": "wd:6",
+    "start": "20:30",
+    "loc": "Кафе Шоколадница",
+    "people": [
+     "Аней",
+     "Максимом"
+    ]
+   },
+   "note": "v56: luogo comune + nome proprio, «полдевятого вечера» = 20:30"
+  },
+  {
+   "s": "Созвон с Олегом по видеосвязи в пятницу в 11 не забыть взять отчёт",
+   "expect": {
+    "titleNot": "видеосвяз",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "Видеосвязи",
+    "people": [
+     "Олегом"
+    ],
+    "desc": "взять отчёт",
+    "title": "Созвон"
+   },
+   "note": "v56: incontro a distanza («по видеосвязи», il luogo resta al caso dativo: vedi rapporto) + nota senza due punti «не забыть …»"
+  },
+  {
+   "s": "Стоматолог 5-го числа в 3 часа дня, не срочно",
+   "expect": {
+    "title": "Стоматолог",
+    "date": "dom:5",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "срочно"
+   },
+   "note": "v56: giorno senza mese «5-го числа» (dayOrdinal), priorità bassa «не срочно» (non diventa «срочно» = urgente)"
+  },
+  {
+   "s": "Купить продукты в супермаркете завтра днём в 4",
+   "expect": {
+    "title": "Купить продукты",
+    "date": "+1",
+    "start": "16:00",
+    "loc": "Супермаркете"
+   },
+   "note": "v56: luogo comune, «днём» prima dell'ora → 16:00"
+  },
+  {
+   "s": "Мне надо в пятницу оплатить коммуналку, это важно",
+   "expect": {
+    "title": "Оплатить коммуналку",
+    "date": "wd:5",
+    "pri": "important",
+    "titleNot": "надо"
+   },
+   "note": "v56: «мне надо» tolto dal titolo, «это важно» → importante"
+  },
+  {
+   "s": "Видеозвонок с мамой в воскресенье в четверть седьмого вечера",
+   "expect": {
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "Мамой"
+    ],
+    "title": "Видеозвонок"
+   },
+   "skip": true,
+   "note": "v56 MOTORE: «в четверть седьмого» = 6:15 (quarto dell'ora SUCCESSIVA, al genitivo ordinale). Canon «в un quarto 7 di sera»: nessuna regola «quarter + ora» (esiste solo «half + ora» per de/nl/ru/uk/id in ranges()); ottenuto 19:00 invece di 18:15. Stessa sorte per «без четверти семь» (6:45 → 19:00) e «в шесть пятнадцать вечера» (canon «alle 6 15 di sera», ottenuto 18:00)."
+  },
+  {
+   "s": "Йога каждый вторник и четверг в 18:30 до 20 декабря в спортзале напомни за 30 минут",
+   "expect": {
+    "start": "18:30",
+    "loc": "Спортзале",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ],
+     "until": "md:12-20"
+    },
+    "title": "Йога"
+   },
+   "note": "v56: ricorrenza con luogo comune e preavviso"
+  },
+  {
+   "s": "Стоматолог в пятницу в десять тридцать",
+   "expect": {
+    "title": "Стоматолог",
+    "date": "wd:5",
+    "start": "10:30"
+   },
+   "note": "v56: «десять тридцать» = 10:30 (l'equivalente russo di «alle 10 e 30»)"
+  },
+  {
+   "s": "Добавь событие корпоратив в пятницу в 19 в ресторане Пушкин",
+   "expect": {
+    "title": "Корпоратив",
+    "date": "wd:5",
+    "start": "19:00",
+    "loc": "Ресторане Пушкин"
+   },
+   "note": "v56: comando + sostantivo generico «событие» (leadNoun), luogo comune + nome"
+  },
+  {
+   "s": "Поездка к бабушке в субботу, напомни накануне",
+   "expect": {
+    "title": "Поездка к бабушке",
+    "date": "wd:6",
+    "rem": 1440
+   },
+   "note": "v56: preavviso «накануне» = un giorno prima (oneDay)"
+  },
+  {
+   "s": "Мне надо оплатить коммуналку до пятницы",
+   "expect": {
+    "titleNot": "fino",
+    "date": "wd:5",
+    "title": "Оплатить коммуналку"
+   },
+   "skip": true,
+   "note": "v56 MOTORE: «до пятницы» (scadenza) → until → canon «fino al пятница»; il parser prende il venerdì come data ma lascia «fino» nel titolo («Оплатить коммуналку fino»: «fino al» è in IT_ARTIFACTS, «fino» da solo no). Succede anche in inglese («Pay the bill until Friday» → «Pay the bill fino»)."
+  },
+  {
+   "s": "Название плановый осмотр, дата 12 ноября, начало 9:30, конец 10, место городская поликлиника, приоритет высокий, участники Игорь, описание взять результаты анализов",
+   "expect": {
+    "title": "Плановый осмотр",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "Городская поликлиника",
+    "pri": "urgent",
+    "people": [
+     "Игорь"
+    ],
+    "desc": "взять результаты анализов"
+   },
+   "note": "v56: dettatura a campi (название, дата, начало, конец, место, приоритет, участники, описание)"
+  },
+  {
+   "s": "Название совещание по бюджету, день 12 ноября, начало 9:30, конец 11, напоминание 30 минут и 10 минут, тег работа, участники Лена и Серёжа, описание принести отчёты, сохранить",
+   "expect": {
+    "title": "Совещание по бюджету",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "11:00",
+    "rem": 30,
+    "tags": [
+     "работа"
+    ],
+    "people": [
+     "Лена",
+     "Серёжа"
+    ],
+    "desc": "принести отчёты"
+   },
+   "skip": true,
+   "note": "v56 MOTORE: è l'esempio dell'aiuto della scheda vocale in russo. (1) Persone: ottenuto [«Лена И Серёжа», «Лена»] perché splitPeople() di index.html divide solo su «, e ed and y et und» e non su «и»; per lo stesso motivo «напоминание 30 минут и 10 минут» dà un solo preavviso (durList() non conosce «и»). (2) Data: «день» NON è in fields.day perché «День рождения мамы 12 мая, напоминание за день» o «День города, место …» diventavano dettature a campi (titolo «Рождения мамы», preavviso perso); così «день 12 ноября» resta nel titolo. Con «дата 12 ноября» la data è letta (caso precedente). Proposte nel rapporto. «сохранить» finale è tolto (leadEnd)."
+  },
+  {
+   "s": "Слушай, напомни мне в среду в половине восьмого вечера забрать посылку на почте",
+   "expect": {
+    "title": "Забрать посылку",
+    "date": "wd:3",
+    "start": "19:30",
+    "loc": "Почте",
+    "rem": 0
+   },
+   "note": "v56 revisione: intercalare colloquiale «слушай,» + comando «напомни мне» (avviso all'ora), «в половине восьмого вечера» = 19:30, luogo comune «на почте»"
+  },
+  {
+   "s": "Врач в пятницу в два часа дня на полчаса",
+   "expect": {
+    "title": "Врач",
+    "date": "wd:5",
+    "start": "14:00",
+    "end": "14:30"
+   },
+   "note": "v56 revisione: durata «на полчаса». Prima «на полчаса» intero era in halfHour e la preposizione spariva (canon «mezz'ora» senza «per», fine 15:00); ora «на» resta e diventa «per mezz'ora»"
+  },
+  {
+   "s": "Совещание в понедельник в 10 по бюджету",
+   "expect": {
+    "title": "Совещание по бюджету",
+    "date": "wd:1",
+    "start": "10:00"
+   },
+   "note": "v56 revisione: «в понедельник» intero in weekdays, così la preposizione non resta orfana nel titolo (prima «Совещание в по бюджету»)"
+  },
+  {
+   "s": "Начало учебного года 1 сентября, напоминание за день",
+   "expect": {
+    "title": "Начало учебного года",
+    "date": "md:9-1",
+    "rem": 1440
+   },
+   "note": "v56 revisione, falso positivo della dettatura a campi: con «напоминание» in fields.rem la frase (начало = campo start + напоминание) diventava «a campi» e il titolo «Inizio учебного года». «напоминание» resta in remind, che basta anche nelle dettature a campi"
+  },
+  {
+   "s": "Встреча с Иваном и Петром в кафе Хаус в пятницу в половине первого",
+   "expect": {
+    "title": "Встреча",
+    "date": "wd:5",
+    "start": "12:30",
+    "loc": "Кафе Хаус",
+    "people": [
+     "Иваном",
+     "Петром"
+    ]
+   },
+   "skip": true,
+   "note": "v56 MOTORE: «в половине первого» = 12:30. Canon «alle 0:30»: la regola «half + ora» di ranges() (10-lang-packs.js) calcola (H+23)%24 e per «первого» (1) dà 0 invece di 12. Ottenuto 00:30. Stesso errore in ucraino («о пів на першу»)"
+  },
+  {
+   "s": "Слушай, напомни мне в среду в семь тридцать вечера забрать посылку на почте",
+   "expect": {
+    "title": "Забрать посылку",
+    "date": "wd:3",
+    "start": "19:30",
+    "loc": "Почте",
+    "rem": 0
+   },
+   "skip": true,
+   "note": "v56 MOTORE: «в семь тридцать вечера» = 19:30. Canon «alle 7 30 di sera»: numberWords() trasforma «тридцать» in «30» perché è seguito da «вечера» (pm), e la cifra 30 non è più riconosciuta come «half» (arr() scarta le voci senza lettere); nessuna regola unisce «ALLE H MM». Ottenuto 19:00 e titolo «30 забрать посылку». Senza «вечера» («в десять тридцать») funziona"
+  },
+  {
+   "s": "Поздравить маму с днём рождения в субботу в 10",
+   "expect": {
+    "title": "Поздравить маму с днём рождения",
+    "date": "wd:6",
+    "start": "10:00"
+   },
+   "skip": true,
+   "note": "v56 MOTORE: «с днём рождения» contiene «днём» (moments.afternoon e pm): canon «с pomeriggio рождения … alle 10» → 22:00 e titolo «Поздравить маму с рождения» (senza ora: 15:00). I momenti si applicano prima che atRule() trasformi «в 10» in «alle 10», quindi hasTime è falso. Serve in rules() un blocco per ru: «днём/днем» non seguito da «рождения»"
+  },
+  {
+   "s": "Родительское собрание в школе №57 в четверг в 18",
+   "expect": {
+    "title": "Родительское собрание",
+    "date": "wd:4",
+    "start": "18:00",
+    "loc": "Школе №57"
+   },
+   "skip": true,
+   "note": "v56 MOTORE: luogo comune + numero («в школе №57», «в поликлинике №3», «в кабинете 305»). preProcess() di 11-nl-smart.js accetta dopo il luogo comune solo parole Maiuscole (after = (\\s+\\p{Lu}…){0,3}): ottenuto luogo «Школе» e titolo «Родительское собрание №57». Per questo «кабинете»/«аудитории» (quasi sempre seguiti da un numero o da un genitivo) non sono fra i luoghi comuni"
   }
  ]
 }

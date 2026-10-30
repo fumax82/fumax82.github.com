@@ -269,8 +269,7 @@
      "יוסי"
     ]
    },
-   "skip": true,
-   "note": "PARSER: la «ו» attaccata al secondo nome (ויוסי) non viene separata in « e »"
+   "note": "ora superato · la «ו» attaccata al secondo nome (ויוסי) non viene separata in « e »"
   },
   {
    "s": "ישיבה כל יום שני בשעה 9",
@@ -294,8 +293,7 @@
     "start": "21:00",
     "loc": "ירושלים"
    },
-   "skip": true,
-   "note": "PARSER: il prefisso «ב» attaccato alla città (בירושלים) non è riconosciuto come preposizione di luogo"
+   "note": "ora superato · il prefisso «ב» attaccato alla città (בירושלים) non è riconosciuto come preposizione di luogo"
   },
   {
    "s": "טסט לרכב בעוד שבועיים",
@@ -304,6 +302,376 @@
     "date": "+14"
    },
    "note": "ora superato · il duale ebraico (שבועיים = 2 settimane, יומיים, שעתיים) non diventa «2 settimane» col solo lessico"
+  },
+  {
+   "s": "תזכיר לי על התור לרופא שיניים מחר בתשע וחצי",
+   "expect": {
+    "title": "התור לרופא שיניים",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0
+   },
+   "note": "v56 dettatura: comando «תזכיר לי על» → titolo pulito e avviso all'ora; «בתשע וחצי» (ב attaccata al numero) = 9:30"
+  },
+  {
+   "s": "תוסיף ליומן ישיבת צוות ביום חמישי מ-2 עד 4 אחר הצהריים בחדר הישיבות עדיפות גבוהה",
+   "expect": {
+    "title": "ישיבת צוות",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:00",
+    "loc": "חדר הישיבות",
+    "pri": "urgent"
+   },
+   "note": "v56: «תוסיף ליומן», luogo comune con ב attaccata, «עדיפות גבוהה» = priorità alta"
+  },
+  {
+   "s": "חדר כושר ביום שני בשבע בערב למשך שעה וחצי",
+   "expect": {
+    "title": "חדר כושר",
+    "date": "wd:1",
+    "start": "19:00",
+    "end": "20:30"
+   },
+   "note": "v56: «בשבע בערב» = 19:00, durata «שעה וחצי»"
+  },
+  {
+   "s": "ביום שבת בשמונה וחצי בערב ארוחת ערב עם נועה ואיתי במסעדת מחניודה",
+   "expect": {
+    "title": "ארוחת ערב",
+    "date": "wd:6",
+    "start": "20:30",
+    "loc": "מחניודה",
+    "people": [
+     "נועה",
+     "איתי"
+    ]
+   },
+   "note": "v56: locale + nome («במסעדת מחניודה»), due persone con ו attaccata, «בשמונה וחצי בערב»"
+  },
+  {
+   "s": "שיחה עם הצוות בזום ביום שישי בשעה 11 הערה להכין את המצגת",
+   "expect": {
+    "title": "שיחה",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "זום",
+    "desc": "להכין את המצגת"
+   },
+   "note": "v56: incontro a distanza «בזום» (ב attaccata), nota senza due punti"
+  },
+  {
+   "s": "רופא שיניים ב-5 לחודש ב-3 אחר הצהריים, לא דחוף",
+   "expect": {
+    "title": "רופא שיניים",
+    "date": "dom:5",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "דחוף"
+   },
+   "note": "v56: giorno senza mese «ב-5 לחודש», priorità bassa «לא דחוף»"
+  },
+  {
+   "s": "קניות בסופר מחר אחר הצהריים ב-4",
+   "expect": {
+    "title": "קניות",
+    "date": "+1",
+    "start": "16:00",
+    "loc": "סופר"
+   },
+   "note": "v56: luogo comune «בסופר», «אחר הצהריים» prima dell'ora"
+  },
+  {
+   "s": "כותרת בדיקה תקופתית, תאריך 12 בנובמבר, התחלה 9:30, סיום 10, מיקום בית החולים איכילוב, עדיפות גבוהה, משתתפים אורי, תיאור להביא את תוצאות הבדיקות",
+   "expect": {
+    "title": "בדיקה תקופתית",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "בית החולים איכילוב",
+    "pri": "urgent",
+    "people": [
+     "אורי"
+    ],
+    "desc": "להביא את תוצאות הבדיקות"
+   },
+   "note": "v56: dettatura a campi completa"
+  },
+  {
+   "s": "אני צריך לשלם את חשבון החשמל ביום חמישי, חשוב",
+   "expect": {
+    "title": "לשלם את חשבון החשמל",
+    "date": "wd:4",
+    "pri": "important",
+    "titleNot": "צריך"
+   },
+   "note": "v56: «אני צריך» tolto, «חשוב» = importante"
+  },
+  {
+   "s": "שיחת וידאו עם אמא ביום ראשון בשש ורבע בערב",
+   "expect": {
+    "title": "שיחת וידאו",
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "אמא"
+    ]
+   },
+   "note": "v56: videochiamata con la mamma, «בשש ורבע בערב» = 18:15"
+  },
+  {
+   "s": "שיעור שחייה כל שלישי וחמישי בשעה 18:30 עד 20 בדצמבר בבריכה תזכיר לי חצי שעה לפני",
+   "expect": {
+    "title": "שיעור שחייה",
+    "start": "18:30",
+    "loc": "בריכה",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ],
+     "until": "md:12-20"
+    }
+   },
+   "note": "v56: ricorrenza con luogo comune «בבריכה» e «חצי שעה לפני»"
+  },
+  {
+   "s": "רופא עיניים ביום שישי בעשר וחצי",
+   "expect": {
+    "title": "רופא עיניים",
+    "date": "wd:5",
+    "start": "10:30"
+   },
+   "note": "v56: le 10:30 dette come si dicono in ebraico («בעשר וחצי»); per «10 ו-30» vedi il caso saltato"
+  },
+  {
+   "s": "פגישת הורים בבית הספר מחר בשש בערב",
+   "expect": {
+    "title": "פגישת הורים",
+    "date": "+1",
+    "start": "18:00",
+    "loc": "בית הספר"
+   },
+   "note": "v56: «בבית הספר» intero (prima «בבית» fra le preposizioni dava il luogo «הספר»)"
+  },
+  {
+   "s": "בדיקת דם בקופת חולים ביום שלישי בשבע וחצי בבוקר תזכיר לי יום לפני",
+   "expect": {
+    "title": "בדיקת דם",
+    "date": "wd:2",
+    "start": "07:30",
+    "loc": "קופת חולים",
+    "rem": 1440
+   },
+   "note": "v56: luogo di due parole, «יום לפני» = un giorno prima"
+  },
+  {
+   "s": "תזכורת לחדש את הדרכון ב-15 לחודש בעדיפות עליונה",
+   "expect": {
+    "title": "לחדש את הדרכון",
+    "date": "dom:15",
+    "pri": "urgent",
+    "rem": 0
+   },
+   "note": "v56: «תזכורת» in testa, giorno senza mese, «בעדיפות עליונה» = urgente"
+  },
+  {
+   "s": "ראיון עבודה בשיחת וידאו ביום רביעי ב-11 בבקשה",
+   "expect": {
+    "title": "ראיון עבודה",
+    "date": "wd:3",
+    "start": "11:00",
+    "loc": "שיחת וידאו"
+   },
+   "note": "v56: «בשיחת וידאו» come luogo, «בבקשה» in coda"
+  },
+  {
+   "s": "רופא שיניים ביום שישי ב-10 ו-30",
+   "expect": {
+    "title": "רופא שיניים",
+    "date": "wd:5",
+    "start": "10:30"
+   },
+   "skip": true,
+   "note": "v56 MOTORE: la ו attaccata ai minuti («ו-30», «ושלושים») non è letta: canon «רופא שיניים יום שישי alle 10 ו-30» → 10:00 e «ו-30» nel titolo. 10-lang-packs.js ranges() accetta «plus» solo come parola separata («10 ו 30» funziona)"
+  },
+  {
+   "s": "תזכיר לי מחר בתשע לקחת תרופות",
+   "expect": {
+    "title": "לקחת תרופות",
+    "date": "+1",
+    "start": "09:00",
+    "rem": 0
+   },
+   "skip": true,
+   "note": "v56 MOTORE: «בתשע» (ב + numero a parole) senza altro dopo non diventa un orario: canon «ricordamelo domani בתשע לקחת תרופות», nessuna ora e «בתשע» nel titolo. Le forme «בתשע» sono nel lessico numbers e funzionano solo con «וחצי/ורבע/בערב/בבוקר/פחות רבע» dopo. Atteso anche rem 0 («תזכיר לי» = avviso all'ora): oggi 15, perché «תזכיר לי» da solo non è in lead (vedi il caso «תזכיר לי להתקשר לסבתא…»)"
+  },
+  {
+   "s": "תוכל להוסיף ליומן פגישה עם אבי מחרתיים ב-10",
+   "expect": {
+    "title": "פגישה",
+    "date": "+2",
+    "start": "10:00",
+    "people": [
+     "אבי"
+    ]
+   },
+   "note": "v56 revisione: richiesta + infinito del comando («תוכל להוסיף ליומן») tolti; prima il titolo era «להוסיף ליומן פגישה»"
+  },
+  {
+   "s": "ארוחת ערב אצל ההורים ביום שישי בשבע בערב",
+   "expect": {
+    "title": "ארוחת ערב",
+    "date": "wd:5",
+    "start": "19:00",
+    "loc": "ההורים"
+   },
+   "note": "v56 revisione: «אצל ההורים» (dai miei) seguito dal giorno: senza la voce in venues il luogo diventava «ההורים יום» (caselessPlace prende «יום» del giorno)"
+  },
+  {
+   "s": "חוג ציור לילדים כל יום שלישי בארבע וחצי במתנ״ס תזכיר לי רבע שעה לפני",
+   "expect": {
+    "title": "חוג ציור לילדים",
+    "start": "16:30",
+    "loc": "מתנ״ס",
+    "rem": 15,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2
+     ]
+    }
+   },
+   "note": "v56 revisione: ricorrenza + sigla con il gershayim («במתנ״ס») + preavviso «רבע שעה לפני»; «בארבע וחצי» senza altro = 16:30"
+  },
+  {
+   "s": "קפה עם רוני ומיכל מחר בעשר בבוקר בקפה לנדוור",
+   "expect": {
+    "title": "קפה",
+    "date": "+1",
+    "start": "10:00",
+    "loc": "לנדוור",
+    "people": [
+     "רוני",
+     "מיכל"
+    ]
+   },
+   "note": "v56 revisione: due persone con la ו attaccata, «בעשר בבוקר», locale + nome («בקפה לנדוור»)"
+  },
+  {
+   "s": "ארוחת צהריים עם סבתא ביום ראשון בשתיים עשרה וחצי",
+   "expect": {
+    "title": "ארוחת צהריים",
+    "date": "wd:0",
+    "start": "12:30",
+    "people": [
+     "סבתא"
+    ]
+   },
+   "note": "v56 revisione: «בשתיים עשרה וחצי» con la grafia a due yod (prima «עשרה» diventava 10 e restava «בשתיים» nel titolo)"
+  },
+  {
+   "s": "להחליף נורה במטבח מתי שיהיה זמן",
+   "expect": {
+    "title": "להחליף נורה במטבח",
+    "pri": null,
+    "titleNot": "זמן"
+   },
+   "note": "v56 revisione: compito senza data con priorità bassa «מתי שיהיה זמן»"
+  },
+  {
+   "s": "תזכיר לי להתקשר לסבתא מחר בשש בערב",
+   "expect": {
+    "title": "להתקשר לסבתא",
+    "date": "+1",
+    "start": "18:00",
+    "rem": 0
+   },
+   "skip": true,
+   "note": "v56 MOTORE (revisione): la forma più comune del comando («תזכיר לי» + infinito con la ל attaccata). Canon «ricordamelo להתקשר לסבתא domani 6 di sera»: titolo e ora giusti, ma rem 15 invece di 0. «תזכיר לי» da solo non può stare in lead: 11-nl-smart.js preProcess() lo toglierebbe anche in «תזכיר לי 24 שעות לפני…» (caso vecchio) e il preavviso andrebbe perso"
+  },
+  {
+   "s": "ישיבת צוות בזום ביום ראשון מעשר עד אחת עשרה וחצי",
+   "expect": {
+    "title": "ישיבת צוות",
+    "date": "wd:0",
+    "start": "10:00",
+    "end": "11:30",
+    "loc": "זום"
+   },
+   "skip": true,
+   "note": "v56 MOTORE (revisione): «מעשר» (dalle dieci, מ attaccata al numero a parole) non è letto. Canon «ישיבת צוות בזום יום ראשון מעשר alle 11 e mezza»: inizio 11:30, nessuna fine, «מעשר» nel titolo. 10-lang-packs.js ranges() conosce «מ-9» solo con le cifre; numberWords() non stacca i prefissi מ/ב/ל dai numeri a parole"
+  },
+  {
+   "s": "ישיבה מחר בין 2 ל-4 אחר הצהריים",
+   "expect": {
+    "title": "ישיבה",
+    "date": "+1",
+    "start": "14:00",
+    "end": "16:00"
+   },
+   "skip": true,
+   "note": "v56 MOTORE (revisione): «בין 2 ל-4» (fra le 2 e le 4). Canon «ישיבה domani dalle 2 ל-4 אחר הצהריים»: inizio 14:00, nessuna fine, «ל-4» nel titolo. Il lessico to ha «ל-», ma alt()/bounded() mette il confine di parola dopo il trattino e la cifra che segue lo annulla; ranges() tratta a parte solo «מ-» e «ב-»"
+  },
+  {
+   "s": "כותרת ישיבת תקציב תאריך 12 בנובמבר התחלה 9 וחצי סיום 11 תזכורת 30 דקות תגית עבודה משתתפים יוסי ושירה תיאור להביא את הדוחות שמור",
+   "expect": {
+    "title": "ישיבת תקציב",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "11:00",
+    "rem": 30,
+    "tags": [
+     "עבודה"
+    ],
+    "people": [
+     "יוסי",
+     "שירה"
+    ],
+    "desc": "להביא את הדוחות"
+   },
+   "skip": true,
+   "note": "v56 MOTORE (revisione): l'esempio di dettatura a campi dell'app (senza virgole, con «תאריך» al posto di «יום»). Tutto giusto tranne le persone: canon «… partecipanti יוסי ושירה …» → persone [«יוסי ושירה», «יוסי»]. splitPeople() in src/index.html divide solo con «,», «;», «e/and…»: la ו attaccata al secondo nome non viene staccata"
+  },
+  {
+   "s": "ההרצאה מתחילה בשעה 6 ומסתיימת בשעה 8 בערב ביום שלישי",
+   "expect": {
+    "title": "ההרצאה",
+    "date": "wd:2",
+    "start": "18:00",
+    "end": "20:00"
+   },
+   "note": "v56 revisione: inizio e fine detti con i verbi («מתחילה בשעה 6 ומסתיימת בשעה 8 בערב») → from/to"
+  },
+  {
+   "s": "ישיבת צוות ביום שני בבוקר",
+   "expect": {
+    "title": "ישיבת צוות",
+    "date": "wd:1"
+   },
+   "note": "v56 revisione: «ביום שני בבוקר». Prima «שני» era anche il numero 2: «2 di mattina» = 02:00 e nessuna data"
+  },
+  {
+   "s": "ארוחת ערב עם דנה ביום שני בשמונה בערב",
+   "expect": {
+    "title": "ארוחת ערב",
+    "date": "wd:1",
+    "start": "20:00",
+    "people": [
+     "דנה"
+    ]
+   },
+   "note": "v56 revisione: «ביום שני בשמונה בערב» (prima «שני» numero rompeva la data)"
+  },
+  {
+   "s": "טסט לרכב בעוד שני ימים",
+   "expect": {
+    "titleIncludes": "טסט",
+    "date": "+2"
+   },
+   "note": "v56 revisione: «שני ימים» (forma maschile) in quantities, ora che «שני» non è più un numero"
   }
  ]
 }

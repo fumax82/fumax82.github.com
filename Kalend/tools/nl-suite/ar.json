@@ -280,8 +280,7 @@
      "أحمد"
     ]
    },
-   "skip": true,
-   "note": "PARSER: la congiunzione «و» attaccata al secondo nome (وأحمد) non viene separata; caselessPeople cerca solo « e » tra i nomi"
+   "note": "ora superato · la congiunzione «و» attaccata al secondo nome (وأحمد) non viene separata; caselessPeople cerca solo « e » tra i nomi"
   },
   {
    "s": "اجتماع الفريق كل أسبوعين الاثنين الساعة 10",
@@ -295,6 +294,345 @@
     "start": "10:00"
    },
    "note": "ora superato · il duale arabo (أسبوعين = 2 settimane, يومين, ساعتين, شهرين) non ha modo di diventare «2 settimane» col solo lessico"
+  },
+  {
+   "s": "ذكرني إني أتصل بدكتور الأسنان بكرة الساعة تسعة ونص",
+   "expect": {
+    "title": "أتصل بدكتور الأسنان",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0
+   },
+   "note": "v56 dettatura: comando «ذكرني إني» (ricordami di) → titolo pulito e avviso all'ora; «تسعة ونص» = 9:30"
+  },
+  {
+   "s": "لو سمحت ضيف اجتماع الفريق يوم الخميس من 2 إلى 4 العصر في قاعة الاجتماعات أولوية عالية",
+   "expect": {
+    "title": "اجتماع الفريق",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:00",
+    "loc": "قاعة الاجتماعات",
+    "pri": "urgent"
+   },
+   "note": "v56: comandi concatenati («لو سمحت» + «ضيف»), luogo comune, «أولوية عالية» = priorità alta"
+  },
+  {
+   "s": "تمرين يوم الاثنين الساعة 7 بالليل لمدة ساعة ونص",
+   "expect": {
+    "title": "تمرين",
+    "date": "wd:1",
+    "start": "19:00",
+    "end": "20:30"
+   },
+   "note": "v56: «بالليل» dopo l'ora, durata detta «ساعة ونص» (un'ora e mezza)"
+  },
+  {
+   "s": "عشاء مع نور وخالد في مطعم نجيب يوم السبت الساعة الثامنة والنصف مساءً",
+   "expect": {
+    "title": "عشاء",
+    "date": "wd:6",
+    "start": "20:30",
+    "loc": "مطعم نجيب",
+    "people": [
+     "نور",
+     "خالد"
+    ]
+   },
+   "note": "v56: tipo di locale + nome, due persone con «و» attaccata, ora in arabo standard «الثامنة والنصف مساءً»"
+  },
+  {
+   "s": "اجتماع مع العميل على زوم يوم الأحد الساعة 11 ملاحظة جهز العرض",
+   "expect": {
+    "title": "اجتماع",
+    "date": "wd:0",
+    "start": "11:00",
+    "loc": "زوم",
+    "desc": "جهز العرض"
+   },
+   "note": "v56: incontro a distanza «على زوم», nota senza due punti"
+  },
+  {
+   "s": "دكتور الأسنان يوم 5 الساعة 3 العصر مش مستعجل",
+   "expect": {
+    "title": "دكتور الأسنان",
+    "date": "dom:5",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "مستعجل"
+   },
+   "note": "v56: giorno senza mese «يوم 5», priorità bassa «مش مستعجل» (via dal titolo)"
+  },
+  {
+   "s": "تسوق في السوبرماركت بكرة العصر الساعة 4 شكرا",
+   "expect": {
+    "title": "تسوق",
+    "date": "+1",
+    "start": "16:00",
+    "loc": "السوبرماركت"
+   },
+   "note": "v56: luogo comune con articolo, «العصر» prima dell'ora, «شكرا» in coda"
+  },
+  {
+   "s": "العنوان فحص دوري التاريخ 12 نوفمبر البداية 9:30 النهاية 10 المكان مستشفى السلام الأولوية عالية المشاركين يوسف الوصف إحضار التحاليل",
+   "expect": {
+    "title": "فحص دوري",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "مستشفى السلام",
+    "pri": "urgent",
+    "people": [
+     "يوسف"
+    ],
+    "desc": "إحضار التحاليل"
+   },
+   "note": "v56: dettatura a campi completa (senza virgole, come esce dal riconoscimento vocale)"
+  },
+  {
+   "s": "لازم أدفع فاتورة الكهربا قبل يوم الخميس مهم",
+   "expect": {
+    "title": "أدفع فاتورة الكهربا",
+    "date": "wd:4",
+    "pri": "important",
+    "titleNot": "لازم"
+   },
+   "note": "v56: «لازم» (devo) tolto, «مهم» = importante"
+  },
+  {
+   "s": "مكالمة فيديو مع ماما يوم الأحد الساعة ستة وربع المسا",
+   "expect": {
+    "title": "مكالمة فيديو",
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "ماما"
+    ]
+   },
+   "note": "v56: videochiamata con la mamma, «ستة وربع المسا» = 18:15 (la videochiamata in testa resta titolo)"
+  },
+  {
+   "s": "درس سباحة كل ثلاثاء وخميس الساعة 6:30 مساءً حتى 20 ديسمبر في النادي ذكرني قبلها بنص ساعة",
+   "expect": {
+    "title": "درس سباحة",
+    "start": "18:30",
+    "loc": "النادي",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ],
+     "until": "md:12-20"
+    }
+   },
+   "note": "v56: ricorrenza con luogo comune e preavviso «قبلها بنص ساعة» (mezz'ora prima)"
+  },
+  {
+   "s": "دكتور الأسنان يوم الجمعة الساعة 10 و 30",
+   "expect": {
+    "title": "دكتور الأسنان",
+    "date": "wd:5",
+    "start": "10:30"
+   },
+   "note": "v56: «10 و 30»"
+  },
+  {
+   "s": "مقابلة عمل عن بعد يوم الأربعاء الساعة 11 الصبح لو سمحت",
+   "expect": {
+    "title": "مقابلة عمل",
+    "date": "wd:3",
+    "start": "11:00",
+    "loc": "عن بعد"
+   },
+   "note": "v56: «عن بعد» (da remoto) come luogo, «لو سمحت» in coda"
+  },
+  {
+   "s": "موعد الطبيب يوم الثلاثاء الساعة 5 العصر ذكرني قبلها بيوم",
+   "expect": {
+    "title": "موعد الطبيب",
+    "date": "wd:2",
+    "start": "17:00",
+    "rem": 1440
+   },
+   "note": "v56: «قبلها بيوم» = un giorno prima"
+  },
+  {
+   "s": "أضف موعد في العيادة يوم الأحد الساعة التاسعة إلا ربعا صباحا",
+   "expect": {
+    "title": "موعد",
+    "date": "wd:0",
+    "start": "08:45",
+    "loc": "العيادة"
+   },
+   "note": "v56: «أضف» tolto, luogo comune, arabo standard «التاسعة إلا ربعا صباحا» = 8:45"
+  },
+  {
+   "s": "تذكير تجديد الإقامة يوم 15 أولوية قصوى",
+   "expect": {
+    "title": "تجديد الإقامة",
+    "date": "dom:15",
+    "pri": "urgent",
+    "rem": 0
+   },
+   "note": "v56: «تذكير» in testa (promemoria all'ora), giorno senza mese, «أولوية قصوى» = urgente"
+  },
+  {
+   "s": "تجديد الجواز في السفارة يوم الأحد الساعة 10",
+   "expect": {
+    "title": "تجديد الجواز",
+    "date": "wd:0",
+    "start": "10:00",
+    "loc": "السفارة"
+   },
+   "skip": true,
+   "note": "v56 MOTORE: luogo di UNA parola fuori da venues seguito dal giorno: canon «تجديد الجواز a السفارة الأحد alle 10» (il nome del giorno è già tornato parola araba) → 10-lang-packs.js caselessPlace prende anche la seconda parola: luogo «السفارة الأحد», titolo «تجديد الجواز a السفارة». Succede solo con l'app in arabo (con l'app in italiano il giorno torna «domenica» e la frase passa); con un luogo comune del lessico («في العيادة يوم الأحد») funziona sempre"
+  },
+  {
+   "s": "ذكرني أتصل بماما بكرة الساعة 6 المسا",
+   "expect": {
+    "title": "أتصل بماما",
+    "date": "+1",
+    "start": "18:00",
+    "rem": 0
+   },
+   "skip": true,
+   "note": "v56 MOTORE: «ذكرني» da solo NON è in lead, perché 11-nl-smart.js preProcess toglierebbe il comando anche in «ذكرني قبل 24 ساعة بموعد…» (caso 17) e il preavviso andrebbe perso (canon «24 ore prima بموعد…», titolo «24 بموعد الطبيب», rem 0). Senza lead la frase diventa «ricordamelo أتصل بماما domani alle 6 di sera»: titolo e ora giusti ma rem 15 invece di 0. Con «ذكرني إني/إنو…» funziona (caso 26)"
+  },
+  {
+   "s": "فكرني إنو أتصل بالبنك بكرة الساعة عشرة ونص الصبح",
+   "expect": {
+    "title": "أتصل بالبنك",
+    "date": "+1",
+    "start": "10:30",
+    "rem": 0
+   },
+   "note": "v56 revisione: comando levantino «فكرني إنو» (ricordami di), ora a parole «عشرة ونص الصبح» = 10:30"
+  },
+  {
+   "s": "عندنا اجتماع مع المدير يوم الأحد الساعة 10 الصبح",
+   "expect": {
+    "title": "اجتماع",
+    "date": "wd:0",
+    "start": "10:00",
+    "people": [
+     "المدير"
+    ]
+   },
+   "note": "v56 revisione: «عندنا» (abbiamo) in testa non è il titolo (lead «عندي/عندنا»)"
+  },
+  {
+   "s": "عشاء عند أهلي يوم الجمعة الساعة 8 بالليل",
+   "expect": {
+    "title": "عشاء",
+    "date": "wd:5",
+    "start": "20:00",
+    "loc": "أهلي"
+   },
+   "note": "v56 revisione: «عند أهلي» (dai miei) seguito dal giorno: senza la voce in venues il luogo diventava «أهلي الجمعة» (caselessPlace prende il nome del giorno)"
+  },
+  {
+   "s": "اجتماع يوم الأحد من الساعة 9 للساعة 11 ونص",
+   "expect": {
+    "title": "اجتماع",
+    "date": "wd:0",
+    "start": "09:00",
+    "end": "11:30"
+   },
+   "note": "v56 revisione: intervallo «من الساعة 9 للساعة 11 ونص» (to «للساعة»)"
+  },
+  {
+   "s": "درس قرآن كل سبت الساعة 5 العصر في المسجد ذكرني قبلها بربع ساعة",
+   "expect": {
+    "title": "درس قرآن",
+    "start": "17:00",
+    "loc": "المسجد",
+    "rem": 15,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      6
+     ]
+    }
+   },
+   "note": "v56 revisione: ricorrenza + luogo + preavviso «قبلها بربع ساعة» (un quarto d'ora prima)"
+  },
+  {
+   "s": "اجتماع أولياء الأمور في المدرسة يوم الخميس الساعة 6 المسا ملاحظة إحضار شهادة الميلاد",
+   "expect": {
+    "title": "اجتماع أولياء الأمور",
+    "date": "wd:4",
+    "start": "18:00",
+    "loc": "المدرسة",
+    "desc": "إحضار شهادة الميلاد"
+   },
+   "note": "v56 revisione: luogo comune + «المسا» dopo l'ora + nota «ملاحظة» senza due punti"
+  },
+  {
+   "s": "ذكرني بموعد الدكتور بكرة الساعة 5 العصر",
+   "expect": {
+    "title": "موعد الدكتور",
+    "date": "+1",
+    "start": "17:00",
+    "rem": 0
+   },
+   "skip": true,
+   "note": "v56 MOTORE (revisione): la forma più comune del comando, «ذكرني ب…» con la ب attaccata al nome. Canon «ricordamelo بموعد الدكتور domani alle 17:00»: titolo «بموعد الدكتور» (la ب resta) e rem 15 invece di 0. Una voce di lead che finisce con «ب» non può scattare: 11-nl-smart.js preProcess() mette il confine di parola (LA) dopo ogni voce di lead che non finisce con l'apostrofo; e «ذكرني» da solo in lead romperebbe il caso 17"
+  },
+  {
+   "s": "العنوان اجتماع الميزانية التاريخ 12 نوفمبر البداية 9 ونص النهاية 11 تذكير 30 دقيقة وسم عمل المشاركون خالد وسارة الوصف إحضار التقارير حفظ",
+   "expect": {
+    "title": "اجتماع الميزانية",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "11:00",
+    "rem": 30,
+    "tags": [
+     "عمل"
+    ],
+    "people": [
+     "خالد",
+     "سارة"
+    ],
+    "desc": "إحضار التقارير"
+   },
+   "skip": true,
+   "note": "v56 MOTORE (revisione): l'esempio di dettatura a campi dell'app (senza virgole, con «التاريخ» al posto di «اليوم»). Tutto giusto tranne le persone: canon «… partecipanti خالد وسارة …» → persone [«خالد وسارة», «خالد»]. Il campo partecipanti è diviso da splitPeople() in src/index.html, il cui SEP conosce solo «,», «;», «e/and…»: la «و» attaccata al secondo nome non viene staccata (in una frase libera la stacca guarded() del modulo 10, ma solo dopo «con»/«e»)"
+  },
+  {
+   "s": "الدورة تبدأ الساعة 5 وتنتهي الساعة 7 يوم السبت",
+   "expect": {
+    "title": "الدورة",
+    "date": "wd:6",
+    "start": "17:00",
+    "end": "19:00"
+   },
+   "note": "v56 revisione: inizio e fine detti con i verbi («تبدأ الساعة 5 وتنتهي الساعة 7»); i verbi non sono più fra i campi (facevano scattare la dettatura a campi), ma in from/to"
+  },
+  {
+   "s": "تمرين يوم الاثنين الصبح الساعة 9",
+   "expect": {
+    "title": "تمرين",
+    "date": "wd:1",
+    "start": "09:00"
+   },
+   "note": "v56 revisione: «الصبح» dopo il giorno. Prima «الصبح» era in thisMorning (= oggi): data di OGGI e «الاثنين» nel titolo"
+  },
+  {
+   "s": "تمرين كل يوم أحد وثلاثاء الساعة 6 الصبح",
+   "expect": {
+    "title": "تمرين",
+    "start": "06:00",
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      0,
+      2
+     ]
+    }
+   },
+   "note": "v56 revisione: «كل يوم أحد» (ogni domenica): mancava «يوم أحد» fra i giorni e «كل يوم» dava una ricorrenza GIORNALIERA"
   }
  ]
 }

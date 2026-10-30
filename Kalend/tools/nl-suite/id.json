@@ -64,8 +64,7 @@
      "Rina"
     ]
    },
-   "skip": true,
-   "note": "PARSER: «setengah 8» = 7:30 (mezza PRIMA dell'ora); canon «jam mezza 8 di sera» → 20:00. Servirebbe una regola «half + H» → H-1:30 per id (e «wpół do», «пів на»)"
+   "note": "ora superato (v56: «setengah 8» = 7:30, mezza prima dell'ora) · «setengah 8» = 7:30 (mezza PRIMA dell'ora); canon «jam mezza 8 di sera» → 20:00. Servirebbe una regola «half + H» → H-1:30 per id (e «wpół do», «пів на»)"
   },
   {
    "s": "Ngopi bareng Rina dan Budi kamis jam 3 sore",
@@ -383,8 +382,7 @@
      "Ayah"
     ]
    },
-   "skip": true,
-   "note": "PARSER: «sabtu malam jam 8» (momento PRIMA dell'ora, senza suffisso orario): pmPrefix agisce solo con hourSuffix in suffixTimes(); proposta: estendere suffixTimes a «pmPrefix (at)? H»"
+   "note": "ora superato (v56: momento prima dell'ora, «malam jam 8») · «sabtu malam jam 8» (momento PRIMA dell'ora, senza suffisso orario): pmPrefix agisce solo con hourSuffix in suffixTimes(); proposta: estendere suffixTimes a «pmPrefix (at)? H»"
   },
   {
    "s": "Kelas English for Kids rabu jam 4 sore",
@@ -420,6 +418,214 @@
     "people": []
    },
    "note": "CONFLITTO: «Da» (italiano/portoghese) dentro il nome del locale"
+  },
+  {
+   "s": "Ingetin aku buat telepon dokter gigi besok jam setengah sepuluh",
+   "expect": {
+    "title": "Telepon dokter gigi",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0
+   },
+   "note": "v56 dettatura: comando iniziale colloquiale («ingetin aku buat»), «setengah sepuluh» = 9:30 (mezza prima dell'ora)"
+  },
+  {
+   "s": "Ingatkan saya besok jam 8 pagi untuk minum obat",
+   "expect": {
+    "title": "Minum obat",
+    "date": "+1",
+    "start": "08:00",
+    "rem": 0
+   },
+   "note": "v56: «ingatkan saya … untuk …»: il «untuk» dell'infinito sparisce anche dopo data e ora"
+  },
+  {
+   "s": "Tolong jadwalkan ketemu Pak Joko hari kamis jam sembilan kurang seperempat",
+   "expect": {
+    "title": "Ketemu Pak Joko",
+    "titleNot": "jadwalkan",
+    "date": "wd:4",
+    "start": "08:45"
+   },
+   "note": "v56: comandi concatenati («tolong» + «jadwalkan»), «sembilan kurang seperempat» = 8:45"
+  },
+  {
+   "s": "Tambahin rapat tim kamis jam 2 siang selama satu setengah jam di ruang rapat prioritas tinggi",
+   "expect": {
+    "title": "Rapat tim",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "15:30",
+    "loc": "Ruang rapat",
+    "pri": "urgent"
+   },
+   "note": "v56: comando, durata a voce («satu setengah jam», lessico quantities), luogo comune, «prioritas tinggi»"
+  },
+  {
+   "s": "Makan malam sama Sari dan Andi di restoran Sederhana sabtu jam setengah sembilan malam",
+   "expect": {
+    "title": "Makan malam",
+    "date": "wd:6",
+    "start": "20:30",
+    "loc": "Restoran Sederhana",
+    "people": [
+     "Sari",
+     "Andi"
+    ]
+   },
+   "note": "v56: luogo comune + nome proprio, due persone, «setengah sembilan malam» = 20:30"
+  },
+  {
+   "s": "Rapat sama tim lewat Zoom jumat jam 11 catatan bawa laporan keuangan",
+   "expect": {
+    "titleIncludes": "Rapat",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "Zoom",
+    "desc": "bawa laporan keuangan"
+   },
+   "note": "v56: incontro a distanza («lewat Zoom»), nota senza i due punti («catatan …»)"
+  },
+  {
+   "s": "Potong rambut tanggal 5 pukul 4 sore santai aja",
+   "expect": {
+    "title": "Potong rambut",
+    "date": "dom:5",
+    "start": "16:00",
+    "pri": null,
+    "titleNot": "santai"
+   },
+   "note": "v56: giorno senza mese («tanggal 5»), priorità bassa («santai aja»). Con «jam» al posto di «pukul» vedi il caso skip più sotto"
+  },
+  {
+   "s": "Belanja di pasar besok sore jam 4",
+   "expect": {
+    "title": "Belanja",
+    "date": "+1",
+    "start": "16:00",
+    "loc": "Pasar"
+   },
+   "note": "v56: luogo comune («di pasar»), momento prima dell'ora («sore jam 4»)"
+  },
+  {
+   "s": "Judul periksa gigi, tanggal 12 November, mulai jam 9.30, selesai jam 10, lokasi RS Siloam, prioritas tinggi, peserta Budi, catatan bawa hasil rontgen",
+   "expect": {
+    "title": "Periksa gigi",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "RS Siloam",
+    "pri": "urgent",
+    "people": [
+     "Budi"
+    ],
+    "desc": "bawa hasil rontgen"
+   },
+   "note": "v56: dettatura «a campi» in indonesiano (judul, tanggal, mulai jam, selesai jam, lokasi, prioritas, peserta, catatan)"
+  },
+  {
+   "s": "Aku harus bayar tagihan listrik sebelum hari jumat penting",
+   "expect": {
+    "titleIncludes": "tagihan listrik",
+    "titleNot": "harus",
+    "date": "wd:5",
+    "pri": "important"
+   },
+   "note": "v56: «aku harus» tolto dal titolo, «penting» = importante"
+  },
+  {
+   "s": "Video call sama mama minggu sore jam enam lewat seperempat",
+   "expect": {
+    "title": "Video call",
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "Mama"
+    ]
+   },
+   "note": "v56: videochiamata con la mamma, «minggu sore jam enam lewat seperempat» = domenica 18:15 (con «… lewat seperempat sore» in coda «sore» resta nel titolo: vedi rapporto)"
+  },
+  {
+   "s": "Kelas yoga setiap selasa dan kamis jam setengah 7 malam sampai 20 Desember di gym ingatkan 30 menit sebelumnya",
+   "expect": {
+    "titleIncludes": "yoga",
+    "start": "18:30",
+    "loc": "Gym",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ],
+     "until": "md:12-20"
+    }
+   },
+   "note": "v56: ricorrenza con fine, luogo comune e preavviso"
+  },
+  {
+   "s": "Dokter gigi hari jumat jam sepuluh tiga puluh",
+   "expect": {
+    "title": "Dokter gigi",
+    "date": "wd:5",
+    "start": "10:30"
+   },
+   "note": "v56: «jam sepuluh tiga puluh» = 10:30 (l'equivalente detto di «10 e 30»)"
+  },
+  {
+   "s": "Tanggal 15 arisan di rumah Bu Rina jam 4 sore, ingatkan sehari sebelumnya",
+   "expect": {
+    "title": "Arisan",
+    "date": "dom:15",
+    "start": "16:00",
+    "loc": "Rumah Bu Rina",
+    "rem": 1440
+   },
+   "note": "v56: giorno senza mese in testa, casa di qualcuno («rumah Bu Rina»), «sehari sebelumnya» = un giorno prima (oneDay)"
+  },
+  {
+   "s": "Tambahin acara pengajian di masjid Al-Azhar jumat malam jam 8 ke kalender ya",
+   "expect": {
+    "title": "Pengajian",
+    "date": "wd:5",
+    "start": "20:00",
+    "loc": "Masjid Al-Azhar"
+   },
+   "note": "v56: comando + sostantivo generico («tambahin acara»), comando finale («ke kalender ya»), «malam jam 8»"
+  },
+  {
+   "s": "Dokter gigi tanggal 5 jam 3 sore nggak buru-buru",
+   "expect": {
+    "title": "Dokter gigi",
+    "date": "dom:5",
+    "start": "15:00",
+    "pri": null
+   },
+   "skip": true,
+   "note": "v56 PARSER: due limiti dello strato smart (11-nl-smart.js, preProcess §4). (1) hasMonth cerca i nomi dei mesi SENZA confini di parola: «okt» (ottobre) dentro «Dokter» fa credere che ci sia un mese e il giorno senza mese non scatta. (2) UNIT esclude il numero seguito da un'unità ore: in indonesiano «jam» è sia l'unità («2 jam») sia la parola dell'orario («jam 3»), quindi «tanggal 5 jam 3» non diventa mai il 5 del mese. Pre: «Dokter gigi tanggal 5 jam 3 sore»; canon: «Dokter gigi tanggal 5 ore 3 di sera» → nessuna data, titolo «Dokter gigi tanggal 5». Con «pukul» e senza «dokter» funziona (vedi «Potong rambut tanggal 5 pukul 4 sore»)"
+  },
+  {
+   "s": "Rapat tim kamis jam 2 sampai jam 4 sore",
+   "expect": {
+    "title": "Rapat tim",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:00"
+   },
+   "skip": true,
+   "note": "v56 PARSER: intervallo senza «dari»: ranges() gira prima di atRule(), quindi «jam 2 sampai jam 4» diventa «alle 2 alle 4 di sera» DOPO la regola «due orari di seguito = intervallo»; il parser storico legge inizio 14:00, fine 15:00 e lascia «16:00» nel titolo. Lo stesso per «pukul 14.00 sampai 16.00» (TM non accetta il punto). Con «dari jam 2 sampai jam 4 sore» funziona"
+  },
+  {
+   "s": "Ingetin aku buat rapat di kantor besok jam 9",
+   "expect": {
+    "title": "Rapat",
+    "date": "+1",
+    "start": "09:00",
+    "loc": "Kantor",
+    "rem": 0
+   },
+   "skip": true,
+   "note": "v56 PARSER: con un comando «ricordami» preProcess() toglie il «di» dell'infinito italiano in ogni lingua (regex …(di|d'|ad|che|to|zu|de|que|…|untuk|để…)…): in indonesiano «di» è la preposizione di luogo, quindi «rapat di kantor» → «rapat kantor», niente luogo. Pre: «rapat kantor besok jam 9»; ottenuto: titolo «Rapat kantor», luogo vuoto"
   }
  ]
 }

@@ -259,8 +259,7 @@
     "loc": "Mazury",
     "rem": 1440
    },
-   "skip": true,
-   "note": "PARSER: «dzień wcześniej» senza numero → la regola before in guarded() vuole «N unità»; servirebbe un «un giorno» come halfHour/oneHour"
+   "note": "preavviso 1 giorno · ora superato (v56: lessico oneDay «dzień wcześniej» → «un giorno»)"
   },
   {
    "s": "Obiad z mamą w niedzielę o 13",
@@ -399,12 +398,12 @@
   {
    "s": "Kolacja w restauracji Per Bacco w piątek o 20",
    "expect": {
-    "title": "Kolacja w restauracji Per Bacco",
-    "titleIncludes": "Per Bacco",
+    "title": "Kolacja",
+    "loc": "Restauracji Per Bacco",
     "date": "wd:5",
     "start": "20:00"
    },
-   "note": "ora superato · il gancio v3x «per …» → descrizione (solo italiano) taglia il titolo a «Kolacja w restauracji»"
+   "note": "CONFLITTO: «Per» (italiano) dentro il nome del locale · v56: «w restauracji» è un luogo comune, quindi il nome del locale va nel luogo (come en/es/de) e il titolo resta «Kolacja»; prima l'attesa era il titolo intero"
   },
   {
    "s": "Pociąg do Gdańska w sobotę o 8 rano",
@@ -414,8 +413,215 @@
     "date": "wd:6",
     "start": "08:00"
    },
+   "note": "ora superato · «do» (until) diventa «fino al» solo davanti a una data/ora (UNTIL_AHEAD in rules()): «do Gdańska» resta nel titolo"
+  },
+  {
+   "s": "Przypomnij mi zadzwonić do dentysty jutro o wpół do dziesiątej",
+   "expect": {
+    "title": "Zadzwonić do dentysty",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0
+   },
+   "note": "v56 dettatura: comando iniziale «przypomnij mi» (avviso all'ora), «wpół do dziesiątej» = 9:30"
+  },
+  {
+   "s": "Dodaj spotkanie zespołu w czwartek od drugiej do czwartej po południu w sali konferencyjnej, wysoki priorytet",
+   "expect": {
+    "title": "Spotkanie zespołu",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:00",
+    "loc": "Sali konferencyjnej",
+    "pri": "urgent"
+   },
+   "note": "v56: comando «dodaj», ore a parole con «po południu», luogo comune, «wysoki priorytet»"
+  },
+  {
+   "s": "Siłownia w poniedziałek o siódmej wieczorem przez półtorej godziny",
+   "expect": {
+    "title": "Siłownia",
+    "date": "wd:1",
+    "start": "19:00",
+    "end": "20:30"
+   },
+   "note": "v56: «o siódmej wieczorem», durata «półtorej godziny» (quantities → 90 minuti)"
+  },
+  {
+   "s": "Kolacja z Kasią i Tomkiem w restauracji Stary Młyn w sobotę o wpół do dziewiątej",
+   "expect": {
+    "title": "Kolacja",
+    "date": "wd:6",
+    "start": "20:30",
+    "loc": "Restauracji Stary Młyn",
+    "people": [
+     "Kasią",
+     "Tomkiem"
+    ]
+   },
+   "note": "v56: luogo comune + nome del locale, «wpół do dziewiątej» + kolacja → 20:30"
+  },
+  {
+   "s": "Rozmowa z zespołem przez Zoom w piątek o 11 notatka przynieść raport",
+   "expect": {
+    "titleIncludes": "Rozmowa",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "Zoom",
+    "desc": "przynieść raport"
+   },
+   "note": "v56: incontro a distanza, nota senza due punti («notatka …»)"
+  },
+  {
+   "s": "Dentysta 5-go o trzeciej po południu, bez pośpiechu",
+   "expect": {
+    "title": "Dentysta",
+    "date": "dom:5",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "pośpiech"
+   },
+   "note": "v56: giorno senza mese «5-go» (dayOrdinal), priorità bassa «bez pośpiechu»"
+  },
+  {
+   "s": "Zakupy w supermarkecie jutro po południu o czwartej",
+   "expect": {
+    "title": "Zakupy",
+    "date": "+1",
+    "start": "16:00",
+    "loc": "Supermarkecie"
+   },
+   "note": "v56: luogo comune al locativo, «po południu» prima dell'ora"
+  },
+  {
+   "s": "Tytuł wizyta kontrolna, data 12 listopada, początek 9:30, koniec 10, miejsce Szpital Bielański, priorytet wysoki, uczestnicy Łukasz, opis zabrać wyniki badań",
+   "expect": {
+    "title": "Wizyta kontrolna",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "Szpital Bielański",
+    "pri": "urgent",
+    "people": [
+     "Łukasz"
+    ],
+    "desc": "zabrać wyniki badań"
+   },
+   "note": "v56: dettatura a campi in polacco (lessico fields)"
+  },
+  {
+   "s": "Muszę do piątku zapłacić rachunek za prąd, ważne",
+   "expect": {
+    "title": "Zapłacić rachunek za prąd",
+    "date": "wd:5",
+    "pri": "important",
+    "titleNot": "muszę"
+   },
+   "note": "v56: «muszę» tolto dal titolo, «do piątku» + importante"
+  },
+  {
+   "s": "Wideorozmowa z mamą w niedzielę kwadrans po szóstej wieczorem",
+   "expect": {
+    "titleIncludes": "Wideorozmowa",
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "Mamą"
+    ]
+   },
+   "note": "v56: «kwadrans po szóstej wieczorem» = 18:15"
+  },
+  {
+   "s": "Joga w każdy wtorek i czwartek o 18:30 do 20 grudnia na siłowni, przypomnij mi pół godziny wcześniej",
+   "expect": {
+    "titleIncludes": "Joga",
+    "start": "18:30",
+    "loc": "Siłowni",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ],
+     "until": "md:12-20"
+    }
+   },
+   "note": "v56: ricorrenza con luogo comune e preavviso"
+  },
+  {
+   "s": "Dentysta w piątek o dziesiątej trzydzieści",
+   "expect": {
+    "title": "Dentysta",
+    "date": "wd:5",
+    "start": "10:30"
+   },
+   "note": "v56: «o dziesiątej trzydzieści» = 10:30 (ora + minuti a parole)"
+  },
+  {
+   "s": "Proszę, dodaj do kalendarza lot do Rzymu w piątek o siódmej rano i przypomnij mi w przeddzień",
+   "expect": {
+    "title": "Lot do Rzymu",
+    "date": "wd:5",
+    "start": "07:00",
+    "rem": 1440
+   },
+   "note": "v56: comandi concatenati («proszę,» + «dodaj do kalendarza»), preavviso «w przeddzień» (oneDay)"
+  },
+  {
+   "s": "Spotkanie z Bartkiem za kwadrans dziewiąta",
+   "expect": {
+    "titleIncludes": "Spotkanie",
+    "start": "08:45",
+    "people": [
+     "Bartkiem"
+    ]
+   },
    "skip": true,
-   "note": "PARSER: «do» (until) è sostituito con «fino al» anche se non seguito da una data; servirebbe «until» solo davanti a cifra/mese/giorno in rules()"
+   "note": "v56 · MOTORE: in polacco il «meno» viene PRIMA della frazione e dell'ora («za kwadrans dziewiąta» = 8:45, «za dziesięć ósma» = 7:50); canon «Spotkanie con Bartkiem tre quarti 9» → nessun orario. ranges() conosce solo l'ordine «quarter to nine» (frazione + minus + ora). Serve una regola «minus + (quarter|N) + ora» → (ora−1):(60−N)"
+  },
+  {
+   "s": "Dentysta piątego o piętnastej",
+   "expect": {
+    "title": "Dentysta",
+    "date": "dom:5",
+    "start": "15:00"
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: il giorno senza mese detto come ordinale a parole al genitivo («piątego», «piętnastego»: è così che si dice in polacco) resta parola: canon «Dentysta piątego alle 15» → nessuna data. Il giorno senza mese (dayOf/dayOrdinal) vuole le cifre e numberWords() converte i numeri a parole solo vicino a un orario/unità/mese"
+  },
+  {
+   "s": "Spotkanie z Bartkiem w czwartek o ósmej dwadzieścia",
+   "expect": {
+    "titleIncludes": "Spotkanie",
+    "date": "wd:4",
+    "start": "08:20",
+    "people": [
+     "Bartkiem"
+    ]
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: minuti a parole subito dopo l'ora («o ósmej dwadzieścia» = 8:20): canon «… alle 8 dwadzieścia» → 8:00 e «dwadzieścia» nel titolo. Funziona solo per 15/30/45 (piętnaście/trzydzieści/czterdzieści pięć stanno in quarter/half/threeQuarters). Serve in numberWords() «alle H + numero a parole 1–59» → H:MM"
+  },
+  {
+   "s": "Tytuł spotkanie budżetowe, dzień 12 listopada, początek 9:30, koniec 11, przypomnienie 30 minut i 10 minut, tag praca, uczestnicy Łukasz i Sara, opis przynieść raporty, zapisz",
+   "expect": {
+    "title": "Spotkanie budżetowe",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "11:00",
+    "rem": 30,
+    "tags": [
+     "praca"
+    ],
+    "people": [
+     "Łukasz",
+     "Sara"
+    ],
+    "desc": "przynieść raporty"
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: è l'esempio dell'aiuto della scheda vocale. «i» fra due partecipanti e fra due preavvisi non diventa «e»: canon «… preavviso mezz'ora i 10 minuti … partecipanti Łukasz i Sara …» → persone [«Łukasz I Sara», «Łukasz»] e solo il primo preavviso (30). guarded() traduce la congiunzione fra nomi solo dopo «con/assieme a», non dopo «partecipanti»/«preavviso»"
   }
  ]
 }

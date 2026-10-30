@@ -1,0 +1,631 @@
+{
+ "lang": "vi",
+ "locale": "vi-VN",
+ "cases": [
+  {
+   "s": "Ăn tối với Lan thứ sáu lúc 7 giờ tối ở Quận 1 #gia-đình",
+   "expect": {
+    "title": "Ăn tối",
+    "date": "wd:5",
+    "start": "19:00",
+    "loc": "Quận 1",
+    "people": [
+     "Lan"
+    ],
+    "tags": [
+     "gia-đình"
+    ]
+   },
+   "note": "frase d'esempio del pacchetto (sampleSentence): «7 giờ tối», quartiere «Quận 1» intero; «Ăn tối» (cena) resta intero nel titolo"
+  },
+  {
+   "s": "ngày mai từ 9 giờ đến 10 giờ họp cùng với anh Nam",
+   "expect": {
+    "title": "Họp",
+    "date": "+1",
+    "start": "09:00",
+    "end": "10:00",
+    "people": [
+     "Nam"
+    ]
+   },
+   "note": "frase d'esempio del pacchetto (sampleVoice): intervallo + domani + persona («cùng với anh Nam»); «Nam» è un nome, non il numero 5"
+  },
+  {
+   "s": "Thứ sáu bảy giờ tối đi xem phim với Hoa",
+   "expect": {
+    "title": "Đi xem phim",
+    "date": "wd:5",
+    "start": "19:00",
+    "people": [
+     "Hoa"
+    ]
+   },
+   "note": "ora a parole («bảy giờ tối»); «Đi» resta nel titolo"
+  },
+  {
+   "s": "Thứ sáu 7 rưỡi tối xem phim với Hoa",
+   "expect": {
+    "title": "Xem phim",
+    "date": "wd:5",
+    "start": "19:30",
+    "people": [
+     "Hoa"
+    ]
+   },
+   "note": "«7 rưỡi tối» = 19:30, senza «tối» nel titolo"
+  },
+  {
+   "s": "Nha sĩ ngày 5 tháng 3 lúc 15 giờ",
+   "expect": {
+    "title": "Nha sĩ",
+    "date": "md:3-5",
+    "start": "15:00"
+   },
+   "note": "data con il mese («ngày 5 tháng 3»); «Nha sĩ» non perde «Nha» e «ngày» non resta nel titolo"
+  },
+  {
+   "s": "Nha sĩ 5/3/2027 lúc 15h",
+   "expect": {
+    "title": "Nha sĩ",
+    "date": "2027-03-05",
+    "start": "15:00"
+   },
+   "note": "data numerica gg/mm/aaaa, «15h»"
+  },
+  {
+   "s": "Sinh nhật Hương ngày 12 tháng 5",
+   "expect": {
+    "title": "Sinh nhật Hương",
+    "date": "md:5-12",
+    "allDay": true,
+    "rrule": {
+     "freq": "YEARLY"
+    }
+   },
+   "note": "compleanno: giornata intera, ogni anno"
+  },
+  {
+   "s": "Đóng tiền điện 3 ngày nữa gấp",
+   "expect": {
+    "title": "Đóng tiền điện",
+    "date": "+3",
+    "pri": "urgent"
+   },
+   "note": "tra 3 giorni («nữa» dopo l'unità) + urgente"
+  },
+  {
+   "s": "Đi chợ tuần sau",
+   "expect": {
+    "title": "Đi chợ",
+    "date": "nextweek"
+   },
+   "note": "settimana prossima («tuần sau»)"
+  },
+  {
+   "s": "Cuối tuần đi chơi ở Vũng Tàu",
+   "expect": {
+    "title": "Đi chơi",
+    "date": "weekend",
+    "loc": "Vũng Tàu"
+   },
+   "note": "fine settimana + città"
+  },
+  {
+   "s": "Lớp yoga mỗi thứ hai và thứ năm lúc 18:30 đến hết 20 tháng 12 tại số 5 Nguyễn Huệ, Sài Gòn #thể-thao nhắc tôi 30 phút trước",
+   "expect": {
+    "title": "Lớp yoga",
+    "start": "18:30",
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      1,
+      4
+     ],
+     "until": "md:12-20"
+    },
+    "tags": [
+     "thể-thao"
+    ],
+    "rem": 30,
+    "loc": "số 5 Nguyễn Huệ, Sài Gòn"
+   },
+   "note": "ricorrenza con fine, indirizzo «số 5 …», tag, preavviso «30 phút trước»; via Nguyễn Huệ a Saigon («Sài Gòn», come si dice a voce)"
+  },
+  {
+   "s": "Tập gym mỗi 2 tuần lúc 7 giờ sáng",
+   "expect": {
+    "title": "Tập gym",
+    "rrule": {
+     "freq": "WEEKLY",
+     "interval": 2
+    },
+    "start": "07:00"
+   },
+   "note": "ogni 2 settimane, mattina"
+  },
+  {
+   "s": "Họp giao ban các ngày trong tuần lúc 8 giờ",
+   "expect": {
+    "title": "Họp giao ban",
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ]
+    },
+    "start": "08:00"
+   },
+   "note": "giorni feriali («các ngày trong tuần»)"
+  },
+  {
+   "s": "Học tiếng Anh hằng tuần, tổng cộng 5 buổi",
+   "expect": {
+    "title": "Học tiếng Anh",
+    "rrule": {
+     "freq": "WEEKLY",
+     "count": 5
+    }
+   },
+   "note": "ogni settimana per 5 volte («tổng cộng 5 buổi»)"
+  },
+  {
+   "s": "Họp phụ huynh thứ hai đầu tiên của tháng lúc 10 giờ",
+   "expect": {
+    "title": "Họp phụ huynh",
+    "rrule": {
+     "freq": "MONTHLY",
+     "nth": 1
+    },
+    "start": "10:00"
+   },
+   "note": "primo lunedì del mese (ordinale DOPO il giorno)"
+  },
+  {
+   "s": "Trả thẻ tín dụng ngày 15 hàng tháng",
+   "expect": {
+    "title": "Trả thẻ tín dụng",
+    "date": "dom:15",
+    "rrule": {
+     "freq": "MONTHLY",
+     "interval": 1
+    },
+    "tags": []
+   },
+   "note": "ogni mese il 15; «thẻ» (la carta) non diventa un tag"
+  },
+  {
+   "s": "Chạy bộ mỗi ngày lúc 6 giờ sáng",
+   "expect": {
+    "title": "Chạy bộ",
+    "rrule": {
+     "freq": "DAILY",
+     "interval": 1
+    },
+    "start": "06:00"
+   },
+   "note": "ogni giorno, mattina"
+  },
+  {
+   "s": "Họp dự án lúc một giờ chiều trong 2 tiếng",
+   "expect": {
+    "title": "Họp dự án",
+    "start": "13:00",
+    "end": "15:00"
+   },
+   "note": "durata («trong 2 tiếng»); «một giờ chiều» è l'ora 13, non «un'ora»"
+  },
+  {
+   "s": "Về quê thứ sáu nhắc trước 1 ngày",
+   "expect": {
+    "title": "Về quê",
+    "date": "wd:5",
+    "rem": 1440
+   },
+   "note": "preavviso 1 giorno; «Về» resta nel titolo"
+  },
+  {
+   "s": "Ăn trưa với mẹ chủ nhật lúc 11 giờ 30",
+   "expect": {
+    "title": "Ăn trưa",
+    "date": "wd:0",
+    "start": "11:30",
+    "people": [
+     "Mẹ"
+    ]
+   },
+   "note": "parente → persona; il pranzo («trưa») non sposta le 11:30 alle 23:30"
+  },
+  {
+   "s": "Ra ngân hàng thứ ba lúc 11 giờ, ghi chú: mang theo giấy tờ",
+   "expect": {
+    "title": "Ra ngân hàng",
+    "date": "wd:2",
+    "start": "11:00",
+    "desc": "mang theo giấy tờ",
+    "rrule": null
+   },
+   "note": "nota con i due punti in coda; CONFLITTO: «ngân hàng» non diventa «ngân ogni» (né ricorrenza)"
+  },
+  {
+   "s": "Gặp khách hàng ngày mai lúc 9 giờ",
+   "expect": {
+    "title": "Gặp khách hàng",
+    "date": "+1",
+    "start": "09:00",
+    "rrule": null,
+    "people": []
+   },
+   "note": "CONFLITTO: «khách hàng ngày mai» non è «hàng ngày» (ogni giorno); «Gặp» resta nel titolo"
+  },
+  {
+   "s": "Đón con ở trường lúc 4 rưỡi chiều",
+   "expect": {
+    "title": "Đón con",
+    "start": "16:30",
+    "loc": "Trường"
+   },
+   "note": "MOTORE: canon «Đón con alle 4 e mezza»: il parser storico legge la parola vietnamita «con» (figlio) come la preposizione italiana «con» e la toglie → titolo «Đón». Succede quando «con» precede un orario o chiude la frase («Họp phụ huynh cho con thứ bảy» → «Họp phụ huynh cho»)",
+   "skip": true
+  },
+  {
+   "s": "Đi ăn với ba tối nay",
+   "expect": {
+    "title": "Đi ăn",
+    "date": "today",
+    "people": [
+     "Ba"
+    ],
+    "start": null
+   },
+   "note": "MOTORE: numberWords() legge «ba» (papà) come il numero 3 perché segue «tối» (parola pm): canon «Đi ăn với 3 di sera oggi» → 15:00 e niente persona. Vale per tutti i nomi d'ordine di nascita del Sud (anh Hai, chị Ba, cô Năm, chú Sáu…) davanti a tối/chiều/sáng",
+   "skip": true
+  },
+  {
+   "s": "Đi xem phim với bạn gái tối mai lúc 8 giờ",
+   "expect": {
+    "title": "Đi xem phim",
+    "date": "+1",
+    "start": "20:00",
+    "people": [
+     "Bạn gái"
+    ]
+   },
+   "note": "MOTORE: parente di due sillabe → «con Bạn gái»: guarded() mette la maiuscola solo alla prima sillaba, il parser prende «Bạn» e lascia «gái» nel titolo («Đi xem phim gái»). Vale per bố mẹ, bạn thân, anh trai, con gái, bác sĩ…",
+   "skip": true
+  },
+  {
+   "s": "Ăn sáng lúc 6 giờ",
+   "expect": {
+    "title": "Ăn sáng",
+    "start": "06:00"
+   },
+   "note": "MOTORE: canon «Ăn sáng alle 6:00» → 18:00. La regola «1–6 = pomeriggio» del parser storico (normTimes) cerca il mattino solo in parole italiane/inglesi (colazione, mattina, breakfast…): «ăn sáng» (colazione) non conta",
+   "skip": true
+  },
+  {
+   "s": "Nhắc tôi gọi cho nha sĩ ngày mai lúc 9 rưỡi",
+   "expect": {
+    "title": "Gọi cho nha sĩ",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0
+   },
+   "note": "v56 dettatura: comando iniziale «Nhắc tôi», «9 rưỡi»"
+  },
+  {
+   "s": "Nhắc tôi ngày mai lúc 8 giờ để uống thuốc",
+   "expect": {
+    "title": "Uống thuốc",
+    "date": "+1",
+    "start": "08:00",
+    "rem": 0
+   },
+   "note": "v56: comando + data/ora prima dell'azione, «để» dell'infinito tolto"
+  },
+  {
+   "s": "Thêm vào lịch họp nhóm thứ năm từ 2 đến 4 giờ chiều ở phòng họp ưu tiên cao",
+   "expect": {
+    "title": "Họp nhóm",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:00",
+    "loc": "Phòng họp",
+    "pri": "urgent"
+   },
+   "note": "v56: comando, luogo comune, «ưu tiên cao»"
+  },
+  {
+   "s": "Làm ơn đặt lịch khám răng ở nha khoa Kim thứ bảy lúc 9 giờ sáng nhé",
+   "expect": {
+    "title": "Khám răng",
+    "date": "wd:6",
+    "start": "09:00",
+    "loc": "Nha khoa Kim"
+   },
+   "note": "v56: comandi concatenati («Làm ơn» + «đặt lịch») e particella finale «nhé»; luogo comune + nome"
+  },
+  {
+   "s": "Tập gym thứ hai lúc 7 giờ tối trong một tiếng rưỡi",
+   "expect": {
+    "title": "Tập gym",
+    "date": "wd:1",
+    "start": "19:00",
+    "end": "20:30"
+   },
+   "note": "v56: sera + durata detta («một tiếng rưỡi»)"
+  },
+  {
+   "s": "Ăn tối với Hương và Nam ở nhà hàng Ngon thứ bảy lúc 8 rưỡi",
+   "expect": {
+    "title": "Ăn tối",
+    "date": "wd:6",
+    "start": "20:30",
+    "loc": "Nhà hàng Ngon",
+    "people": [
+     "Hương",
+     "Nam"
+    ]
+   },
+   "note": "v56: luogo comune + nome, «8 rưỡi» con la cena → 20:30"
+  },
+  {
+   "s": "Gọi video với cả nhóm qua Zalo thứ sáu lúc 11 giờ ghi chú mang theo báo cáo",
+   "expect": {
+    "title": "Gọi video với cả nhóm",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "Zalo",
+    "desc": "mang theo báo cáo"
+   },
+   "note": "v56: incontro a distanza («qua Zalo»), nota senza due punti"
+  },
+  {
+   "s": "Cắt tóc ngày 5 lúc 3 giờ chiều không gấp",
+   "expect": {
+    "title": "Cắt tóc",
+    "date": "dom:5",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "gấp"
+   },
+   "note": "v56: giorno senza mese («ngày 5»), priorità bassa («không gấp»)"
+  },
+  {
+   "s": "Mua đồ ở siêu thị chiều mai lúc 4 giờ",
+   "expect": {
+    "title": "Mua đồ",
+    "date": "+1",
+    "start": "16:00",
+    "loc": "Siêu thị"
+   },
+   "note": "v56: luogo comune, «chiều mai» prima dell'ora"
+  },
+  {
+   "s": "Tiêu đề khám sức khỏe, vào ngày 12 tháng 11, bắt đầu lúc 9 giờ 30, kết thúc lúc 10 giờ, địa điểm bệnh viện Bạch Mai, ưu tiên cao, người tham gia Lan, mô tả mang theo kết quả xét nghiệm",
+   "expect": {
+    "title": "Khám sức khỏe",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "Bệnh viện Bạch Mai",
+    "pri": "urgent",
+    "people": [
+     "Lan"
+    ],
+    "desc": "mang theo kết quả xét nghiệm"
+   },
+   "note": "v56: dettatura a campi completa"
+  },
+  {
+   "s": "Tôi phải đóng tiền điện trước thứ sáu, quan trọng lắm",
+   "expect": {
+    "title": "Đóng tiền điện",
+    "date": "wd:5",
+    "pri": "important",
+    "titleNot": "tôi phải"
+   },
+   "note": "v56: «Tôi phải» tolto, «quan trọng lắm»"
+  },
+  {
+   "s": "Gọi video với mẹ chủ nhật lúc sáu giờ mười lăm tối",
+   "expect": {
+    "title": "Gọi video",
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "Mẹ"
+    ]
+   },
+   "note": "v56: videochiamata con la mamma, «sáu giờ mười lăm tối» = 18:15"
+  },
+  {
+   "s": "Lớp yoga mỗi thứ ba và thứ năm lúc 18:30 đến ngày 20 tháng 12 ở phòng tập nhắc tôi trước 30 phút",
+   "expect": {
+    "title": "Lớp yoga",
+    "start": "18:30",
+    "loc": "Phòng tập",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ],
+     "until": "md:12-20"
+    }
+   },
+   "note": "v56: ricorrenza con luogo e preavviso"
+  },
+  {
+   "s": "Nha sĩ thứ sáu lúc 10 giờ 30",
+   "expect": {
+    "title": "Nha sĩ",
+    "date": "wd:5",
+    "start": "10:30"
+   },
+   "note": "v56: «10 giờ 30»"
+  },
+  {
+   "s": "Họp lúc 9 giờ kém 15 sáng thứ hai",
+   "expect": {
+    "title": "Họp",
+    "date": "wd:1",
+    "start": "08:45"
+   },
+   "note": "v56: «9 giờ kém 15» = 8:45 (meno un quarto)"
+  },
+  {
+   "s": "Tiêu đề họp ngân sách, ngày 12 tháng 11, bắt đầu 9 giờ rưỡi, kết thúc 11 giờ, nhắc trước 30 phút và 10 phút, thẻ công việc, người tham gia Minh và Hương, mô tả mang theo báo cáo, lưu",
+   "expect": {
+    "title": "Họp ngân sách",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "11:00",
+    "rem": 30,
+    "tags": [
+     "công việc"
+    ],
+    "people": [
+     "Minh",
+     "Hương"
+    ],
+    "desc": "mang theo báo cáo"
+   },
+   "note": "v56 MOTORE: è la frase d'esempio dell'aiuto vocale vietnamita. (1) «ngày» non può stare in fields.day: è anche in «ngày mai», «hằng ngày», «3 ngày nữa» e fieldsRule() lo sostituirebbe ovunque («giorno mai») → la data resta nel titolo «Họp ngân sách, ngày 12 tháng 11» (con «vào ngày 12 tháng 11» funziona); (2) «thẻ» non può stare in fields.tags: la regola «tag …» delle frasi libere (modulo 11) farebbe di «trả thẻ tín dụng» un tag; (3) durList() unisce i preavvisi solo con «e/and», non con «và»",
+   "skip": true
+  },
+  {
+   "s": "Thứ bảy tuần này bảy giờ rưỡi tối đi ăn lẩu với Tuấn và Linh ở quán Lẩu Phan",
+   "expect": {
+    "title": "Đi ăn lẩu",
+    "date": "wd:6",
+    "start": "19:30",
+    "loc": "Quán Lẩu Phan",
+    "people": [
+     "Tuấn",
+     "Linh"
+    ]
+   },
+   "note": "v56 revisione: «thứ bảy tuần này» (questo sabato, «tuần này» non resta nel titolo), ora a parole «bảy giờ rưỡi tối», due persone con «và», luogo comune + nome"
+  },
+  {
+   "s": "Họp với sếp lúc mười giờ kém mười lăm sáng thứ hai",
+   "expect": {
+    "title": "Họp",
+    "date": "wd:1",
+    "start": "09:45",
+    "people": [
+     "Sếp"
+    ]
+   },
+   "note": "v56 revisione: «mười giờ kém mười lăm» a parole = 9:45 (dieci meno un quarto)"
+  },
+  {
+   "s": "Mùng 10 đóng tiền nhà, không gấp đâu",
+   "expect": {
+    "title": "Đóng tiền nhà",
+    "date": "dom:10",
+    "pri": null,
+    "titleNot": "đâu"
+   },
+   "note": "v56 revisione: giorno senza mese «mùng 10» + priorità bassa con la particella «đâu»"
+  },
+  {
+   "s": "Đi máy bay ra Hà Nội chiều mai lúc 3 giờ",
+   "expect": {
+    "title": "Đi máy bay ra Hà Nội",
+    "date": "+1",
+    "start": "15:00"
+   },
+   "note": "v56 revisione, CONFLITTO: «bay» (volare) non è il numero 7 (bảy senza accenti): prima dava «máy 7 chiều» → 19:00"
+  },
+  {
+   "s": "Khám thai ở bệnh viện Từ Dũ ngày 3 tháng 12 lúc 8 rưỡi sáng, ưu tiên cao",
+   "expect": {
+    "title": "Khám thai",
+    "date": "md:12-3",
+    "start": "08:30",
+    "loc": "Bệnh viện Từ Dũ",
+    "pri": "urgent"
+   },
+   "note": "v56 revisione: «8 rưỡi sáng» (8:30, «sáng» non resta nel titolo), luogo comune + nome, «ưu tiên cao»"
+  },
+  {
+   "s": "Đặt lịch họp dự án với Khoa và Vy thứ năm lúc 2 giờ chiều trong hai tiếng rưỡi ở văn phòng, gấp lắm",
+   "expect": {
+    "title": "Họp dự án",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:30",
+    "loc": "Văn phòng",
+    "people": [
+     "Khoa",
+     "Vy"
+    ],
+    "pri": "urgent"
+   },
+   "note": "v56 revisione: comando «Đặt lịch», durata «hai tiếng rưỡi» (2 h 30: prima diventava «hai 90 minuti»), «gấp lắm» in coda"
+  },
+  {
+   "s": "Duyệt nội dung quảng cáo thứ hai bắt đầu lúc 2 giờ kết thúc lúc 4 giờ chiều",
+   "expect": {
+    "title": "Duyệt nội dung quảng cáo",
+    "date": "wd:1",
+    "start": "14:00",
+    "end": "16:00"
+   },
+   "note": "v56 revisione, CONFLITTO: «nội dung» (contenuto) non è un marcatore di nota né un campo: con «bắt đầu … kết thúc …» faceva scattare la dettatura a campi (titolo «Duyệt», data persa)"
+  },
+  {
+   "s": "Thứ bảy 7 giờ tối đi giao lưu",
+   "expect": {
+    "title": "Đi giao lưu",
+    "date": "wd:6",
+    "start": "19:00"
+   },
+   "note": "v56 revisione, CONFLITTO: «lưu» (salva) in coda vale solo dopo una virgola: «giao lưu» (incontro) resta intero"
+  },
+  {
+   "s": "Họp với Mai lúc 3 giờ chiều thứ năm",
+   "expect": {
+    "title": "Họp",
+    "date": "wd:4",
+    "start": "15:00",
+    "people": [
+     "Mai"
+    ]
+   },
+   "note": "MOTORE: «Mai» (nome femminile comunissimo) è anche «mai» = domani nel lessico «tomorrow» e le regole non guardano la maiuscola: canon «Họp con domani alle 15:00 giovedì» → data domani, titolo «Họp với thứ năm», nessuna persona. Togliere «mai» da solo romperebbe «mai họp lúc 9 giờ» (domani), forma comunissima",
+   "skip": true
+  },
+  {
+   "s": "Họp với anh Khoa và chị Vy thứ năm lúc 2 giờ chiều",
+   "expect": {
+    "title": "Họp",
+    "date": "wd:4",
+    "start": "14:00",
+    "people": [
+     "Khoa",
+     "Vy"
+    ]
+   },
+   "note": "MOTORE: come «cùng với anh Nam» → «Nam» (caso 2), gli appellativi anh/chị vanno tolti dal nome; qui guarded() mette prima la maiuscola al parente («với Anh Khoa») e la rimozione dell'articolo (ARTICLES.vi) guarda solo le minuscole → persone [Anh Khoa, Chị Vy]",
+   "skip": true
+  },
+  {
+   "s": "Đám cưới Ngọc và Phát chủ nhật ngày 8 tháng 11",
+   "expect": {
+    "title": "Đám cưới Ngọc và Phát",
+    "date": "md:11-8",
+    "people": []
+   },
+   "note": "MOTORE: «và» (e) sta anche in «with» perché senza «họp với anh Khoa và chị Vy» perde la seconda persona (la regola «e» fra nomi di guarded() non accetta l'appellativo dopo «và»). Così in un titolo senza «với» «Ngọc và Phát» diventa «Ngọc con Phát» → titolo «Đám cưới Ngọc», persone [Phát]. Inoltre il giorno della settimana prima della data («chủ nhật ngày 8…») resta nel titolo, come in italiano («Riunione lunedì 9 novembre» → «Riunione lunedì»)",
+   "skip": true
+  }
+ ]
+}

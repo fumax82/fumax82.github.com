@@ -400,6 +400,212 @@
     "loc": ""
    },
    "note": "CONFLITTO: «Nota» (marcatore di descrizione) senza i due punti"
+  },
+  {
+   "s": "Bana hatırlat, yarın dokuz buçukta dişçiyi arayacağım",
+   "expect": {
+    "title": "Dişçiyi arayacağım",
+    "date": "+1",
+    "start": "09:30",
+    "rem": 0
+   },
+   "note": "v56 dettatura: comando iniziale «bana hatırlat» (avviso all'ora), «dokuz buçukta» = 9:30"
+  },
+  {
+   "s": "Perşembe öğleden sonra 2'den 4'e kadar yüksek öncelikli ekip toplantısı ekle",
+   "expect": {
+    "title": "Ekip toplantısı",
+    "date": "wd:4",
+    "start": "14:00",
+    "end": "16:00",
+    "pri": "urgent"
+   },
+   "note": "v56: comando in coda «ekle» (leadEnd), «yüksek öncelikli», intervallo con i suffissi"
+  },
+  {
+   "s": "Elif ve Burak ile cumartesi saat sekiz buçukta Karaköy'de akşam yemeği",
+   "expect": {
+    "title": "Akşam yemeği",
+    "date": "wd:6",
+    "start": "20:30",
+    "loc": "Karaköy",
+    "people": [
+     "Elif",
+     "Burak"
+    ]
+   },
+   "note": "v56: «sekiz buçukta» + akşam yemeği → 20:30, quartiere con suffisso"
+  },
+  {
+   "s": "Cuma saat 11'de Zoom'da ekip toplantısı not raporu getir",
+   "expect": {
+    "title": "Ekip toplantısı",
+    "date": "wd:5",
+    "start": "11:00",
+    "loc": "Zoom",
+    "desc": "raporu getir"
+   },
+   "note": "v56: incontro a distanza («Zoom'da»), nota senza due punti («not …»)"
+  },
+  {
+   "s": "Dişçi ayın 5'inde öğleden sonra 3'te, acelesi yok",
+   "expect": {
+    "title": "Dişçi",
+    "date": "dom:5",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "acele"
+   },
+   "note": "v56: giorno senza mese «ayın 5'inde» (dayOf «ayın»), priorità bassa «acelesi yok»"
+  },
+  {
+   "s": "Yarın öğleden sonra saat dörtte Migros'ta alışveriş",
+   "expect": {
+    "title": "Alışveriş",
+    "date": "+1",
+    "start": "16:00",
+    "loc": "Migros"
+   },
+   "note": "v56: «öğleden sonra saat dörtte» = 16:00, negozio con suffisso"
+  },
+  {
+   "s": "Başlık kontrol muayenesi, gün 12 Kasım, başlangıç 9:30, bitiş 10, yer Acıbadem Hastanesi, öncelik yüksek, katılımcılar Emre, açıklama tahlil sonuçlarını getir",
+   "expect": {
+    "title": "Kontrol muayenesi",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "10:00",
+    "loc": "Acıbadem Hastanesi",
+    "pri": "urgent",
+    "people": [
+     "Emre"
+    ],
+    "desc": "tahlil sonuçlarını getir"
+   },
+   "note": "v56: dettatura a campi in turco (lessico fields, parole dell'aiuto della scheda vocale: «Başlık …, gün …, başlangıç …»)"
+  },
+  {
+   "s": "Cumaya kadar elektrik faturasını ödemem lazım, önemli",
+   "expect": {
+    "titleIncludes": "elektrik faturasını",
+    "date": "wd:5",
+    "pri": "important"
+   },
+   "note": "v56: scadenza «cumaya kadar» + önemli (in turco l'obbligo «ödemem lazım» è in coda e resta nel titolo: togliere «lazım» lascerebbe «ödemem» = «non pago»)"
+  },
+  {
+   "s": "Pazar akşamı saat altıyı çeyrek geçe annem ile görüntülü görüşme",
+   "expect": {
+    "title": "Görüntülü görüşme",
+    "date": "wd:0",
+    "start": "18:15",
+    "people": [
+     "Annem"
+    ]
+   },
+   "note": "v56: «altıyı çeyrek geçe» (accusativo + çeyrek geçe) di sera = 18:15"
+  },
+  {
+   "s": "Yoga her salı ve perşembe saat 18:30'da Kadıköy'de, 20 aralığa kadar, yarım saat önce hatırlat",
+   "expect": {
+    "titleIncludes": "Yoga",
+    "start": "18:30",
+    "loc": "Kadıköy",
+    "rem": 30,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ],
+     "until": "md:12-20"
+    }
+   },
+   "note": "v56: ricorrenza con luogo, fine e preavviso in coda («yarım saat önce hatırlat»)"
+  },
+  {
+   "s": "Cuma saat on buçukta dişçi",
+   "expect": {
+    "title": "Dişçi",
+    "date": "wd:5",
+    "start": "10:30"
+   },
+   "note": "v56: «on buçukta» = 10:30"
+  },
+  {
+   "s": "Yarın saat 10'da annemi ara",
+   "expect": {
+    "title": "Annemi ara",
+    "date": "+1",
+    "start": "10:00"
+   },
+   "note": "v56: «ara» (= chiama) non è più l'abbreviazione di dicembre (tolta dai mesi): prima diventava «Annemi aralık»"
+  },
+  {
+   "s": "Lütfen yarın öğlen on ikide Can ile öğle yemeği ekle",
+   "expect": {
+    "title": "Öğle yemeği",
+    "date": "+1",
+    "start": "12:00",
+    "people": [
+     "Can"
+    ]
+   },
+   "note": "v56: «lütfen» in testa e «ekle» in coda, «öğlen on ikide» = 12:00"
+  },
+  {
+   "s": "Pazartesi akşam yedide spor salonunda antrenman",
+   "expect": {
+    "title": "Antrenman",
+    "date": "wd:1",
+    "start": "19:00",
+    "loc": "Spor salonu"
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: luogo comune con il suffisso locativo attaccato («spor salonunda», «ofiste», «markette»): in preProcess() il ramo tr fa (?:venues)(?:'?(?:de|da|…)) ma altCI() mette il confine di parola (?![\\p{L}…]) DOPO la voce, quindi il suffisso senza apostrofo non può mai seguire: resta «Spor salonunda antrenman» senza luogo"
+  },
+  {
+   "s": "Yarın akşam yedi buçukta sinema",
+   "expect": {
+    "title": "Sinema",
+    "date": "+1",
+    "start": "19:30"
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: «akşam/sabah + ora + buçuk/çeyrek»: suffixTimes() legge «akşam 7» come «alle 19:00» (con i minuti) PRIMA di vedere «buçukta», poi «19:00 e mezza» perde la mezza → 19:00 (e «sabah dokuz buçukta» → 9:00). Il prefisso pm/am dovrebbe lasciare l'ora nuda («alle 19») quando segue una frazione"
+  },
+  {
+   "s": "Pazar akşamı saat altıda annemle görüntülü görüşme",
+   "expect": {
+    "title": "Görüntülü görüşme",
+    "date": "wd:0",
+    "start": "18:00",
+    "people": [
+     "Annem"
+    ]
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: comitativo attaccato al nome («annemle», «Ayşe'yle», «Mehmet'le», «arkadaşlarla»: la forma parlata normale): la regola WITH_AFTER di guarded() vuole «ile» staccato, quindi nessuna persona e «Annemle» resta nel titolo"
+  },
+  {
+   "s": "Başlık bütçe toplantısı, gün 12 kasım, başlangıç dokuz buçuk, bitiş 11, hatırlatıcı 30 dakika ve 10 dakika, etiket iş, katılımcılar Emre ve Zeynep, açıklama raporları getir, kaydet",
+   "expect": {
+    "title": "Bütçe toplantısı",
+    "date": "md:11-12",
+    "start": "09:30",
+    "end": "11:00",
+    "rem": 30,
+    "tags": [
+     "iş"
+    ],
+    "people": [
+     "Emre",
+     "Zeynep"
+    ],
+    "desc": "raporları getir"
+   },
+   "skip": true,
+   "note": "v56 · MOTORE: è l'esempio dell'aiuto della scheda vocale. «ve» fra due partecipanti e fra due preavvisi non diventa «e»: canon «… preavviso mezz'ora ve 10 minuti … partecipanti Emre ve Zeynep …» → persone [«Emre Ve Zeynep», «Emre»], solo il primo preavviso; inoltre «tag iş» dà i tag [«iş», «is»] (doppione senza diacritici)"
   }
  ]
 }
