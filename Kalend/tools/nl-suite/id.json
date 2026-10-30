@@ -478,7 +478,7 @@
   {
    "s": "Rapat sama tim lewat Zoom jumat jam 11 catatan bawa laporan keuangan",
    "expect": {
-    "titleIncludes": "Rapat",
+    "title": "Rapat",
     "date": "wd:5",
     "start": "11:00",
     "loc": "Zoom",
@@ -526,7 +526,7 @@
   {
    "s": "Aku harus bayar tagihan listrik sebelum hari jumat penting",
    "expect": {
-    "titleIncludes": "tagihan listrik",
+    "title": "Bayar tagihan listrik",
     "titleNot": "harus",
     "date": "wd:5",
     "pri": "important"
@@ -548,7 +548,7 @@
   {
    "s": "Kelas yoga setiap selasa dan kamis jam setengah 7 malam sampai 20 Desember di gym ingatkan 30 menit sebelumnya",
    "expect": {
-    "titleIncludes": "yoga",
+    "title": "Kelas yoga",
     "start": "18:30",
     "loc": "Gym",
     "rem": 30,
@@ -602,7 +602,7 @@
     "pri": null
    },
    "skip": true,
-   "note": "v56 PARSER: due limiti dello strato smart (11-nl-smart.js, preProcess §4). (1) hasMonth cerca i nomi dei mesi SENZA confini di parola: «okt» (ottobre) dentro «Dokter» fa credere che ci sia un mese e il giorno senza mese non scatta. (2) UNIT esclude il numero seguito da un'unità ore: in indonesiano «jam» è sia l'unità («2 jam») sia la parola dell'orario («jam 3»), quindi «tanggal 5 jam 3» non diventa mai il 5 del mese. Pre: «Dokter gigi tanggal 5 jam 3 sore»; canon: «Dokter gigi tanggal 5 ore 3 di sera» → nessuna data, titolo «Dokter gigi tanggal 5». Con «pukul» e senza «dokter» funziona (vedi «Potong rambut tanggal 5 pukul 4 sore»)"
+   "note": "v56 PARSER: due limiti dello strato smart (11-nl-smart.js, preProcess §4). (1) hasMonth cerca le abbreviazioni dei mesi SENZA confini di parola: «okt» dentro «Dokter» (e così «jan» in «janji», «des» in «desa»/«deskripsi», «mar» in «kemarin», «sep» in «sepeda», «agu» in «agung») fa credere che ci sia un mese e il giorno senza mese non scatta. (2) UNIT esclude il numero seguito da un'unità ore: in indonesiano «jam» è sia l'unità («2 jam») sia la parola dell'orario («jam 3»), quindi «tanggal 5 jam 3» non diventa mai il 5 del mese. Pre: «Dokter gigi tanggal 5 jam 3 sore»; canon: «Dokter gigi tanggal 5 ore 3 di sera» («5 jam» letto anche come durata di 5 ore) → nessuna data, titolo «Dokter gigi tanggal 5». Con «pukul» e senza «dokter» funziona (vedi «Potong rambut tanggal 5 pukul 4 sore»)"
   },
   {
    "s": "Rapat tim kamis jam 2 sampai jam 4 sore",
@@ -613,7 +613,7 @@
     "end": "16:00"
    },
    "skip": true,
-   "note": "v56 PARSER: intervallo senza «dari»: ranges() gira prima di atRule(), quindi «jam 2 sampai jam 4» diventa «alle 2 alle 4 di sera» DOPO la regola «due orari di seguito = intervallo»; il parser storico legge inizio 14:00, fine 15:00 e lascia «16:00» nel titolo. Lo stesso per «pukul 14.00 sampai 16.00» (TM non accetta il punto). Con «dari jam 2 sampai jam 4 sore» funziona"
+   "note": "v56 PARSER: intervallo senza «dari» (forma comunissima: anche «Les piano setiap sabtu jam 10 sampai jam 11 pagi»). In ranges() la regola «sampai jam 4» → «alle 4» gira, ma «jam 2» diventa «alle 2» solo dopo, in atRule(), quando la regola «due orari di seguito = intervallo» è già passata. Canon: «Rapat tim kamis alle 2 alle 4 di sera» → 14:00–15:00 e «16:00» resta nel titolo. Uguale con «pukul 14.00 sampai 16.00» (TM non accetta il punto). Con «dari jam 2 sampai jam 4 sore» funziona"
   },
   {
    "s": "Ingetin aku buat rapat di kantor besok jam 9",
@@ -625,7 +625,108 @@
     "rem": 0
    },
    "skip": true,
-   "note": "v56 PARSER: con un comando «ricordami» preProcess() toglie il «di» dell'infinito italiano in ogni lingua (regex …(di|d'|ad|che|to|zu|de|que|…|untuk|để…)…): in indonesiano «di» è la preposizione di luogo, quindi «rapat di kantor» → «rapat kantor», niente luogo. Pre: «rapat kantor besok jam 9»; ottenuto: titolo «Rapat kantor», luogo vuoto"
+   "note": "v56 PARSER: con un comando «ricordami» preProcess() (11-nl-smart.js) toglie il «di» dell'infinito italiano in OGNI lingua, nelle prime 7 parole (regex …(di|d'|ad|che|to|zu|de|que|…|untuk|để…)…). In indonesiano «di» è la preposizione di luogo: «rapat di kantor» → «rapat kantor», niente luogo. Succede a ogni «ingetin/ingatkan … X di <luogo>» (anche «Ingetin aku jemput Nadia di sekolah jam 12 siang» → titolo «Jemput Nadia sekolah»). Pre: «rapat kantor besok jam 9»; ottenuto: titolo «Rapat kantor», luogo vuoto"
+  },
+  {
+   "s": "Rapat besok jam 9, tolong masukin ke kalender ya",
+   "expect": {
+    "title": "Rapat",
+    "titleNot": "masukin",
+    "date": "+1",
+    "start": "09:00"
+   },
+   "note": "v56 revisione: comando composto in coda («tolong masukin ke kalender ya»): il motore toglie UNA sola voce di leadEnd, quindi servono le forme composte nel lessico (prima: titolo «Rapat, tolong masukin»)"
+  },
+  {
+   "s": "Arisan di rumah ibu sabtu jam 4 sore",
+   "expect": {
+    "title": "Arisan",
+    "date": "wd:6",
+    "start": "16:00",
+    "loc": "Rumah ibu"
+   },
+   "note": "v56 revisione: casa di un parente detta in minuscolo («di rumah ibu»): voce composta nei luoghi comuni (prima: luogo «Rumah», titolo «Arisan ibu»)"
+  },
+  {
+   "s": "Penting banget, bayar pajak motor di Samsat Jakarta Timur paling lambat tanggal 25",
+   "expect": {
+    "title": "Bayar pajak motor",
+    "date": "dom:25",
+    "loc": "Samsat Jakarta Timur",
+    "pri": "urgent"
+   },
+   "note": "v56 revisione: urgenza in testa, scadenza senza mese («paling lambat tanggal 25»), ufficio con nome proprio (prima: «paling lambat» restava nel titolo)"
+  },
+  {
+   "s": "Naik MRT ke Blok M besok jam 8",
+   "expect": {
+    "title": "Naik MRT",
+    "date": "+1",
+    "start": "08:00",
+    "loc": "Blok M",
+    "tags": []
+   },
+   "note": "v56 revisione: «MRT» (metropolitana di Giacarta) non è il mese di marzo: tolta l'abbreviazione «mrt» da months (prima: titolo «Naik maret», tag «mare»)"
+  },
+  {
+   "s": "Kondangan nikahan Rizky sabtu jam 11 di gedung Graha Sabha Pramana",
+   "expect": {
+    "title": "Kondangan nikahan Rizky",
+    "date": "wd:6",
+    "start": "11:00",
+    "loc": "Gedung Graha Sabha Pramana"
+   },
+   "note": "v56 revisione: «di gedung …» (sala per matrimoni ed eventi) fra i luoghi comuni"
+  },
+  {
+   "s": "Check-out hotel besok jam 11 siang",
+   "expect": {
+    "title": "Check-out hotel",
+    "date": "+1",
+    "start": "11:00"
+   },
+   "skip": true,
+   "note": "v56 PARSER: «siang» (mezzogiorno/primo pomeriggio) sta in pm e ranges() (10-lang-packs.js, regola «8 pm») lo rende «di sera»: canon «Check-out hotel domani alle 11 di sera» → 23:00 (e «jam 10 siang» → 22:00). «jam 11 siang» = 11:00, «jam 12 siang» = 12:00, «jam 1 siang» = 13:00. Togliere «siang» da pm non basta: la sicurezza serale di post() (11-nl-smart.js) legge pm come parole serali e sposterebbe comunque 11:00 → 23:00"
+  },
+  {
+   "s": "Antar Nadia ke sekolah besok pagi jam 6",
+   "expect": {
+    "title": "Antar Nadia",
+    "date": "+1",
+    "start": "06:00",
+    "loc": "Sekolah"
+   },
+   "skip": true,
+   "note": "v56 PARSER: momento del mattino PRIMA dell'ora: in ranges() la regola amB scrive l'ora «nuda» («alle 6») e il parser applica «1–6 = pomeriggio». Canon «Antar Nadia domani alle 6» → 18:00. Uguale «pagi jam setengah tujuh» → 18:30 e «pagi jam 5 sampai jam 7» → 17:00 con «07:00» nel titolo. Aggirato nel lessico solo per «subuh jam»/«dini hari jam» (amPrefix → «05:00»); per «pagi jam» l'aggiramento costerebbe i minuti di «pagi jam 8 lewat seperempat»"
+  },
+  {
+   "s": "Kelas yoga online besok jam 7 pagi",
+   "expect": {
+    "title": "Kelas yoga",
+    "date": "+1",
+    "start": "07:00",
+    "loc": "Online"
+   },
+   "skip": true,
+   "note": "v56 PARSER: incontri a distanza (11-nl-smart.js, preProcess): la regex di ripiego (?:ONLINE_PRE\\s+)?(?:online…) non ha il confine di parola davanti alla preposizione, quindi la «a» finale di «yoga» è presa per la preposizione «a» e tolta insieme a «online». Pre «Kelas yog besok jam 7 pagi» → titolo «Kelas yog». Uguale «Les bahasa online» → «Les bahas», «Rapat kerja online» → «Rapat kerj»; vale in tutte le lingue («Lezione di yoga online»)"
+  },
+  {
+   "s": "Judul servis mobil, tanggal 7 November, mulai jam 8 pagi, selesai jam 12 siang, lokasi bengkel Auto2000 Cibubur, prioritas sedang, peserta Andi dan Rudi, keterangan ganti oli",
+   "expect": {
+    "title": "Servis mobil",
+    "date": "md:11-7",
+    "start": "08:00",
+    "end": "12:00",
+    "loc": "Bengkel Auto2000 Cibubur",
+    "pri": "important",
+    "people": [
+     "Andi",
+     "Rudi"
+    ],
+    "desc": "ganti oli"
+   },
+   "skip": true,
+   "note": "v56 PARSER: dettatura a campi con DUE partecipanti: canon «… partecipanti Andi dan Rudi …»; splitPeople() del parser a campi (src/index.html, SEP) divide solo su e/ed/and/y/et/und, non sulla congiunzione della lingua («dan»): persone «Andi Dan Rudi», «Andi». Tutti gli altri campi sono giusti"
   }
  ]
 }

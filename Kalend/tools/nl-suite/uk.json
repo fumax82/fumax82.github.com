@@ -641,6 +641,111 @@
    },
    "skip": true,
    "note": "v56 MOTORE: luogo comune + numero («в школі №57», «у поліклініці №3», «в кабінеті 305»). preProcess() di 11-nl-smart.js accetta dopo il luogo comune solo parole Maiuscole: ottenuto luogo «Школі» e titolo «Батьківські збори №57». Per questo «кабінеті»/«аудиторії» non sono fra i luoghi comuni"
+  },
+  {
+   "s": "Кожної середи о 19:00 хор у будинку культури, нагадай за годину",
+   "expect": {
+    "title": "Хор",
+    "start": "19:00",
+    "loc": "Будинку культури",
+    "rem": 60,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      3
+     ]
+    }
+   },
+   "note": "v56 revisione 2: ricorrenza in testa + luogo comune di due parole («у будинку культури») + preavviso «нагадай за годину»"
+  },
+  {
+   "s": "Зустріч з Іваном і Петром завтра о 15 в переговорці, високий пріоритет, дякую",
+   "expect": {
+    "title": "Зустріч",
+    "date": "+1",
+    "start": "15:00",
+    "loc": "Переговорці",
+    "people": [
+     "Іваном",
+     "Петром"
+    ],
+    "pri": "urgent",
+    "titleNot": "дякую"
+   },
+   "note": "v56 revisione 2: due persone unite da «і», luogo comune, «високий пріоритет», «дякую» finale (leadEnd)"
+  },
+  {
+   "s": "Зателефонувати в податкову в понеділок зранку, не горить",
+   "expect": {
+    "title": "Зателефонувати в податкову",
+    "date": "wd:1",
+    "pri": null,
+    "titleNot": "горить"
+   },
+   "note": "v56 revisione 2: «зранку» prima della data, priorità bassa «не горить»; «в податкову» (accusativo, direzione) resta nel titolo"
+  },
+  {
+   "s": "Маю зустріч з Іваном у четвер о 14",
+   "expect": {
+    "title": "Зустріч",
+    "date": "wd:4",
+    "start": "14:00",
+    "people": [
+     "Іваном"
+    ]
+   },
+   "note": "v56 revisione 2: «маю» (= devo/ho) come comando iniziale"
+  },
+  {
+   "s": "Гості в суботу о 18, пріоритет високий",
+   "expect": {
+    "title": "Гості",
+    "date": "wd:6",
+    "start": "18:00",
+    "pri": "urgent",
+    "people": []
+   },
+   "note": "v56 revisione 2, falso positivo della dettatura a campi: con «гості» in fields.people la frase diventava «a campi» (titolo vuoto, persone [«Субота Alle 18:00»]). «гості» tolto dai campi (resta «учасники»)"
+  },
+  {
+   "s": "Спортзал у понеділок о сьомій вечора на півтори години",
+   "expect": {
+    "title": "Спортзал",
+    "date": "wd:1",
+    "start": "19:00",
+    "end": "20:30"
+   },
+   "skip": true,
+   "note": "v56 MOTORE: ordine naturale «о сьомій вечора на півтори години». Canon «alle 7 alle 13 .5 години»: la regola «momento PRIMA dell'ora» (pmB) di ranges() in 10-lang-packs.js legge «вечора на 1» di «на 1.5» come «sera alle 1» («на» è in at). Ottenuto titolo «Спортзал 13:00.5 години», 19:00–20:00. Nell'ordine inverso (caso «на півтори години о сьомій вечора») funziona"
+  },
+  {
+   "s": "Передзвонити клієнту через тиждень",
+   "expect": {
+    "title": "Передзвонити клієнту",
+    "date": "+7",
+    "rrule": null
+   },
+   "skip": true,
+   "note": "v56 MOTORE: «через тиждень» = tra una settimana. Prima era in biweekly e creava una ricorrenza OGNI 2 SETTIMANE (tolto). Ora lo legge nextWeek (lessico preesistente) → lunedì prossimo (2 novembre) invece di +7: la regola «in» di guarded() (10-lang-packs.js) vuole un numero davanti all'unità («через 2 тижні» va)"
+  },
+  {
+   "s": "Виліт у неділю о другій ночі",
+   "expect": {
+    "title": "Виліт",
+    "date": "wd:0",
+    "start": "02:00"
+   },
+   "note": "v56 revisione 2: «о другій ночі» = 02:00. Prima «ночі/вночі/уночі» erano in pm e davano 14:00 (ora in am, come «ночи» in russo)"
+  },
+  {
+   "s": "Таксі в аеропорт у понеділок вранці о шостій",
+   "expect": {
+    "title": "Таксі в аеропорт",
+    "date": "wd:1",
+    "start": "06:00"
+   },
+   "skip": true,
+   "note": "v56 MOTORE: momento PRIMA dell'ora con ore 1–6. Canon «Таксі в аеропорт понеділок alle 6»: la regola amB di ranges() (10-lang-packs.js) scrive l'ora «nuda» e la regola «1–6 senza altro = pomeriggio» la porta alle 18:00. Ottenuto 18:00. «о 6 ранку» (momento DOPO l'ora) va"
   }
  ]
 }

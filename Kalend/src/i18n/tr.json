@@ -1033,7 +1033,6 @@
    "en yüksek öncelik",
    "çok çok acil",
    "acil durum",
-   "hemen",
    "derhal",
    "bir an önce",
    "en kısa sürede"
@@ -1171,7 +1170,11 @@
    "başlıyor",
    "basliyor",
    "başlama",
-   "baslama"
+   "baslama",
+   "başlangıç saat",
+   "baslangic saat",
+   "başlangıç saati",
+   "baslangic saati"
   ],
   "to": [
    "ile",
@@ -1640,7 +1643,9 @@
    "gece",
    "ikindi",
    "öğle",
-   "ogle"
+   "ogle",
+   "akşamı",
+   "aksami"
   ],
   "am": [
    "am",
@@ -1650,7 +1655,9 @@
    "öğleden önce",
    "ogleden once",
    "sabah erken",
-   "gece yarısından sonra"
+   "gece yarısından sonra",
+   "sabahı",
+   "sabahi"
   ],
   "moments": {
    "morning": [
@@ -2477,7 +2484,9 @@
    "öğleden önce",
    "ogleden once",
    "sabah saat",
-   "sabahleyin saat"
+   "sabahleyin saat",
+   "sabahı saat",
+   "sabahi saat"
   ],
   "noSpaces": false,
   "biweekly": [
@@ -2739,16 +2748,10 @@
     "gün"
    ],
    "start": [
-    "başlangıç",
-    "baslangic",
     "başlangıç saati",
-    "başlama saati",
-    "başlangıç saat",
-    "baslangic saat"
+    "başlama saati"
    ],
    "end": [
-    "bitiş",
-    "bitis",
     "bitiş saati",
     "bitis saati",
     "bitiş saat",
@@ -2775,7 +2778,6 @@
     "misafirler"
    ],
    "place": [
-    "yer",
     "konum",
     "adres",
     "mekan",

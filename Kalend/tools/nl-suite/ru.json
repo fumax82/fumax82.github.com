@@ -671,6 +671,104 @@
    },
    "skip": true,
    "note": "v56 MOTORE: luogo comune + numero («в школе №57», «в поликлинике №3», «в кабинете 305»). preProcess() di 11-nl-smart.js accetta dopo il luogo comune solo parole Maiuscole (after = (\\s+\\p{Lu}…){0,3}): ottenuto luogo «Школе» e titolo «Родительское собрание №57». Per questo «кабинете»/«аудитории» (quasi sempre seguiti da un numero o da un genitivo) non sono fra i luoghi comuni"
+  },
+  {
+   "s": "Каждую среду в 19:00 хор в доме культуры, напомни за час",
+   "expect": {
+    "title": "Хор",
+    "start": "19:00",
+    "loc": "Доме культуры",
+    "rem": 60,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      3
+     ]
+    }
+   },
+   "note": "v56 revisione 2: ricorrenza in testa + luogo comune di due parole («в доме культуры») + preavviso «напомни за час»"
+  },
+  {
+   "s": "Встреча с Иваном и Петром завтра в 15 в переговорке, высокий приоритет, спасибо",
+   "expect": {
+    "title": "Встреча",
+    "date": "+1",
+    "start": "15:00",
+    "loc": "Переговорке",
+    "people": [
+     "Иваном",
+     "Петром"
+    ],
+    "pri": "urgent",
+    "titleNot": "спасибо"
+   },
+   "note": "v56 revisione 2: due persone unite da «и», luogo comune, «высокий приоритет», «спасибо» finale (leadEnd)"
+  },
+  {
+   "s": "Позвонить в налоговую в понедельник с утра, не к спеху",
+   "expect": {
+    "title": "Позвонить в налоговую",
+    "date": "wd:1",
+    "pri": null,
+    "titleNot": "спеху"
+   },
+   "note": "v56 revisione 2: «с утра» = di mattina, NON «stamattina»: prima era in thisMorning e la data diventava oggi (titolo «Позвонить в налоговую понедельник»); «не к спеху» = priorità bassa"
+  },
+  {
+   "s": "Забрать машину из сервиса в субботу утром, низкий приоритет",
+   "expect": {
+    "title": "Забрать машину из сервиса",
+    "date": "wd:6",
+    "pri": null,
+    "titleNot": "приоритет",
+    "loc": ""
+   },
+   "note": "v56 revisione 2: «низкий приоритет» (lowPriority) non diventa «importante»; «из сервиса» (genitivo, provenienza) non è un luogo"
+  },
+  {
+   "s": "Гости в субботу в 18, приоритет высокий",
+   "expect": {
+    "title": "Гости",
+    "date": "wd:6",
+    "start": "18:00",
+    "pri": "urgent",
+    "people": []
+   },
+   "note": "v56 revisione 2, falso positivo della dettatura a campi: con «гости» in fields.people la frase (гости = partecipanti + приоритет) diventava «a campi», titolo vuoto e persone [«Суббота Alle 18:00»]. «гости» tolto dai campi (resta «участники»)"
+  },
+  {
+   "s": "Перезвонить клиенту через неделю",
+   "expect": {
+    "title": "Перезвонить клиенту",
+    "date": "+7",
+    "rrule": null
+   },
+   "skip": true,
+   "note": "v56 MOTORE: «через неделю» = tra una settimana. Prima era in biweekly e creava una ricorrenza OGNI 2 SETTIMANE da oggi (tolto dal lessico). Ora canon invariato «через неделю»: la regola «in» di guarded() (10-lang-packs.js) vuole un numero davanti all'unità («через 2 недели» va). Stesso limite per «через час», «через месяц», «за неделю» (preavviso)"
+  },
+  {
+   "s": "Созвон с Андреем в четверг в девять утра, обсудить договор",
+   "expect": {
+    "title": "Созвон",
+    "date": "wd:4",
+    "start": "09:00",
+    "people": [
+     "Андреем"
+    ],
+    "desc": "обсудить договор"
+   },
+   "skip": true,
+   "note": "v56 MOTORE: nota dopo la virgola che comincia con un infinito. post() di 11-nl-smart.js ha la regola solo per it/en/de/fr/es/pt: ottenuto titolo «Созвон, обсудить договор» e nessuna descrizione"
+  },
+  {
+   "s": "Такси в аэропорт в понедельник утром в шесть",
+   "expect": {
+    "title": "Такси в аэропорт",
+    "date": "wd:1",
+    "start": "06:00"
+   },
+   "skip": true,
+   "note": "v56 MOTORE: momento PRIMA dell'ora con ore 1–6. Canon «Такси в аэропорт понедельник alle 6»: la regola amB di ranges() (10-lang-packs.js) scrive l'ora «nuda» (alle 6) e poi la regola «1–6 senza altro = pomeriggio» la porta alle 18:00. Ottenuto 18:00. Succede anche in inglese («in the morning at 6») e in ucraino («вранці о шостій»); «в 6 утра» (momento DOPO l'ora) va"
   }
  ]
 }

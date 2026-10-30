@@ -569,6 +569,67 @@
    "note": "v56: comandi concatenati («proszę,» + «dodaj do kalendarza»), preavviso «w przeddzień» (oneDay)"
   },
   {
+   "s": "Hej, zapisz mi w kalendarzu spotkanie z Kasią w sobotę o wpół do ósmej wieczorem",
+   "expect": {
+    "title": "Spotkanie",
+    "date": "wd:6",
+    "start": "19:30",
+    "people": [
+     "Kasią"
+    ]
+   },
+   "note": "v56 revisione: comandi concatenati colloquiali («hej,» + «zapisz mi» + «w kalendarzu»), «wpół do ósmej wieczorem» = 19:30"
+  },
+  {
+   "s": "Basen w każdy wtorek o siódmej rano na pływalni Delfin, przypomnij mi godzinę wcześniej",
+   "expect": {
+    "title": "Basen",
+    "start": "07:00",
+    "loc": "Pływalni Delfin",
+    "rem": 60,
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2
+     ]
+    }
+   },
+   "note": "v56 revisione: ricorrenza + ora a parole + luogo comune con nome proprio + preavviso"
+  },
+  {
+   "s": "Zebranie zarządu w poniedziałek od dziewiątej do jedenastej w sali konferencyjnej B, bardzo ważne",
+   "expect": {
+    "title": "Zebranie zarządu",
+    "date": "wd:1",
+    "start": "09:00",
+    "end": "11:00",
+    "loc": "Sali konferencyjnej B",
+    "pri": "important"
+   },
+   "note": "v56 revisione: intervallo a parole «od dziewiątej do jedenastej», luogo comune + sigla della sala, «bardzo ważne»"
+  },
+  {
+   "s": "Początek roku szkolnego 1 września o 9, przypomnij mi dzień wcześniej",
+   "expect": {
+    "title": "Początek roku szkolnego",
+    "date": "md:9-1",
+    "start": "09:00",
+    "rem": 1440
+   },
+   "note": "v56 revisione: CONFLITTO con la dettatura a campi. «początek»/«koniec»/«start» non sono più parole-campo (fields.start/end): con «dzień» (in «dzień wcześniej») la frase diventava una dettatura a campi («inizio roku szkolnego…», titolo rotto). Nella dettatura a campi «początek 9:30, koniec 11» si legge comunque con from/to"
+  },
+  {
+   "s": "Dentysta na trzecią w piątek, nie ma pośpiechu",
+   "expect": {
+    "title": "Dentysta",
+    "date": "wd:5",
+    "start": "15:00",
+    "pri": null,
+    "titleNot": "pośpiech"
+   },
+   "note": "v56 revisione: «na trzecią» (accusativo femminile, numbers) = 15:00, priorità bassa «nie ma pośpiechu»"
+  },
+  {
    "s": "Spotkanie z Bartkiem za kwadrans dziewiąta",
    "expect": {
     "titleIncludes": "Spotkanie",
@@ -622,6 +683,27 @@
    },
    "skip": true,
    "note": "v56 · MOTORE: è l'esempio dell'aiuto della scheda vocale. «i» fra due partecipanti e fra due preavvisi non diventa «e»: canon «… preavviso mezz'ora i 10 minuti … partecipanti Łukasz i Sara …» → persone [«Łukasz I Sara», «Łukasz»] e solo il primo preavviso (30). guarded() traduce la congiunzione fra nomi solo dopo «con/assieme a», non dopo «partecipanti»/«preavviso»"
+  },
+  {
+   "s": "Lekcja online w piątek o 10",
+   "skip": true,
+   "expect": {
+    "title": "Lekcja",
+    "date": "wd:5",
+    "start": "10:00",
+    "loc": "Online"
+   },
+   "note": "v56 · MOTORE: 11-nl-smart.js preProcess(), incontri a distanza: la seconda regex «(?:ONLINE_PRE\\s+)?(?:OS)» non ha il confine di parola prima di ONLINE_PRE, quindi la «a» finale di «Lekcja» (= preposizione «a» di ONLINE_PRE) viene presa con «online»: pre «Lekcj w piątek o 10» → titolo «Lekcj». Colpisce ogni parola che finisce in a/em/en/in/on/al/di/per/su… prima di «online», «na Zoom», «przez telefon» (anche it «Visita online» → «Visit», en «Yoga online» → «Yog»)"
+  },
+  {
+   "s": "Jutro rano o szóstej bieganie",
+   "skip": true,
+   "expect": {
+    "title": "Bieganie",
+    "date": "+1",
+    "start": "06:00"
+   },
+   "note": "v56 · MOTORE: momento del mattino PRIMA dell'ora: ranges() (regola amB «rano o 6») scrive l'ora nuda «alle 6» per lasciare spazio a «e mezza», poi la regola «1–6 senza altro = pomeriggio» la porta alle 18:00. Canon «domani alle 6 bieganie» → 18:00 (anche en «Tomorrow morning at 6» → 18:00); «o szóstej rano» (dopo) funziona"
   }
  ]
 }

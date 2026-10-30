@@ -672,6 +672,103 @@
     "date": "+2"
    },
    "note": "v56 revisione: «שני ימים» (forma maschile) in quantities, ora che «שני» non è più un numero"
+  },
+  {
+   "s": "הסדנה מתחילה ב-9 ונגמרת ב-12 ביום חמישי עדיפות גבוהה",
+   "expect": {
+    "title": "הסדנה",
+    "date": "wd:4",
+    "start": "09:00",
+    "end": "12:00",
+    "pri": "urgent"
+   },
+   "note": "v56 revisione 2: inizio e fine detti con i verbi senza «בשעה» («מתחילה ב-9 ונגמרת ב-12»): verbi in from/to e non più fra i campi (con «עדיפות» facevano scattare la dettatura a campi)"
+  },
+  {
+   "s": "תקבע לי תור לספר ביום רביעי בחמש וחצי אחר הצהריים",
+   "expect": {
+    "title": "תור לספר",
+    "date": "wd:3",
+    "start": "17:30"
+   },
+   "note": "v56 revisione 2: comando «תקבע לי», ora a parole con la ב attaccata «בחמש וחצי אחר הצהריים» = 17:30"
+  },
+  {
+   "s": "שיחת וידאו עם הסבים מחר בשש בערב, הערה לשאול על החג",
+   "expect": {
+    "title": "שיחת וידאו",
+    "date": "+1",
+    "start": "18:00",
+    "people": [
+     "הסבים"
+    ],
+    "desc": "לשאול על החג"
+   },
+   "note": "v56 revisione 2: videochiamata, nota dopo la virgola con «הערה»"
+  },
+  {
+   "s": "תוסיפי ליומן הופעה של עומר אדם בקיסריה ב-12 באוגוסט בתשע בערב",
+   "expect": {
+    "title": "הופעה של עומר אדם",
+    "date": "md:8-12",
+    "start": "21:00",
+    "loc": "קיסריה"
+   },
+   "note": "v56 revisione 2: comando al femminile «תוסיפי ליומן», città con la ב attaccata, «בתשע בערב» = 21:00"
+  },
+  {
+   "s": "ארוחת ערב עם נועה ביום שישי בשעה 20 בתל אביב",
+   "expect": {
+    "title": "ארוחת ערב",
+    "date": "wd:5",
+    "start": "20:00",
+    "loc": "תל אביב",
+    "people": [
+     "נועה"
+    ]
+   },
+   "skip": true,
+   "note": "v56 MOTORE (revisione 2): è la sampleSentence di he.json, mostrata nell'app. Canon «ארוחת ערב con נועה יום שישי alle 20 בתל אביב»: nessun luogo, titolo «ארוחת ערב בתל אביב». 10-lang-packs.js attachedPlace() vuole almeno 3 lettere dopo la ב: «תל» ne ha 2, e «תל אביב» è fra le cities (lo stesso per «בבת ים»)"
+  },
+  {
+   "s": "פגישה עם מיכל ודני מחר מ-10 עד 12 בצהריים במשרד",
+   "expect": {
+    "title": "פגישה",
+    "date": "+1",
+    "start": "10:00",
+    "end": "12:00",
+    "loc": "משרד",
+    "people": [
+     "מיכל",
+     "דני"
+    ]
+   },
+   "skip": true,
+   "note": "v56 MOTORE (revisione 2): «dalle 10 a mezzogiorno». Canon «… dalle 10 alle 12 di sera …» («בצהריים» è in pm, come serve a «בשתיים בצהריים» = 14:00): il parser storico porta anche l'inizio alla sera, 22:00–12:00 (fine prima dell'inizio). Succede anche in italiano con «dalle 10 alle 12 di sera»"
+  },
+  {
+   "s": "ישיבה במשרד הפנים ביום ראשון בשעה 9",
+   "expect": {
+    "title": "ישיבה",
+    "date": "wd:0",
+    "start": "09:00",
+    "loc": "משרד הפנים"
+   },
+   "skip": true,
+   "note": "v56 MOTORE (revisione 2): luogo di due parole con la ב attaccata la cui prima parola è anche un luogo comune. 10-lang-packs.js attachedPlace() prova prima la parola sola («משרד» è fra i venues): luogo «משרד», titolo «ישיבה הפנים». Lo stesso per «באולם אירועים…», «בשוק הכרמל»"
+  },
+  {
+   "s": "קפה עם דנה לוי מחר בעשר בבוקר",
+   "expect": {
+    "title": "קפה",
+    "date": "+1",
+    "start": "10:00",
+    "people": [
+     "דנה לוי"
+    ]
+   },
+   "skip": true,
+   "note": "v56 MOTORE (revisione 2): nome e cognome. Canon «קפה con דנה לוי domani 10 di mattina»: persone [«דנה»], titolo «קפה לוי». 10-lang-packs.js caselessPeople() prende UNA sola parola dopo «con»; lo stesso per i parenti di due parole del lessico («עם בן דוד שלי» → «בן»)"
   }
  ]
 }

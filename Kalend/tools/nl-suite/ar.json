@@ -374,7 +374,7 @@
    "note": "v56: luogo comune con articolo, «العصر» prima dell'ora, «شكرا» in coda"
   },
   {
-   "s": "العنوان فحص دوري التاريخ 12 نوفمبر البداية 9:30 النهاية 10 المكان مستشفى السلام الأولوية عالية المشاركين يوسف الوصف إحضار التحاليل",
+   "s": "العنوان فحص دوري التاريخ 12 نوفمبر البداية 9:30 النهاية 10 المكان مستشفى السلام الأولوية عالية المشاركون يوسف الوصف إحضار التحاليل",
    "expect": {
     "title": "فحص دوري",
     "date": "md:11-12",
@@ -387,7 +387,7 @@
     ],
     "desc": "إحضار التحاليل"
    },
-   "note": "v56: dettatura a campi completa (senza virgole, come esce dal riconoscimento vocale)"
+   "note": "v56: dettatura a campi completa (senza virgole, come esce dal riconoscimento vocale); il campo partecipanti con «المشاركون», l'etichetta dell'app"
   },
   {
    "s": "لازم أدفع فاتورة الكهربا قبل يوم الخميس مهم",
@@ -633,6 +633,108 @@
     }
    },
    "note": "v56 revisione: «كل يوم أحد» (ogni domenica): mancava «يوم أحد» fra i giorni e «كل يوم» dava una ricorrenza GIORNALIERA"
+  },
+  {
+   "s": "ممكن تضيفلي كشف عند دكتورة العيون يوم الأربعاء الساعة سبعة ونص بالليل",
+   "expect": {
+    "title": "كشف",
+    "date": "wd:3",
+    "start": "19:30",
+    "loc": "دكتورة العيون"
+   },
+   "note": "v56 revisione 2: richiesta + comando alla seconda persona attaccato («ممكن» + «تضيفلي»), luogo di due parole dopo «عند», «سبعة ونص بالليل» = 19:30"
+  },
+  {
+   "s": "يا ريت تحطلي اجتماع مع منى وعمر بكرة الساعة عشرة الصبح",
+   "expect": {
+    "title": "اجتماع",
+    "date": "+1",
+    "start": "10:00",
+    "people": [
+     "منى",
+     "عمر"
+    ]
+   },
+   "note": "v56 revisione 2: «يا ريت» + «تحطلي» concatenati, due persone con la «و» attaccata, «عشرة الصبح»"
+  },
+  {
+   "s": "مكالمة على الواتس مع أختي بكرة الساعة 9 بالليل",
+   "expect": {
+    "title": "مكالمة",
+    "date": "+1",
+    "start": "21:00",
+    "loc": "الواتس",
+    "people": [
+     "أختي"
+    ]
+   },
+   "note": "v56 revisione 2: chiamata a distanza «على الواتس» (WhatsApp, colloquiale) + parente"
+  },
+  {
+   "s": "العنوان تجديد رخصة القيادة التاريخ 20 نوفمبر البداية 8:00 المكان المرور الأولوية منخفضة",
+   "expect": {
+    "title": "تجديد رخصة القيادة",
+    "date": "md:11-20",
+    "start": "08:00",
+    "loc": "المرور",
+    "pri": null
+   },
+   "note": "v56 revisione 2: dettatura a campi con priorità BASSA («الأولوية منخفضة» → normale)"
+  },
+  {
+   "s": "ذكرني بكرة الساعة 8 الصبح إني آخد الدوا",
+   "expect": {
+    "title": "آخد الدوا",
+    "date": "+1",
+    "start": "08:00"
+   },
+   "note": "v56 revisione 2: «ذكرني» detto prima di data e ora, il compito dopo con «إني» (che io…): «إني/إنو» fra le stopwords. Il preavviso (15 invece di 0) è il limite del caso 43"
+  },
+  {
+   "s": "مراجعة التصنيف الائتماني للشركة يوم الأحد",
+   "expect": {
+    "title": "مراجعة التصنيف الائتماني للشركة",
+    "date": "wd:0",
+    "tags": []
+   },
+   "note": "v56 revisione 2 (CONFLITTO): «التصنيف» (classificazione) non è più una parola del campo tag: prima il titolo era «مراجعة للشركة» con il tag «الائتماني»"
+  },
+  {
+   "s": "اجتماع مع العميل الساعة 4، ملاحظة جهز العقد",
+   "expect": {
+    "title": "اجتماع",
+    "start": "16:00",
+    "people": [
+     "العميل"
+    ],
+    "desc": "جهز العقد"
+   },
+   "skip": true,
+   "note": "v56 MOTORE (revisione 2): la virgola araba «،» attaccata all'ora. Canon «اجتماع con العميل alle 4، note جهز العقد»: inizio 04:00 (la regola «1–6 senza altro = pomeriggio» non scatta con «4،») e titolo «اجتماع ،». Né preNormalize (10-lang-packs.js) né la pulizia del titolo (post() in 11-nl-smart.js, trimTitle in 10-lang-packs.js) conoscono «،» (U+060C); nel lessico non si può mettere (arr() scarta le voci senza lettere)"
+  },
+  {
+   "s": "اجتماع بكرة من الساعة 10 الصبح لحد الساعة 12 الضهر",
+   "expect": {
+    "title": "اجتماع",
+    "date": "+1",
+    "start": "10:00",
+    "end": "12:00"
+   },
+   "skip": true,
+   "note": "v56 MOTORE (revisione 2): intervallo «dalle 10 di mattina a mezzogiorno». Canon «اجتماع domani dalle 10 alle 0 di sera»: 10-lang-packs.js ranges(), regola «momento PRIMA dell'ora» (amB), legge «الصبح لحد الساعة 12» come «di mattina alle 12» = 0:00; poi «di sera» (da «الضهر», mezzogiorno) porta l'inizio alle 22:00: risultato 22:00–12:00. Lo stesso con «من 10 لـ 12 الضهر» (22:00–12:00), come in italiano «dalle 10 alle 12 di sera»"
+  },
+  {
+   "s": "اجتماع مع عبد الله يوم الأحد الساعة 10",
+   "expect": {
+    "title": "اجتماع",
+    "date": "wd:0",
+    "start": "10:00",
+    "people": [
+     "عبد الله"
+    ]
+   },
+   "skip": true,
+   "note": "v56 MOTORE (revisione 2): nome composto «عبد الله» (fra i più comuni). Canon «اجتماع con عبد الله الأحد alle 10»: persone [«عبد»], titolo «اجتماع الله». 10-lang-packs.js caselessPeople() prende UNA sola parola dopo «con»; lo stesso per la kunya («أبو أحمد» → «أبو», «أم خالد» → «أم») e per «الأستاذ محمد» → «الأستاذ»"
   }
  ]
 }

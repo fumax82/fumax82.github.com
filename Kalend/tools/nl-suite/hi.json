@@ -383,7 +383,7 @@
     "start": "16:00",
     "loc": "बाज़ार"
    },
-   "note": "v56: luogo comune «बाज़ार में», momento prima dell'ora «दोपहर 4 बजे» = 16:00"
+   "note": "v56: luogo «बाज़ार में» (letto dalla regola PLACE_AFTER: «बाज़ार» non è più fra i luoghi comuni, vedi caso «हनुमान मंदिर»), momento prima dell'ora «दोपहर 4 बजे» = 16:00"
   },
   {
    "s": "टाइटल चेकअप, तारीख़ 12 नवंबर, शुरू 9:30, ख़त्म 10, जगह अपोलो हॉस्पिटल, रिमाइंडर 1 घंटा पहले, प्राथमिकता उच्च, विवरण रिपोर्ट ले जाना",
@@ -421,24 +421,24 @@
   {
    "s": "मुझे शुक्रवार तक बिजली का बिल भरना है, बहुत ज़रूरी",
    "expect": {
-    "titleIncludes": "बिजली का बिल",
+    "title": "बिजली का बिल भरना",
     "date": "wd:5",
     "pri": "important",
     "titleNot": "मुझे"
    },
-   "note": "v56: «मुझे … है» (devo) fuori dal titolo, «बहुत ज़रूरी» = importante"
+   "note": "v56: «मुझे … है» (devo) fuori dal titolo, «बहुत ज़रूरी» = importante; titolo esatto (revisione)"
   },
   {
    "s": "रविवार शाम सवा छह बजे मम्मी के साथ वीडियो कॉल",
    "expect": {
-    "titleIncludes": "वीडियो कॉल",
+    "title": "वीडियो कॉल",
     "date": "wd:0",
     "start": "18:15",
     "people": [
      "मम्मी"
     ]
    },
-   "note": "v56: videochiamata con la mamma, «शाम सवा छह बजे» = 18:15"
+   "note": "v56: videochiamata con la mamma, «शाम सवा छह बजे» = 18:15; titolo esatto (revisione)"
   },
   {
    "s": "हर मंगलवार और गुरुवार शाम 6:30 बजे 20 दिसंबर तक जिम में योगा क्लास, 30 मिनट पहले याद दिलाना",
@@ -493,7 +493,7 @@
   {
    "s": "कल सुबह 9 बजकर 15 मिनट पर स्कूल में पेरेंट-टीचर मीटिंग",
    "expect": {
-    "titleIncludes": "मीटिंग",
+    "title": "पेरेंट-टीचर मीटिंग",
     "date": "+1",
     "start": "09:15",
     "loc": "स्कूल"
@@ -580,6 +580,152 @@
    },
    "skip": true,
    "note": "MOTORE · v56 revisione: «ढाई बजे» = 2:30 (come «डेढ़ बजे» = 1:30). Canon «शुक्रवार pomeriggio ढाई बजे लोन की मीटिंग» → 15:00 (pomeriggio senza ora) e «ढाई बजे» nel titolo. Le frazioni-numero ढाई/डेढ़ non hanno una chiave di lessico: numbers accetta solo interi e halfPrefix vuole un numero dopo"
+  },
+  {
+   "s": "अरे सुनो, परसों शाम साढ़े सात बजे राहुल और प्रिया के साथ डिनर पार्टी है, याद दिला देना",
+   "expect": {
+    "title": "डिनर पार्टी",
+    "date": "+2",
+    "start": "19:30",
+    "people": [
+     "राहुल",
+     "प्रिया"
+    ],
+    "rem": 15
+   },
+   "note": "v56 revisione: comandi colloquiali in testa («अरे सुनो»), «शाम साढ़े सात बजे» a parole = 19:30, due persone con «और … के साथ», «है» fuori dal titolo; «याद दिला देना» in coda = «ricordamelo» senza anticipo → preavviso predefinito (15), come «…, ricordamelo» in italiano"
+  },
+  {
+   "s": "बुधवार शाम छह बजे गूगल मीट पर क्लाइंट मीटिंग, नोट प्रेज़ेंटेशन तैयार रखना",
+   "expect": {
+    "title": "क्लाइंट मीटिंग",
+    "date": "wd:3",
+    "start": "18:00",
+    "loc": "गूगल मीट",
+    "desc": "प्रेज़ेंटेशन तैयार रखना"
+   },
+   "note": "v56 revisione: piattaforma in devanagari + posposizione («गूगल मीट पर»), «शाम छह बजे» a parole, nota senza due punti"
+  },
+  {
+   "s": "कल सुबह दस बजे बैंक में चेक जमा करना है, टॉप प्रायोरिटी",
+   "expect": {
+    "title": "चेक जमा करना",
+    "date": "+1",
+    "start": "10:00",
+    "loc": "बैंक",
+    "pri": "urgent"
+   },
+   "note": "v56 revisione: luogo comune «बैंक में», priorità alta in coda «टॉप प्रायोरिटी»"
+  },
+  {
+   "s": "हर महीने 5 तारीख़ को किराया देना, एक दिन पहले याद दिलाना",
+   "expect": {
+    "title": "किराया देना",
+    "date": "dom:5",
+    "rem": 1440,
+    "rrule": {
+     "freq": "MONTHLY"
+    }
+   },
+   "note": "v56 revisione: ricorrenza mensile con il giorno («हर महीने 5 तारीख़ को») + preavviso di un giorno («एक दिन पहले याद दिलाना» = 1440)"
+  },
+  {
+   "s": "कल शाम पाँच बजे से सात बजे तक कोचिंग में फ़िज़िक्स की क्लास",
+   "expect": {
+    "title": "फ़िज़िक्स की क्लास",
+    "date": "+1",
+    "start": "17:00",
+    "end": "19:00",
+    "loc": "कोचिंग"
+   },
+   "note": "v56 revisione: intervallo con le ore a parole («पाँच बजे से सात बजे तक»), «शाम» vale per tutte e due le ore, luogo comune «कोचिंग में»"
+  },
+  {
+   "s": "मंगलवार सुबह 7 बजे हनुमान मंदिर में पूजा",
+   "expect": {
+    "title": "पूजा",
+    "date": "wd:2",
+    "start": "07:00",
+    "loc": "हनुमान मंदिर"
+   },
+   "note": "v56 revisione · CONFLITTO: luogo con il nome davanti («हनुमान मंदिर में»). Con «मंदिर» fra i luoghi comuni il ramo hi/bn di preProcess() prendeva solo «मंदिर» e lasciava «हनुमान» nel titolo; per questo i tipi che in India hanno quasi sempre un nome (मंदिर, मस्जिद, पार्क, बाज़ार, अस्पताल, एयरपोर्ट, स्टेशन, मैदान, कॉलेज…) non sono nei luoghi comuni e li legge la regola PLACE_AFTER (due parole prima di «में»)"
+  },
+  {
+   "s": "कल शाम 5 बजे प्रिया के साथ पार्क में टहलना",
+   "expect": {
+    "title": "टहलना",
+    "date": "+1",
+    "start": "17:00",
+    "loc": "पार्क",
+    "people": [
+     "प्रिया"
+    ]
+   },
+   "skip": true,
+   "note": "MOTORE · v56 revisione: canon «domani alle 17:00 con a प्रिया⁢पार्क टहलना» → luogo «प्रिया पार्क», nessuna persona. In guarded() (10-lang-packs.js) la regola PLACE_AFTER prende le DUE parole prima di «में» anche quando la prima è il nome appena letto dalla regola WITH_AFTER (preceduto da «con»). Con «पार्क» fra i luoghi comuni questa frase passava, ma «नेहरू पार्क में» perdeva il nome: vedi caso «हनुमान मंदिर»"
+  },
+  {
+   "s": "टाइटल क्लाइंट मीटिंग, तारीख़ 5 दिसंबर, शुरू दोपहर 2 बजे, ख़त्म 4 बजे, जगह कॉन्फ़्रेंस रूम, प्राथमिकता उच्च, प्रतिभागी अमित, विवरण बजट पर चर्चा",
+   "expect": {
+    "title": "क्लाइंट मीटिंग",
+    "date": "md:12-5",
+    "start": "14:00",
+    "end": "16:00",
+    "loc": "कॉन्फ़्रेंस रूम",
+    "pri": "urgent",
+    "people": [
+     "अमित"
+    ],
+    "desc": "बजट पर चर्चा"
+   },
+   "skip": true,
+   "note": "MOTORE · v56 revisione: dettatura a campi completa con UN solo partecipante. Canon «… partecipanti अमित, descrizione a बजट चर्चा»: titolo, data, ore, luogo e priorità giusti, ma (1) persone [अमित, अम]: listAfter() in src/index.html legge la parola senza i segni vocalici \\p{M} e aggiunge il troncone «अम»; (2) descrizione «a बजट चर्चा»: la regola PLACE_AFTER di guarded() (10-lang-packs.js) trasforma «बजट पर» in «a बजट» anche DENTRO il campo descrizione"
+  },
+  {
+   "s": "शुक्रवार दोपहर 3 बजे ऑफ़िस में क्लाइंट मीटिंग, कैलेंडर में जोड़ दो, धन्यवाद",
+   "expect": {
+    "title": "क्लाइंट मीटिंग",
+    "date": "wd:5",
+    "start": "15:00",
+    "loc": "ऑफ़िस",
+    "titleNot": "जोड़"
+   },
+   "note": "v56 revisione: comando in coda seguito dal ringraziamento («कैलेंडर में जोड़ दो, धन्यवाद»). preProcess() toglie una sola voce di leadEnd: senza la combinazione nel lessico restava «कैलेंडर में जोड़ दो» → luogo «कैलेंडर», titolo «…, जोड़ दो»"
+  },
+  {
+   "s": "शनिवार सुबह 7 बजे जिम में 2 घंटे वर्कआउट",
+   "expect": {
+    "title": "वर्कआउट",
+    "date": "wd:6",
+    "start": "07:00",
+    "end": "09:00",
+    "loc": "जिम"
+   },
+   "skip": true,
+   "note": "MOTORE · v56 revisione: durata detta senza preposizione davanti («2 घंटे वर्कआउट», o con la posposizione «2 घंटे के लिए»). Canon «शनिवार alle 07:00 2 ore वर्कआउट» → fine 08:00 (durata predefinita) e titolo «2 वर्कआउट». guarded() (10-lang-packs.js) legge la durata solo con L.for PRIMA del numero («per 2 ore»); nelle lingue a posposizioni serve anche «N unità + for» e «alle HH:MM N ore» → «per N ore»"
+  },
+  {
+   "s": "शुक्रवार शाम 7 बजे डिनर, राहुल भी आएगा",
+   "expect": {
+    "title": "डिनर",
+    "date": "wd:5",
+    "start": "19:00",
+    "people": [
+     "राहुल"
+    ]
+   },
+   "note": "v56 revisione: persona annunciata DOPO («राहुल भी आएगा» = verrà anche Rahul). Con la frase in withStrong la regola generica metteva «con» al suo posto e cercava il nome DOPO → nessuna persona e titolo «डिनर, राहुल»; in with la legge la regola WITH_AFTER (nome prima)"
+  },
+  {
+   "s": "कल 11 बजे क्लाइंट मीटिंग, नोट लैपटॉप साथ लाना",
+   "expect": {
+    "title": "क्लाइंट मीटिंग",
+    "date": "+1",
+    "start": "11:00",
+    "people": [],
+    "desc": "लैपटॉप साथ लाना"
+   },
+   "note": "v56 revisione: nota senza due punti con «साथ लाना» (portare con sé). Con «साथ» da solo fra le parole di with il portatile diventava una persona («लैपटॉप») e la nota restava nel titolo («क्लाइंट मीटिंग, लाना»)"
   }
  ]
 }

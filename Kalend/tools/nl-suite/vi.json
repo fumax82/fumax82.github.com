@@ -295,7 +295,7 @@
      "Bạn gái"
     ]
    },
-   "note": "MOTORE: parente di due sillabe → «con Bạn gái»: guarded() mette la maiuscola solo alla prima sillaba, il parser prende «Bạn» e lascia «gái» nel titolo («Đi xem phim gái»). Vale per bố mẹ, bạn thân, anh trai, con gái, bác sĩ…",
+   "note": "MOTORE: guarded() mette la maiuscola solo alla PRIMA sillaba del parente («con Bạn gái») e il parser prende «Bạn» come persona lasciando «gái» nel titolo. Lo stesso per bác sĩ, anh trai, bà ngoại, bạn bè, cô giáo, bố mẹ… Nel lessico i composti con un appellativo/«bạn» sono stati tolti dai parenti: oggi la frase dà titolo «Đi xem phim với bạn gái» e nessuna persona (niente spazzatura). Quando guarded() metterà la maiuscola a tutte le sillabe si possono rimettere (bạn gái, bạn trai, anh trai, chị gái, em gái, bà ngoại, bác sĩ…)",
    "skip": true
   },
   {
@@ -496,7 +496,7 @@
     ],
     "desc": "mang theo báo cáo"
    },
-   "note": "v56 MOTORE: è la frase d'esempio dell'aiuto vocale vietnamita. (1) «ngày» non può stare in fields.day: è anche in «ngày mai», «hằng ngày», «3 ngày nữa» e fieldsRule() lo sostituirebbe ovunque («giorno mai») → la data resta nel titolo «Họp ngân sách, ngày 12 tháng 11» (con «vào ngày 12 tháng 11» funziona); (2) «thẻ» non può stare in fields.tags: la regola «tag …» delle frasi libere (modulo 11) farebbe di «trả thẻ tín dụng» un tag; (3) durList() unisce i preavvisi solo con «e/and», non con «và»",
+   "note": "v56 MOTORE: è la frase d'esempio dell'aiuto vocale vietnamita. Canon «titolo họp ngân sách, ngày 12 tháng 11 , inizio alle 9:30 , fine alle 11:00 , preavviso mezz'ora và 10 minuti , tag công việc, partecipanti Minh và Hương, descrizione …». (1) «ngày» non può stare in fields.day: fieldsRule() lo sostituirebbe anche in «ngày mai», «hằng ngày» → titolo «Họp ngân sách, ngày 12 tháng 11», nessuna data (con «vào ngày 12 tháng 11» funziona, caso 36); (2) durList() unisce i preavvisi solo con «e/and», non con «và» → solo 30; (3) la regola «e» fra nomi di guarded() vale solo dopo una parola di «with», non dopo il campo «partecipanti» → persone [Minh Và Hương, Minh]; (4) canonTag() toglie i segni diacritici ai tag nuovi → tag [công việc, cong viec]. «thẻ» ora è un campo (« thẻ» con lo spazio: solo dopo una virgola)",
    "skip": true
   },
   {
@@ -614,8 +614,7 @@
      "Vy"
     ]
    },
-   "note": "MOTORE: come «cùng với anh Nam» → «Nam» (caso 2), gli appellativi anh/chị vanno tolti dal nome; qui guarded() mette prima la maiuscola al parente («với Anh Khoa») e la rimozione dell'articolo (ARTICLES.vi) guarda solo le minuscole → persone [Anh Khoa, Chị Vy]",
-   "skip": true
+   "note": "v56 revisione: appellativi tolti dal nome («anh Khoa» → Khoa, «và chị Vy» → Vy): anh/chị/em/cô/bà… non sono nei parenti, «và anh/chị/…» sta in «with»"
   },
   {
    "s": "Đám cưới Ngọc và Phát chủ nhật ngày 8 tháng 11",
@@ -624,7 +623,97 @@
     "date": "md:11-8",
     "people": []
    },
-   "note": "MOTORE: «và» (e) sta anche in «with» perché senza «họp với anh Khoa và chị Vy» perde la seconda persona (la regola «e» fra nomi di guarded() non accetta l'appellativo dopo «và»). Così in un titolo senza «với» «Ngọc và Phát» diventa «Ngọc con Phát» → titolo «Đám cưới Ngọc», persone [Phát]. Inoltre il giorno della settimana prima della data («chủ nhật ngày 8…») resta nel titolo, come in italiano («Riunione lunedì 9 novembre» → «Riunione lunedì»)",
+   "note": "MOTORE: il giorno della settimana prima della data esplicita («chủ nhật ngày 8 tháng 11», forma normale in vietnamita) resta nel titolo → «Đám cưới Ngọc và Phát chủ nhật»; succede anche in italiano («Matrimonio domenica 8 novembre» → «Matrimonio domenica»). La parte «Ngọc và Phát» ora è giusta: «và» da solo non è più in «with», quindi niente persona «Phát»",
+   "skip": true
+  },
+  {
+   "s": "Nhắc mình chiều mai 3 giờ rưỡi đi lấy đồ ở tiệm giặt nhé",
+   "expect": {
+    "title": "Đi lấy đồ",
+    "date": "+1",
+    "start": "15:30",
+    "loc": "Tiệm giặt",
+    "rem": 0
+   },
+   "note": "v56 revisione: comando «Nhắc mình» + particella «nhé», momento prima dell'ora («chiều mai 3 giờ rưỡi» = 15:30), luogo comune"
+  },
+  {
+   "s": "Đi đám cưới Tuấn và Linh ở nhà hàng Hoa Sen thứ bảy lúc 6 giờ chiều, nhắc trước 1 tiếng",
+   "expect": {
+    "title": "Đi đám cưới Tuấn và Linh",
+    "date": "wd:6",
+    "start": "18:00",
+    "loc": "Nhà hàng Hoa Sen",
+    "people": [],
+    "rem": 60
+   },
+   "note": "v56 revisione, CONFLITTO: «Tuấn và Linh» senza «với» sono gli sposi, non partecipanti; luogo comune + nome, preavviso «1 tiếng»"
+  },
+  {
+   "s": "Đặt lịch hẹn với bác sĩ thứ ba lúc 9 giờ",
+   "expect": {
+    "title": "Hẹn với bác sĩ",
+    "date": "wd:2",
+    "start": "09:00",
+    "people": []
+   },
+   "note": "v56 revisione, CONFLITTO: il comando è «Đặt lịch», «hẹn» (l'appuntamento) resta; «bác sĩ» non diventa la persona «Bác» con «sĩ» nel titolo"
+  },
+  {
+   "s": "Học tiếng Anh mỗi tối thứ ba và thứ năm lúc 7 giờ",
+   "expect": {
+    "title": "Học tiếng Anh",
+    "start": "19:00",
+    "rrule": {
+     "freq": "WEEKLY",
+     "byday": [
+      2,
+      4
+     ]
+    }
+   },
+   "note": "v56 revisione: «mỗi tối thứ ba và thứ năm» = ogni martedì e giovedì sera (19:00), «mỗi tối» non resta nel titolo"
+  },
+  {
+   "s": "Ăn trưa ngày mai với khách hàng lúc 12 giờ",
+   "expect": {
+    "title": "Ăn trưa với khách hàng",
+    "date": "+1",
+    "start": "12:00",
+    "people": []
+   },
+   "note": "v56 revisione, CONFLITTO: «trưa ngày mai» non è «domani» intero: «Ăn trưa» (pranzo) resta nel titolo"
+  },
+  {
+   "s": "Ăn tối với Lan và Nam thứ sáu lúc tám giờ rưỡi tối ở nhà hàng Ngon, Hà Nội, thẻ gia đình, nhắc tôi một ngày trước và một tiếng trước",
+   "expect": {
+    "title": "Ăn tối",
+    "date": "wd:5",
+    "start": "20:30",
+    "loc": "Nhà hàng Ngon, Hà Nội",
+    "people": [
+     "Lan",
+     "Nam"
+    ],
+    "tags": [
+     "gia đình"
+    ],
+    "rem": 60
+   },
+   "note": "MOTORE (frase d'esempio dell'aiuto vocale vietnamita): canon «Ăn tối con Lan e Nam thứ sáu alle 8:30 di sera , Hà Nội, tag gia đình, ricordamelo un giorno và 1 ore prima». (1) il luogo comune di 11-nl-smart.js non prende la città dopo la virgola → luogo «Nhà hàng Ngon» (anche in italiano «al ristorante Da Mario, Milano» perde Milano); (2) durList() non unisce i preavvisi con «và» → solo 1440, manca 60; (3) canonTag() toglie i diacritici → tag [gia đình, gia đinh]. Titolo, ora, persone e tag «gia đình» sono già giusti",
+   "skip": true
+  },
+  {
+   "s": "Uống thuốc mỗi ngày lúc 9 giờ tối, nhắc trước 5 phút",
+   "expect": {
+    "title": "Uống thuốc",
+    "start": "21:00",
+    "rrule": {
+     "freq": "DAILY"
+    },
+    "rem": 5
+   },
+   "note": "MOTORE (vale per tutte le lingue): canon «Uống thuốc ogni giorno alle 9:00 di sera , ricordamelo 5 minuti». fields() del parser storico (src/index.html) trova «giorno» (campo giorno) e «ricordamelo» (campo preavviso) e legge la frase come dettatura a campi: ricorrenza persa. In italiano «Prendere le medicine ogni giorno alle 21, ricordamelo 5 minuti prima» → titolo «Prendere le medicine ogni», nessuna ricorrenza",
    "skip": true
   }
  ]

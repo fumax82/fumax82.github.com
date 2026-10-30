@@ -1302,7 +1302,9 @@
    "pomiedzy",
    "start",
    "początek",
-   "poczatek"
+   "poczatek",
+   "początek o",
+   "poczatek o"
   ],
   "to": [
    "do",
@@ -1317,7 +1319,8 @@
    "konczy sie o",
    "do końca",
    "-",
-   "–"
+   "–",
+   "koniec o"
   ],
   "for": [
    "przez",
@@ -2386,7 +2389,8 @@
    "dwudziesta druga": 22,
    "dwudziestą drugą": 22,
    "dwudziesta trzecia": 23,
-   "dwudziestą trzecią": 23
+   "dwudziestą trzecią": 23,
+   "trzecią": 3
   },
   "ordinals": {
    "pierwszy": 1,
@@ -3119,8 +3123,7 @@
    "title": [
     "tytuł",
     "tytul",
-    "nazwa",
-    "temat"
+    "nazwa"
    ],
    "desc": [
     "opis",
@@ -3135,14 +3138,12 @@
     "dzien"
    ],
    "start": [
-    "początek",
-    "poczatek",
     "godzina rozpoczęcia",
-    "start"
+    "godzina rozpoczecia"
    ],
    "end": [
-    "koniec",
-    "godzina zakończenia"
+    "godzina zakończenia",
+    "godzina zakonczenia"
    ],
    "rem": [
     "przypomnienie",
@@ -3159,8 +3160,6 @@
    "people": [
     "uczestnicy",
     "uczestnik",
-    "goście",
-    "goscie",
     "zaproszeni"
    ],
    "place": [

@@ -554,6 +554,60 @@
    "note": "v56: «lütfen» in testa e «ekle» in coda, «öğlen on ikide» = 12:00"
   },
   {
+   "s": "Cumartesi akşam sekizde Ayşe ve Can ile Nevizade'de rakı balık",
+   "expect": {
+    "title": "Rakı balık",
+    "date": "wd:6",
+    "start": "20:00",
+    "loc": "Nevizade",
+    "people": [
+     "Ayşe",
+     "Can"
+    ]
+   },
+   "note": "v56 revisione: sera + ora a parole col locativo, due persone con «ve … ile», luogo con suffisso"
+  },
+  {
+   "s": "Cuma akşamı 8'de sinema, acelesi yok",
+   "expect": {
+    "title": "Sinema",
+    "date": "wd:5",
+    "start": "20:00",
+    "pri": null,
+    "titleNot": "acele"
+   },
+   "note": "v56 revisione: «akşamı» (possessivo: «la sera di venerdì») ora in pm → 20:00 (prima 08:00); priorità bassa"
+  },
+  {
+   "s": "Pazar sabahı saat 6'da koşu",
+   "expect": {
+    "title": "Koşu",
+    "date": "wd:0",
+    "start": "06:00"
+   },
+   "note": "v56 revisione: «sabahı saat» in amPrefix → 06:00 (prima la regola «1–6 = pomeriggio» dava 18:00)"
+  },
+  {
+   "s": "Başlangıç seviyesi İngilizce kursu pazartesi saat 19'da, hatırlatma bir gün önce",
+   "expect": {
+    "title": "Başlangıç seviyesi İngilizce kursu",
+    "date": "wd:1",
+    "start": "19:00",
+    "rem": 1440
+   },
+   "note": "v56 revisione: CONFLITTO con la dettatura a campi. «başlangıç»/«bitiş» da soli non sono più parole-campo (restano in from/to, che leggono già «başlangıç 9:30, bitiş 11»): con «hatırlatma» e «gün» la frase diventava una dettatura a campi («inizio seviyesi…»)"
+  },
+  {
+   "s": "Acil, yarın sabah dokuzda müdürü ara",
+   "expect": {
+    "title": "Müdürü ara",
+    "date": "+1",
+    "start": "09:00",
+    "pri": "urgent"
+   },
+   "note": "v56 revisione: urgenza in testa, «sabah dokuzda» = 9:00, imperativo «ara» nel titolo"
+  },
+  {
    "s": "Pazartesi akşam yedide spor salonunda antrenman",
    "expect": {
     "title": "Antrenman",
@@ -606,6 +660,27 @@
    },
    "skip": true,
    "note": "v56 · MOTORE: è l'esempio dell'aiuto della scheda vocale. «ve» fra due partecipanti e fra due preavvisi non diventa «e»: canon «… preavviso mezz'ora ve 10 minuti … partecipanti Emre ve Zeynep …» → persone [«Emre Ve Zeynep», «Emre»], solo il primo preavviso; inoltre «tag iş» dà i tag [«iş», «is»] (doppione senza diacritici)"
+  },
+  {
+   "s": "Cuma saat 17'de faturayı ödemeyi hatırlat",
+   "skip": true,
+   "expect": {
+    "title": "Faturayı ödemeyi",
+    "date": "wd:5",
+    "start": "17:00",
+    "rem": 0
+   },
+   "note": "v56 · MOTORE: «…mayı/meyi hatırlat» in coda (il verbo turco va alla fine) vale «ricordamelo» generico → preavviso predefinito 15 invece che all'ora (0). «hatırlat» non può stare in leadEnd perché staccherebbe «1 saat önce hatırlat». Canon «cuma dalle 17:00 faturayı ödemeyi ricordamelo» → rem 15"
+  },
+  {
+   "s": "Pazar sabahı altı buçukta koşu",
+   "skip": true,
+   "expect": {
+    "title": "Koşu",
+    "date": "wd:0",
+    "start": "06:30"
+   },
+   "note": "v56 · MOTORE: momento del mattino PRIMA dell'ora: ranges() (regola amB) scrive l'ora nuda «alle 6 e mezza», poi «1–6 = pomeriggio» la porta a 18:30. Canon «pazar alle 6 e mezza koşu» → 18:30"
   }
  ]
 }
