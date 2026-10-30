@@ -1,0 +1,40 @@
+n      .
+V.le Isonzo
+T7.0961-780809                  |
+Fornaci CATANZARO
+P100888900783
+EURO
+- DELIZIE SAC.G.GRANDE          0,79
+.  FERR KINDER LATTE X4            1,89
+.  GUGL ESPRESSO X 4 #          7,55
+.  GUGL ESPRESSO X 4 €           7,55
+- ROBERTI BURRINO 4          2,83
+. ROBERTI BURRINO  #          2,54
+«  CIMI PROYO.TASL.4kg8          2,2
+- CINI PROVO. 7AGL.4kgt          2,53
+- .  CIHI PROVO.TAGL.4kg8          2.85
+-  CIMI PROVO. TAGL.4kgé          1,8
+- CINI PROVO. TAGL.4kg8          2,15
+«  CIMI PROVO. TAGL. dici          2.40
+. CINI PROVO. TAGLI. 4kg8          2,15
+CINI PROVO. TAGL.4kgi 7      2,02
+i   CINE PROVO. TAGL..4kot          1,72
+.  CIMI PROVO.TAGL.4kg?          2,06
+- CINI PROVO.TAG.4kgh     2,45
+. CINI PROVO.TAGL .4koe          2,20
+-  CIHI PROVO.TAGL.4kge          2.09
+#
+#4566#hue. Art. 0019
+Cassa N04 Oper00003           7
+TOTALE ELRO              VAL
+C.Credita                  a”        52.08
+RESTO                         0,00 -
+Le Calabria che produce,
+tt ringrazia : hai speso
+49,40 Euro di prodetti          |
+Calabresi pari al 94,85%      |
+della tua spesa odierna               |
+Arrivederci Grazie               ’
+NUMERO CASSA     4
+28-09-14 12:44             SF. 126
+/F EN 99003560

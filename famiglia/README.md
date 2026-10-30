@@ -1,10 +1,36 @@
-# Famiglia 2.2 — finanze di famiglia, offline
+# Famiglia 2.3 — finanze di famiglia, offline
 
 App Android per analizzare entrate e uscite importando gli estratti Excel di Intesa Sanpaolo.
 Tutto resta sul telefono: nessun permesso Internet, database locale, backup cifrato.
 
-**APK pronto da installare:** [`dist/Famiglia-2.2.apk`](dist/Famiglia-2.2.apk)
-Si installa sopra la 2.0 o la 2.1 senza disinstallare: i dati restano.
+**APK pronto da installare:** [`dist/Famiglia-2.3.apk`](dist/Famiglia-2.3.apk)
+Si installa sopra la 2.0, 2.1 o 2.2 senza disinstallare: i dati restano.
+
+---
+
+## Novità della versione 2.3: lettura scontrini più robusta
+
+Provata anche su scontrini italiani pubblici di Wikimedia Commons (Coop Liguria, Ipersidis, un supermercato con colonna IVA, un bar).
+Il riconoscimento è stato migliorato su:
+
+- **Foto difficili**: se la prima lettura non torna, l'app prova da sola altri tre modi.
+  - Senza ritaglio, per lo scontrino che riempie tutta la foto.
+  - Con una "maschera" che cancella lo sfondo ai lati riga per riga (divano, tovaglia, scontrino storto).
+  - Con correzione delle ombre, per la carta stropicciata.
+- **Righe dei prodotti**:
+  - aliquote con decimali ("22,00%") mai scambiate per prezzi;
+  - quantità sopra il prodotto ("6 X 0,22"), anche se l'OCR legge la X come "%";
+  - pesi con 4 decimali ("0,5484 kg x € 2,79/kg");
+  - codici IVA tra parentesi ("[C") e puntini o segni ai bordi del nome, tolti.
+- **Fine della tabella prodotti** riconosciuta anche con lettere sporche davanti ("…TOTALE COMPLESSIVO", "Tot Lordo", "Dettaglio pagamenti").
+- **Totale**: se la riga "TOTALE" è illeggibile, si usa l'importo pagato con carta ("C.Credito", "Pagamento elettronico", "Bancomat").
+- **Negozio**: niente più indirizzi ("V.le Isonzo") o righe di prodotti usati come nome; insegne corte come "Coop" accettate solo su righe da intestazione.
+- **Reparti**: aggiunto un dizionario di oltre 180 marche e abbreviazioni frequenti. Per esempio Lindt, Kinder, Galbani, Santal, S.Angelo, Barilla, Mutti, "PR COTTO", "YOG", "PROVO.TAGL", "GRAP" e Dash.
+- **Avvisi a chi fotografa**: se lo scontrino era troppo piccolo nella foto o non si legge nessun prodotto, l'app lo dice e suggerisce come rifare la foto.
+
+Il limite più importante resta la foto: per una buona lettura lo scontrino deve riempire l'inquadratura in larghezza.
+Per gli scontrini lunghi conviene fare più foto in sequenza.
+
 
 ---
 
@@ -81,7 +107,7 @@ Android quindi non la installa sopra la vecchia app. Per non perdere i dati:
 
 1. Nella **1.0**: *Spazio › Backup cifrato*. Salva il file `.fmb` e ricorda la password.
 2. Disinstalla la 1.0.
-3. Installa `Famiglia-2.2.apk`. Android chiederà di consentire l'installazione da questa fonte.
+3. Installa `Famiglia-2.3.apk`. Android chiederà di consentire l'installazione da questa fonte.
 4. Nella **2.0**: *Altro › Impostazioni e backup › Ripristina* e scegli il file `.fmb`.
    Il database viene aggiornato automaticamente al nuovo formato.
 

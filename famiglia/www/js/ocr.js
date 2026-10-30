@@ -109,12 +109,93 @@
     const rows = [];
     for (let y = 0; y < H; y++) { let n = 0; for (let x = x0; x <= x1; x++) if (gray[y * W + x] > t) n++; rows.push(n / Math.max(1, x1 - x0 + 1) > 0.5); }
     const [y0, y1] = longestRun(rows);
+    // Si taglia un lato solo se lì c'è davvero uno sfondo più scuro della carta
+    // (se la foto è tutta scontrino, un bordo solo un po' in ombra NON va tagliato)
+    const mean = (xa, xb, ya, yb) => {
+      let sum = 0, n = 0;
+      for (let y = ya; y <= yb; y++) for (let x = xa; x <= xb; x++) { sum += gray[y * W + x]; n++; }
+      return n ? sum / n : 0;
+    };
+    const inside = mean(x0, x1, 0, H - 1);
+    let cx0 = x0, cx1 = x1, cy0 = y0, cy1 = y1;
+    if (x0 > 0 && mean(0, x0 - 1, 0, H - 1) > inside * 0.8) cx0 = 0;
+    if (x1 < W - 1 && mean(x1 + 1, W - 1, 0, H - 1) > inside * 0.8) cx1 = W - 1;
+    const insideRows = mean(cx0, cx1, y0, y1);
+    if (y0 > 0 && mean(cx0, cx1, 0, y0 - 1) > insideRows * 0.8) cy0 = 0;
+    if (y1 < H - 1 && mean(cx0, cx1, y1 + 1, H - 1) > insideRows * 0.8) cy1 = H - 1;
+    return box(cx0, cx1, cy0, cy1, W, H, w0, h0);
+  }
+
+  function box(x0, x1, y0, y1, W, H, w0, h0) {
     const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
     // Se il "foglio" trovato è troppo piccolo, usiamo tutta la foto
     if (bw < W * 0.12 || bh < H * 0.2) return { x: 0, y: 0, w: w0, h: h0 };
     const k = w0 / W, padX = bw * 0.03, padY = bh * 0.01;
     const x = Math.max(0, (x0 - padX) * k), y = Math.max(0, (y0 - padY) * k);
     return { x, y, w: Math.min(w0 - x, (bw + 2 * padX) * k), h: Math.min(h0 - y, (bh + 2 * padY) * k) };
+  }
+
+  /**
+   * Maschera della carta, riga per riga: per ogni riga (a bassa risoluzione)
+   * i bordi sinistro e destro del foglio. Tutto ciò che sta fuori (divano,
+   * tavolo, ombre) verrà reso bianco, così l'OCR non legge "rumore" ai lati.
+   * Funziona anche con scontrini un po' storti o stropicciati.
+   */
+  function paperMask(canvas) {
+    const W = 300, H = Math.max(1, Math.round(canvas.height * W / canvas.width));
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(canvas, 0, 0, W, H);
+    const d = ctx.getImageData(0, 0, W, H).data;
+    const gray = new Uint8Array(W * H), hist = new Uint32Array(256);
+    for (let i = 0; i < W * H; i++) {
+      const g = (d[i * 4] * 0.299 + d[i * 4 + 1] * 0.587 + d[i * 4 + 2] * 0.114) | 0;
+      gray[i] = g; hist[g]++;
+    }
+    const t = otsu(hist, W * H);
+    const left = new Int16Array(H), right = new Int16Array(H);
+    // Bordo del foglio: partendo dal centro, il primo tratto di 10 pixel con almeno
+    // il 60% di pixel scuri (sfondo, anche se a puntini). Le lettere normali sono più rade;
+    // le righe con loghi grandi vengono corrette subito sotto.
+    const WIN = 10, FRAC = 0.6;
+    for (let y = 0; y < H; y++) {
+      const row = y * W, mid = W >> 1;
+      const isDark = x => gray[row + x] <= t;
+      let l = 0, r = W - 1;
+      for (let x = mid; x >= WIN; x--) {
+        let n = 0;
+        for (let k = 0; k < WIN; k++) if (isDark(x - k)) n++;
+        if (n >= WIN * FRAC) { l = x; break; }
+      }
+      for (let x = mid; x < W - WIN; x++) {
+        let n = 0;
+        for (let k = 0; k < WIN; k++) if (isDark(x + k)) n++;
+        if (n >= WIN * FRAC) { r = x; break; }
+      }
+      left[y] = l; right[y] = r;
+    }
+    // Righe "strane" (molto più strette del solito, es. un logo nero): prendono i bordi tipici
+    const widths = Array.from(left, (l, y) => right[y] - l).sort((a, b) => a - b);
+    const typical = widths[widths.length >> 1];
+    const okRows = [];
+    for (let y = 0; y < H; y++) if (right[y] - left[y] >= typical * 0.75) okRows.push(y);
+    if (okRows.length) {
+      let k = 0;
+      for (let y = 0; y < H; y++) {
+        if (right[y] - left[y] >= typical * 0.75) continue;
+        while (k < okRows.length - 1 && okRows[k + 1] <= y) k++;
+        const ref = okRows[Math.abs(okRows[k] - y) <= Math.abs((okRows[k + 1] ?? okRows[k]) - y) ? k : Math.min(k + 1, okRows.length - 1)];
+        left[y] = left[ref]; right[y] = right[ref];
+      }
+    }
+    // Leviga i bordi (mediana su 9 righe) per non seguire una singola riga rumorosa
+    const smooth = arr => Array.from(arr, (v, y) => {
+      const win = [];
+      for (let k = Math.max(0, y - 4); k <= Math.min(H - 1, y + 4); k++) win.push(arr[k]);
+      return win.sort((a, b) => a - b)[win.length >> 1];
+    });
+    return { W, H, left: smooth(left), right: smooth(right) };
   }
 
   /**
@@ -125,10 +206,11 @@
    *  4. aumenta il contrasto e converte in bianco e nero, eliminando le filigrane chiare
    */
   async function prepareForOcr(src, opts) {
-    const o = Object.assign({ width: 1500, maxPixels: 12e6, crop: true, flatten: false, binarize: 0.85 }, opts);
+    const o = Object.assign({ width: 1500, maxPixels: 12e6, crop: true, flatten: false, binarize: 0.85, mask: false }, opts);
     const img = typeof src === 'string' ? await loadImage(src) : src;
     const w0 = img.naturalWidth || img.videoWidth || img.width, h0 = img.naturalHeight || img.videoHeight || img.height;
     const box = o.crop ? findPaper(img, w0, h0) : { x: 0, y: 0, w: w0, h: h0 };
+    lastPaperWidth = Math.min(lastPaperWidth, box.w); // per avvisare se lo scontrino era troppo piccolo
     let scale = o.width / box.w;
     if (box.w * scale * box.h * scale > o.maxPixels) scale = Math.sqrt(o.maxPixels / (box.w * box.h));
     const W = Math.round(box.w * scale), H = Math.round(box.h * scale);
@@ -152,8 +234,15 @@
       bctx.drawImage(small, 0, 0, W, H);
       bg = bctx.getImageData(0, 0, W, H).data;
     }
+    const mask = o.mask ? paperMask(canvas) : null;
+    const sx = mask ? mask.W / W : 0, sy = mask ? mask.H / H : 0;
     const hist = new Uint32Array(256);
     for (let i = 0; i < p.length; i += 4) {
+      if (mask) {
+        const px = (i >> 2) % W, py = ((i >> 2) / W) | 0;
+        const my = Math.min(mask.H - 1, (py * sy) | 0), mx = px * sx;
+        if (mx < mask.left[my] + 1 || mx > mask.right[my] - 1) { p[i] = 255; hist[255]++; continue; } // fuori dal foglio
+      }
       let g = p[i] * 0.299 + p[i + 1] * 0.587 + p[i + 2] * 0.114;
       if (bg) {
         const b = Math.max(1, bg[i] * 0.299 + bg[i + 1] * 0.587 + bg[i + 2] * 0.114);
@@ -227,7 +316,15 @@
    * con il totale, riprova con altre dimensioni e tiene la lettura migliore.
    * Restituisce { text, parsed, pass }.
    */
-  const PASSES = [{ width: 1100, binarize: 1 }, { width: 1300, binarize: 0.95 }, { width: 1700, binarize: 1 }];
+  // Tentativi in ordine: il primo va bene per la maggior parte delle foto; gli altri
+  // servono per foto difficili (scontrino piccolo nella foto, sfondo a righe o a
+  // puntini, carta stropicciata con ombre).
+  const PASSES = [
+    { width: 1100, binarize: 1 },                              // la maggior parte delle foto
+    { width: 1100, binarize: 1, crop: false },                 // scontrino che riempie tutta la foto
+    { width: 1100, binarize: 1, mask: true },                  // sfondo a righe/puntini, scontrino storto
+    { width: 1300, binarize: 1, mask: true, flatten: true }    // carta stropicciata con ombre
+  ];
 
   /** Punteggio di una lettura: totale coerente prima di tutto, poi numero di prodotti. */
   function score(p) {
@@ -247,8 +344,11 @@
     return out;
   }
 
+  let lastPaperWidth = Infinity;
+
   async function readReceipt(photos, onProgress) {
     let best = null;
+    lastPaperWidth = Infinity;
     for (let i = 0; i < PASSES.length; i++) {
       const label = i === 0 ? '' : ' (tentativo ' + (i + 1) + ': controllo dei prezzi)';
       const texts = await recognize(photos, (p, msg) => onProgress && onProgress(p, msg + label), PASSES[i]);
@@ -264,6 +364,10 @@
       if (!best || score(parsed) > score(best.parsed)) best = candidate;
       if (parsed.check === 'ok' && parsed.items.length) break;
     }
+    // Avvisi per chi fotografa: scontrino troppo piccolo nella foto, nessun prodotto letto
+    best.warnings = [];
+    if (lastPaperWidth < 700) best.warnings.push('small');
+    if (!best.parsed.items.length) best.warnings.push('noitems');
     return best;
   }
 

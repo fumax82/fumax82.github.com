@@ -36,6 +36,25 @@
     ['Animali', ['crocchett', 'cane', 'gatto', 'lettiera', 'pet ', 'whiskas', 'friskies', 'purina']]
   ];
 
+
+  // Marche e abbreviazioni frequenti sugli scontrini italiani (per riconoscere il reparto)
+  const BRANDS = {
+    "Latte e formaggi": ["provol", "provo ", "provo.", "burrin", "caciocav", "fior di latte", "milk", "galbani", "parmalat", "granarolo", " mila ", "muller", "danone", "activia", "philadelphia", "santa lucia", "vipit", "vipiteno", "tilsiter", "sottilette", "jocca", "lurpak", "fage", "zymil", "alta qualita"],
+    "Dolci e snack": ["lindt", "ferrero", "kinder", "milka", " novi ", "perugina", " baci ", "pocket coffee", "loacker", "pan di stelle", "gocciole", "oro saiwa", "crik crok", "pringles", "san carlo", "amica chips", "tavolett", "haribo", "fonzies", "oreo", "togo", "plasmon biscotti", "doria", "balocco", "mulino bianco"],
+    "Bevande": ["s.angelo", "s angelo", "sant anna", "san benedetto", "levissima", "ferrarelle", "san pellegrino", "santal", " yoga ", "skipper", "lipton", "valfrutta", "rocchetta", "vera ", "lete", "uliveto", "panna "],
+    "Pasta, riso e farine": ["barilla", "de cecco", "divella", "garofalo", "rummo", "voiello", " rana ", "scotti", "gallo riso"],
+    "Salumi": ["pr cotto", "pr crudo", "prosc", "rovagnati", "beretta", "fiorucci", "citterio", "negroni", "golfetta", "wuber"],
+    "Carne": [" aia ", "amadori", "fileni"],
+    "Dispensa": ["espresso", "moka", "mutti", "cirio", "de rica", "knorr", "rio mare", "nostromo", "callipo", "calve", "bertolli", "carapelli", "monini", "lavazza", "kimbo", "segafredo", " illy", "nescafe", "cereali", "kellogg", "porridge", "avena", "fiocchi", "pomi", "dado"],
+    "Pane e forno": ["pan bauletto", "harry", "wasa", "pavesi", "fette", "panbauletto"],
+    "Casa e pulizia": [" dash", "dixan", "finish", "svelto", "chanteclair", " ace ", "swiffer", " regina ", " tempo ", "foxy", "lysoform", "napisan", " bref", "vileda", "domopak", " pril", "nelsen", "smac", "vernel", "coccolino"],
+    "Igiene personale": [" dove ", "nivea", "colgate", "mentadent", "oral b", "gillette", "pantene", "head shoulders", "vidal", "neutro roberts", " lines ", "tampax", "nuvenia", "chilly", "felce azzurra", "borotalco"],
+    "Alcolici": ["grap ", "grappa", "limoncello", "amaretto", "martini", "baileys", "jager", "montenegro", "ramazzotti", "averna", "lucano", "nastro", "ceres", "bud ", "aperitivo"],
+    "Surgelati": ["orogel", "sofficini", "capitan findus"],
+    "Animali": ["purina", "friskies", "whiskas", " felix", "gourmet", "monge", "schesir", " almo "]
+  };
+  for (const [dep, words] of DEPARTMENTS) if (BRANDS[dep]) words.push(...BRANDS[dep]);
+
   /**
    * Reparto di un prodotto in base al nome. Vince la parola che compare PRIMA
    * nel nome: in "SUCCO ARANCIA" conta "succo" (bevanda), non "arancia" (frutta).
@@ -103,27 +122,34 @@
    *  3. insegna conosciuta in qualsiasi riga
    *  4. prima riga "sensata" in alto (non indirizzo, non partita IVA...)
    */
-  function findShop(lines) {
-    const scan = list => {
-      for (const l of list) {
+  function findShop(lines, bodyStart) {
+    const scan = (list, strictShort) => {
+      for (let li = 0; li < list.length; li++) {
+        const l = list[li];
         const words = l.split(/[\s.,*'’-]+/);
+        // Nomi corti (Alì, Pam, Coop...) solo su righe "da insegna": senza numeri e con poche
+        // parole, oppure nelle primissime righe (es. "****** COOP LIGURIA ******")
+        const shortOk = !strictShort || (!/\d/.test(l) && (words.filter(Boolean).length <= 4 || li < 3));
         for (let i = 0; i < words.length; i++) {
           const one = knownShop(words[i]);
-          if (one) return one;
+          if (one && (shortOk || U.norm(words[i]).replace(/[^a-z]/g, '').length >= 5)) return one;
           if (i + 1 < words.length) { const two = knownShop(words[i] + words[i + 1]); if (two) return two; }
         }
       }
       return '';
     };
-    const top = scan(lines.slice(0, 10));
+    const top = scan(lines.slice(0, 10), true);
     if (top) return top;
     for (const l of lines) {
       const m = U.norm(l).replace(/\s/g, '').match(/www[.,]?([a-z0-9-]{3,})[.,](it|com|eu|net)/);
       if (m) return knownShop(m[1]) || m[1].charAt(0).toUpperCase() + m[1].slice(1);
     }
-    const any = scan(lines);
+    const any = scan(lines, true);
     if (any) return any;
-    const first = lines.slice(0, 6).find(l => /[a-z]{4,}/i.test(l) && !SKIP.test(U.norm(l)) && !HEADER.test(U.norm(l)) && !LEGAL.test(U.norm(l)));
+    // Ultima possibilità: una riga dell'intestazione (prima della tabella prodotti), senza prezzi
+    const head = lines.slice(0, bodyStart ? Math.min(bodyStart, 6) : 3);
+    const first = head.find(l => /[a-z]{4,}/i.test(l) && !PRICE_END.test(l) && !/\d{3,}/.test(l)
+      && !SKIP.test(U.norm(l)) && !HEADER.test(U.norm(l)) && !LEGAL.test(U.norm(l)));
     return first ? first.replace(/[^\w\sàèéìòù'&.-]/gi, '').trim().slice(0, 40) : '';
   }
 
@@ -136,16 +162,20 @@
   // Intestazione della tabella prodotti: i prodotti iniziano DOPO queste righe
   const HEADER = /(descrizione|documento commerciale|di vendita o prest|vendita o prestazione)/;
   // Fine della tabella prodotti
-  const BODY_END = /^(sub ?totale|totale|tot\b|articoli\b|n\.? ?articoli|pezzi\b|di cui iva|pagamento|importo pagato|[-=_ ]*info tessera)|info tessera/;
+  // (le frasi tipiche valgono anche se l'OCR aggiunge "sporcizia" all'inizio della riga)
+  const BODY_END = /^(sub ?totale|totale|tot\b|articoli\b|n\.? ?articoli|pezzi\b|di cui iva|pagamento|importo pagato|[-=_ ]*info tessera)|info tessera|totale complessivo|sub ?totale|\btot\.? (lordo|netto|euro|eur)\b|totale (euro|eur|€)|importo pagato|pagamento (elettronico|contant)|di cui iva|dettaglio pagamenti|\barticoli\s+\d/;
   // Righe societarie (ragione sociale, indirizzo)
-  const LEGAL = /(s\.?r\.?l|s\.?p\.?a|s\.?n\.?c|s\.?a\.?s|socio unico|cap\. soc|rea |p\.? ?iva|via |viale |piazza |corso )/;
+  const LEGAL = /(s\.?r\.?l|s\.?p\.?a|s\.?n\.?c|s\.?a\.?s|socio unico|cap\. soc|rea |p\.? ?iva|via |viale |v\.le |piazza |p\.?zza |corso |c\.so |loc\. |localita |fraz\. |largo |vicolo |tel\.? ?\d|^t\.? ?\d|^pi ?\d|\b\d{5}\b)/;
   // Sconti e offerte (riga che riduce il prezzo del prodotto sopra)
   const DISCOUNT = /^(offerta|sconto|promo|promozione|buono|coupon|risparmio|riduzione|taglio prezzo)/;
 
   // Prezzo in fondo alla riga, seguito eventualmente dal codice IVA (A, B, C...) o da €
-  const PRICE_END = /(-?\d{1,4}[.,]\d{2})\s*(?:€|eur|[a-z]{1,2}\b|%|\*|[|!])?\s*$/i;
-  const QTY_LINE = /^\s*(\d+(?:[.,]\d+)?)\s*(?:x|×|\*|pz\.?\s*x?)\s*(\d{1,4}[.,]\d{2})\b/i;
-  const WEIGHT_LINE = /(\d+[.,]\d{1,3})\s*kg\s*(?:x|×|\*)\s*(\d{1,4}[.,]\d{2})/i;
+  // (un numero seguito da % è l'aliquota IVA, non un prezzo)
+  const PRICE_END = /(-?\d{1,4}[.,]\d{2})(?!\d|\s?%)\s*(?:€|eur|[a-z]{1,2}\b|\*|[|!\]\[]|\[?[a-z]\]?)?\s*$/i;
+  // "2 x 0,89" (l'OCR a volte legge la "x" come "%": accettato solo se la riga è tutta qui)
+  const QTY_LINE = /^\s*(\d+(?:[.,]\d+)?)\s*(?:x|×|\*|pz\.?\s*x?|%(?=\s*\d{1,4}[.,]\d{2}\s*$))\s*(\d{1,4}[.,]\d{2})\b/i;
+  // "0,5484kg x € 2,79/kg" (l'OCR legge spesso "kg" come "k9" e "€" come "E")
+  const WEIGHT_LINE = /(\d+[.,]\d{1,4})\s*k[g9q]\s*(?:x|×|\*)\s*(?:€|e|eur)?\s*(\d{1,4}[.,]\d{2})/i;
 
   /** "1,29" / "1.29" / "1.234,56" -> centesimi. */
   function toCents(text) {
@@ -190,7 +220,7 @@
     const found = [];
     for (const raw of lines) {
       const l = fixNumbers(raw), n = U.norm(l);
-      if (!/(totale|importo|pagamento elettronico|pagato|pb banca|da pagare)/.test(n) || /iva|resto|contante|non riscosso|sconti|risparmi/.test(n)) continue;
+      if (!/(totale|importo|pagamento elettronico|pagato|pb banca|da pagare|c\.? ?credit|carta di credito|bancomat|pago ?bancomat)/.test(n) || /iva|resto|contante|non riscosso|sconti|risparmi|hai speso/.test(n)) continue;
       const m = l.match(/(\d{1,4}[.,]\d{2})\s*(?:€|eur)?\s*$/i);
       if (!m) continue;
       const v = toCents(m[1]);
@@ -204,13 +234,15 @@
     return +Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
   }
 
-  /** Pulisce il nome del prodotto. */
+  /** Pulisce il nome del prodotto: toglie prezzo, aliquota/codice IVA e prefissi. */
   function cleanName(s) {
-    return s.replace(PRICE_END, '')
-      .replace(/\s\d{1,2}\s?%\s*$/, '')      // colonna IVA (es. "22%")
-      .replace(/^(off\.?|offerta)\s+/i, '')   // prefisso "OFF." delle offerte
+    let n = s.replace(PRICE_END, '').trim();
+    n = n.replace(/\s\d{1,2}(?:[.,]\d{1,2})?\s?%$/, '').trim();   // colonna IVA (es. "22%" o "22,00%")
+    n = n.replace(/\s\[?[a-z]\]?$/i, (m) => (/[\[\]]/.test(m) || /\s[A-E]$/.test(m) ? '' : m)).trim(); // codice IVA ("[C", " C")
+    n = n.replace(/^(?:[^a-z0-9\s]+\s+|[a-z]\s+(?=[a-z]{3,}))+/i, '');   // puntini/segni o una lettera isolata all'inizio
+    return n.replace(/^(off\.?|offerta)\s+/i, '')                  // prefisso "OFF." delle offerte
       .replace(/\s{2,}/g, ' ')
-      .replace(/^[\s*#.|-]+|[\s*#.|-]+$/g, '')
+      .replace(/^[\s*#.|+«»•·‘’“”"'-]+|[\s*#€.|+«»•·‘’“”"'-]+$/g, '')
       .trim();
   }
 
@@ -282,7 +314,7 @@
     const itemsTotal = U.sum(items, it => it.price);
     const total = findTotal(lines, itemsTotal);
     return {
-      shop: findShop(lines),
+      shop: findShop(lines, start),
       date: findDate(lines.join('\n')),
       total: total || itemsTotal,
       items,
@@ -435,7 +467,7 @@
       const v = m ? toCents(m[1]) : 0;
       if (/resto|non riscosso/.test(n)) continue;
       if (/(pagamento|pagato|pag\.)\s*(in\s*)?contant|^contant/.test(n) && v > 0) cash += v;
-      if (/(pagamento elettronico|pago ?bancomat|bancomat|carta di credito|carta di debito|pb banca|pos\b|contactless|visa|mastercard|maestro)/.test(n) && (v > 0 || /pago ?bancomat|transazione autorizzata/.test(n))) card += v || 1;
+      if (/(pagamento elettronico|pago ?bancomat|bancomat|carta di credito|carta di debito|c\.? ?credit|pb banca|pos\b|contactless|visa|mastercard|maestro|edc)/.test(n) && (v > 0 || /pago ?bancomat|transazione autorizzata/.test(n))) card += v || 1;
     }
     if (cash && !card) return 'cash';
     if (card && !cash) return 'card';

@@ -69,3 +69,29 @@ test('collegamento scontrino -> movimento: stesso importo nei giorni dello scont
   const noDate = R.matchPayments({ date: '', total: 1365 }, [tx('2026-10-20', -1365)], [], '2026-10-30');
   assert.strictEqual(noDate.length, 1, 'senza data: stesso importo negli ultimi 30 giorni');
 });
+
+// --- Scontrini pubblici da Wikimedia Commons (testo OCR, vedi fixtures/README.md) ---
+
+test('Commons, supermercato con colonna IVA: quantità sopra il prodotto, totale, carta', () => {
+  const r = R.parseText(read('commons-supermercato-iva'));
+  assert.strictEqual(r.total, 1185);
+  assert.strictEqual(r.check, 'ok');
+  assert.strictEqual(r.payment, 'card');
+  assert.strictEqual(r.items.length, 6);
+  assert.deepStrictEqual([r.items[0].qty, r.items[0].unit, r.items[0].price], [6, 22, 132], '"6 X 0,22" (letto "6% 0,22") sopra l\'acqua');
+  assert.ok(r.items.every(i => !/%/.test(i.name)), 'aliquota IVA tolta dai nomi');
+  assert.strictEqual(r.items.find(i => /LINDT/.test(i.name)).category, 'Dolci e snack');
+  assert.strictEqual(r.shop, '', 'senza intestazione nella foto: nessun nome inventato');
+});
+
+test('Commons, Ipersidis Catanzaro (foto piccola): totale dal pagamento con carta, nomi puliti', () => {
+  const r = R.parseText(read('commons-ipersidis-catanzaro'));
+  assert.strictEqual(r.total, 5208, 'TOTALE letto male: si usa la riga "C.Credito"');
+  assert.strictEqual(r.check, 'diff', 'mancano 2 righe: l\'app deve avvisare');
+  assert.strictEqual(r.payment, 'card');
+  assert.ok(!/isonzo/i.test(r.shop), 'l\'indirizzo non è il nome del negozio');
+  assert.ok(r.items.length >= 15);
+  assert.ok(r.items.every(i => /^[A-Z0-9]/i.test(i.name) && !/[#€]$/.test(i.name)), 'niente puntini o simboli ai bordi del nome');
+  assert.strictEqual(r.items.find(i => /BURRINO/.test(i.name)).category, 'Latte e formaggi');
+  assert.strictEqual(r.items.find(i => /PROVO/.test(i.name)).category, 'Latte e formaggi');
+});

@@ -104,7 +104,7 @@ async function readPhotos() {
     // Foto ridotte da conservare (occupano meno spazio)
     const small = [];
     for (const p of photos) small.push(await OCR.prepareImage(p, 1200, false));
-    editReceipt(Object.assign(parsed, { ocrText: text, photos: small }));
+    editReceipt(Object.assign(parsed, { ocrText: text, photos: small, warnings: result.warnings }));
   } catch (e) {
     modal('Lettura non riuscita', '<p class="sub">' + esc(e.message || e) + '</p><button class="btn wide" onclick="editReceipt({shop:\'\',date:U.today(),total:0,items:[],ocrText:\'\'})">Inserisci a mano</button>');
   }
@@ -120,7 +120,9 @@ function editReceipt(draft) {
   window.rcDeps = R.DEPARTMENTS.map(d => d[0]).concat('Altro');
   rc.choice = null; // scelta del pagamento: null = la propone l'app
   modal(rc.id ? 'Modifica scontrino' : 'Controlla e conferma',
-    (rc.check === 'diff' ? '<div class="hint warn">La somma delle righe (' + eur(rc.itemsTotal) + ') non coincide con il totale letto. Controlla prezzi e righe mancanti.</div>' : '')
+    ((rc.warnings || []).includes('small') ? '<div class="hint warn">📏 Lo scontrino era piccolo nella foto, quindi i caratteri erano poco leggibili. La prossima volta avvicinati finché lo scontrino riempie l\'inquadratura in larghezza; per gli scontrini lunghi fai più foto in sequenza.</div>' : '')
+    + ((rc.warnings || []).includes('noitems') ? '<div class="hint warn">Nessun prodotto letto. Prova con una foto più vicina, ben illuminata e con lo scontrino disteso, oppure inserisci le righe a mano.</div>' : '')
+    + (rc.check === 'diff' ? '<div class="hint warn">La somma delle righe (' + eur(rc.itemsTotal) + ') non coincide con il totale letto. Controlla prezzi e righe mancanti.</div>' : '')
     + '<label class="field">Negozio<input id="rcShop" value="' + esc(rc.shop) + '"></label>'
     + '<div class="grid"><label class="field">Data<input id="rcDate" type="date" value="' + esc(rc.date || U.today()) + '" onchange="paymentSection()"></label>'
     + '<label class="field">Totale €<input id="rcTotal" type="number" step="0.01" value="' + (rc.total / 100).toFixed(2) + '" oninput="updateSum();paymentSection()"></label></div>'
