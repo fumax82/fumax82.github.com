@@ -19,11 +19,12 @@ Screens.todo = function () {
   const tab = S.sub.todo || 'list';
   const proposals = C.ruleProposals(S.data.transactions, S.prefs);
   const bankCats = C.bankCategoryGaps(S.data.transactions, S.prefs);
-  const tabs = [['list', 'Movimenti (' + S.todo.length + ')'], ['proposals', 'Spese ripetitive (' + proposals.length + ')'], ['bank', 'Categorie banca (' + bankCats.length + ')']];
+  const quick = quickGroups();
+  const tabs = [['list', 'Movimenti (' + S.todo.length + ')'], ['quick', 'Dettagli rapidi (' + quick.length + ')'], ['proposals', 'Spese ripetitive (' + proposals.length + ')'], ['bank', 'Categorie banca (' + bankCats.length + ')']];
   return '<span class="eyebrow">INFORMAZIONI MANCANTI</span><h1>Da completare</h1>'
     + '<p class="sub">Movimenti in entrata e in uscita a cui manca famiglia di spesa, categoria o carta. Completali voce per voce: l\'app impara dalle tue scelte.</p>'
     + '<div class="tabs">' + tabs.map(([v, l]) => '<button class="' + (tab === v ? 'on' : '') + '" onclick="S.sub.todo=\'' + v + '\';render()">' + l + '</button>').join('') + '</div>'
-    + (tab === 'proposals' ? proposalsHtml(proposals) : tab === 'bank' ? bankHtml(bankCats) : todoListHtml());
+    + (tab === 'proposals' ? proposalsHtml(proposals) : tab === 'bank' ? bankHtml(bankCats) : tab === 'quick' ? quickHtml(quick) : todoListHtml());
 };
 
 // ---------------------------------------------------------------------
@@ -65,7 +66,7 @@ function todoCard(it) {
 function acceptSuggestion(id) {
   const it = S.todo.find(x => x.tx.id === id);
   if (!it || !it.suggestion) return;
-  classify([id], { family: it.suggestion.family, category: it.suggestion.category }, it.suggestion.source !== 'rule');
+  saveFields(id, { class: { family: it.suggestion.family, category: it.suggestion.category } });
 }
 
 /** Accetta tutte le proposte (senza chiedere regole una per una). */
@@ -97,23 +98,73 @@ function assign(id) {
     + (s ? '<p class="mini">Proposta: ' + esc(s.reason) + '</p>' : '')
     + (!t.account ? '<label class="field">Conto o carta di ' + (t.cents < 0 ? 'origine' : 'destinazione') + (it.missing.includes('account') ? ' <span class="chip miss">mancante</span>' : '') + accountSelect('aAcc', t.accountUser) + '</label>' : '')
     + '<label class="field">Trattamento nei report<select id="aKind">' + Object.entries(KINDS).map(([v, l]) => '<option ' + (t.kind === v ? 'selected' : '') + ' value="' + v + '">' + l + '</option>').join('') + '</select></label>';
-  if (it.similar.length) {
-    html += '<label class="check"><input type="checkbox" id="aSimilar" checked> Applica anche ai ' + it.similar.length + ' movimenti simili ancora da completare</label>';
-  }
-  html += '<button class="btn wide" onclick="saveAssign(' + t.id + ')">Salva</button>';
+  const prof = FL.profiles(S.data.transactions, S.tax)[(t.cents < 0 ? -1 : 1) + '|' + C.merchantKey(t)];
+  if (prof && prof.sourceId !== t.id) html = '<button class="btn gold wide" onclick="fillFromProfile(' + t.id + ',\'a\')">↺ Copia i dati dal ' + fmt(prof.date) + ' (stesso esercizio)</button>' + html;
+  html += '<details><summary>Altri dettagli per i report (facoltativi)</summary>' + extraInputs('aX', t) + '</details>'
+    + '<button class="btn wide" onclick="saveAssign(' + t.id + ')">Salva</button>'
+    + (it.similar.length ? '<p class="mini">Dopo il salvataggio vedrai i ' + it.similar.length + ' movimenti simili e potrai scegliere quali campi copiare.</p>' : '');
   modal('Completa le informazioni', html);
 }
 
 function saveAssign(id) {
-  const it = S.todo.find(x => x.tx.id === id);
   const cat = readCat('aCat');
   if (cat === undefined) return;
-  const set = { kind: $('aKind').value };
-  if (cat) { set.family = cat.family; set.category = cat.category; }
-  if ($('aAcc')) { const acc = readAccount('aAcc'); if (acc) set.accountUser = acc; }
-  const ids = [id].concat($('aSimilar') && $('aSimilar').checked && it ? it.similar : []);
+  const after = Object.assign({ kind: $('aKind').value }, readExtraInputs('aX'));
+  if (cat) after.class = cat;
+  if ($('aAcc')) { const acc = readAccount('aAcc'); if (acc) after.accountUser = acc; }
   closeModal();
-  classify(ids, set, true);
+  saveFields(id, after);
+}
+
+// ---------------------------------------------------------------------
+// Dettagli rapidi: necessità e natura per esercizio, con un tocco
+// ---------------------------------------------------------------------
+
+/** Esercizi (raggruppati) con spese a cui manca la necessità o la natura. */
+function quickGroups() {
+  const groups = {};
+  for (const t of S.data.transactions) {
+    if (t.state !== 'active' || t.cents >= 0 || !['expense'].includes(t.kind)) continue;
+    const ex = t.extra || {};
+    if (ex.need && ex.nature) continue;
+    const key = C.merchantKey(t) || U.norm(t.operation);
+    const g = (groups[key] = groups[key] || { key, ids: [], total: 0, last: t });
+    g.ids.push(t.id);
+    g.total -= t.cents;
+    if (t.date > g.last.date) g.last = t;
+  }
+  return Object.values(groups).sort((a, b) => b.total - a.total);
+}
+
+function quickHtml(list) {
+  if (!list.length) return '<div class="empty"><div class="glyph">✓</div><p class="sub">Tutte le spese hanno necessità e natura.</p></div>';
+  const need = FL.byKey.need, nature = FL.byKey.nature;
+  return '<div class="hint">Un tocco assegna il valore a <b>tutte</b> le spese di quell\'esercizio che non lo hanno ancora. Le prossime lo riceveranno in automatico. Servono per capire quanto spendi in cose superflue e quanto è fisso ogni mese.</div>'
+    + list.slice(0, S.quickLimit || 30).map((g, i) => {
+      const ex = g.last.extra || {};
+      return '<div class="card" style="padding:14px"><div class="row"><div style="min-width:0"><strong style="font-size:14px">' + esc(title(g.last)) + '</strong>'
+        + '<p class="mini" style="margin:2px 0">' + g.ids.length + ' spese · ' + eur(g.total) + ' · ' + esc(g.last.category || 'senza categoria') + '</p></div>'
+        + '<button class="link" onclick="detail(' + g.last.id + ')">Dettaglio</button></div>'
+        + '<div class="tabs" style="margin:6px 0">' + need.options.map(([v, l]) => '<button class="' + (ex.need === v ? 'on' : '') + '" onclick="quickSet(' + i + ',\'need\',\'' + v + '\')">' + l + '</button>').join('') + '</div>'
+        + '<div class="tabs" style="margin:6px 0">' + nature.options.map(([v, l]) => '<button class="' + (ex.nature === v ? 'on' : '') + '" onclick="quickSet(' + i + ',\'nature\',\'' + v + '\')">' + l + '</button>').join('') + '</div></div>';
+    }).join('')
+    + (list.length > (S.quickLimit || 30) ? '<button class="btn secondary wide" onclick="S.quickLimit=(S.quickLimit||30)+30;render()">Mostra altri</button>' : '');
+}
+
+/** Assegna un campo a tutte le spese dell'esercizio che non lo hanno. */
+function quickSet(i, key, value) {
+  const g = quickGroups()[i];
+  if (!g) return;
+  const items = g.ids.map(txById).filter(t => !(t.extra || {})[key]).map(t => {
+    const item = { id: t.id, extra: { [key]: value } };
+    // Le spese già classificate diventano "tue": la memoria esercizi le userà come modello
+    if (t.category && !C.isGenericCategory(t.category)) item.classifiedBy = 'user';
+    return item;
+  });
+  if (!items.length) return;
+  markMemory([g.last]);
+  act('bulkEdit', { items, reason: FL.byKey[key].label + ' per ' + title(g.last), silent: true });
+  notice(FL.byKey[key].label + ' "' + FL.format(value, key) + '" su ' + items.length + ' spese di ' + title(g.last));
 }
 
 // ---------------------------------------------------------------------

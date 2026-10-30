@@ -27,6 +27,10 @@ Screens.settings = function () {
     + [['liquid', 'Liquidità disponibile oggi €'], ['income', 'Reddito netto mensile abituale €'], ['essential', 'Spese essenziali mensili incluse rate €'], ['debt', 'Rate mensili di debiti €'], ['reserve', 'Mesi di riserva desiderati']]
       .map(([k, l]) => '<label class="field">' + l + '<input id="h_' + k + '" type="number" min="0" step="0.01" value="' + (p[k] != null ? p[k] : (k === 'reserve' ? 6 : '')) + '"></label>').join('')
     + '<button class="btn wide" onclick="saveHouse()">Salva profilo</button></div>'
+    + '<div class="card"><h2>Classificazione automatica</h2>'
+    + '<label class="check"><input type="checkbox" ' + (pref('merchantMemory', true) !== false ? 'checked' : '') + ' onchange="put(\'merchantMemory\',this.checked);notice(this.checked?\'Memoria esercizi attiva\':\'Memoria esercizi disattivata\')">'
+    + '<span><b>Memoria esercizi</b>: i nuovi movimenti di un esercizio che hai già compilato ricevono in automatico gli stessi dati (categoria, conto, necessità, natura, detrazione…). Non tocca mai i movimenti che hai modificato a mano.</span></label>'
+    + '<button class="btn secondary wide" onclick="nav(\'rules\')">Regole automatiche</button></div>'
     + '<div class="card"><h2>Backup e sicurezza</h2><p class="sub">Database SQLite locale. Nessun permesso Internet. Accesso protetto dal blocco schermo del telefono. La fotocamera serve solo per gli scontrini.</p>'
     + '<div class="actions"><button class="btn" onclick="act(\'backup\')">Backup cifrato</button><button class="btn secondary" onclick="act(\'restore\')">Ripristina</button></div>'
     + '<p class="mini">Il backup include movimenti, regole, scontrini (con foto), collegamenti e impostazioni. I backup della versione 1.0 si ripristinano senza problemi. Usa una password lunga: non è recuperabile.</p>'
@@ -34,7 +38,7 @@ Screens.settings = function () {
     + '<details class="card"><summary>Registro delle ultime 100 azioni</summary>' + S.data.audit.map(a => '<p class="mini"><b>' + esc(a.action) + '</b> · ' + esc(a.date) + '<br>' + esc(a.detail) + '</p>').join('') + '</details>'
     + '<div class="card"><h2>Come leggere i risultati</h2><p class="sub">Accantonamenti, investimenti e giroconti non sono consumi. I rimborsi sono separati dalle entrate. I prelievi bancomat non sono spese: lo diventano i pagamenti in contanti che registri; la parte non registrata appare come "Contanti non tracciati".</p>'
     + '<p class="sub">Non essendoci un ID univoco nell\'Excel, due operazioni perfettamente identiche non sono sempre distinguibili. Si conserva la massima molteplicità osservata nei file sovrapposti.</p>'
-    + '<p class="mini">Famiglia 2.0 · build personale offline</p></div>';
+    + '<p class="mini">Famiglia 2.1 · build personale offline</p></div>';
 };
 
 function saveHouse() {

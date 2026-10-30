@@ -7,10 +7,10 @@
 Screens.reports = function () {
   const tab = S.sub.reports || 'overview';
   const alerts = Insights.compute(S.data, S.month, U.today());
-  const tabs = [['overview', 'Panoramica'], ['alerts', 'Avvisi (' + alerts.length + ')'], ['recurring', 'Ricorrenti'], ['shopping', 'Spesa e prodotti']];
+  const tabs = [['overview', 'Panoramica'], ['alerts', 'Avvisi (' + alerts.length + ')'], ['habits', 'Abitudini'], ['recurring', 'Ricorrenti'], ['shopping', 'Spesa e prodotti']];
   return '<span class="eyebrow">DAI NUMERI ALLE SCELTE</span><h1>Analisi</h1>' + monthControl()
     + '<div class="tabs">' + tabs.map(([v, l]) => '<button class="' + (tab === v ? 'on' : '') + '" onclick="S.sub.reports=\'' + v + '\';render()">' + l + '</button>').join('') + '</div>'
-    + (tab === 'alerts' ? alertsHtml(alerts) : tab === 'recurring' ? recurringHtml() : tab === 'shopping' ? shoppingHtml() : overviewHtml());
+    + (tab === 'alerts' ? alertsHtml(alerts) : tab === 'habits' ? habitsHtml() : tab === 'recurring' ? recurringHtml() : tab === 'shopping' ? shoppingHtml() : overviewHtml());
 };
 
 function overviewHtml() {
@@ -36,6 +36,68 @@ function overviewHtml() {
     + '</table></div><p class="mini">* Mese non interamente coperto dai file importati (vedi Importa).</p></div>'
     + '<button class="btn secondary wide" onclick="act(\'csv\')">Esporta tutti i movimenti CSV</button>';
 }
+
+// ---------------------------------------------------------------------
+// Abitudini: report sui campi manuali (necessità, natura, etichette...)
+// ---------------------------------------------------------------------
+
+/** Spese contabilizzate del periodo (contanti inclusi, giroconti esclusi). */
+function periodExpenses() {
+  return selected().filter(t => F.booked(t) && t.kind === 'expense' && t.cents < 0);
+}
+
+/** Somma per valore di un campo extra: [[etichetta, centesimi], ...] */
+function byExtra(list, key) {
+  const out = {};
+  for (const t of list) {
+    const v = (t.extra || {})[key];
+    const vals = Array.isArray(v) ? v : [v];
+    for (const x of vals.length ? vals : [undefined]) {
+      const label = x ? FL.format(x, key) : 'Non indicato';
+      out[label] = (out[label] || 0) - t.cents;
+    }
+  }
+  return Object.entries(out).sort((a, b) => b[1] - a[1]);
+}
+
+function habitsHtml() {
+  const list = periodExpenses();
+  if (!list.length) return '<p class="sub">Nessuna spesa nel periodo.</p>';
+  const total = -U.sum(list, t => t.cents);
+  const tagged = list.filter(t => (t.extra || {}).need).length;
+  const superflue = -U.sum(list.filter(t => (t.extra || {}).need === 'superflua'), t => t.cents);
+  const regret = list.filter(t => (t.extra || {}).rating === 'no');
+  const tags = byExtra(list.filter(t => ((t.extra || {}).tags || []).length), 'tags');
+  const year = (S.month || U.today()).slice(0, 4);
+  const taxList = S.data.transactions.filter(t => F.booked(t) && t.date.startsWith(year) && (t.extra || {}).tax);
+  const refunds = S.data.transactions.filter(t => t.state === 'active' && (t.extra || {}).refund && !S.data.links.some(l => l.type === 'refund' && l.to === t.id));
+  const merchants = {};
+  for (const t of list) {
+    const k = (t.extra || {}).merchant || C.merchantKey(t) || t.operation;
+    const m = (merchants[k] = merchants[k] || { name: title(t), total: 0, count: 0 });
+    m.total -= t.cents; m.count++;
+  }
+  const top = Object.values(merchants).sort((a, b) => b.total - a.total).slice(0, 12);
+
+  return (tagged < list.length ? '<div class="hint">Necessità indicata per ' + tagged + ' spese su ' + list.length + ' (' + Math.round(tagged / list.length * 100) + '%). '
+      + '<button class="link" onclick="nav(\'todo\',\'quick\')">Completa in fretta per esercizio →</button></div>' : '')
+    + '<div class="card"><h2>Necessità</h2><p class="sub">Essenziale = non rinunciabile · Utile = migliora la vita · Superflua = si può tagliare.</p>'
+    + donut(byExtra(list, 'need')) + bars(byExtra(list, 'need'))
+    + (superflue ? '<div class="hint warn">Spese superflue: <b>' + eur(superflue) + '</b> (' + Math.round(superflue / total * 100) + '% delle spese). Su un anno, a questo ritmo: ' + eur(superflue * (S.month ? 12 : 1)) + (S.month ? '' : ' nel periodo') + '.</div>' : '') + '</div>'
+    + '<div class="card"><h2>Natura delle spese</h2><p class="sub">Le fisse sono il "costo base" della famiglia; le una tantum vanno pianificate.</p>' + bars(byExtra(list, 'nature')) + '</div>'
+    + (regret.length ? '<div class="card alert"><h2>Spese che non rifaresti</h2><p class="sub">' + regret.length + ' spese per <b>' + eur(-U.sum(regret, t => t.cents)) + '</b>. Guardale prima del prossimo acquisto simile.</p>'
+      + regret.slice(0, 8).map(t => txrow(t)).join('') + '</div>' : '')
+    + (tags.length ? '<div class="card"><h2>Etichette e progetti</h2><p class="sub">Quanto è costato ogni progetto o evento nel periodo.</p>' + bars(tags, 'filterByTag') + '</div>' : '')
+    + '<div class="card"><h2>Detrazioni ' + year + ' (730)</h2>'
+    + (taxList.length ? bars(byExtra(taxList, 'tax')) + '<p class="sub">Totale ' + eur(-U.sum(taxList, t => t.cents)) + ' · conserva le ricevute. <button class="link" onclick="showIds(' + jsArg(taxList.map(t => t.id)) + ',\'Detrazioni ' + year + '\')">Elenco</button></p>'
+      : '<p class="sub">Nessuna spesa segnata come detraibile. Indica "Detrazione 730" nel dettaglio di farmacia, visite, veterinario, scuola, sport dei ragazzi…</p>') + '</div>'
+    + (refunds.length ? '<div class="card warn"><h2>Rimborsi attesi</h2><p class="sub">Spese da farsi rimborsare non ancora collegate a un rimborso: <b>' + eur(-U.sum(refunds, t => t.cents)) + '</b>.</p>'
+      + refunds.slice(0, 10).map(t => txrow(t, '<small>Da: ' + esc(FL.format(t.extra.refund, 'refund')) + ' · da ' + U.daysBetween(t.date, U.today()) + ' giorni</small>')).join('') + '</div>' : '')
+    + '<div class="card"><h2>Esercizi dove spendi di più</h2>' + top.map(m => '<div class="kpi row"><div><strong style="font-size:13px">' + esc(m.name) + '</strong><small class="mini" style="display:block">'
+      + m.count + ' spese · media ' + eur(Math.round(m.total / m.count)) + '</small></div><b>' + eur(m.total) + '</b></div>').join('') + '</div>';
+}
+
+function filterByTag(tag) { S.filterExtra = { tags: tag }; S.filterFamily = ''; S.filterCat = ''; nav('moves'); }
 
 function kpi(title, sub, value) {
   return '<div class="kpi row"><div>' + title + '<small class="sub" style="display:block">' + esc(sub) + '</small></div>' + value + '</div>';

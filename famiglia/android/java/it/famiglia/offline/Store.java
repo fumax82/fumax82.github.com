@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -30,10 +31,14 @@ import org.json.JSONObject;
  *   links           collegamenti tra movimenti (contanti<-prelievo, rimborsi...)   [v2]
  *   receipts        scontrini letti con OCR e righe di spesa                        [v2]
  *   receipt_photos  foto degli scontrini (JPEG compressi)                           [v2]
+ *
+ * Colonna tx.extra (v3): campi manuali aggiuntivi in formato JSON, es.
+ *   {"need":"superflua","nature":"variabile","tags":["Vacanza 2026"],"merchant":"Bar Sport"}
+ * Nuovi campi si aggiungono dall'interfaccia (fields.js) senza cambiare il database.
  */
 public class Store extends SQLiteOpenHelper {
-    /** Versione 2 = Famiglia 2.0. Il passaggio da 1 a 2 è automatico (onUpgrade). */
-    public static final int VERSION = 2;
+    /** Versione 3 = Famiglia 2.1. Gli aggiornamenti 1 -> 2 -> 3 sono automatici (onUpgrade). */
+    public static final int VERSION = 3;
 
     static final List<String> KINDS = Arrays.asList(
             "expense", "income", "refund", "saving", "investment", "transfer", "withdrawal");
@@ -65,13 +70,20 @@ public class Store extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE audit(id INTEGER PRIMARY KEY,created TEXT,action TEXT,detail TEXT)");
         db.execSQL("CREATE TABLE prefs(key TEXT PRIMARY KEY,value TEXT)");
         db.execSQL("CREATE TABLE rejected(pending INTEGER,booked INTEGER,PRIMARY KEY(pending,booked))");
-        // ...poi le aggiunte della versione 2
+        // ...poi le aggiunte delle versioni successive
         upgradeTo2(db);
+        upgradeTo3(db);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         if (oldVersion < 2) upgradeTo2(db);
+        if (oldVersion < 3) upgradeTo3(db);
+    }
+
+    /** Aggiunta della versione 2.1: campi manuali extra (necessità, etichette, ...). */
+    private void upgradeTo3(SQLiteDatabase db) {
+        db.execSQL("ALTER TABLE tx ADD COLUMN extra TEXT DEFAULT '{}'");
     }
 
     /** Aggiunte della versione 2.0: nuove colonne e nuove tabelle. */
@@ -154,6 +166,7 @@ public class Store extends SQLiteOpenHelper {
                 t.accountUser = str(c, "account_user");
                 t.classifiedBy = str(c, "classified_by");
                 t.source = str(c, "source");
+                t.extra = str(c, "extra");
                 out.add(t);
             }
         } finally {
@@ -188,6 +201,7 @@ public class Store extends SQLiteOpenHelper {
                 o.put("accountUser", str(c, "account_user"));
                 o.put("classifiedBy", str(c, "classified_by"));
                 o.put("source", str(c, "source"));
+                o.put("extra", parseExtra(str(c, "extra")));
                 txs.put(o);
             }
         } finally {
@@ -309,11 +323,46 @@ public class Store extends SQLiteOpenHelper {
             {"category", "category"}, {"kind", "kind"}, {"note", "note"}, {"person", "person"},
             {"family", "family"}, {"accountUser", "account_user"}, {"classifiedBy", "classified_by"}};
 
+    static JSONObject parseExtra(String s) {
+        try {
+            return new JSONObject(s == null || s.isEmpty() ? "{}" : s);
+        } catch (Exception e) {
+            return new JSONObject();
+        }
+    }
+
+    /**
+     * Unisce i campi extra: le chiavi presenti in "changes" sostituiscono quelle
+     * esistenti; un valore vuoto ("" o lista vuota) cancella il campo.
+     */
+    static String mergeExtra(String current, JSONObject changes) throws Exception {
+        JSONObject cur = parseExtra(current);
+        Iterator<String> keys = changes.keys();
+        while (keys.hasNext()) {
+            String k = keys.next();
+            Object val = changes.get(k);
+            boolean empty = val == JSONObject.NULL || "".equals(val) || (val instanceof JSONArray && ((JSONArray) val).length() == 0);
+            if (empty) cur.remove(k);
+            else cur.put(k, val);
+        }
+        return cur.toString();
+    }
+
+    private String currentExtra(SQLiteDatabase db, String id) {
+        Cursor c = db.rawQuery("SELECT extra FROM tx WHERE id=?", new String[]{id});
+        try {
+            return c.moveToFirst() && !c.isNull(0) ? c.getString(0) : "{}";
+        } finally {
+            c.close();
+        }
+    }
+
     /** Modifica solo i campi presenti nel JSON (modifica "parziale"). */
     private void editOne(SQLiteDatabase db, JSONObject o) throws Exception {
         if (o.has("kind") && !KINDS.contains(o.getString("kind"))) throw new Exception("Tipo non valido");
         ContentValues v = new ContentValues();
         for (String[] f : EDITABLE) if (o.has(f[0])) v.put(f[1], o.optString(f[0]));
+        if (o.has("extra")) v.put("extra", mergeExtra(currentExtra(db, o.getString("id")), o.getJSONObject("extra")));
         if (v.size() == 0) return;
         db.update("tx", v, "id=?", new String[]{o.getString("id")});
     }
@@ -367,6 +416,7 @@ public class Store extends SQLiteOpenHelper {
         v.put("family", o.optString("family", ""));
         v.put("classified_by", "user");
         v.put("source", "manual");
+        if (o.has("extra")) v.put("extra", mergeExtra("{}", o.getJSONObject("extra")));
 
         long id = o.optLong("id", 0);
         db.beginTransaction();
@@ -659,12 +709,14 @@ public class Store extends SQLiteOpenHelper {
     /** Esporta tutti i movimenti in CSV (separatore ";", compatibile con Excel italiano). */
     public String csv() throws Exception {
         StringBuilder sb = new StringBuilder("﻿ID;Data;Operazione;Dettagli;Conto o carta;Contabilizzazione;"
-                + "Famiglia;Categoria;Valuta;Importo;Tipo;Stato;Persona;Note;Fonte\r\n");
+                + "Famiglia;Categoria;Valuta;Importo;Tipo;Stato;Persona;Note;Fonte;"
+                + "Esercizio;Necessità;Natura;Detrazione;Etichette;Rimborso da;Rifarei\r\n");
         for (Tx t : all()) {
             String account = t.account.isEmpty() ? t.accountUser : t.account;
             String[] f = {"" + t.id, t.date, t.operation, t.details, account, t.status, t.family, t.category,
                     t.currency, BigDecimal.valueOf(t.cents, 2).toPlainString().replace('.', ','),
-                    t.kind, t.state, t.person, t.note, t.source};
+                    t.kind, t.state, t.person, t.note, t.source,
+                    ex(t, "merchant"), ex(t, "need"), ex(t, "nature"), ex(t, "tax"), ex(t, "tags"), ex(t, "refund"), ex(t, "rating")};
             for (int i = 0; i < f.length; i++) {
                 if (i > 0) sb.append(';');
                 String s = f[i] == null ? "" : f[i];
@@ -675,6 +727,18 @@ public class Store extends SQLiteOpenHelper {
             sb.append("\r\n");
         }
         return sb.toString();
+    }
+
+    /** Campo extra come testo (le liste diventano "a, b"). */
+    private static String ex(Tx t, String key) {
+        Object v = parseExtra(t.extra).opt(key);
+        if (v instanceof JSONArray) {
+            JSONArray a = (JSONArray) v;
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < a.length(); i++) sb.append(i > 0 ? ", " : "").append(a.optString(i));
+            return sb.toString();
+        }
+        return v == null ? "" : v.toString();
     }
 
     /** Usato dal ripristino: nomi tabelle attese in un backup di una certa versione. */

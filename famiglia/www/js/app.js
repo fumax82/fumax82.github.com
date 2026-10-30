@@ -27,13 +27,14 @@ const S = {
   page: 'home',
   month: '',          // mese selezionato "AAAA-MM" ('' = tutti)
   query: '', filterState: 'active', filterAccount: '', filterCat: '', filterFamily: '', filterPerson: '',
+  filterExtra: {},    // filtri sui campi extra (necessità, etichette...)
   limit: 80,
   sub: {},            // sotto-schede di ogni schermata (es. S.sub.reports = 'alerts')
   loaded: false
 };
 const Screens = {};
 const $ = id => document.getElementById(id);
-const C = Classify, G = Gaps, F = Finance, L = Links, R = Receipts, U = Util;
+const C = Classify, G = Gaps, F = Finance, L = Links, R = Receipts, U = Util, FL = Fields;
 
 // ---------------------------------------------------------------------
 // Formattazione
@@ -82,17 +83,21 @@ function derive() {
 
 let lastRuleSignature = '';
 /**
- * Applica in automatico le regole ai movimenti nuovi o non classificati da te.
+ * Completa in automatico i movimenti nuovi o non toccati da te:
+ *  1. MEMORIA ESERCIZI: prendono tutti i dati dell'ultimo movimento dello
+ *     stesso esercizio che hai compilato tu (vedi fields.js)
+ *  2. REGOLE: per gli altri
  * La "firma" evita di ripetere all'infinito la stessa richiesta.
  */
 function applyRulesAutomatically() {
-  const edits = C.pendingRuleEdits(S.data.transactions, pref('rules', []));
+  const edits = FL.autoEdits(S.data.transactions, S.prefs);
   if (!edits.length) return;
   const sig = JSON.stringify(edits);
   if (sig === lastRuleSignature) return;
   lastRuleSignature = sig;
-  act('bulkEdit', { items: edits, reason: 'Regole automatiche', silent: true });
-  notice(edits.length + (edits.length === 1 ? ' movimento classificato' : ' movimenti classificati') + ' dalle tue regole');
+  act('bulkEdit', { items: edits, reason: 'Memoria esercizi e regole', silent: true });
+  const mem = edits.filter(e => String(e.classifiedBy).startsWith('merchant:')).length;
+  notice([mem ? mem + ' completati dalla memoria esercizi' : '', edits.length - mem ? (edits.length - mem) + ' classificati dalle regole' : ''].filter(Boolean).join(' · '));
 }
 
 /** Chiamata dal database ogni volta che i dati cambiano. */
@@ -213,6 +218,11 @@ function monthControl() {
     + '</select><span>' + (S.month ? (covered ? 'Periodo coperto dai file' : 'Mese parziale') : 'Tutto lo storico') + '</span></div>';
 }
 
+/** Nome da mostrare: l'esercizio indicato da te oppure la descrizione della banca. */
+function title(t) {
+  return (t.extra && t.extra.merchant) || t.details || t.operation;
+}
+
 /** Una riga movimento (tocca per aprire il dettaglio). */
 function txrow(t, extra) {
   if (!t) return '';
@@ -221,7 +231,7 @@ function txrow(t, extra) {
   const label = (fam ? fam + ' › ' : '') + (t.category || 'Da classificare');
   const miss = C.missingInfo(t, S.tax);
   return '<div class="tx" role="button" tabindex="0" onclick="detail(' + t.id + ')" onkeydown="if(event.key===\'Enter\')detail(' + t.id + ')">'
-    + '<div class="txicon">' + glyph + '</div><div class="txmain"><strong>' + esc(t.details || t.operation) + '</strong>'
+    + '<div class="txicon">' + glyph + '</div><div class="txmain"><strong>' + esc(title(t)) + '</strong>'
     + '<small>' + fmt(t.date) + ' · ' + esc(label) + (U.account(t) ? ' · ' + esc(U.account(t)) : '') + '</small>'
     + (t.status === 'NO' ? '<small class="orange">' + (t.state === 'replaced' ? 'Riconciliato' : 'In attesa') + '</small>' : '')
     + (t.state === 'excluded' ? '<small class="red">Escluso dai totali</small>' : '')
@@ -362,6 +372,35 @@ function classify(ids, set, ask) {
   if (ids.length === 1) act('edit', Object.assign({ id: ids[0], classifiedBy: 'user' }, clean));
   else act('bulkEdit', { items: ids.map(id => Object.assign({ id, classifiedBy: 'user' }, clean)), reason: 'Classificazione manuale' });
   if (ask && (clean.category || clean.family || clean.accountUser)) setTimeout(() => askRemember(txById(ids[0]), clean), 250);
+}
+
+/**
+ * Memoria esercizi: da adesso in poi i NUOVI movimenti di questi esercizi
+ * prenderanno i dati in automatico; quelli già presenti li decidi tu.
+ */
+function markMemory(list) {
+  const since = Object.assign({}, pref('memorySince', {}));
+  const maxId = Math.max(0, ...S.data.transactions.map(t => t.id));
+  for (const t of list) since[FL.profileKey(t)] = maxId;
+  put('memorySince', since);
+}
+
+/**
+ * Salva i campi di UN movimento e poi propone di copiarli sui movimenti
+ * dello stesso esercizio o simili (finestra in screens/copy.js).
+ * after = { campo: valore } come in Fields.FIELDS (es. { class: {...}, need: 'utile' })
+ */
+function saveFields(id, after) {
+  const t = txById(id);
+  if (!t) return;
+  const before = FL.snapshot(t, S.tax);
+  const edited = {};
+  for (const key in after) if (!FL.same(before[key], after[key], key)) edited[key] = after[key];
+  if (!Object.keys(edited).length) { notice('Nessuna modifica'); return; }
+  markMemory([t]);
+  act('edit', Object.assign({ id, classifiedBy: 'user' }, FL.toEdit(edited)));
+  const toCopy = FL.changed(before, after); // solo valori compilati (non quelli cancellati)
+  if (Object.keys(toCopy).length) setTimeout(() => offerCopy(t, toCopy, before), 200);
 }
 
 /**

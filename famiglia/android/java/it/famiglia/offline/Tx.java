@@ -32,6 +32,7 @@ public class Tx {
     public String accountUser = ""; // conto/carta indicata da te quando manca nel file
     public String classifiedBy = "";// chi ha classificato: bank, user, rule:<id>
     public String source = "bank";  // bank = da file, manual = inserito a mano (contanti)
+    public String extra = "{}";     // campi manuali aggiuntivi in JSON (necessità, etichette, ...)
 
     // --- Stato ---
     public String state = "active"; // active, replaced (riconciliato), excluded

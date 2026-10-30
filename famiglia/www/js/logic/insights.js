@@ -187,6 +187,42 @@
         text: eur(-x.tx.cents) + ', oltre 3 volte la mediana della categoria ' + (x.tx.category || '') + ' (' + eur(x.median) + ').', tip: '', ids: [x.tx.id] });
     }
 
+    // 13) Spese superflue (campo "Necessità" indicato da te)
+    const curExp = cur.filter(t => F.booked(t) && t.kind === 'expense' && t.cents < 0);
+    const sup = curExp.filter(t => (t.extra || {}).need === 'superflua');
+    const supTotal = -U.sum(sup, t => t.cents), expTotal = -U.sum(curExp, t => t.cents);
+    if (supTotal >= 3000 && expTotal > 0 && supTotal / expTotal >= 0.15) {
+      add({ id: 'superflue:' + m, level: supTotal / expTotal >= 0.25 ? 'alta' : 'media', icon: '✂', title: 'Spese superflue: ' + Math.round(supTotal / expTotal * 100) + '% del mese',
+        text: eur(supTotal) + ' in spese che hai indicato come superflue.', tip: 'Ridurle di un terzo libererebbe circa ' + eur(supTotal * 4) + ' all\'anno.',
+        ids: sup.map(t => t.id), saving: Math.round(supTotal * 4) });
+    }
+
+    // 14) Spese che non rifaresti (ultimi 90 giorni)
+    const regret = booked.filter(t => (t.extra || {}).rating === 'no' && t.date >= U.addDays(todayIso || U.today(), -90));
+    if (regret.length >= 2) {
+      add({ id: 'regret:' + regret.length, level: 'info', icon: '👎', title: regret.length + ' spese che non rifaresti negli ultimi 3 mesi',
+        text: 'Totale ' + eur(-U.sum(regret, t => t.cents)) + '.', tip: 'Prima di un acquisto simile, aspetta 48 ore: spesso la voglia passa.', ids: regret.map(t => t.id) });
+    }
+
+    // 15) Rimborsi attesi da più di 30 giorni
+    const waiting = all.filter(t => t.state === 'active' && (t.extra || {}).refund && U.daysBetween(t.date, todayIso || U.today()) > 30
+      && !links.some(l => l.type === 'refund' && l.to === t.id));
+    if (waiting.length) {
+      add({ id: 'refundwait:' + waiting.map(t => t.id).join(','), level: 'media', icon: '⏳', title: waiting.length + ' rimborsi attesi da più di 30 giorni',
+        text: 'Totale ' + eur(-U.sum(waiting, t => t.cents)) + ' da ricevere.', tip: 'Sollecita il rimborso; quando arriva, collegalo alla spesa dal dettaglio.', ids: waiting.map(t => t.id) });
+    }
+
+    // 16) Promemoria 730 (da marzo a giugno)
+    const today = todayIso || U.today(), mm = +today.slice(5, 7);
+    if (mm >= 3 && mm <= 6) {
+      const lastYear = String(+today.slice(0, 4) - 1);
+      const tax = booked.filter(t => t.date.startsWith(lastYear) && (t.extra || {}).tax);
+      if (tax.length) {
+        add({ id: '730:' + lastYear, level: 'info', icon: '🧾', title: 'Dichiarazione dei redditi: ' + eur(-U.sum(tax, t => t.cents)) + ' di spese detraibili ' + lastYear,
+          text: tax.length + ' spese segnate come detraibili.', tip: 'Controlla che siano nel 730 precompilato e conserva le ricevute.', ids: tax.map(t => t.id) });
+      }
+    }
+
     const order = { alta: 0, media: 1, info: 2 };
     return out.sort((a, b) => order[a.level] - order[b.level]);
   }

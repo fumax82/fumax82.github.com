@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.Native) return; // nel telefono non serve
-  const KEY = 'famiglia-demo-v2';
+  const KEY = 'famiglia-demo-v3';
   const U = window.Util;
   let db = null;
   const photos = {}; // foto scontrini (solo in memoria)
@@ -35,7 +35,7 @@
     const t = {
       id: db.nextId++, occurrence: 1, date, cents, operation, details, account: account || '', currency: 'EUR', status: status || 'SI',
       originalCategory: category || '', category: category || '', note: '', person: 'Famiglia', state: 'active', replaced: 0,
-      family: '', accountUser: '', classifiedBy: category ? 'bank' : '', source: 'bank',
+      family: '', accountUser: '', classifiedBy: category ? 'bank' : '', source: 'bank', extra: {},
       raw: { Data: date, Operazione: operation, Dettagli: details, 'Conto o carta': account || '', Categoria: category || '', Importo: (cents / 100).toFixed(2) }
     };
     t.kind = kindOf(t);
@@ -113,6 +113,11 @@
       t.cents = -total;
       db.receipts.push({ id: db.nextReceipt++, txId: t.id, created: t.date, shop: t.details.split(' ')[0].replace(/^./, c => c) , date: t.date, total, items, photos: 0 });
     });
+    // Un esercizio già compilato da te: la memoria esercizi completerà gli altri pagamenti al bar
+    const bar = tx.filter(t => t.details === 'BAR CENTRALE').pop();
+    Object.assign(bar, { classifiedBy: 'user', family: 'Ristoranti e bar', category: 'Bar e caffè', extra: { merchant: 'Bar Centrale', need: 'superflua', nature: 'variabile' } });
+    const mutuo = tx.filter(t => /MUTUO/.test(t.details)).pop();
+    Object.assign(mutuo, { classifiedBy: 'user', family: 'Casa', category: 'Mutuo e affitto', extra: { need: 'essenziale', nature: 'fissa', tax: 'mutuo' } });
     db.audit.push({ date: today, action: 'Anteprima', detail: 'Dati dimostrativi generati' });
   }
 
@@ -123,6 +128,7 @@
   function load() {
     try { db = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { db = null; }
     if (!db || !db.transactions) { seedData(); save(); }
+    for (const t of db.transactions) if (!t.extra) t.extra = {};
   }
 
   /** Stessa struttura di Store.snapshot() in Java. */
@@ -144,7 +150,21 @@
   const byId = id => db.transactions.find(t => t.id === id);
   const log = (action, detail) => db.audit.push({ date: new Date().toISOString(), action, detail: String(detail).slice(0, 300) });
   const EDITABLE = ['category', 'kind', 'note', 'person', 'family', 'accountUser', 'classifiedBy'];
-  const editOne = o => { const t = byId(o.id); if (t) for (const k of EDITABLE) if (k in o) t[k] = o[k]; };
+  /** Come Store.mergeExtra in Java: un valore vuoto cancella il campo. */
+  const mergeExtra = (cur, changes) => {
+    const out = Object.assign({}, cur);
+    for (const k in changes) {
+      const v = changes[k];
+      if (v === '' || v == null || (Array.isArray(v) && !v.length)) delete out[k]; else out[k] = v;
+    }
+    return out;
+  };
+  const editOne = o => {
+    const t = byId(o.id);
+    if (!t) return;
+    for (const k of EDITABLE) if (k in o) t[k] = o[k];
+    if (o.extra) t.extra = mergeExtra(t.extra || {}, o.extra);
+  };
 
   /** Esegue un comando come farebbe Bridge.java. */
   function action(cmd, o) {
@@ -161,6 +181,7 @@
         let t = o.id ? byId(o.id) : null;
         if (!t) { t = makeTx(o.date, o.cents, o.operation, o.details, o.account || 'Contanti', o.category); t.id = db.nextId++; db.transactions.push(t); }
         Object.assign(t, { date: o.date, cents: o.cents, operation: o.operation, details: o.details, category: o.category || '', family: o.family || '', kind: o.kind || 'expense', person: o.person || 'Famiglia', note: o.note || '', source: 'manual', classifiedBy: 'user', status: 'SI' });
+        if (o.extra) t.extra = mergeExtra(t.extra || {}, o.extra);
         if (o.link) {
           db.links = db.links.filter(l => !(l.from === t.id && l.type === o.link.type));
           db.links.push({ id: db.nextLink++, type: o.link.type, from: t.id, to: o.link.to || 0, cents: o.link.cents || -t.cents, note: o.link.note || '', created: U.today() });

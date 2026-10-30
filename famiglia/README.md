@@ -1,9 +1,25 @@
-# Famiglia 2.0 — finanze di famiglia, offline
+# Famiglia 2.1 — finanze di famiglia, offline
 
 App Android per analizzare entrate e uscite importando gli estratti Excel di Intesa Sanpaolo.
 Tutto resta sul telefono: nessun permesso Internet, database locale, backup cifrato.
 
-**APK pronto da installare:** [`dist/Famiglia-2.0.apk`](dist/Famiglia-2.0.apk)
+**APK pronto da installare:** [`dist/Famiglia-2.1.apk`](dist/Famiglia-2.1.apk)
+
+---
+
+## Novità della versione 2.1
+
+| Funzione | Cosa fa |
+|---|---|
+| **Copia sui movimenti simili** | Appena salvi un movimento, l'app mostra gli altri movimenti dello **stesso esercizio**, della **stessa insegna** in altri punti vendita e dello **stesso tipo di servizio** (es. Anthropic → OpenAI, Gemini). Per ognuno vedi i campi "valore attuale → nuovo valore", ciascuno con la sua spunta: togli quelli che non sono in comune. Un tocco su un campo in alto lo accende o spegne per tutti. |
+| **Modifica di un esercizio già compilato** | Se cambi i dati di un movimento, l'app chiede se aggiornare anche gli altri. Quelli che avevano lo stesso valore vecchio sono già spuntati; quelli in cui avevi scelto a mano un valore diverso no. |
+| **Memoria esercizi** | I movimenti **nuovi** di un esercizio che hai già compilato ricevono in automatico tutti i suoi dati: categoria, conto, necessità, natura, detrazione, nome. Quelli già presenti li decidi tu nella finestra di copia. Si disattiva da *Impostazioni*. |
+| **Nuovi campi per i report** | *Esercizio* (nome leggibile), *Necessità* (essenziale / utile / superflua), *Natura* (fissa / variabile / una tantum), *Detrazione 730*, *Etichette / progetto*, *Da farsi rimborsare da*, *Rifarei questa spesa?* |
+| **Dettagli rapidi** | In *Da fare*: un tocco assegna necessità o natura a tutte le spese di un esercizio. |
+| **Report "Abitudini"** | In *Analisi*: spese per necessità e per natura, spese che non rifaresti, costo di ogni progetto, detrazioni 730 dell'anno, rimborsi attesi, esercizi dove spendi di più. Ci sono nuovi filtri in *Movimenti* e nuovi avvisi (superflue, rimborsi in ritardo, promemoria 730). |
+| **Scontrini letti meglio** | L'app ritaglia il foglio dalla foto e lo porta alla dimensione giusta. Lo converte in bianco e nero, eliminando le filigrane stampate sul retro della carta. Riconosce la colonna IVA, le offerte, le righe "2x2,90" e le insegne anche lette con errori, o dal sito stampato (www.cadoro.it). Se i conti non tornano riprova da sola, e accetta le foto in qualsiasi ordine. Provato su scontrini veri NaturaSì e Cadoro: tutti i prodotti, i prezzi e i totali sono corretti. |
+
+**Aggiornare dalla 2.0**: installa direttamente la 2.1 sopra la 2.0, perché la firma è la stessa. I dati restano e il database si aggiorna da solo.
 
 ---
 
@@ -42,14 +58,14 @@ Così i totali non contano due volte gli stessi soldi e non li perdono.
 
 ---
 
-## ⚠️ Installazione: leggere prima di disinstallare la 1.0
+## ⚠️ Installazione dalla 1.0: leggere prima di disinstallare
 
 La 2.0 è firmata con una **chiave diversa** dalla 1.0, perché la chiave originale non era disponibile.
 Android quindi non la installa sopra la vecchia app. Per non perdere i dati:
 
 1. Nella **1.0**: *Spazio › Backup cifrato*. Salva il file `.fmb` e ricorda la password.
 2. Disinstalla la 1.0.
-3. Installa `Famiglia-2.0.apk`. Android chiederà di consentire l'installazione da questa fonte.
+3. Installa `Famiglia-2.1.apk`. Android chiederà di consentire l'installazione da questa fonte.
 4. Nella **2.0**: *Altro › Impostazioni e backup › Ripristina* e scegli il file `.fmb`.
    Il database viene aggiornato automaticamente al nuovo formato.
 
@@ -83,12 +99,13 @@ famiglia/
 │   ├── js/logic/               CALCOLI PURI, senza grafica (testati)
 │   │   ├── util.js             date, importi, piccole utilità
 │   │   ├── classify.js         famiglie/categorie, dizionario (AI…), regole, cose da completare, ricorrenze
+│   │   ├── fields.js           ELENCO DEI CAMPI, copia sui movimenti simili, memoria esercizi
 │   │   ├── gaps.js             analisi dei buchi tra importazioni
 │   │   ├── finance.js          totali, categorie, mesi, contanti non tracciati
 │   │   ├── links.js            collegamenti: contanti↔prelievi, giroconti, rimborsi
 │   │   ├── insights.js         avvisi su sprechi e abitudini
-│   │   └── receipts.js         lettura del testo degli scontrini, reparti, analisi prodotti
-│   ├── js/ocr.js               fotocamera → testo (Tesseract, offline)
+│   │   └── receipts.js         lettura del testo degli scontrini, insegne, reparti, analisi prodotti
+│   ├── js/ocr.js               foto → ritaglio e pulizia → testo (Tesseract, offline), più tentativi
 │   ├── js/app.js               stato, comunicazione con Android, componenti comuni
 │   ├── js/screens/*.js         una schermata per file (home, todo, imports, receipts, cash…)
 │   ├── js/demo.js              database finto per l'anteprima sul PC
@@ -104,7 +121,7 @@ famiglia/
 │   │   ├── Tx.java             un movimento
 │   │   └── Backup.java         backup cifrato AES-256 (compatibile con la 1.0)
 │   └── res-compiled/           icona e risorse già compilate
-├── tests/logic.test.js         test automatici della logica
+├── tests/                      test automatici (logica, copia campi, scontrini veri in tests/fixtures/)
 └── tools/
     ├── build_apk.sh            crea l'APK firmato con un comando
     ├── axml.py                 converte il manifest nel formato binario Android
@@ -119,6 +136,9 @@ famiglia/
 - **Cambiare le soglie dei buchi**: in `www/js/logic/gaps.js` modifica la funzione `priority`.
 - **Nuovo avviso**: in `www/js/logic/insights.js` aggiungi un blocco `add({...})` dentro `compute`.
 - **Nuovo reparto prodotti**: in `www/js/logic/receipts.js` modifica `DEPARTMENTS`.
+- **Nuova insegna di negozio**: in `www/js/logic/receipts.js` aggiungi una riga in `SHOPS`.
+- **Nuovo campo manuale** (es. "Canale: online/negozio"): aggiungilo in `FIELDS` dentro `www/js/logic/fields.js`.
+  Dettaglio, finestra di copia, memoria e filtri lo useranno da soli; per l'esportazione CSV aggiungilo anche in `Store.csv()`.
 - **Colori**: le variabili sono in cima a `www/css/style.css`.
 
 ---

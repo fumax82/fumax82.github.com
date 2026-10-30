@@ -94,12 +94,12 @@ async function readPhotos() {
   window.onModalClose = null;
   modal('Lettura dello scontrino', '<p class="sub" id="ocrMsg">Avvio…</p><div class="progress"><div id="ocrBar"></div></div><p class="mini">La lettura avviene sul telefono e può richiedere qualche secondo per foto.</p>');
   try {
-    const texts = await OCR.recognize(photos, (p, msg) => {
+    const result = await OCR.readReceipt(photos, (p, msg) => {
       if ($('ocrBar')) $('ocrBar').style.width = p + '%';
       if ($('ocrMsg')) $('ocrMsg').textContent = msg;
     });
-    const text = R.mergeTexts(texts);
-    const parsed = R.parseText(text);
+    const text = result.text;
+    const parsed = result.parsed;
     // Foto ridotte da conservare (occupano meno spazio)
     const small = [];
     for (const p of photos) small.push(await OCR.prepareImage(p, 1200, false));
@@ -206,6 +206,9 @@ function saveReceipt() {
     });
   } else {
     act('saveReceipt', Object.assign(receipt, { txId: Number(pay) || 0 }));
+    // Il nome del negozio letto sullo scontrino diventa il nome dell'esercizio del pagamento
+    const paid = txById(Number(pay));
+    if (paid && receipt.shop && !(paid.extra || {}).merchant) act('edit', { id: paid.id, extra: { merchant: receipt.shop }, classifiedBy: paid.classifiedBy || '' });
     notice('Scontrino salvato con ' + items.length + ' prodotti');
   }
 }

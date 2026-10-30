@@ -14,13 +14,19 @@ Screens.moves = function () {
     .filter(t => !S.filterFamily || C.familyOf(t, S.tax) === S.filterFamily)
     .filter(t => !S.filterCat || t.category === S.filterCat)
     .filter(t => !S.filterPerson || t.person === S.filterPerson)
+    .filter(t => Object.entries(S.filterExtra).every(([k, v]) => {
+      if (!v) return true;
+      const x = (t.extra || {})[k];
+      if (v === '__none') return !x || (Array.isArray(x) && !x.length);
+      return Array.isArray(x) ? x.includes(v) : x === v;
+    }))
     .sort((x, y) => y.date.localeCompare(x.date) || y.id - x.id);
   const accounts = knownAccounts();
   const families = [...new Set(S.data.transactions.map(t => C.familyOf(t, S.tax)).filter(Boolean))].sort();
   const cats = [...new Set(S.data.transactions.map(t => t.category).filter(Boolean))].sort();
   const persons = [...new Set(S.data.transactions.map(t => t.person).filter(Boolean))];
   const opts = (vals, cur, label) => '<option value="">' + esc(label) + '</option>' + vals.map(v => '<option ' + (v === cur ? 'selected' : '') + ' value="' + esc(v) + '">' + esc(v) + '</option>').join('');
-  const active = [S.filterAccount, S.filterFamily, S.filterCat, S.filterPerson].filter(Boolean).length + (S.filterState !== 'active' ? 1 : 0);
+  const active = [S.filterAccount, S.filterFamily, S.filterCat, S.filterPerson].concat(Object.values(S.filterExtra)).filter(Boolean).length + (S.filterState !== 'active' ? 1 : 0);
 
   return '<span class="eyebrow">TUTTO SOTTO CONTROLLO</span><h1>Movimenti</h1>' + monthControl()
     + '<label class="field">Cerca descrizione, note o categoria<input id="search" placeholder="Supermercato, mutuo, Anthropic…" value="' + esc(S.query) + '" onchange="S.query=this.value;render()"></label>'
@@ -33,6 +39,14 @@ Screens.moves = function () {
     + '<label class="field">Famiglia di spesa<select onchange="S.filterFamily=this.value;render()">' + opts(families, S.filterFamily, 'Tutte le famiglie') + '</select></label>'
     + '<label class="field">Categoria<select onchange="S.filterCat=this.value;render()">' + opts(cats, S.filterCat, 'Tutte le categorie') + '</select></label>'
     + '<label class="field">Persona<select onchange="S.filterPerson=this.value;render()">' + opts(persons, S.filterPerson, 'Tutta la famiglia') + '</select></label>'
+    + ['need', 'nature', 'tax', 'rating', 'refund'].map(k => {
+      const f = FL.byKey[k], cur = S.filterExtra[k] || '';
+      return '<label class="field">' + esc(f.label) + '<select onchange="S.filterExtra.' + k + '=this.value;render()"><option value="">Tutti</option>'
+        + f.options.map(([v, l]) => '<option value="' + v + '"' + (cur === v ? ' selected' : '') + '>' + esc(l) + '</option>').join('')
+        + '<option value="__none"' + (cur === '__none' ? ' selected' : '') + '>Non indicato</option></select></label>';
+    }).join('')
+    + '<label class="field">Etichetta / progetto<select onchange="S.filterExtra.tags=this.value;render()">' + opts(knownValues('tags'), S.filterExtra.tags || '', 'Tutte') + '</select></label>'
+    + '<label class="field">Esercizio<select onchange="S.filterExtra.merchant=this.value;render()">' + opts(knownValues('merchant'), S.filterExtra.merchant || '', 'Tutti') + '</select></label>'
     + (active ? '<button class="btn secondary wide" onclick="resetFilters()">Azzera filtri</button>' : '') + '</details>'
     + '<div class="row"><span class="sub">' + a.length + ' movimenti · somma ' + eur(U.sum(a, t => t.cents)) + '</span></div>'
     + '<div class="card">' + (a.length ? a.slice(0, S.limit).map(t => txrow(t)).join('') : '<p class="sub">Nessun movimento per questi filtri.</p>') + '</div>'
@@ -41,7 +55,7 @@ Screens.moves = function () {
 };
 
 function resetFilters() {
-  S.filterState = 'active'; S.filterAccount = ''; S.filterFamily = ''; S.filterCat = ''; S.filterPerson = ''; S.query = '';
+  S.filterState = 'active'; S.filterAccount = ''; S.filterFamily = ''; S.filterCat = ''; S.filterPerson = ''; S.query = ''; S.filterExtra = {};
   render();
 }
 
@@ -70,12 +84,18 @@ function detail(id) {
 
   // Modulo di classificazione
   const preset = sug && !t.category ? sug : { family: t.family || fam, category: t.category };
+  const prof = FL.profiles(S.data.transactions, S.tax)[(t.cents < 0 ? -1 : 1) + '|' + C.merchantKey(t)];
+  if (prof && prof.sourceId !== t.id) {
+    html += '<button class="btn gold wide" onclick="fillFromProfile(' + t.id + ',\'d\')">↺ Copia i dati dal ' + fmt(prof.date) + ' (stesso esercizio)</button>';
+  }
   html += '<label class="field">Famiglia › categoria' + catSelect('dCat', preset.family, preset.category) + '</label>'
     + '<label class="field">Trattamento nei report<select id="dKind">' + Object.entries(KINDS).map(([v, l]) => '<option ' + (t.kind === v ? 'selected' : '') + ' value="' + v + '">' + l + '</option>').join('') + '</select></label>'
     + (!t.account ? '<label class="field">Conto o carta (manca nel file)' + accountSelect('dAcc', t.accountUser) + '</label>' : '')
     + '<label class="field">Persona<input id="dPerson" value="' + esc(t.person) + '"></label>'
-    + '<label class="field">Note / etichette<textarea id="dNote">' + esc(t.note) + '</textarea></label>'
-    + '<button class="btn wide" onclick="saveDetail(' + t.id + ')">Salva classificazione</button>';
+    + '<details' + (t.extra && Object.keys(t.extra).length ? ' open' : '') + '><summary>Dettagli per i report (necessità, natura, etichette…)</summary>' + extraInputs('dX', t) + '</details>'
+    + '<label class="field">Note<textarea id="dNote">' + esc(t.note) + '</textarea></label>'
+    + '<button class="btn wide" onclick="saveDetail(' + t.id + ')">Salva</button>'
+    + '<p class="mini">Dopo il salvataggio ti verranno proposti i movimenti dello stesso esercizio o simili su cui copiare i dati.</p>';
 
   // Collegamenti
   html += '<div class="card"><h3>Collegamenti</h3>' + linksHtml(t, links) + '</div>';
@@ -123,16 +143,15 @@ function linksHtml(t, links) {
   return html || '<p class="sub">Nessun collegamento.</p>';
 }
 
+/** Salva il dettaglio e propone la copia dei campi sui movimenti simili. */
 function saveDetail(id) {
-  const t = txById(id);
   const cat = readCat('dCat');
   if (cat === undefined) return;
-  const set = { kind: $('dKind').value, person: $('dPerson').value.trim() || 'Famiglia', note: $('dNote').value };
-  if (cat) { set.family = cat.family; set.category = cat.category; }
-  if ($('dAcc')) set.accountUser = readAccount('dAcc');
-  const changedClass = cat && (cat.category !== t.category || cat.family !== (t.family || C.familyOf(t, S.tax)));
+  const after = Object.assign({ kind: $('dKind').value, person: $('dPerson').value.trim() || 'Famiglia', note: $('dNote').value }, readExtraInputs('dX'));
+  if (cat) after.class = cat;
+  if ($('dAcc')) after.accountUser = readAccount('dAcc');
   closeModal();
-  classify([id], set, changedClass || (set.accountUser && set.accountUser !== t.accountUser));
+  saveFields(id, after);
 }
 
 function ruleFromDetail(id) {
