@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <!-- Sicurezza: nessuna connessione verso Internet, solo file dell'app.
+       'wasm-unsafe-eval' serve al motore OCR (Tesseract) per leggere gli scontrini. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; connect-src 'self' data: blob:; object-src 'none'; base-uri 'none'">
+  <title>Famiglia</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="mark">f<span>•</span></span><div>famiglia<small>IL TUO SPAZIO FINANZIARIO</small></div></div>
+    <button class="icon" aria-label="Impostazioni" onclick="nav('settings')">⚙</button>
+  </header>
+  <main id="app"></main>
+  <nav id="nav"></nav>
+  <div id="toast" role="status"></div>
+  <div id="modal" hidden></div>
+
+  <!-- 1. Logica (calcoli puri, testati con node --test) -->
+  <script src="js/logic/util.js"></script>
+  <script src="js/logic/classify.js"></script>
+  <script src="js/logic/finance.js"></script>
+  <script src="js/logic/gaps.js"></script>
+  <script src="js/logic/links.js"></script>
+  <script src="js/logic/insights.js"></script>
+  <script src="js/logic/receipts.js"></script>
+  <!-- 2. OCR scontrini (offline) -->
+  <script src="vendor/tesseract/tesseract.min.js"></script>
+  <script src="js/ocr.js"></script>
+  <!-- 3. Interfaccia -->
+  <script src="js/app.js"></script>
+  <script src="js/screens/home.js"></script>
+  <script src="js/screens/moves.js"></script>
+  <script src="js/screens/todo.js"></script>
+  <script src="js/screens/rules.js"></script>
+  <script src="js/screens/imports.js"></script>
+  <script src="js/screens/reports.js"></script>
+  <script src="js/screens/receipts.js"></script>
+  <script src="js/screens/cash.js"></script>
+  <script src="js/screens/plan.js"></script>
+  <script src="js/screens/settings.js"></script>
+  <!-- 4. Anteprima per il browser del PC (nel telefono si disattiva da sola) -->
+  <script src="js/demo.js"></script>
+</body>
+</html>

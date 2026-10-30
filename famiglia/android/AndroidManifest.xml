@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Manifest dell'app Famiglia.
+  Viene convertito in formato binario da tools/axml.py durante la build.
+  I riferimenti alle risorse sono scritti in esadecimale:
+    @android:0x01030241 = tema di sistema "DeviceDefault Light NoActionBar"
+    @0x7f010000         = icona dell'app (res/drawable/icon.xml)
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="it.famiglia.offline"
+    android:versionCode="2"
+    android:versionName="2.0">
+
+    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="34" />
+
+    <!-- Fotocamera: serve SOLO per fotografare gli scontrini (OCR fatto sul telefono). -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <!-- Nessun permesso INTERNET: i dati non lasciano mai il telefono. -->
+
+    <application
+        android:theme="@android:0x01030241"
+        android:label="Famiglia • Finanze"
+        android:icon="@0x7f010000"
+        android:allowBackup="false"
+        android:supportsRtl="true"
+        android:largeHeap="true"
+        android:hardwareAccelerated="true"
+        android:usesCleartextTraffic="false">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="0x4a0"
+            android:windowSoftInputMode="0x10">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

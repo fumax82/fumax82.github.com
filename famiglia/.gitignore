@@ -1,0 +1,5 @@
+# Strumenti scaricati e file intermedi della build
+.build-tools/
+build/
+# Chiave di firma: MAI nel repository pubblico (conservala tu in un posto sicuro)
+keystore/
