@@ -9,7 +9,7 @@ Screens.moves = function () {
   const a = selected()
     .filter(t => S.filterState === 'all' ? true : S.filterState === 'pending' ? (t.state === 'active' && t.status === 'NO')
       : S.filterState === 'missing' ? C.missingInfo(t, S.tax).length > 0 : t.state === S.filterState)
-    .filter(t => !q || U.norm(t.operation + ' ' + t.details + ' ' + t.note + ' ' + t.category).includes(q))
+    .filter(t => !q || U.norm(t.operation + ' ' + t.details + ' ' + t.note + ' ' + t.category + ' ' + title(t) + ' ' + ((subjectOf(t) || {}).description || '')).includes(q))
     .filter(t => !S.filterAccount || (S.filterAccount === 'missing' ? !U.account(t) : U.account(t) === S.filterAccount))
     .filter(t => !S.filterFamily || C.familyOf(t, S.tax) === S.filterFamily)
     .filter(t => !S.filterCat || t.category === S.filterCat)
@@ -72,7 +72,7 @@ function detail(id) {
   const receipts = S.data.receipts.filter(r => r.txId === t.id);
   const by = t.classifiedBy === 'user' ? 'da te' : String(t.classifiedBy).startsWith('rule:') ? 'da una regola' : t.classifiedBy === 'bank' ? 'dalla banca' : 'non classificato';
 
-  let html = '<div class="value" style="font-size:30px;margin:12px 0">' + eur(t.cents) + '</div>'
+  let html = subjectBox(t) + '<div class="value" style="font-size:30px;margin:12px 0">' + eur(t.cents) + '</div>'
     + '<p class="sub">' + fmt(t.date) + ' · ' + (t.status === 'SI' ? 'Contabilizzato' : 'Non contabilizzato') + ' · ' + esc(KINDS[t.kind] || t.kind)
     + (t.source === 'manual' ? ' · inserito a mano' : '') + '</p>'
     + (t.details && t.operation ? '<p class="detail"><b>' + esc(t.operation) + '</b><br>' + esc(t.details) + '</p>' : '')
@@ -88,7 +88,7 @@ function detail(id) {
   if (prof && prof.sourceId !== t.id) {
     html += '<button class="btn gold wide" onclick="fillFromProfile(' + t.id + ',\'d\')">↺ Copia i dati dal ' + fmt(prof.date) + ' (stesso esercizio)</button>';
   }
-  html += '<label class="field">Famiglia › categoria' + catSelect('dCat', preset.family, preset.category) + '</label>'
+  html += '<label class="field">Famiglia › categoria' + catSelect('dCat', preset.family, preset.category, sug ? [{ family: sug.family, category: sug.category, reason: 'proposta' }] : []) + '</label>'
     + '<label class="field">Trattamento nei report<select id="dKind">' + Object.entries(KINDS).map(([v, l]) => '<option ' + (t.kind === v ? 'selected' : '') + ' value="' + v + '">' + l + '</option>').join('') + '</select></label>'
     + (!t.account ? '<label class="field">Conto o carta (manca nel file)' + accountSelect('dAcc', t.accountUser) + '</label>' : '')
     + '<label class="field">Persona<input id="dPerson" value="' + esc(t.person) + '"></label>'
@@ -111,7 +111,7 @@ function detail(id) {
         : '<button class="btn secondary" onclick="act(\'undo\',{id:' + t.id + '});closeModal()">Ripristina</button>')
     + '</div><details><summary>Tutti i campi originali</summary><pre class="detail">' + esc(JSON.stringify(t.raw, null, 2)) + '</pre>'
     + '<p class="sub">Occorrenza ' + t.occurrence + (t.replaced ? ' · Sostituito dal movimento #' + t.replaced : '') + ' · id ' + t.id + '</p></details>';
-  modal(t.details || t.operation, html);
+  modal(title(t), html);
 }
 
 /** Descrive i collegamenti del movimento e propone quelli possibili. */

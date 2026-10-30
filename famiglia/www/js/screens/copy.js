@@ -17,22 +17,33 @@
 const GROUP_LABEL = {
   merchant: 'Stesso esercizio',
   brand: 'Stessa insegna, altro punto vendita',
-  type: 'Stesso tipo di servizio'
+  type: 'Stesso tipo di servizio',
+  subject: 'Movimenti del soggetto'
 };
+
+/** Campi che una scheda soggetto può assegnare (non quelli del singolo acquisto). */
+const SUBJECT_KEYS = ['class', 'kind', 'accountUser', 'person', 'need', 'nature', 'tax', 'tags'];
 
 let cp = null; // stato della finestra di copia
 
 /** Apre la finestra di copia per i valori appena salvati su "source". */
 function offerCopy(source, values, before) {
   const rows = FL.proposals(source, values, S.data.transactions, S.tax, before);
-  if (!rows.length) {
+  const sj = subjectOf(source);
+  if (!rows.length && !(sj && subjectDiffers(sj, values))) {
     // Nessun altro movimento da aggiornare: basta la memoria esercizi
     const mem = pref('merchantMemory', true) !== false && Object.keys(values).some(k => FL.byKey[k] && FL.byKey[k].memory);
-    notice(mem ? 'Salvato. I prossimi movimenti di questo esercizio riceveranno questi dati in automatico.' : 'Salvato');
+    notice(sj ? 'Salvato' : mem ? 'Salvato. I prossimi movimenti di questo esercizio riceveranno questi dati in automatico.' : 'Salvato');
     return;
   }
-  cp = { source, values, rows, limit: { merchant: 30, brand: 15, type: 15 } };
+  cp = { source, values, rows, limit: { merchant: 30, brand: 15, type: 15, subject: 40 } };
   renderCopy();
+}
+
+/** I valori appena salvati sono diversi da quelli della scheda del soggetto? */
+function subjectDiffers(sj, values) {
+  const cur = SJ.values(sj);
+  return SUBJECT_KEYS.some(k => values[k] !== undefined && !FL.same(cur[k] === undefined ? (k === 'class' ? { family: '', category: '' } : '') : cur[k], values[k], k));
 }
 
 function renderCopy() {
@@ -40,21 +51,24 @@ function renderCopy() {
   const keys = Object.keys(cp.values);
   // Etichette in alto: stato "acceso" se il campo è spuntato in almeno una riga
   const fieldOn = k => cp.rows.some(r => r.changes.some(c => c.key === k && c.checked));
-  let html = '<p class="sub">Hai impostato in <b>' + esc(title(s)) + '</b>:</p><div>'
+  let html = (cp.subject
+    ? '<p class="sub">' + typeIcon(cp.subject.type) + ' Il soggetto <b>' + esc(cp.subject.name) + '</b> assegna ai suoi movimenti:</p><div>'
+    : '<p class="sub">Hai impostato in <b>' + esc(title(s)) + '</b>:</p><div>')
     + keys.map(k => '<button class="chip ' + (fieldOn(k) ? 'ok' : '') + '" onclick="copyToggleField(' + jsArg(k) + ')">'
       + (fieldOn(k) ? '✓ ' : '○ ') + esc(FL.byKey[k].label) + ': <b>' + esc(FL.format(cp.values[k], k)) + '</b></button>').join('')
     + '</div><p class="mini">Tocca un campo per copiarlo o non copiarlo su tutti. Sotto puoi scegliere movimento per movimento.</p>';
 
-  for (const g of ['merchant', 'brand', 'type']) {
+  for (const g of ['subject', 'merchant', 'brand', 'type']) {
     const rows = cp.rows.map((r, i) => Object.assign({ i }, r)).filter(r => r.group === g);
     if (!rows.length) continue;
-    html += '<div class="row" style="margin-top:16px"><h3 style="margin:0">' + GROUP_LABEL[g] + ' (' + rows.length + ')</h3>'
+    html += '<div class="row" style="margin-top:16px"><h3 style="margin:0">' + (g === 'subject' ? 'Movimenti di "' + esc(cp.subject.name) + '"' : GROUP_LABEL[g]) + ' (' + rows.length + ')</h3>'
       + '<span><button class="link" onclick="copyGroup(\'' + g + '\',true)">Tutti</button> · <button class="link" onclick="copyGroup(\'' + g + '\',false)">Nessuno</button></span></div>';
     html += rows.slice(0, cp.limit[g]).map(r => {
       const t = r.tx, any = r.changes.some(c => c.checked);
       return '<div class="card" style="padding:12px;margin:8px 0">'
         + '<label class="check" style="margin:0"><input type="checkbox" ' + (any ? 'checked' : '') + ' onchange="copyRow(' + r.i + ',this.checked)">'
-        + '<span style="flex:1"><b>' + esc(title(t)) + '</b><br><span class="mini">' + fmt(t.date) + ' · ' + eur(t.cents) + (U.account(t) ? ' · ' + esc(U.account(t)) : '') + '</span></span></label>'
+        + '<span style="flex:1"><b>' + esc(title(t)) + '</b><br><span class="mini">' + fmt(t.date) + ' · ' + eur(t.cents) + (U.account(t) ? ' · ' + esc(U.account(t)) : '')
+        + (title(t) !== (t.details || t.operation) ? '<br><i>' + esc(t.details || t.operation) + '</i>' : '') + '</span></span></label>'
         + r.changes.map((c, j) => '<label class="check" style="margin:6px 0 0 30px;font-size:12px"><input type="checkbox" data-row="' + r.i + '" data-key="' + esc(c.key) + '" '
           + (c.checked ? 'checked' : '') + ' onchange="copyChange(' + r.i + ',' + j + ',this.checked)"><span>' + esc(c.label) + ': <span class="mini">' + esc(FL.format(c.from, c.key))
           + '</span> → <b>' + esc(FL.format(c.to, c.key)) + '</b>' + (!FL.isEmpty(c.from, c.key) && !c.checked ? ' <span class="chip">valore diverso già presente</span>' : '') + '</span></label>').join('')
@@ -64,20 +78,34 @@ function renderCopy() {
   }
 
   // Regola facoltativa per i servizi dello stesso tipo (es. tutti gli abbonamenti AI)
-  const dict = C.dictionaryMatch(s);
-  if (cp.values.class && cp.rows.some(r => r.group !== 'merchant')) {
+  const dict = s ? C.dictionaryMatch(s) : null;
+  if (s && cp.values.class && cp.rows.some(r => r.group !== 'merchant')) {
     const words = [C.mainToken(s)].concat(cp.rows.filter(r => r.group !== 'merchant').map(r => C.mainToken(r.tx)));
     const text = [...new Set(words.filter(w => w && w.length >= 3))].slice(0, 6).join('|');
     html += '<label class="check" style="margin-top:16px"><input type="checkbox" id="cpRule"' + (dict ? ' checked' : '') + '><span>Crea anche una regola per i <b>prossimi</b> movimenti: le descrizioni che contengono '
       + '<input id="cpRuleText" value="' + esc(text) + '" style="width:100%;margin-top:6px;border:1px solid #dce4dc;border-radius:8px;padding:8px"> andranno in <b>'
       + esc(FL.format(cp.values.class, 'class')) + '</b></span></label>';
   }
-  const memory = pref('merchantMemory', true) !== false && keys.some(k => FL.byKey[k].memory);
+  // Scheda del soggetto: aggiornarla o crearla, così valgono anche i movimenti futuri
+  const sj = s ? subjectOf(s) : null;
+  if (s && sj && subjectDiffers(sj, cp.values)) {
+    html += '<label class="check" style="margin-top:16px"><input type="checkbox" id="cpSubjUpd" checked onchange="copyCount()"><span>' + typeIcon(sj.type) + ' Aggiorna anche la scheda del soggetto <b>' + esc(sj.name)
+      + '</b>: i suoi prossimi movimenti useranno questi dati</span></label>';
+  } else if (s && !sj) {
+    const keysForSubject = keys.filter(k => SUBJECT_KEYS.includes(k));
+    if (keysForSubject.length) {
+      html += '<label class="check" style="margin-top:16px"><input type="checkbox" id="cpSubjNew"' + (cp.rows.some(r => r.group === 'merchant') ? ' checked' : '') + ' onchange="copyCount()"><span>👤 Crea il soggetto '
+        + '<input id="cpSubjName" value="' + esc(SJ.suggestedName(s)) + '" style="width:100%;margin-top:6px;border:1px solid #dce4dc;border-radius:8px;padding:8px">'
+        + ' con questi dati: riconoscerà da solo i suoi movimenti futuri e potrai dargli una descrizione</span></label>';
+    }
+  }
+  const memory = s && !sj && pref('merchantMemory', true) !== false && keys.some(k => FL.byKey[k].memory);
   html += (memory ? '<p class="mini">🧠 Memoria esercizi attiva: i prossimi movimenti di "' + esc(title(s)) + '" riceveranno questi dati in automatico.</p>' : '')
+    + (cp.subject && cp.subject.auto !== false ? '<p class="mini">🔄 I prossimi movimenti di "' + esc(cp.subject.name) + '" riceveranno questi dati da soli.</p>' : '')
     + '<button class="btn wide" id="cpApply" onclick="copyApply()"></button>'
-    + '<button class="btn secondary wide" style="margin-top:8px" onclick="closeModal()">Solo questo movimento</button>';
+    + '<button class="btn secondary wide" style="margin-top:8px" onclick="closeModal()">' + (cp.subject ? 'Non ora' : 'Solo questo movimento') + '</button>';
   const scroll = $('modal').hidden ? 0 : $('modal').scrollTop;
-  modal('Copiare anche su altri movimenti?', html);
+  modal(cp.subject ? 'Assegnare i dati di "' + cp.subject.name + '"?' : cp.rows.length ? 'Copiare anche su altri movimenti?' : 'Aggiornare la scheda del soggetto?', html);
   $('modal').scrollTop = scroll;
   copyCount();
 }
@@ -88,8 +116,10 @@ function copyCount() {
   const fields = U.sum(rows, r => r.changes.filter(c => c.checked).length);
   const b = $('cpApply');
   if (!b) return;
-  b.disabled = !rows.length;
-  b.textContent = rows.length ? 'Copia su ' + rows.length + (rows.length === 1 ? ' movimento' : ' movimenti') + ' (' + fields + ' campi)' : 'Nessun campo selezionato';
+  const subj = ($('cpSubjUpd') && $('cpSubjUpd').checked) || ($('cpSubjNew') && $('cpSubjNew').checked);
+  b.disabled = !rows.length && !subj;
+  b.textContent = rows.length ? (cp.subject ? 'Assegna a ' : 'Copia su ') + rows.length + (rows.length === 1 ? ' movimento' : ' movimenti') + ' (' + fields + ' campi)' + (subj ? ' e salva la scheda' : '')
+    : subj ? 'Salva la scheda del soggetto' : 'Nessun campo selezionato';
 }
 
 function copyChange(i, j, on) {
@@ -119,7 +149,25 @@ function copyApply() {
   for (const r of cp.rows) {
     const values = {};
     for (const c of r.changes) if (c.checked) values[c.key] = c.to;
-    if (Object.keys(values).length) items.push(Object.assign({ id: r.tx.id, classifiedBy: 'user' }, FL.toEdit(values)));
+    if (Object.keys(values).length) items.push(Object.assign({ id: r.tx.id, classifiedBy: cp.subject ? 'subject:' + cp.subject.id : 'user' }, FL.toEdit(values)));
+  }
+  // Scheda soggetto: aggiorna o crea con i valori appena scelti
+  const forSubject = {};
+  for (const k of SUBJECT_KEYS) if (cp.values[k] !== undefined && !FL.isEmpty(cp.values[k], k)) forSubject[k] = cp.values[k];
+  const maxId = Math.max(0, ...S.data.transactions.map(t => t.id));
+  if ($('cpSubjUpd') && $('cpSubjUpd').checked) {
+    const sj = subjectOf(cp.source);
+    const upd = Object.assign({}, sj, { set: Object.assign({}, sj.set, forSubject), since: maxId });
+    S.subjects = S.subjects.map(x => (x.id === sj.id ? upd : x));
+    put('subjects', S.subjects);
+  } else if ($('cpSubjNew') && $('cpSubjNew').checked) {
+    const ns = SJ.fromTx(cp.source, forSubject);
+    ns.name = $('cpSubjName').value.trim() || ns.name;
+    ns.since = maxId;
+    S.subjects = S.subjects.concat([ns]);
+    put('subjects', S.subjects);
+    // Il movimento di partenza e quelli dello stesso esercizio ora appartengono al soggetto
+    notice('Soggetto "' + ns.name + '" creato: aprilo da Classifica › Soggetti per aggiungere una descrizione');
   }
   if ($('cpRule') && $('cpRule').checked && $('cpRuleText').value.trim()) {
     const rule = C.ruleFromTx(cp.source, { family: cp.values.class.family, category: cp.values.class.category });
@@ -131,9 +179,10 @@ function copyApply() {
   }
   // Tutti i movimenti mostrati (anche quelli senza spunta) li hai già decisi tu:
   // la memoria esercizi non deve modificarli dopo, solo i movimenti futuri.
-  markMemory(cp.rows.map(r => r.tx));
+  if (cp.source) markMemory(cp.rows.map(r => r.tx));
   closeModal();
-  if (items.length) act('bulkEdit', { items, reason: 'Copia da "' + title(cp.source) + '"' });
+  if (items.length) act('bulkEdit', { items, reason: cp.subject ? 'Soggetto "' + cp.subject.name + '"' : 'Copia da "' + title(cp.source) + '"' });
+  else render();
 }
 
 // ---------------------------------------------------------------------
@@ -164,9 +213,9 @@ function pickChoice(id, v, btn) {
 }
 
 /** HTML dei campi extra di un movimento (prefix = prefisso degli id). */
-function extraInputs(prefix, t) {
+function extraInputs(prefix, t, skip) {
   const ex = t.extra || {};
-  return FL.FIELDS.filter(f => f.extra).map(f => {
+  return FL.FIELDS.filter(f => f.extra && !f.hidden && !(skip || []).includes(f.key)).map(f => {
     const id = prefix + '_' + f.key, v = ex[f.key];
     let input;
     if (f.choice) input = choiceButtons(id, f, v);
@@ -194,11 +243,7 @@ function fillFromProfile(id, prefix) {
   const p = FL.profiles(S.data.transactions, S.tax)[(t.cents < 0 ? -1 : 1) + '|' + C.merchantKey(t)];
   if (!p) return;
   const v = p.values;
-  if (v.class) {
-    const sel = $(prefix + 'Cat'), val = v.class.family + '||' + v.class.category;
-    if (![...sel.options].some(o => o.value === val)) sel.insertAdjacentHTML('beforeend', '<option value="' + esc(val) + '">' + esc(v.class.category) + '</option>');
-    sel.value = val;
-  }
+  if (v.class) setCat(prefix + 'Cat', v.class.family, v.class.category);
   if (v.kind && $(prefix + 'Kind')) $(prefix + 'Kind').value = v.kind;
   if (v.person && $(prefix + 'Person')) $(prefix + 'Person').value = v.person;
   for (const f of FL.FIELDS.filter(x => x.extra && x.memory)) {

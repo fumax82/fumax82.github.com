@@ -129,7 +129,7 @@ test('collegamenti: proposta del prelievo per un pagamento in contanti', () => {
   assert.strictEqual(pairs.length, 1);
 });
 
-test('avvisi: doppioni di abbonamenti AI e addebiti doppi', () => {
+test('avvisi: doppioni di abbonamenti AI (gli addebiti doppi sono nei controlli)', () => {
   const rows = [];
   for (const m of ['01', '02', '03', '04']) {
     rows.push(tx({ date: '2026-' + m + '-03', details: 'ANTHROPIC', cents: -2200, category: 'AI', family: 'Tecnologia e abbonamenti' }));
@@ -140,7 +140,7 @@ test('avvisi: doppioni di abbonamenti AI e addebiti doppi', () => {
   const out = I.compute({ transactions: rows, links: [], prefsParsed: {} }, '2026-04', '2026-04-25');
   const ids = out.map(a => a.id.split(':')[0]);
   assert.ok(ids.includes('dupsubs'), JSON.stringify(ids));
-  assert.ok(ids.includes('dup'));
+  assert.ok(!ids.includes('dup'), 'gli addebiti doppi ora sono nei Controlli sui doppioni (duplicates.js)');
 });
 
 const RECEIPT = `ESSELUNGA S.P.A.

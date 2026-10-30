@@ -6,10 +6,12 @@
  */
 'use strict';
 
-Screens.rules = function () {
+/** Scheda "Regole" della Classifica (per casi avanzati: di solito bastano i soggetti). */
+function rulesHtml() {
   const rules = pref('rules', []);
-  return '<span class="eyebrow">CLASSIFICAZIONE AUTOMATICA</span><h1>Regole</h1>'
-    + '<p class="sub">Le regole vengono controllate dall\'alto in basso: vale la prima che corrisponde. Non modificano mai i movimenti che hai classificato a mano.</p>'
+  return '<div class="hint">Le regole servono per gruppi di parole che valgono per <b>più soggetti</b> (es. "anthropic|openai|gemini → AI"). '
+    + 'Per un singolo negozio o servizio usa i <button class="link" onclick="S.sub.todo=\'subjects\';render()">Soggetti</button>. '
+    + 'Ordine di priorità: tue scelte a mano → soggetti → memoria esercizi → regole (dall\'alto in basso).</div>'
     + '<button class="btn wide" onclick="editRule(null)">＋ Nuova regola</button>'
     + (rules.length ? rules.map((r, i) => {
       const n = C.ruleMatchesCount(r, S.data.transactions);
@@ -23,8 +25,8 @@ Screens.rules = function () {
         + '<button class="btn secondary small" onclick="showIds(' + jsArg(S.data.transactions.filter(t => C.ruleMatches(r, t)).map(t => t.id)) + ',' + jsArg(r.name || r.text) + ')">Vedi</button>'
         + (i > 0 ? '<button class="btn secondary small" onclick="moveRule(' + i + ',-1)">↑</button>' : '')
         + '<button class="btn secondary small" onclick="toggleRule(' + i + ')">' + (r.enabled === false ? 'Attiva' : 'Sospendi') + '</button></div></div>';
-    }).join('') : '<div class="empty"><div class="glyph">⚙</div><p class="sub">Nessuna regola. Le crei quando classifichi un movimento (l\'app ti chiede se ricordare la scelta) o dalla scheda "Spese ripetitive" in Da fare.</p></div>');
-};
+    }).join('') : '<div class="empty"><div class="glyph">⚙</div><p class="sub">Nessuna regola. Puoi crearne una qui oppure dalla finestra di copia dopo aver classificato un movimento.</p></div>');
+}
 
 /** Finestra di modifica regola. i = posizione (null per nuova), draft = bozza precompilata. */
 function editRule(i, draft) {
@@ -84,7 +86,7 @@ function saveRule() {
   if (window.ruleDraft.index != null) rules[window.ruleDraft.index] = r; else rules.push(r);
   put('rules', rules);
   closeModal();
-  nav('rules');
+  nav('todo', 'rules');
 }
 
 function deleteRule(i) {

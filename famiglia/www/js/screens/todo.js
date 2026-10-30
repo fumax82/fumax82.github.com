@@ -1,52 +1,115 @@
 /*
- * todo.js - "DA FARE": la lista degli avvisi sui movimenti che non si
- * possono classificare perché mancano informazioni.
+ * todo.js - "CLASSIFICA": il posto unico per famiglie, categorie e
+ * assegnazioni automatiche. Quattro schede:
  *
- * Per ogni movimento puoi indicare voce per voce:
- *   - famiglia di spesa  - categoria  - conto o carta di origine/destinazione
- * L'app propone la scelta più probabile (regole, tue scelte passate,
- * dizionario: es. Anthropic/OpenAI/Gemini -> AI) e dopo la conferma chiede
- * se ricordarla per le prossime volte (regola automatica).
- *
- * Sotto-schede:
- *   list       movimenti con informazioni mancanti
- *   proposals  spese ripetitive senza regola (pagamenti ricorrenti)
- *   bank       categorie della banca da associare a una famiglia
+ *   todo        DA CLASSIFICARE: i movimenti senza categoria, raggruppati per
+ *               soggetto (es. tutti gli Esselunga insieme): un tocco sulla
+ *               proposta crea il soggetto e assegna la categoria a tutto il gruppo
+ *               (prima vedi la lista e confermi). Sotto, i movimenti singoli.
+ *   subjects    SOGGETTI: l'anagrafica di chi ricevi o a cui dai soldi
+ *               (screens/subjects.js)
+ *   categories  FAMIGLIE E CATEGORIE: rinomina, sposta, unisci (screens/categories.js)
+ *   rules       REGOLE per parole chiave (screens/rules.js), per casi avanzati
  */
 'use strict';
 
 Screens.todo = function () {
-  const tab = S.sub.todo || 'list';
-  const proposals = C.ruleProposals(S.data.transactions, S.prefs);
-  const bankCats = C.bankCategoryGaps(S.data.transactions, S.prefs);
-  const quick = quickGroups();
-  const tabs = [['list', 'Movimenti (' + S.todo.length + ')'], ['quick', 'Dettagli rapidi (' + quick.length + ')'], ['proposals', 'Spese ripetitive (' + proposals.length + ')'], ['bank', 'Categorie banca (' + bankCats.length + ')']];
-  return '<span class="eyebrow">INFORMAZIONI MANCANTI</span><h1>Da completare</h1>'
-    + '<p class="sub">Movimenti in entrata e in uscita a cui manca famiglia di spesa, categoria o carta. Completali voce per voce: l\'app impara dalle tue scelte.</p>'
+  const tab = S.sub.todo || 'todo';
+  const tabs = [['todo', 'Da classificare' + (S.todo.length ? ' (' + S.todo.length + ')' : '')], ['subjects', 'Soggetti (' + S.subjects.length + ')'],
+    ['categories', 'Categorie'], ['rules', 'Regole']];
+  return '<span class="eyebrow">FAMIGLIE, CATEGORIE, SOGGETTI</span><h1>Classifica</h1>'
     + '<div class="tabs">' + tabs.map(([v, l]) => '<button class="' + (tab === v ? 'on' : '') + '" onclick="S.sub.todo=\'' + v + '\';render()">' + l + '</button>').join('') + '</div>'
-    + (tab === 'proposals' ? proposalsHtml(proposals) : tab === 'bank' ? bankHtml(bankCats) : tab === 'quick' ? quickHtml(quick) : todoListHtml());
+    + (tab === 'subjects' ? subjectsHtml() : tab === 'categories' ? categoriesHtml() : tab === 'rules' ? rulesHtml() : todoHtml());
 };
+// Vecchi indirizzi: portano alle schede della Classifica
+Screens.rules = () => { S.sub.todo = 'rules'; return Screens.todo(); };
+Screens.categories = () => { S.sub.todo = 'categories'; return Screens.todo(); };
+Screens.subjects = () => { S.sub.todo = 'subjects'; return Screens.todo(); };
 
 // ---------------------------------------------------------------------
-// Lista movimenti da completare
+// Da classificare
 // ---------------------------------------------------------------------
 
-function todoListHtml() {
-  const filter = S.sub.todoFilter || 'all';
-  const counts = { family: 0, category: 0, account: 0 };
-  for (const it of S.todo) for (const m of it.missing) counts[m]++;
-  const list = S.todo.filter(it => filter === 'all' || it.missing.includes(filter));
-  const ready = list.filter(it => it.suggestion);
-  if (!S.todo.length) {
-    return '<div class="empty"><div class="glyph">✓</div><h2>Tutto in ordine</h2><p class="sub">Nessun movimento con informazioni mancanti.</p></div>'
+function todoHtml() {
+  const active = S.data.transactions.filter(t => t.state === 'active' && !C.INTERNAL_KINDS.includes(t.kind) && t.kind !== 'withdrawal');
+  const done = active.filter(t => !C.missingInfo(t, S.tax).some(m => m !== 'account')).length;
+  const pct = active.length ? Math.round(done / active.length * 100) : 100;
+  const groups = SJ.candidates(S.data.transactions, S.prefs).filter(g => g.missing > 0 && g.ids.length >= 2);
+  window.todoGroups = groups;
+  const inGroup = new Set(groups.flatMap(g => g.ids));
+  const singles = S.todo.filter(it => !inGroup.has(it.tx.id));
+  const review = S.subjects.map(s => ({ s, n: SJ.proposals(s, S.data.transactions, S.subjects, S.tax).length })).filter(x => x.n);
+  const bankCats = C.bankCategoryGaps(S.data.transactions, S.prefs);
+
+  let html = '<div class="card"><div class="row"><h3 style="margin:0">' + pct + '% dei movimenti classificati</h3><span class="mini">' + done + ' su ' + active.length + '</span></div>'
+    + '<div class="track"><div class="fill" style="width:' + pct + '%"></div></div>'
+    + '<p class="mini" style="margin:8px 0 0">Il modo più veloce: assegna la categoria a un <b>soggetto</b> (es. "Esselunga") e vale per tutti i suoi movimenti, anche quelli futuri.</p></div>';
+
+  if (review.length) {
+    html += '<div class="card warn"><h3>Soggetti con movimenti da aggiornare</h3>' + review.map(x => '<div class="row" style="margin:8px 0"><span>' + typeIcon(x.s.type) + ' <b>' + esc(x.s.name) + '</b> · ' + x.n + ' movimenti</span>'
+      + '<button class="btn small" onclick="subjectReview(' + jsArg(x.s.id) + ')">Rivedi</button></div>').join('') + '</div>';
+  }
+  if (groups.length) {
+    html += '<h2 style="margin-top:20px">Per soggetto</h2><p class="sub">Movimenti ripetuti verso la stessa controparte. Tocca la categoria proposta (o scegline un\'altra): vedrai la lista dei movimenti prima di confermare.</p>'
+      + groups.slice(0, S.todoLimit || 12).map((g, i) => groupCard(g, i)).join('')
+      + (groups.length > (S.todoLimit || 12) ? '<button class="btn secondary wide" onclick="S.todoLimit=(S.todoLimit||12)+12;render()">Mostra altri ' + (groups.length - (S.todoLimit || 12)) + '</button>' : '');
+  }
+  if (bankCats.length) {
+    html += '<details class="card"' + (groups.length ? '' : ' open') + '><summary>Categorie della banca senza famiglia (' + bankCats.length + ')</summary>' + bankHtml(bankCats) + '</details>';
+  }
+  if (singles.length) {
+    html += '<h2 style="margin-top:20px">Movimenti singoli (' + singles.length + ')</h2>' + singlesHtml(singles);
+  }
+  if (!groups.length && !singles.length && !review.length) {
+    html += '<div class="empty"><div class="glyph">✓</div><h2>Tutto classificato</h2><p class="sub">Nessun movimento con famiglia o categoria mancanti.</p></div>'
       + (pref('todoIgnored', []).length ? '<button class="btn secondary wide" onclick="put(\'todoIgnored\',[]);derive();render()">Mostra di nuovo i ' + pref('todoIgnored', []).length + ' ignorati</button>' : '');
   }
-  const chips = [['all', 'Tutti', S.todo.length], ['category', 'Senza categoria', counts.category], ['family', 'Senza famiglia', counts.family], ['account', 'Senza carta/conto', counts.account]];
-  return '<div class="tabs">' + chips.map(([v, l, n]) => '<button class="' + (filter === v ? 'on' : '') + '" onclick="S.sub.todoFilter=\'' + v + '\';render()">' + l + ' · ' + n + '</button>').join('') + '</div>'
-    + (ready.length ? '<div class="card"><div class="row"><div><h3>' + ready.length + ' proposte pronte</h3><p class="sub" style="margin:0">Regole, tue scelte passate e servizi conosciuti (es. Anthropic, OpenAI e Gemini → AI).</p></div></div>'
-      + '<button class="btn gold wide" style="margin-top:12px" onclick="acceptAll()">Accetta tutte le proposte</button></div>' : '')
-    + list.slice(0, S.todoLimit || 25).map(todoCard).join('')
-    + (list.length > (S.todoLimit || 25) ? '<button class="btn secondary wide" onclick="S.todoLimit=(S.todoLimit||25)+25;render()">Mostra altri (' + (list.length - (S.todoLimit || 25)) + ')</button>' : '');
+  return html;
+}
+
+/** Riquadro di un gruppo: nome proposto, numeri, categoria proposta con un tocco. */
+function groupCard(g, i) {
+  const s = g.suggestion;
+  return '<div class="card"><div class="row"><div style="min-width:0"><strong>' + esc(g.name) + '</strong>'
+    + '<p class="mini" style="margin:2px 0">' + g.ids.length + (g.sign === 'out' ? ' uscite' : ' entrate') + ' · ' + eur(g.total) + ' · ultimo ' + fmt(g.last.date) + '</p></div>'
+    + '<button class="link" onclick="showIds(' + jsArg(g.ids) + ',' + jsArg(g.name) + ')">Vedi</button></div>'
+    + '<div class="pick-list" style="margin-top:8px">'
+    + (s ? '<button class="chip pick ok" onclick="quickSubject(' + i + ',' + jsArg(s.family) + ',' + jsArg(s.category) + ')">' + familyIcon(s.family) + ' ' + esc(s.category) + ' <span class="mini">✓ proposta</span></button>' : '')
+    + '<button class="chip pick" onclick="groupPick(' + i + ')">Scegli categoria…</button>'
+    + '<button class="chip" onclick="dismissGroup(' + i + ')">Ignora</button></div>'
+    + (s ? '<p class="mini" style="margin:6px 0 0">Proposta: ' + esc(s.reason) + '</p>' : '') + '</div>';
+}
+
+/** Un tocco sulla proposta: crea il soggetto con quella categoria e mostra la lista da confermare. */
+function quickSubject(i, family, category) {
+  const g = window.todoGroups[i];
+  const s = SJ.fromTx(g.last, { class: { family, category } });
+  s.name = g.name;
+  saveSubjectObject(s, true);
+}
+
+/** "Scegli categoria…": apre la scheda del nuovo soggetto già compilata. */
+function groupPick(i) {
+  const g = window.todoGroups[i];
+  const draft = SJ.fromTx(g.last, g.suggestion ? { class: { family: g.suggestion.family, category: g.suggestion.category } } : {});
+  draft.name = g.name;
+  editSubject(null, draft);
+  setTimeout(() => openPicker('sjCat'), 150);
+}
+
+function dismissGroup(i) {
+  const g = window.todoGroups[i];
+  put('subjectsDismissed', pref('subjectsDismissed', []).concat([g.key]));
+  render();
+}
+
+/** Movimenti senza gruppo: elenco con proposta e completamento rapido. */
+function singlesHtml(list) {
+  const ready = list.filter(it => it.suggestion && (it.missing.includes('category') || it.missing.includes('family')));
+  return (ready.length > 1 ? '<div class="card"><div class="row"><span><b>' + ready.length + ' proposte pronte</b><br><span class="mini">Servizi conosciuti (es. Anthropic, OpenAI, Gemini → AI), tue scelte passate e regole.</span></span>'
+      + '<button class="btn gold small" onclick="acceptAll()">Accetta tutte</button></div></div>' : '')
+    + list.slice(0, S.limit).map(todoCard).join('')
+    + (list.length > S.limit ? '<button class="btn secondary wide" onclick="S.limit+=40;render()">Mostra altri</button>' : '');
 }
 
 function todoCard(it) {
@@ -94,7 +157,7 @@ function assign(id) {
   const t = it.tx, s = it.suggestion;
   const preset = s || { family: t.family || C.familyOf(t, S.tax), category: t.category };
   let html = txrow(t)
-    + '<label class="field">Famiglia › categoria' + (it.missing.includes('category') || it.missing.includes('family') ? ' <span class="chip miss">mancante</span>' : '') + catSelect('aCat', preset.family, preset.category) + '</label>'
+    + '<label class="field">Famiglia › categoria' + (it.missing.includes('category') || it.missing.includes('family') ? ' <span class="chip miss">mancante</span>' : '') + catSelect('aCat', preset.family, preset.category, s ? [{ family: s.family, category: s.category, reason: 'proposta' }] : []) + '</label>'
     + (s ? '<p class="mini">Proposta: ' + esc(s.reason) + '</p>' : '')
     + (!t.account ? '<label class="field">Conto o carta di ' + (t.cents < 0 ? 'origine' : 'destinazione') + (it.missing.includes('account') ? ' <span class="chip miss">mancante</span>' : '') + accountSelect('aAcc', t.accountUser) + '</label>' : '')
     + '<label class="field">Trattamento nei report<select id="aKind">' + Object.entries(KINDS).map(([v, l]) => '<option ' + (t.kind === v ? 'selected' : '') + ' value="' + v + '">' + l + '</option>').join('') + '</select></label>';
@@ -114,96 +177,6 @@ function saveAssign(id) {
   if ($('aAcc')) { const acc = readAccount('aAcc'); if (acc) after.accountUser = acc; }
   closeModal();
   saveFields(id, after);
-}
-
-// ---------------------------------------------------------------------
-// Dettagli rapidi: necessità e natura per esercizio, con un tocco
-// ---------------------------------------------------------------------
-
-/** Esercizi (raggruppati) con spese a cui manca la necessità o la natura. */
-function quickGroups() {
-  const groups = {};
-  for (const t of S.data.transactions) {
-    if (t.state !== 'active' || t.cents >= 0 || !['expense'].includes(t.kind)) continue;
-    const ex = t.extra || {};
-    if (ex.need && ex.nature) continue;
-    const key = C.merchantKey(t) || U.norm(t.operation);
-    const g = (groups[key] = groups[key] || { key, ids: [], total: 0, last: t });
-    g.ids.push(t.id);
-    g.total -= t.cents;
-    if (t.date > g.last.date) g.last = t;
-  }
-  return Object.values(groups).sort((a, b) => b.total - a.total);
-}
-
-function quickHtml(list) {
-  if (!list.length) return '<div class="empty"><div class="glyph">✓</div><p class="sub">Tutte le spese hanno necessità e natura.</p></div>';
-  const need = FL.byKey.need, nature = FL.byKey.nature;
-  return '<div class="hint">Un tocco assegna il valore a <b>tutte</b> le spese di quell\'esercizio che non lo hanno ancora. Le prossime lo riceveranno in automatico. Servono per capire quanto spendi in cose superflue e quanto è fisso ogni mese.</div>'
-    + list.slice(0, S.quickLimit || 30).map((g, i) => {
-      const ex = g.last.extra || {};
-      return '<div class="card" style="padding:14px"><div class="row"><div style="min-width:0"><strong style="font-size:14px">' + esc(title(g.last)) + '</strong>'
-        + '<p class="mini" style="margin:2px 0">' + g.ids.length + ' spese · ' + eur(g.total) + ' · ' + esc(g.last.category || 'senza categoria') + '</p></div>'
-        + '<button class="link" onclick="detail(' + g.last.id + ')">Dettaglio</button></div>'
-        + '<div class="tabs" style="margin:6px 0">' + need.options.map(([v, l]) => '<button class="' + (ex.need === v ? 'on' : '') + '" onclick="quickSet(' + i + ',\'need\',\'' + v + '\')">' + l + '</button>').join('') + '</div>'
-        + '<div class="tabs" style="margin:6px 0">' + nature.options.map(([v, l]) => '<button class="' + (ex.nature === v ? 'on' : '') + '" onclick="quickSet(' + i + ',\'nature\',\'' + v + '\')">' + l + '</button>').join('') + '</div></div>';
-    }).join('')
-    + (list.length > (S.quickLimit || 30) ? '<button class="btn secondary wide" onclick="S.quickLimit=(S.quickLimit||30)+30;render()">Mostra altri</button>' : '');
-}
-
-/** Assegna un campo a tutte le spese dell'esercizio che non lo hanno. */
-function quickSet(i, key, value) {
-  const g = quickGroups()[i];
-  if (!g) return;
-  const items = g.ids.map(txById).filter(t => !(t.extra || {})[key]).map(t => {
-    const item = { id: t.id, extra: { [key]: value } };
-    // Le spese già classificate diventano "tue": la memoria esercizi le userà come modello
-    if (t.category && !C.isGenericCategory(t.category)) item.classifiedBy = 'user';
-    return item;
-  });
-  if (!items.length) return;
-  markMemory([g.last]);
-  act('bulkEdit', { items, reason: FL.byKey[key].label + ' per ' + title(g.last), silent: true });
-  notice(FL.byKey[key].label + ' "' + FL.format(value, key) + '" su ' + items.length + ' spese di ' + title(g.last));
-}
-
-// ---------------------------------------------------------------------
-// Spese ripetitive -> proposta di regola
-// ---------------------------------------------------------------------
-
-function proposalsHtml(list) {
-  if (!list.length) return '<div class="empty"><div class="glyph">↻</div><p class="sub">Nessuna spesa ripetitiva senza regola. Quando l\'app nota pagamenti ripetuti verso lo stesso soggetto o conto, te lo propone qui.</p></div>';
-  const ctxSug = { taxonomy: S.tax, rules: [], history: C.learnHistory(S.data.transactions) };
-  return '<div class="hint">L\'app ha notato pagamenti ripetuti verso lo stesso soggetto. Con una regola, i prossimi verranno classificati da soli appena importi il file.</div>'
-    + list.map((g, i) => {
-      const last = txById(g.ids[g.ids.length - 1]);
-      const s = C.suggest(last, ctxSug) || { family: last.family, category: last.category };
-      return '<div class="card"><div class="row"><h3>' + esc(g.label) + '</h3><span class="badge">' + esc(g.cadence) + '</span></div>'
-        + '<p class="sub">' + g.count + ' ' + (g.sign === 'out' ? 'pagamenti' : 'accrediti') + ' · circa ' + eur(g.typical)
-        + (g.next ? ' · prossimo previsto ' + fmt(g.next) : '') + (g.monthly ? ' · ' + eur(g.monthly * 12) + ' l\'anno' : '') + '</p>'
-        + '<label class="field">La descrizione contiene<input id="pText' + i + '" value="' + esc(g.token) + '"></label>'
-        + '<label class="field">Classifica sempre come' + catSelect('pCat' + i, s.family, s.category) + '</label>'
-        + '<div class="actions"><button class="btn" onclick="createProposal(' + i + ')">Crea regola</button>'
-        + '<button class="btn secondary" onclick="showIds(' + jsArg(g.ids) + ',' + jsArg(g.label) + ')">Vedi</button>'
-        + '<button class="btn secondary" onclick="dismissProposal(' + jsArg(g.key) + ')">Non è ripetitiva</button></div></div>';
-    }).join('');
-}
-
-function createProposal(i) {
-  const g = C.ruleProposals(S.data.transactions, S.prefs)[i];
-  const cat = readCat('pCat' + i);
-  if (!cat) { notice('Scegli una categoria'); return; }
-  const last = txById(g.ids[g.ids.length - 1]);
-  const rule = C.ruleFromTx(last, { family: cat.family, category: cat.category });
-  rule.text = $('pText' + i).value.trim() || g.token;
-  rule.name = rule.text.split(/[|,]/)[0];
-  put('rules', pref('rules', []).concat([rule]));
-  notice('Regola creata: i movimenti "' + rule.name + '" andranno in ' + cat.category);
-}
-
-function dismissProposal(key) {
-  put('ruleProposalsDismissed', pref('ruleProposalsDismissed', []).concat([key]));
-  render();
 }
 
 // ---------------------------------------------------------------------

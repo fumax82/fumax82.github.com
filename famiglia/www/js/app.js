@@ -34,7 +34,7 @@ const S = {
 };
 const Screens = {};
 const $ = id => document.getElementById(id);
-const C = Classify, G = Gaps, F = Finance, L = Links, R = Receipts, U = Util, FL = Fields;
+const C = Classify, G = Gaps, F = Finance, L = Links, R = Receipts, U = Util, FL = Fields, SJ = Subjects, D = Duplicates;
 
 // ---------------------------------------------------------------------
 // Formattazione
@@ -77,6 +77,8 @@ function put(key, value) {
 /** Ricalcola i dati derivati (da completare, buchi...). */
 function derive() {
   S.tax = C.taxonomy(S.prefs);
+  S.subjects = SJ.list(S.prefs);
+  S.checks = D.analyze(S.data.transactions, S.data.imports, pref('dupDecisions', {}), U.today());
   S.todo = C.todoList(S.data.transactions, S.prefs);
   S.gaps = G.analyze(S.data.imports, S.data.transactions, pref('gapIgnored', []), U.today());
 }
@@ -121,9 +123,10 @@ window.receive = function (d) {
 window.onImported = function (summary) {
   notice('Importazione completata: ' + summary);
   setTimeout(() => {
-    if (S.todo.length || (S.gaps && S.gaps.gaps.length) || receiptsReady()) {
+    if (S.todo.length || (S.gaps && S.gaps.gaps.length) || receiptsReady() || (S.checks || []).length) {
       modal('Importazione completata', '<p class="sub">' + esc(summary) + '</p>'
-        + (S.todo.length ? '<div class="hint warn">' + S.todo.length + ' movimenti hanno informazioni mancanti (famiglia, categoria o carta).</div><button class="btn wide" onclick="closeModal();nav(\'todo\')">Completa ora</button>' : '')
+        + (S.todo.length ? '<div class="hint warn">' + S.todo.length + ' movimenti da classificare. Quelli dei soggetti in anagrafica hanno già ricevuto i loro dati.</div><button class="btn wide" onclick="closeModal();nav(\'todo\',\'todo\')">Classifica ora</button>' : '')
+        + ((S.checks || []).some(c => c.type === 'import') ? '<div class="hint warn" style="margin-top:12px">⧉ Alcuni movimenti sembrano importati due volte (descrizione diversa tra un file e l\'altro).</div><button class="btn secondary wide" onclick="closeModal();nav(\'checks\')">Controlla i doppioni</button>' : '')
         + (receiptsReady() ? '<div class="hint" style="margin-top:12px">' + receiptsReady() + ' scontrini ora corrispondono a un movimento importato.</div><button class="btn secondary wide" onclick="closeModal();nav(\'receipts\')">Collega gli scontrini</button>' : '')
         + (S.gaps && S.gaps.important ? '<div class="hint warn" style="margin-top:12px">Attenzione: ' + S.gaps.important + ' buchi importanti tra i file importati.</div><button class="btn secondary wide" onclick="closeModal();nav(\'imports\')">Vedi analisi dei buchi</button>' : ''));
     }
@@ -154,7 +157,8 @@ function nav(page, sub) {
 
 /** Tasto "indietro" di Android. */
 window.back = function () {
-  if (!$('modal').hidden) closeModal();
+  if (!$('picker').hidden) closePicker();
+  else if (!$('modal').hidden) closeModal();
   else if (S.page !== 'home') nav('home');
 };
 
@@ -185,7 +189,7 @@ function render() {
   const todoCount = S.todo.length;
   const gapCount = S.gaps ? S.gaps.gaps.filter(g => g.level !== 'minima' && g.level !== 'bassa').length : 0;
   const items = [
-    ['home', '⌂', 'Home', 0], ['moves', '⇄', 'Movimenti', 0], ['todo', '✓', 'Da fare', todoCount],
+    ['home', '⌂', 'Home', 0], ['moves', '⇄', 'Movimenti', 0], ['todo', '✓', 'Classifica', todoCount],
     ['imports', '⤓', 'Importa', gapCount], ['reports', '▥', 'Analisi', 0], ['more', '☰', 'Altro', 0]
   ];
   $('nav').innerHTML = items.map(([p, i, l, n]) => '<button class="' + (S.page === p ? 'active' : '') + '" onclick="nav(\'' + p + '\')"><b>' + i + '</b>' + l
@@ -219,9 +223,15 @@ function monthControl() {
     + '</select><span>' + (S.month ? (covered ? 'Periodo coperto dai file' : 'Mese parziale') : 'Tutto lo storico') + '</span></div>';
 }
 
-/** Nome da mostrare: l'esercizio indicato da te oppure la descrizione della banca. */
+/** Soggetto dell'anagrafica a cui appartiene il movimento (o null). */
+function subjectOf(t) {
+  return SJ.subjectOf(t, S.subjects || []);
+}
+
+/** Nome da mostrare: il soggetto dell'anagrafica, l'esercizio indicato da te o la descrizione della banca. */
 function title(t) {
-  return (t.extra && t.extra.merchant) || t.details || t.operation;
+  const s = subjectOf(t);
+  return (s && s.name) || (t.extra && t.extra.merchant) || t.details || t.operation;
 }
 
 /** Una riga movimento (tocca per aprire il dettaglio). */
@@ -233,6 +243,7 @@ function txrow(t, extra) {
   const miss = C.missingInfo(t, S.tax);
   return '<div class="tx" role="button" tabindex="0" onclick="detail(' + t.id + ')" onkeydown="if(event.key===\'Enter\')detail(' + t.id + ')">'
     + '<div class="txicon">' + glyph + '</div><div class="txmain"><strong>' + esc(title(t)) + '</strong>'
+    + (subjectOf(t) ? '<small class="subj-desc">' + esc(subjectOf(t).description ? subjectOf(t).description + ' · ' : '') + esc(t.details || t.operation) + '</small>' : '')
     + '<small>' + fmt(t.date) + ' · ' + esc(label) + (U.account(t) ? ' · ' + esc(U.account(t)) : '') + '</small>'
     + (t.status === 'NO' ? '<small class="orange">' + (t.state === 'replaced' ? 'Riconciliato' : 'In attesa') + '</small>' : '')
     + (t.state === 'excluded' ? '<small class="red">Escluso dai totali</small>' : '')
@@ -291,43 +302,7 @@ function level(l) {
 // Scelta famiglia/categoria e conto (usate in molte finestre)
 // ---------------------------------------------------------------------
 
-/** Menu a tendina "Famiglia › Categoria" con possibilità di crearne una nuova. */
-function catSelect(id, family, category) {
-  let found = false;
-  let html = '<select id="' + id + '" onchange="$(\'' + id + '_new\').hidden=this.value!==\'__new\'"><option value="">— Scegli famiglia › categoria —</option>';
-  for (const f of S.tax) {
-    html += '<optgroup label="' + esc(f.family) + '">' + f.categories.map(c => {
-      const sel = category && U.norm(c) === U.norm(category) && (!family || family === f.family) && !found;
-      if (sel) found = true;
-      return '<option value="' + esc(f.family + '||' + c) + '"' + (sel ? ' selected' : '') + '>' + esc(c) + '</option>';
-    }).join('') + '</optgroup>';
-  }
-  if (category && !found) {
-    html += '<optgroup label="Attuale (non in elenco)"><option selected value="' + esc((family || '') + '||' + category) + '">' + esc(category) + (family ? ' (' + esc(family) + ')' : ' (senza famiglia)') + '</option></optgroup>';
-  }
-  html += '<option value="__new">➕ Nuova categoria…</option></select>';
-  html += '<div id="' + id + '_new" hidden><label class="field">Famiglia della nuova categoria<select id="' + id + '_nf">'
-    + S.tax.map(f => '<option>' + esc(f.family) + '</option>').join('') + '<option value="__nf">➕ Nuova famiglia…</option></select></label>'
-    + '<label class="field">Nome nuova famiglia (solo se scelta sopra)<input id="' + id + '_nfn" placeholder="Es. Lavoro"></label>'
-    + '<label class="field">Nome nuova categoria<input id="' + id + '_nc" placeholder="Es. Corsi di formazione"></label></div>';
-  return html;
-}
-
-/** Legge la scelta del menu: { family, category } oppure null se vuoto. */
-function readCat(id) {
-  const v = $(id).value;
-  if (!v) return null;
-  if (v === '__new') {
-    let family = $(id + '_nf').value;
-    if (family === '__nf') family = $(id + '_nfn').value.trim();
-    const category = $(id + '_nc').value.trim();
-    if (!family || !category) { notice('Indica famiglia e nome della nuova categoria'); return undefined; }
-    ensureTaxonomy(family, category);
-    return { family, category };
-  }
-  const [family, category] = v.split('||');
-  return { family, category };
-}
+// La scelta di famiglia/categoria (catSelect, readCat) è in screens/picker.js
 
 /** Aggiunge (se manca) una categoria a una famiglia nella tassonomia salvata. */
 function ensureTaxonomy(family, category) {

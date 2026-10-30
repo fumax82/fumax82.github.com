@@ -35,6 +35,11 @@ Screens.imports = function () {
     + '<div class="card" style="margin:0;padding:14px"><span class="eyebrow">GIORNI SCOPERTI</span><div class="value">' + a.totalGapDays + '</div></div>'
     + '<div class="card" style="margin:0;padding:14px"><span class="eyebrow">COPERTO FINO AL</span><div class="value" style="font-size:17px">' + fmt(a.last) + '</div></div></div>';
 
+  // Controlli sui doppioni
+  const checks = (S.checks || []).filter(c => c.level !== 'info');
+  html += '<div class="card ' + (checks.length ? 'warn' : '') + '" role="button" onclick="nav(\'checks\')"><div class="row"><h3>⧉ Controlli sui doppioni</h3><span>→</span></div>'
+    + '<p class="sub" style="margin:0">' + (checks.length ? checks.length + ' casi da verificare: doppie importazioni, doppi addebiti, spese registrate due volte.' : 'Nessun doppione sospetto tra i movimenti importati.') + '</p></div>';
+
   // Linea del tempo
   html += '<div class="card"><h2>Linea del tempo</h2>' + timeline(a, ignored)
     + '<div class="legend" style="margin-top:8px"><span><i class="dot" style="background:#78a99a"></i>Coperto</span>'

@@ -29,8 +29,10 @@ Screens.home = function () {
     + '</div>'
 
     // Promemoria
-    + (S.todo.length ? '<div class="card warn" role="button" onclick="nav(\'todo\')"><div class="row"><h3>✓ ' + S.todo.length + ' movimenti da completare</h3><span>→</span></div>'
-      + '<p class="sub" style="margin:0">Manca famiglia, categoria o carta. ' + S.todo.filter(x => x.suggestion).length + ' hanno già una proposta pronta.</p></div>' : '')
+    + (S.todo.length ? '<div class="card warn" role="button" onclick="nav(\'todo\',\'todo\')"><div class="row"><h3>✓ ' + S.todo.length + ' movimenti da classificare</h3><span>→</span></div>'
+      + '<p class="sub" style="margin:0">Raggruppati per soggetto: un tocco sulla categoria proposta e vale per tutto il gruppo.</p></div>' : '')
+    + ((S.checks || []).filter(c => c.level !== 'info').length ? '<div class="card alert" role="button" onclick="nav(\'checks\')"><div class="row"><h3>⧉ ' + S.checks.filter(c => c.level !== 'info').length + ' possibili doppioni</h3><span>→</span></div>'
+      + '<p class="sub" style="margin:0">Doppie importazioni, doppi addebiti o spese registrate due volte: controlla prima che falsino i totali.</p></div>' : '')
     + (C.bankCategoryGaps(S.data.transactions, S.prefs).length ? '<div class="card warn" role="button" onclick="nav(\'todo\',\'bank\')"><div class="row"><h3>▦ ' + C.bankCategoryGaps(S.data.transactions, S.prefs).length + ' categorie della banca senza famiglia</h3><span>→</span></div>'
       + '<p class="sub" style="margin:0">Associale una volta sola e tutti i movimenti avranno la famiglia di spesa.</p></div>' : '')
     + (gapsImportant.length ? '<div class="card alert" role="button" onclick="nav(\'imports\')"><div class="row"><h3>⤓ ' + gapsImportant.length + (gapsImportant.length === 1 ? ' buco' : ' buchi') + ' tra le importazioni</h3><span>→</span></div>'

@@ -1,10 +1,51 @@
-# Famiglia 2.3 — finanze di famiglia, offline
+# Famiglia 2.4 — finanze di famiglia, offline
 
 App Android per analizzare entrate e uscite importando gli estratti Excel di Intesa Sanpaolo.
 Tutto resta sul telefono: nessun permesso Internet, database locale, backup cifrato.
 
-**APK pronto da installare:** [`dist/Famiglia-2.3.apk`](dist/Famiglia-2.3.apk)
-Si installa sopra la 2.0, 2.1 o 2.2 senza disinstallare: i dati restano.
+**APK pronto da installare:** [`dist/Famiglia-2.4.apk`](dist/Famiglia-2.4.apk)
+Si installa sopra le versioni 2.x senza disinstallare: i dati restano.
+
+---
+
+## Novità della versione 2.4: classificazione semplice, anagrafica soggetti, controlli doppioni
+
+### Un solo posto: "Classifica"
+La scheda in basso **Classifica** raccoglie tutto ciò che prima era sparso tra Da fare, Regole, Famiglie e Impostazioni:
+
+| Scheda | A cosa serve |
+|---|---|
+| **Da classificare** | Percentuale di movimenti classificati e i movimenti senza categoria **raggruppati per soggetto** (es. tutti gli Eni insieme). Un tocco sulla categoria proposta crea il soggetto e mostra la lista dei movimenti da confermare. Sotto ci sono i movimenti singoli. |
+| **Soggetti** | L'anagrafica: chi ricevi soldi e a chi li dai, con i soggetti suggeriti dall'app. |
+| **Categorie** | Famiglie con icona, numero di movimenti e totale. Tocca una categoria per **rinominarla, spostarla, unirla** a un'altra o eliminarla. Movimenti, soggetti, regole e budget si aggiornano dopo la conferma. |
+| **Regole** | Parole chiave che valgono per più soggetti (es. `anthropic|openai|gemini` → AI). È un'opzione avanzata. |
+
+**Scelta della categoria visuale**: al posto del menu a tendina si apre un selettore con ricerca, categorie suggerite e recenti, e famiglie come riquadri con icona.
+
+### Anagrafica dei soggetti
+Ogni soggetto (negozio, abbonamento, azienda, persona, datore di lavoro, ente, banca) ha:
+- **nome e descrizione**: compaiono in testa al movimento, sopra la descrizione della banca. Per esempio "Claude (Anthropic) · Abbonamento AI per lavoro" sopra "ANTHROPIC* CLAUDE.AI SUBSCRIPTION SAN FRANCISCO";
+- **parole di riconoscimento**, con l'anteprima di quanti movimenti riconosce, e la direzione (uscite, entrate, entrambe);
+- **dati da assegnare**: famiglia › categoria, trattamento, conto o carta, persona, necessità, natura, detrazione 730, etichette.
+
+Quando salvi, l'app **mostra la lista dei movimenti** con "valore attuale → nuovo valore" campo per campo, e tu confermi.
+I **nuovi** movimenti del soggetto ricevono i dati da soli, se vuoi.
+Dal dettaglio di un movimento puoi creare il soggetto, collegarlo a uno esistente o scollegarlo.
+Dopo aver modificato un movimento, la finestra di copia propone anche di aggiornare la scheda del soggetto o di crearla.
+
+Ordine di priorità: tue scelte a mano → soggetti → memoria esercizi → regole.
+
+### Controlli sui doppioni (Importa › Controlli, e in Home)
+| Caso | Come lo riconosce | Azioni |
+|---|---|---|
+| **Doppia importazione** | Stesso importo, conto e giorno da due file diversi, con descrizione un po' cambiata. Indizio forte: il primo file copre la data ma non contiene il secondo movimento. | Escludi il doppione / Sono diversi |
+| **Doppio addebito** | Due addebiti uguali, stessa controparte, stesso giorno, nello stesso file | Da contestare (finisce nei rimborsi attesi) / Due acquisti veri |
+| **Registrato due volte** | Pagamento in contanti inserito a mano e pagamento della banca uguale negli stessi giorni | Elimina quello a mano / Sono diversi |
+| **Carta contata due volte** | L'addebito mensile della carta di credito sul conto è uguale alla somma degli acquisti della carta già importati | Addebito carta = giroconto |
+| **Addebito stornato** | Addebito e accredito uguali dalla stessa controparte | Collega lo storno |
+
+Ogni caso spiega **perché** sembra un doppione e da quale file arriva ogni movimento. Le decisioni vengono ricordate.
+
 
 ---
 
@@ -107,7 +148,7 @@ Android quindi non la installa sopra la vecchia app. Per non perdere i dati:
 
 1. Nella **1.0**: *Spazio › Backup cifrato*. Salva il file `.fmb` e ricorda la password.
 2. Disinstalla la 1.0.
-3. Installa `Famiglia-2.3.apk`. Android chiederà di consentire l'installazione da questa fonte.
+3. Installa `Famiglia-2.4.apk`. Android chiederà di consentire l'installazione da questa fonte.
 4. Nella **2.0**: *Altro › Impostazioni e backup › Ripristina* e scegli il file `.fmb`.
    Il database viene aggiornato automaticamente al nuovo formato.
 
@@ -142,6 +183,8 @@ famiglia/
 │   │   ├── util.js             date, importi, piccole utilità
 │   │   ├── classify.js         famiglie/categorie, dizionario (AI…), regole, cose da completare, ricorrenze
 │   │   ├── fields.js           ELENCO DEI CAMPI, copia sui movimenti simili, memoria esercizi
+│   │   ├── subjects.js         ANAGRAFICA SOGGETTI: riconoscimento, dati da assegnare, soggetti suggeriti
+│   │   ├── duplicates.js       CONTROLLI SUI DOPPIONI (doppie importazioni, doppi addebiti...)
 │   │   ├── gaps.js             analisi dei buchi tra importazioni
 │   │   ├── finance.js          totali, categorie, mesi, contanti non tracciati
 │   │   ├── links.js            collegamenti: contanti↔prelievi, giroconti, rimborsi
@@ -149,7 +192,8 @@ famiglia/
 │   │   └── receipts.js         lettura del testo degli scontrini, insegne, reparti, analisi prodotti
 │   ├── js/ocr.js               foto → ritaglio e pulizia → testo (Tesseract, offline), più tentativi
 │   ├── js/app.js               stato, comunicazione con Android, componenti comuni
-│   ├── js/screens/*.js         una schermata per file (home, todo, imports, receipts, cash…)
+│   ├── js/screens/*.js         una schermata per file: todo.js (Classifica), subjects.js, categories.js,
+│   │                           picker.js (scelta categoria), checks.js (doppioni), home, imports, receipts, cash…
 │   ├── js/demo.js              database finto per l'anteprima sul PC
 │   └── vendor/tesseract/       motore OCR + modello italiano (non modificare)
 ├── android/

@@ -149,20 +149,7 @@
         tip: 'Un pasto a domicilio costa spesso 3-4 volte lo stesso pasto cucinato a casa.', saving: Math.round(delivery * 0.5 * 12) });
     }
 
-    // 9) Addebiti doppi (stessa controparte e importo entro 1 giorno)
-    const expenses = booked.filter(t => t.cents < 0 && t.kind === 'expense' && t.date >= U.addDays(todayIso || U.today(), -120));
-    const seen = {};
-    for (const t of expenses) {
-      const k = C.merchantKey(t) + '|' + t.cents;
-      for (const o of seen[k] || []) {
-        if (Math.abs(U.daysBetween(o.date, t.date)) <= 1 && U.account(o) === U.account(t)) {
-          add({ id: 'dup:' + o.id + ':' + t.id, level: 'alta', icon: '⧉', title: 'Possibile addebito doppio',
-            text: (t.details || t.operation) + ': ' + eur(-t.cents) + ' il ' + o.date.split('-').reverse().join('/') + ' e il ' + t.date.split('-').reverse().join('/') + '.',
-            tip: 'Se non hai fatto due acquisti, contatta l\'esercente o la banca per lo storno.', ids: [o.id, t.id] });
-        }
-      }
-      (seen[k] = seen[k] || []).push(t);
-    }
+    // 9) Addebiti doppi: ora nei Controlli sui doppioni (logic/duplicates.js), più precisi
 
     // 10) Contanti non tracciati negli ultimi 90 giorni
     const recentW = booked.filter(t => t.kind === 'withdrawal' && t.date >= U.addDays(todayIso || U.today(), -90));

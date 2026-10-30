@@ -203,3 +203,26 @@ td:first-child, th:first-child { text-align: left; }
   .card .value { font-size: 21px; }
   #nav button { font-size: 9px; }
 }
+
+/* ---------- Scelta categoria (picker) ---------- */
+#picker { position: fixed; inset: 0; background: #09242baa; z-index: 35; padding: 12px; overflow: auto; }
+#picker[hidden] { display: none; }
+.picker-sheet { margin: 12px auto; }
+.catbtn { display: block; width: 100%; text-align: left; margin-top: 7px; border: 1px solid #dce4dc; background: #fff; color: #173c43; border-radius: 12px; padding: 13px; min-height: 46px; font-size: 14px; }
+.search { display: block; width: 100%; border: 1px solid #dce4dc; background: #fff; border-radius: 12px; padding: 12px; margin: 12px 0; font-size: 15px; }
+.pick-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip.pick { background: #fff; border: 1px solid #d7e0d6; font-size: 13px; padding: 8px 12px; color: var(--ink); }
+.chip.pick.ok { background: #dff0e5; border-color: #9fd0b0; }
+button.chip { cursor: pointer; }
+.fam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fam-card { display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 2px; background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 12px; color: var(--ink); }
+.fam-card.open { border-color: var(--brand); box-shadow: 0 0 0 2px #163e4522; }
+.fam-ico { font-size: 22px; }
+.fam-name { font-weight: 700; font-size: 13px; }
+
+/* ---------- Soggetti ---------- */
+.subj-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; background: #eef3ea; border-radius: 16px; padding: 12px 14px; margin: 8px 0 4px; }
+.txmain small.subj-desc { font-style: italic; color: #5f7774; }
+
+/* ---------- Controlli ---------- */
+.reasons { margin: 8px 0; padding-left: 18px; font-size: 13px; line-height: 1.5; color: #4c6563; }

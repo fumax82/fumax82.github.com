@@ -80,7 +80,7 @@ function habitsHtml() {
   const top = Object.values(merchants).sort((a, b) => b.total - a.total).slice(0, 12);
 
   return (tagged < list.length ? '<div class="hint">Necessità indicata per ' + tagged + ' spese su ' + list.length + ' (' + Math.round(tagged / list.length * 100) + '%). '
-      + '<button class="link" onclick="nav(\'todo\',\'quick\')">Completa in fretta per esercizio →</button></div>' : '')
+      + '<button class="link" onclick="nav(\'todo\',\'subjects\')">Assegnala ai soggetti, vale per tutti i loro movimenti →</button></div>' : '')
     + '<div class="card"><h2>Necessità</h2><p class="sub">Essenziale = non rinunciabile · Utile = migliora la vita · Superflua = si può tagliare.</p>'
     + donut(byExtra(list, 'need')) + bars(byExtra(list, 'need'))
     + (superflue ? '<div class="hint warn">Spese superflue: <b>' + eur(superflue) + '</b> (' + Math.round(superflue / total * 100) + '% delle spese). Su un anno, a questo ritmo: ' + eur(superflue * (S.month ? 12 : 1)) + (S.month ? '' : ' nel periodo') + '.</div>' : '') + '</div>'

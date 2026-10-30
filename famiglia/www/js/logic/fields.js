@@ -28,7 +28,8 @@
     { key: 'kind', label: 'Trattamento', copy: true, memory: true },
     { key: 'accountUser', label: 'Conto / carta', copy: true, memory: true },
     { key: 'person', label: 'Persona', copy: true, memory: true },
-    { key: 'merchant', label: 'Esercizio', extra: true, copy: true, memory: true, scope: 'merchant',
+    // "Esercizio": nome libero della 2.1; dalla 2.4 il nome lo dà il soggetto dell'anagrafica (hidden: non si mostra nel modulo)
+    { key: 'merchant', label: 'Esercizio', extra: true, copy: true, memory: true, scope: 'merchant', hidden: true,
       hint: 'Nome leggibile del negozio o soggetto (es. "Esselunga Viale Piave")' },
     { key: 'need', label: 'Necessità', extra: true, copy: true, memory: true, choice: true,
       options: [['essenziale', 'Essenziale'], ['utile', 'Utile'], ['superflua', 'Superflua']],
@@ -166,23 +167,34 @@
     const out = [];
     for (const group of ['merchant', 'brand', 'type']) {
       for (const t of groups[group]) {
-        const changes = [];
-        for (const key in values) {
-          const f = byKey[key];
-          if (!f || (f.scope === 'merchant' && group !== 'merchant')) continue;
-          if (key === 'accountUser' && t.account) continue; // la banca indica già il conto
-          const from = get(t, key, tax), to = values[key];
-          if (same(from, to, key)) continue;
-          const inSync = before && before[key] !== undefined && !isEmpty(before[key], key) && same(from, before[key], key);
-          const manual = !isEmpty(from, key) && !inSync && (t.classifiedBy === 'user' || (f.extra && !t.classifiedBy));
-          let checked = inSync || (f.copy && !manual);
-          if (key === 'accountUser' && group !== 'merchant') checked = false;
-          changes.push({ key, label: f.label, from, to, checked });
-        }
+        const changes = changesFor(t, values, tax, before, group);
         if (changes.length) out.push({ tx: t, group, changes });
       }
     }
     return out;
+  }
+
+  /**
+   * Cosa cambierebbe in UN movimento copiando "values".
+   * group: 'merchant' (stesso esercizio), 'brand', 'type' oppure 'subject' (scheda soggetto).
+   * Per un soggetto i suoi dati valgono come modello voluto da te: sono proposti
+   * spuntati tranne dove nel movimento hai scelto a mano un valore diverso.
+   */
+  function changesFor(t, values, tax, before, group) {
+    const changes = [];
+    for (const key in values) {
+      const f = byKey[key];
+      if (!f || (f.scope === 'merchant' && group !== 'merchant')) continue;
+      if (key === 'accountUser' && t.account) continue; // la banca indica già il conto
+      const from = get(t, key, tax), to = values[key];
+      if (isEmpty(to, key) || same(from, to, key)) continue;
+      const inSync = before && before[key] !== undefined && !isEmpty(before[key], key) && same(from, before[key], key);
+      const manual = !isEmpty(from, key) && !inSync && (t.classifiedBy === 'user' || (f.extra && !t.classifiedBy));
+      let checked = group === 'subject' ? !manual : inSync || (f.copy && !manual);
+      if (key === 'accountUser' && group !== 'merchant' && group !== 'subject') checked = false;
+      changes.push({ key, label: f.label, from, to, checked });
+    }
+    return changes;
   }
 
   // ---------------------------------------------------------------------
@@ -228,10 +240,18 @@
     const tax = C.taxonomy(prefs);
     const out = [];
     const done = new Set();
+    // 0. Soggetti dell'anagrafica: hanno la precedenza su memoria e regole
+    const SJ = root.Subjects || (typeof require !== 'undefined' ? require('./subjects.js') : null);
+    if (SJ) {
+      for (const e of SJ.autoEdits(all, prefs)) { out.push(e); done.add(e.id); }
+      // I movimenti di un soggetto con dati da assegnare li gestisce solo il soggetto
+      const subjects = SJ.list(prefs);
+      for (const t of all) { const s = SJ.subjectOf(t, subjects); if (s && SJ.hasValues(s)) done.add(t.id); }
+    }
     if (!prefs || prefs.merchantMemory !== false) {
       const prof = profiles(all, tax);
       for (const t of all) {
-        if (t.state !== 'active' || (t.classifiedBy && t.classifiedBy !== 'bank')) continue;
+        if (done.has(t.id) || t.state !== 'active' || (t.classifiedBy && t.classifiedBy !== 'bank')) continue;
         const key = profileKey(t), p = prof[key];
         if (!p || p.sourceId === t.id) continue;
         const since = ((prefs && prefs.memorySince) || {})[key];
@@ -251,7 +271,7 @@
     return out.concat(C.pendingRuleEdits(others, rules));
   }
 
-  const Fields = { FIELDS, byKey, get, isEmpty, same, format, toEdit, changed, snapshot, related, proposals, profiles, profileKey, autoEdits };
+  const Fields = { FIELDS, byKey, get, isEmpty, same, format, toEdit, changed, snapshot, related, proposals, changesFor, profiles, profileKey, autoEdits };
   root.Fields = Fields;
   if (typeof module !== 'undefined') module.exports = Fields;
 })(typeof window === 'undefined' ? globalThis : window);

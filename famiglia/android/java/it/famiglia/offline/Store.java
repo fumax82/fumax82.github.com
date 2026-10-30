@@ -187,8 +187,21 @@ public class Store extends SQLiteOpenHelper {
         Set<Long> usedBooked = new HashSet<>();
         for (Tx t : all) if (t.replaced > 0) usedBooked.add(t.replaced);
 
+        // In quali file importati compare ogni movimento (serve ai controlli sui doppioni)
+        java.util.Map<Long, JSONArray> importsOfTx = new java.util.HashMap<>();
+        Cursor c = db.rawQuery("SELECT DISTINCT tx_id,import_id FROM observations", null);
+        try {
+            while (c.moveToNext()) {
+                JSONArray a = importsOfTx.get(c.getLong(0));
+                if (a == null) importsOfTx.put(c.getLong(0), a = new JSONArray());
+                a.put(c.getLong(1));
+            }
+        } finally {
+            c.close();
+        }
+
         JSONArray txs = new JSONArray();
-        Cursor c = db.rawQuery("SELECT * FROM tx", null);
+        c = db.rawQuery("SELECT * FROM tx", null);
         try {
             String[] cols = {"category", "kind", "note", "person", "state"};
             while (c.moveToNext()) {
@@ -202,6 +215,8 @@ public class Store extends SQLiteOpenHelper {
                 o.put("classifiedBy", str(c, "classified_by"));
                 o.put("source", str(c, "source"));
                 o.put("extra", parseExtra(str(c, "extra")));
+                JSONArray imps = importsOfTx.get(o.getLong("id"));
+                o.put("imports", imps == null ? new JSONArray() : imps);
                 txs.put(o);
             }
         } finally {

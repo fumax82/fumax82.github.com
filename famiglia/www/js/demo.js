@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.Native) return; // nel telefono non serve
-  const KEY = 'famiglia-demo-v3';
+  const KEY = 'famiglia-demo-v4';
   const U = window.Util;
   let db = null;
   const photos = {}; // foto scontrini (solo in memoria)
@@ -35,7 +35,7 @@
     const t = {
       id: db.nextId++, occurrence: 1, date, cents, operation, details, account: account || '', currency: 'EUR', status: status || 'SI',
       originalCategory: category || '', category: category || '', note: '', person: 'Famiglia', state: 'active', replaced: 0,
-      family: '', accountUser: '', classifiedBy: category ? 'bank' : '', source: 'bank', extra: {},
+      family: '', accountUser: '', classifiedBy: category ? 'bank' : '', source: 'bank', extra: {}, imports: [],
       raw: { Data: date, Operazione: operation, Dettagli: details, 'Conto o carta': account || '', Categoria: category || '', Importo: (cents / 100).toFixed(2) }
     };
     t.kind = kindOf(t);
@@ -76,17 +76,33 @@
     // Quattro file importati: sovrapposizione, buco di 12 giorni, buco di 2 giorni, ultimi giorni non importati
     const periods = [[s, U.addDays(s, 60)], [U.addDays(s, 55), U.addDays(s, 110)], [U.addDays(s, 123), U.addDays(s, 160)], [U.addDays(s, 163), U.addDays(today, -6)]];
     // il secondo buco deve cadere in giorni feriali per essere visibile
-    let id = 1;
-    const seen = new Set();
+    let id = 1, prevEnd = null;
     for (const [a, b] of periods) {
-      const rows = generate(a, b).filter(t => { const k = t.date + t.details + t.cents; if (seen.has(k)) return false; seen.add(k); return true; });
+      // I giorni già coperti dal file precedente contengono gli STESSI movimenti (come nella realtà)
+      for (const t of db.transactions) if (t.date >= a && t.date <= b) t.imports.push(id);
+      const from = prevEnd && prevEnd >= a ? U.addDays(prevEnd, 1) : a;
+      const rows = generate(from, b);
+      rows.forEach(t => (t.imports = [id]));
       db.transactions.push(...rows);
-      db.imports.push({ id: id++, name: 'Movimenti_Intesa_' + a + '.xlsx', created: b + 'T18:00:00Z', start: a, end: b, count: rows.length, firstDate: a, lastDate: b });
+      db.imports.push({ id, name: 'Movimenti_Intesa_' + a + '.xlsx', created: b + 'T18:00:00Z', start: a, end: b, count: rows.length, firstDate: a, lastDate: b });
+      id++;
+      prevEnd = b;
     }
     const tx = db.transactions;
     // Addebito doppio, giroconto, movimenti in attesa
     const d1 = U.addDays(today, -20);
-    tx.push(makeTx(d1, -4590, 'Pagamento POS', 'DECATHLON MILANO', 'Carta Visa *4821', 'Sport'), makeTx(d1, -4590, 'Pagamento POS', 'DECATHLON MILANO', 'Carta Visa *4821', 'Sport'));
+    const lastFile = periods.length;
+    const dec = [makeTx(d1, -4590, 'Pagamento POS', 'DECATHLON MILANO', 'Carta Visa *4821', 'Sport'), makeTx(d1, -4590, 'Pagamento POS', 'DECATHLON MILANO', 'Carta Visa *4821', 'Sport')];
+    dec.forEach(t => (t.imports = [lastFile]));
+    tx.push(...dec);
+    // Doppia importazione: nella sovrapposizione tra il 1° e il 2° file la banca ha cambiato la descrizione
+    const twinOf = tx.find(t => t.imports.length === 2 && t.cents < 0 && t.kind === 'expense' && t.details.includes(' '));
+    if (twinOf) {
+      twinOf.imports = [1];
+      const twin = makeTx(twinOf.date, twinOf.cents, twinOf.operation, twinOf.details.split(' ')[0] + ' S.P.A. ' + (twinOf.details.split(' ')[1] || ''), twinOf.account, twinOf.category);
+      twin.imports = [2];
+      tx.push(twin);
+    }
     tx.push(makeTx(U.addDays(today, -30), -50000, 'Bonifico disposto', 'A FAVORE CONTO DEPOSITO', 'Conto 1000/00012345', ''), makeTx(U.addDays(today, -29), 50000, 'Bonifico a vostro favore', 'DA CONTO CORRENTE', 'Conto Deposito 7788', ''));
     tx.push(makeTx(U.addDays(today, -7), -2650, 'Pagamento POS', 'RISTORANTE DA MARIO', 'Carta Visa *4821', '', 'NO'));
     tx.push(makeTx(U.addDays(today, -12), 2999, 'Storno pagamento', 'AMAZON EU SARL RIMBORSO', 'Carta Visa *4821', 'Rimborsi e storni'));
@@ -98,6 +114,11 @@
     const cash2 = makeTx(U.addDays(w[1].date, 1), -2500, 'Pagamento in contanti', 'Parrucchiere', 'Contanti', 'Cura della persona');
     Object.assign(cash2, { source: 'manual', family: 'Persona e famiglia', classifiedBy: 'user' });
     tx.push(cash1, cash2);
+    // Lo stesso parrucchiere risulta anche pagato con la carta: registrato due volte?
+    const salon = makeTx(cash2.date, -2500, 'Pagamento POS', 'SALONE BELLEZZA LUCIA', 'Carta Visa *4821', 'Cura della persona');
+    salon.id = db.nextId++;
+    salon.imports = [lastFile];
+    tx.push(salon);
     db.links.push({ id: db.nextLink++, type: 'cash', from: cash1.id, to: w[0].id, cents: 1800, note: '', created: today });
     // Scontrini di esempio collegati alla spesa del sabato
     const shops = tx.filter(t => /ESSELUNGA|CONAD|LIDL/.test(t.details)).slice(-4);
@@ -118,6 +139,10 @@
     Object.assign(bar, { classifiedBy: 'user', family: 'Ristoranti e bar', category: 'Bar e caffè', extra: { merchant: 'Bar Centrale', need: 'superflua', nature: 'variabile' } });
     const mutuo = tx.filter(t => /MUTUO/.test(t.details)).pop();
     Object.assign(mutuo, { classifiedBy: 'user', family: 'Casa', category: 'Mutuo e affitto', extra: { need: 'essenziale', nature: 'fissa', tax: 'mutuo' } });
+    // Un soggetto in anagrafica, con descrizione e dati da assegnare ai suoi movimenti
+    db.prefs.subjects = JSON.stringify([{ id: 'demo-mutuo', name: 'Mutuo prima casa', description: 'Rata mensile del mutuo con Intesa Sanpaolo',
+      type: 'banca', direction: 'out', match: 'mutuo casa', auto: true, since: 0, created: today,
+      set: { class: { family: 'Casa', category: 'Mutuo e affitto' }, need: 'essenziale', nature: 'fissa', tax: 'mutuo' } }]);
     db.audit.push({ date: today, action: 'Anteprima', detail: 'Dati dimostrativi generati' });
   }
 
@@ -225,9 +250,10 @@
     if (!gap) { window.notice('Anteprima: nessun buco da riempire.'); return; }
     const start = U.addDays(gap.start, -2), end = gap.type === 'recent' ? U.today() : U.addDays(gap.end, 2);
     const rows = generate(start, end).filter(r => r.date >= gap.start && r.date <= gap.end);
-    rows.forEach(r => (r.id = db.nextId++));
+    const newImport = db.imports.length + 1;
+    rows.forEach(r => { r.id = db.nextId++; r.imports = [newImport]; });
     db.transactions.push(...rows);
-    db.imports.push({ id: db.imports.length + 1, name: 'Movimenti_Intesa_' + start + '.xlsx', created: new Date().toISOString(), start, end, count: rows.length, firstDate: start, lastDate: end });
+    db.imports.push({ id: newImport, name: 'Movimenti_Intesa_' + start + '.xlsx', created: new Date().toISOString(), start, end, count: rows.length, firstDate: start, lastDate: end });
     log('Importazione', 'Anteprima: ' + rows.length + ' nuovi');
     save();
     window.receive(snapshot());
