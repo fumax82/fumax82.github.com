@@ -21,8 +21,8 @@ android {
         applicationId "app.kalend"
         minSdk 24
         targetSdk 36
-        versionCode 55
-        versionName "55.0"
+        versionCode 56
+        versionName "56.0"
         // contatto richiesto da MET Norway nello User-Agent (vedi Net.java)
         buildConfigField "String", "CONTACT", "\"" + (System.getenv("KALEND_CONTACT") ?: "https://github.com/fumax82/fumax82.github.com") + "\""
     }

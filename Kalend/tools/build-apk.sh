@@ -22,7 +22,7 @@ JAR="$CACHE/android-all-16.jar"
 R8="$CACHE/r8lib.jar"
 AAPT2="$CACHE/aapt2"
 WORK="$CACHE/apk-build"
-VERSION_CODE=55; VERSION_NAME="55.0"
+VERSION_CODE=56; VERSION_NAME="56.0"
 CONTACT="${KALEND_CONTACT:-https://github.com/fumax82/fumax82.github.com}"
 mkdir -p "$CACHE"
 

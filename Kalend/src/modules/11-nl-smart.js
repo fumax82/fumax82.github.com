@@ -9,14 +9,20 @@
       Così si può dettare in inglese con l'app in italiano, o viceversa,
       senza cambiare nulla nelle impostazioni.
    2. COMANDI INIZIALI/FINALI tolti dal titolo: «ricordami di…»,
-      «aggiungi…», «remind me to…», «〜を追加して» (lessico lead/leadEnd).
-      Un «ricordami di» senza altro preavviso = avviso all'ora dell'evento.
+      «aggiungi…», «remind me to…», «〜を追加して» (lessico lead/leadEnd),
+      anche concatenati («aggiungi in agenda…») e con il sostantivo generico
+      che segue («aggiungi UN EVENTO spesa», lessico leadNoun). Un «ricordami»
+      senza altro preavviso = avviso all'ora dell'evento; il «di» dell'infinito
+      («ricordami domani alle 8 DI prendere…») sparisce con il comando.
    3. LUOGHI COMUNI in minuscolo: «in palestra», «at the gym», «im Büro»,
       «al bar Centrale», e gli incontri a distanza («online», «su Zoom»)
       (lessico venues/online).
    4. GIORNO SENZA MESE: «il 15», «on the 15th», «am 15.», «15日» → il
-      prossimo 15 del mese (lessico dayOf, suffissi del giorno).
-   5. NOTE SENZA DUE PUNTI: «… nota portare i documenti» → descrizione.
+      prossimo 15 del mese (lessico dayOf, dayOrdinal, suffissi del giorno);
+      «il primo del mese» → ogni mese, giorno 1.
+   5. NOTE SENZA DUE PUNTI: «… nota portare i documenti» → descrizione;
+      e «Riunione, portare il contratto»: la frase dopo la virgola che comincia
+      con un verbo (infinito o imperativo) è una nota, non il titolo.
    6. PRIORITÀ BASSA: «quando puoi», «low priority» → normale e via dal
       titolo (lessico lowPriority); urgente/importante sono già nel lessico.
    7. SICUREZZA SERALE: un orario fra le 1:00 e le 7:59 detto insieme a
