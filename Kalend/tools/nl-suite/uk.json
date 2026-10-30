@@ -755,6 +755,16 @@
    },
    "skip": true,
    "note": "v56 MOTORE: giorno senza mese spento a torto. preProcess() di 11-nl-smart.js (parte 4) cerca i nomi dei mesi SENZA confini di parola: l'abbreviazione «кві» (квітень) dentro «квіти» fa credere che la frase abbia un mese. Ottenuto titolo «Замовити квіти для мами 7 числа», nessuna data. Lo stesso con «сер» in «середу/сервісі» e «гру» in «групою»"
+  },
+  {
+   "s": "Зустріч у другій половині дня в середу",
+   "expect": {
+    "title": "Зустріч",
+    "date": "wd:3",
+    "start": "15:00"
+   },
+   "skip": true,
+   "note": "v56 MOTORE: «у другій половині дня» (moments.afternoon) viene rotto prima dei momenti: numberWords() legge «у другій» come «alle 2» (cue «у») e «половині» (half) diventa «e mezza». Canon «Зустріч alle 2 e mezza дня середа»: ottenuto 14:30 e titolo «Зустріч дня». Servirebbe proteggere le frasi di moments da numberWords (come protect per le ricorrenze) e applicare half solo accanto a un'ora"
   }
  ]
 }

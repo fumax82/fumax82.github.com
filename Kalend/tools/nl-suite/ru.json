@@ -791,6 +791,16 @@
    },
    "skip": true,
    "note": "v56 MOTORE: giorno senza mese spento a torto. preProcess() di 11-nl-smart.js (parte 4) cerca i nomi dei mesi SENZA confini di parola: l'abbreviazione «мар» (марта) dentro «Мариной» fa credere che la frase abbia un mese. Ottenuto titolo «Встреча 5 числа», nessuna data. Stesso guaio in ucraino con «сер» dentro «середу/сервісі», «кві» dentro «квіти», «гру» dentro «групою»"
+  },
+  {
+   "s": "Встреча во второй половине дня в среду",
+   "expect": {
+    "title": "Встреча",
+    "date": "wd:3",
+    "start": "15:00"
+   },
+   "skip": true,
+   "note": "v56 MOTORE: «во второй половине дня» (moments.afternoon) viene rotto dalla regola SIMPLE «half» di rules() (10-lang-packs.js), che sostituisce «половине» con «mezza» OVUNQUE, anche senza un'ora vicina. Canon «Встреча во второй mezza дня среда»: titolo «Встреча во второй», nessun orario. Idem «в первой половине дня» e «Отчёт за первую половину года» (titolo «Отчёт за первую года»). Le voci «половине/половину» in half vanno tenute (servono a «в половине девятого»)"
   }
  ]
 }
