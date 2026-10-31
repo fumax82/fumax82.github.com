@@ -14,61 +14,20 @@
   'use strict';
   const U = root.Util || require('./util.js');
 
-  // Reparti e parole chiave (testo in minuscolo, senza accenti)
-  const DEPARTMENTS = [
-    ['Frutta', ['mele', 'pera ', 'pere ', 'kaki', 'mela', 'banan', 'arance', 'arancia', 'pere ', 'kiwi', 'uva', 'limon', 'fragol', 'frutta', 'ananas', 'pesche', 'albicocc', 'mandarin', 'clementin', 'melone', 'anguria', 'mirtill', 'avocado']],
-    ['Verdura', ['insalata', 'pomodor', 'zucchin', 'patat', 'carot', 'cipoll', 'verdur', 'spinaci', 'finocch', 'peperon', 'melanzan', 'lattuga', 'rucola', 'broccol', 'cavol', 'funghi', 'aglio', 'basilico', 'sedano', 'cetriol', 'legumi fres']],
-    ['Carne', ['pollo', 'petto', 'manzo', 'maiale', 'bovino', 'tacchin', 'salsicc', 'macinato bov', 'macinato mist', 'macinato di', 'hamburger', 'bistecc', 'vitello', 'arrosto', 'cotolett', 'wurstel', 'spiedin', 'agnello', 'carne']],
-    ['Pesce', ['salmone', 'merluzz', 'gamber', 'pesce', 'orata', 'branzino', 'cozze', 'vongole', 'calamar', 'polpo', 'baccala', 'sgombro', 'alici', 'acciughe']],
-    ['Salumi', ['prosciutto', 'crudo', 'cotto', 'salame', 'mortadell', 'bresaola', 'speck', 'pancetta', 'coppa']],
-    ['Latte e formaggi', ['latte', 'yogurt', 'yogh', 'yog ', 'feta', 'brie', 'asiago', 'montasio', 'skyr', 'formagg', 'mozzarell', 'parmigian', 'grana', 'burro', 'ricotta', 'panna', 'stracchino', 'gorgonzola', 'mascarpone', 'emmental', 'provola', 'scamorza', 'kefir', 'fontina', 'pecorino']],
-    ['Uova', ['uova', 'uovo']],
-    ['Pane e forno', ['pane', 'gris ', 'taralli', 'friselle', 'piadin', 'schiacciat', 'focacc', 'cracker', 'grissin', 'fette biscott', 'piadina', 'pizza', 'panini', 'brioche', 'cornett', 'tramezz']],
-    ['Pasta, riso e farine', ['pasta', 'spaghett', 'penne', 'riso', 'fusilli', 'farina', 'rigaton', 'tagliatell', 'lasagne', 'gnocchi', 'ravioli', 'tortellin', 'cous cous', 'orzo', 'farro']],
-    ['Dispensa', ['olio', 'aceto', 'sale ', 'zucchero', 'passata', 'pelati', 'polpa', 'ceci', 'fagioli', 'lenticch', 'caffe', 'tonno', 'sugo', 'pesto', 'maionese', 'ketchup', 'marmellat', 'miele', 'cereali', 'muesli', 'spezie', 'brodo', 'dado', 'legumi', 'conserv', 'the ', 'te ', 'camomilla', 'tisana']],
-    ['Dolci e snack', ['biscott', 'cioccolat', 'merendin', 'patatin', 'snack', 'gelat', 'torta', 'nutella', 'caramell', 'wafer', 'crostatin', 'chips', 'pop corn', 'dolci', 'barrett', 'pandoro', 'panettone', 'colomba']],
-    ['Bevande', ['acqua', 'succo', 'spremut', 'nettare', 'kombucha', 'coca', 'aranciata', 'bibita', 'the fredd', 'te fredd', 'estathe', 'chinotto', 'gassosa', 'energy', 'red bull', 'sprite', 'fanta', 'pepsi', 'lemon soda']],
-    ['Alcolici', ['vino', 'birra', 'moretti', 'peroni', 'heineken', 'menabrea', 'ichnusa', 'nastro azzurro', 'tennent', 'corona', 'beck', 'prosecco doc', 'spritz', 'prosecco', 'spumante', 'liquor', 'gin ', 'vodka', 'whisky', 'rum ', 'amaro', 'aperol', 'campari', 'lambrusco', 'chianti']],
-    ['Surgelati', ['surgel', 'findus', 'bastoncin', 'frozen', 'gelo ', 'sofficin', '4 salti']],
-    ['Casa e pulizia', ['detersiv', 'ammorbid', 'carta igien', 'scottex', 'tovagliol', 'sgrassat', 'candeggin', 'spugn', 'sacchett', 'pellicol', 'alluminio', 'piatti', 'bicchieri', 'lavastovigl', 'pastiglie', 'anticalcare', 'deodorante amb', 'scopa', 'carta cucina', 'fazzolett']],
-    ['Igiene personale', ['shampoo', 'bagnoschiuma', 'dentifric', 'sapone', 'deodorant', 'assorbent', 'rasoi', 'cotton', 'balsamo', 'spazzolin', 'crema', 'docciaschiuma', 'collutorio', 'salviett']],
-    ['Bambini', ['pannolin', 'omogeneizz', 'biberon', 'baby', 'plasmon', 'mellin']],
-    ['Animali', ['crocchett', 'cane', 'gatto', 'lettiera', 'pet ', 'whiskas', 'friskies', 'purina']]
-  ];
+  // Il riconoscimento dei reparti è in products.js (dizionario, abbreviazioni,
+  // correzioni imparate). Qui solo il collegamento.
+  const P = () => root.Products || require('./products.js');
+  let learned = {}; // correzioni dell'utente: { products: {chiave: reparto}, words: {parola: reparto} }
 
+  /** Imposta le correzioni imparate (chiamata dall'app con le preferenze). */
+  function setLearned(l) { learned = l || {}; }
 
-  // Marche e abbreviazioni frequenti sugli scontrini italiani (per riconoscere il reparto)
-  const BRANDS = {
-    "Latte e formaggi": ["provol", "provo ", "provo.", "burrin", "caciocav", "fior di latte", "milk", "galbani", "parmalat", "granarolo", " mila ", "muller", "danone", "activia", "philadelphia", "santa lucia", "vipit", "vipiteno", "tilsiter", "sottilette", "jocca", "lurpak", "fage", "zymil", "alta qualita"],
-    "Dolci e snack": ["lindt", "ferrero", "kinder", "milka", " novi ", "perugina", " baci ", "pocket coffee", "loacker", "pan di stelle", "gocciole", "oro saiwa", "crik crok", "pringles", "san carlo", "amica chips", "tavolett", "haribo", "fonzies", "oreo", "togo", "plasmon biscotti", "doria", "balocco", "mulino bianco"],
-    "Bevande": ["s.angelo", "s angelo", "sant anna", "san benedetto", "levissima", "ferrarelle", "san pellegrino", "santal", " yoga ", "skipper", "lipton", "valfrutta", "rocchetta", "vera ", "lete", "uliveto", "panna "],
-    "Pasta, riso e farine": ["barilla", "de cecco", "divella", "garofalo", "rummo", "voiello", " rana ", "scotti", "gallo riso"],
-    "Salumi": ["pr cotto", "pr crudo", "prosc", "rovagnati", "beretta", "fiorucci", "citterio", "negroni", "golfetta", "wuber"],
-    "Carne": [" aia ", "amadori", "fileni"],
-    "Dispensa": ["espresso", "moka", "mutti", "cirio", "de rica", "knorr", "rio mare", "nostromo", "callipo", "calve", "bertolli", "carapelli", "monini", "lavazza", "kimbo", "segafredo", " illy", "nescafe", "cereali", "kellogg", "porridge", "avena", "fiocchi", "pomi", "dado"],
-    "Pane e forno": ["pan bauletto", "harry", "wasa", "pavesi", "fette", "panbauletto"],
-    "Casa e pulizia": [" dash", "dixan", "finish", "svelto", "chanteclair", " ace ", "swiffer", " regina ", " tempo ", "foxy", "lysoform", "napisan", " bref", "vileda", "domopak", " pril", "nelsen", "smac", "vernel", "coccolino"],
-    "Igiene personale": [" dove ", "nivea", "colgate", "mentadent", "oral b", "gillette", "pantene", "head shoulders", "vidal", "neutro roberts", " lines ", "tampax", "nuvenia", "chilly", "felce azzurra", "borotalco"],
-    "Alcolici": ["grap ", "grappa", "limoncello", "amaretto", "martini", "baileys", "jager", "montenegro", "ramazzotti", "averna", "lucano", "nastro", "ceres", "bud ", "aperitivo"],
-    "Surgelati": ["orogel", "sofficini", "capitan findus"],
-    "Animali": ["purina", "friskies", "whiskas", " felix", "gourmet", "monge", "schesir", " almo "]
-  };
-  for (const [dep, words] of DEPARTMENTS) if (BRANDS[dep]) words.push(...BRANDS[dep]);
+  /** Reparti come [nome, parole] (compatibilità con il resto del codice). */
+  const DEPARTMENTS = (root.Products || require('./products.js')).DEPARTMENTS.map(d => [d.name, [].concat(d.t || [], d.w || [], d.f || [])]);
 
-  /**
-   * Reparto di un prodotto in base al nome. Vince la parola che compare PRIMA
-   * nel nome: in "SUCCO ARANCIA" conta "succo" (bevanda), non "arancia" (frutta).
-   */
-  function productCategory(name) {
-    const n = ' ' + U.norm(name).replace(/[^a-z0-9]+/g, ' ') + ' ';
-    let best = null, bestPos = Infinity;
-    for (const [dep, words] of DEPARTMENTS) {
-      for (const w of words) {
-        const pos = n.indexOf(w);
-        if (pos >= 0 && pos < bestPos) { bestPos = pos; best = dep; }
-      }
-    }
-    return best || 'Altro';
+  /** Reparto di un prodotto (tiene conto delle correzioni imparate). */
+  function productCategory(name, l) {
+    return P().classify(name, l || learned).department;
   }
 
   // ---------------------------------------------------------------------
@@ -474,7 +433,7 @@
     return '';
   }
 
-  const Receipts = { DEPARTMENTS, SHOPS, productCategory, knownShop, findShop, parseText, mergeTexts, productKey, analyze, matchPayments, paymentMethod, findDate, toCents };
+  const Receipts = { DEPARTMENTS, SHOPS, productCategory, setLearned, knownShop, findShop, parseText, mergeTexts, productKey, analyze, matchPayments, paymentMethod, findDate, toCents };
   root.Receipts = Receipts;
   if (typeof module !== 'undefined') module.exports = Receipts;
 })(typeof window === 'undefined' ? globalThis : window);

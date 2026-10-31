@@ -78,6 +78,7 @@ function put(key, value) {
 function derive() {
   S.tax = C.taxonomy(S.prefs);
   S.subjects = SJ.list(S.prefs);
+  R.setLearned(pref('productLearned', {}));
   S.checks = D.analyze(S.data.transactions, S.data.imports, pref('dupDecisions', {}), U.today());
   S.todo = C.todoList(S.data.transactions, S.prefs);
   S.gaps = G.analyze(S.data.imports, S.data.transactions, pref('gapIgnored', []), U.today());

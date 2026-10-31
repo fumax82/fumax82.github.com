@@ -1,12 +1,37 @@
-# Famiglia 2.4 — finanze di famiglia, offline
+# Famiglia 2.5 — finanze di famiglia, offline
 
 App Android per analizzare entrate e uscite importando gli estratti Excel di Intesa Sanpaolo.
 Tutto resta sul telefono: nessun permesso Internet, database locale, backup cifrato.
 
-**APK pronto da installare:** [`dist/Famiglia-2.4.apk`](dist/Famiglia-2.4.apk)
+**APK pronto da installare:** [`dist/Famiglia-2.5.apk`](dist/Famiglia-2.5.apk)
 Si installa sopra le versioni 2.x senza disinstallare: i dati restano.
 
 ---
+
+## Novità della versione 2.5: reparti dei prodotti (alcolici, frutta, uova...)
+
+Ogni riga dello scontrino viene assegnata a un **reparto** (🍎 Frutta, 🥦 Verdura, 🥩 Carne, 🐟 Pesce,
+🥓 Salumi, 🧀 Latte e formaggi, 🥚 Uova, 🍞 Pane e forno, 🍝 Pasta riso e farine, 🥫 Dispensa,
+🍪 Dolci e snack, 🥤 Bevande, 🍷 Alcolici, 🧊 Surgelati, 🥗 Pronti e gastronomia, 🧽 Casa e pulizia,
+🧴 Igiene personale, 🍼 Bambini, 🐾 Animali) con un dizionario che vale per qualunque supermercato:
+
+- conosce **tipi di prodotto** (vino, mele, uova...), **marche** (Moretti, Barilla, Mulino Bianco...) e le
+  **abbreviazioni** degli scontrini (`FORMAGG`, `PROSC`, `MOZZ`); tollera piccoli errori di lettura
+- la parola che dice **cosa è** il prodotto vince sul gusto: `YOGURT ALLA FRAGOLA` è latticino, non frutta
+- prova su 474 righe di scontrini: dal 70,5% della 2.4 al 100%; su 188 prodotti **mai visti** prima
+  della messa a punto il 96,3% (i casi sbagliati sono stati poi aggiunti al dizionario)
+
+**Correggere un reparto sbagliato** (e insegnarlo all'app):
+
+- tocca un prodotto nello scontrino salvato o nell'analisi *Spesa e prodotti* e scegli il reparto giusto
+- *Ricorda per «prodotto»*: i prossimi scontrini con lo stesso prodotto (anche formato diverso) useranno il tuo reparto
+- *Usa anche la parola «…»*: vale per tutti i prodotti che contengono quella parola
+- *Correggi anche gli altri acquisti*: aggiorna subito gli scontrini già salvati
+- anche cambiare il reparto nella schermata di modifica dello scontrino viene ricordato
+
+In *Analisi › Spesa e prodotti* trovi i **prodotti da controllare** (non riconosciuti), l'elenco delle
+**correzioni ricordate** (con *Dimentica*) e **Ricalcola i reparti**, che mostra cosa cambierebbe con il
+dizionario attuale negli scontrini vecchi (le tue correzioni non vengono toccate).
 
 ## Novità della versione 2.4: classificazione semplice, anagrafica soggetti, controlli doppioni
 
@@ -189,11 +214,12 @@ famiglia/
 │   │   ├── finance.js          totali, categorie, mesi, contanti non tracciati
 │   │   ├── links.js            collegamenti: contanti↔prelievi, giroconti, rimborsi
 │   │   ├── insights.js         avvisi su sprechi e abitudini
-│   │   └── receipts.js         lettura del testo degli scontrini, insegne, reparti, analisi prodotti
+│   │   ├── products.js         REPARTI DEI PRODOTTI: dizionario (tipi, marche, gusti) e correzioni ricordate
+│   │   └── receipts.js         lettura del testo degli scontrini, insegne, analisi prodotti
 │   ├── js/ocr.js               foto → ritaglio e pulizia → testo (Tesseract, offline), più tentativi
 │   ├── js/app.js               stato, comunicazione con Android, componenti comuni
 │   ├── js/screens/*.js         una schermata per file: todo.js (Classifica), subjects.js, categories.js,
-│   │                           picker.js (scelta categoria), checks.js (doppioni), home, imports, receipts, cash…
+│   │                           picker.js (scelta categoria), checks.js (doppioni), products.js (correzione reparti)…
 │   ├── js/demo.js              database finto per l'anteprima sul PC
 │   └── vendor/tesseract/       motore OCR + modello italiano (non modificare)
 ├── android/
@@ -208,6 +234,7 @@ famiglia/
 │   │   └── Backup.java         backup cifrato AES-256 (compatibile con la 1.0)
 │   └── res-compiled/           icona e risorse già compilate
 ├── tests/                      test automatici (logica, copia campi, scontrini veri in tests/fixtures/)
+│                               products-bench.js / products-holdout.js: precisione dei reparti
 └── tools/
     ├── build_apk.sh            crea l'APK firmato con un comando
     ├── axml.py                 converte il manifest nel formato binario Android
@@ -221,7 +248,10 @@ famiglia/
   Aggiungi la parola nella lista giusta, per esempio `'claude'` nella riga AI.
 - **Cambiare le soglie dei buchi**: in `www/js/logic/gaps.js` modifica la funzione `priority`.
 - **Nuovo avviso**: in `www/js/logic/insights.js` aggiungi un blocco `add({...})` dentro `compute`.
-- **Nuovo reparto prodotti**: in `www/js/logic/receipts.js` modifica `DEPARTMENTS`.
+- **Prodotto riconosciuto male**: in `www/js/logic/products.js` aggiungi la parola in `DEPARTMENTS`
+  (`t` = tipo di prodotto, peso alto; `w` = marca o prodotto; `f` = gusto, conta poco). Poi lancia
+  `node tests/products-bench.js` per vedere che gli altri prodotti restino giusti.
+- **Nuovo reparto prodotti**: aggiungi un blocco `{ name, icon, t, w, f }` in `DEPARTMENTS` di `products.js`.
 - **Nuova insegna di negozio**: in `www/js/logic/receipts.js` aggiungi una riga in `SHOPS`.
 - **Nuovo campo manuale** (es. "Canale: online/negozio"): aggiungilo in `FIELDS` dentro `www/js/logic/fields.js`.
   Dettaglio, finestra di copia, memoria e filtri lo useranno da soli; per l'esportazione CSV aggiungilo anche in `Store.csv()`.

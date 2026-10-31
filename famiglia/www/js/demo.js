@@ -124,7 +124,8 @@
     const shops = tx.filter(t => /ESSELUNGA|CONAD|LIDL/.test(t.details)).slice(-4);
     const catalog = [['LATTE INTERO 1L', 129, 'Latte e formaggi'], ['BANANE', 189, 'Frutta'], ['PASTA PENNE 500G', 89, 'Pasta, riso e farine'], ['MOZZARELLA', 99, 'Latte e formaggi'],
       ['PETTO DI POLLO', 645, 'Carne'], ['BISCOTTI FROLLINI', 219, 'Dolci e snack'], ['ACQUA NATURALE 6X1,5L', 199, 'Bevande'], ['DETERSIVO PIATTI', 249, 'Casa e pulizia'],
-      ['POMODORI', 230, 'Verdura'], ['BIRRA 66CL', 139, 'Alcolici'], ['YOGURT BIANCO', 95, 'Latte e formaggi'], ['PANE', 180, 'Pane e forno']];
+      ['POMODORI', 230, 'Verdura'], ['BIRRA 66CL', 139, 'Alcolici'], ['YOGURT BIANCO', 95, 'Latte e formaggi'], ['PANE', 180, 'Pane e forno'],
+      ['UOVA FRESCHE X6', 219, 'Uova'], ['TILSITER AFFETTATO', 249, 'Altro'], ['TEMPEH BIO', 289, 'Altro']];
     shops.forEach((t, k) => {
       const items = catalog.filter(() => rnd() < 0.7).map(([name, unit, category]) => {
         const qty = rnd() < 0.2 ? 2 : 1, price = Math.round(unit * (1 + k * 0.03)) * qty;

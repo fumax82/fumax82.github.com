@@ -149,6 +149,7 @@ function shoppingHtml() {
     + '<div class="grid3"><div class="card" style="margin:0;padding:14px"><span class="eyebrow">SCONTRINI</span><div class="value">' + a.receipts + '</div></div>'
     + '<div class="card" style="margin:0;padding:14px"><span class="eyebrow">SPESO</span><div class="value" style="font-size:18px">' + eur(a.total) + '</div></div>'
     + '<div class="card" style="margin:0;padding:14px"><span class="eyebrow">MEDIA</span><div class="value" style="font-size:18px">' + eur(a.average) + '</div></div></div>'
+    + unknownProductsHtml()
     + '<div class="card"><h2>Per reparto</h2>' + donut(a.byCategory) + bars(a.byCategory, 'shopCategory') + '</div>'
     + (a.byMonth.length > 1 ? '<div class="card"><h2>Mese per mese</h2>' + bars(a.byMonth.map(([m, v]) => [monthName(m), v])) + '</div>' : '')
     + '<div class="card"><h2>Dove spendi di più</h2>' + productTable(a.top, 'spent') + '</div>'
@@ -156,11 +157,13 @@ function shoppingHtml() {
     + (a.rising.length ? '<div class="card"><h2>Prezzi in aumento</h2><p class="sub">Stesso prodotto, prezzo unitario più alto rispetto al primo acquisto.</p>'
       + a.rising.map(p => '<div class="kpi row"><div><strong style="font-size:13px">' + esc(p.name) + '</strong><small class="mini" style="display:block">da ' + eur(p.prices[0].unit) + ' a ' + eur(p.prices[p.prices.length - 1].unit) + '</small></div><strong class="red">+' + Math.round(p.change * 100) + '%</strong></div>').join('') + '</div>' : '')
     + '<div class="card"><h2>Negozi</h2>' + a.byShop.map(s => '<div class="kpi row"><div><strong style="font-size:13px">' + esc(s.shop) + '</strong><small class="mini" style="display:block">' + s.count + ' scontrini · media ' + eur(s.average) + '</small></div><b>' + eur(s.total) + '</b></div>').join('') + '</div>'
+    + learnedHtml()
     + '<button class="btn wide" onclick="nav(\'receipts\')">Vai agli scontrini</button>';
 }
 
+/** Tabella prodotti: tocca una riga per correggerne il reparto. */
 function productTable(list, by) {
-  return '<table><tr><th>Prodotto</th><th>Volte</th><th>Speso</th></tr>' + list.map(p => '<tr><td>' + esc(p.name) + '<br><span class="mini">' + esc(p.category) + '</span></td><td>' + p.count + '</td><td>' + eur(p.spent) + '</td></tr>').join('') + '</table>';
+  return '<table><tr><th>Prodotto</th><th>Volte</th><th>Speso</th></tr>' + list.map(p => '<tr onclick="changeDepartment(' + jsArg(p.name) + ',' + jsArg(p.category) + ')"><td>' + esc(p.name) + '<br><span class="mini">' + Products.icon(p.category) + ' ' + esc(p.category) + '</span></td><td>' + p.count + '</td><td>' + eur(p.spent) + '</td></tr>').join('') + '</table>';
 }
 
 function setShopFilter(k, v) {

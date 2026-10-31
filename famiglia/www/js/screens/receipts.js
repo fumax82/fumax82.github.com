@@ -117,7 +117,7 @@ let rc = null; // bozza dello scontrino in modifica
 
 function editReceipt(draft) {
   rc = Object.assign({ items: [], photos: [] }, draft);
-  window.rcDeps = R.DEPARTMENTS.map(d => d[0]).concat('Altro');
+  window.rcDeps = Products.NAMES;
   rc.choice = null; // scelta del pagamento: null = la propone l'app
   modal(rc.id ? 'Modifica scontrino' : 'Controlla e conferma',
     ((rc.warnings || []).includes('small') ? '<div class="hint warn">📏 Lo scontrino era piccolo nella foto, quindi i caratteri erano poco leggibili. La prossima volta avvicinati finché lo scontrino riempie l\'inquadratura in larghezza; per gli scontrini lunghi fai più foto in sequenza.</div>' : '')
@@ -182,7 +182,7 @@ function itemRows(items) {
     + '<input class="q" type="number" step="0.001" value="' + (it.qty || 1) + '" aria-label="Quantità">'
     + '<input class="p" type="number" step="0.01" value="' + (it.price / 100).toFixed(2) + '" aria-label="Prezzo" oninput="updateSum()">'
     + '<button onclick="removeItem(' + i + ')" aria-label="Elimina riga">×</button>'
-    + '<select class="cat c">' + window.rcDeps.map(d => '<option' + (d === it.category ? ' selected' : '') + '>' + d + '</option>').join('') + '</select></div>').join('');
+    + '<select class="cat c" data-auto="' + esc(it.category) + '"' + (it.userCat ? ' data-user="1"' : '') + '>' + window.rcDeps.map(d => '<option value="' + esc(d) + '"' + (d === it.category ? ' selected' : '') + '>' + Products.icon(d) + ' ' + d + '</option>').join('') + '</select></div>').join('');
 }
 
 /** Legge le righe dal modulo. */
@@ -191,7 +191,12 @@ function readItems() {
     const name = row.querySelector('.n').value.trim();
     const qty = Number(row.querySelector('.q').value) || 1;
     const price = Math.round(Number(row.querySelector('.p').value) * 100) || 0;
-    return { name, qty, price, unit: Math.round(price / qty), category: row.querySelector('.c').value };
+    const sel = row.querySelector('.c');
+    // Reparto cambiato a mano rispetto a quello proposto: lo segno come "tuo"
+    const userCat = sel.dataset.user === '1' || sel.value !== sel.dataset.auto;
+    const it = { name, qty, price, unit: Math.round(price / qty), category: sel.value };
+    if (userCat) it.userCat = true;
+    return it;
   }).filter(it => it.name);
 }
 
@@ -227,6 +232,7 @@ function saveReceipt() {
     photos: $('rcKeep') && $('rcKeep').checked && !rc.id ? rc.photos : []
   };
   if (!receipt.date) { notice('Indica la data'); return; }
+  learnFromItems(items);
   const pay = (document.querySelector('input[name=rcPay]:checked') || {}).value || '0';
   closeModal();
   if (pay === 'cash') {
@@ -291,7 +297,10 @@ function openReceipt(id) {
   modal(r.shop || 'Scontrino', '<p class="sub">' + fmt(r.date) + ' · ' + r.items.length + ' prodotti · totale <b>' + eur(r.total) + '</b></p>'
     + (t ? '<h3>Pagamento</h3>' + txrow(t) : '<div class="hint warn">Non collegato a un pagamento.</div>')
     + '<h3 style="margin-top:16px">Per reparto</h3>' + bars(Object.entries(byCat).sort((a, b) => b[1] - a[1]))
-    + '<h3>Prodotti</h3><table>' + r.items.map(it => '<tr><td>' + esc(it.name) + '<br><span class="mini">' + esc(it.category) + '</span></td><td>' + (it.qty !== 1 ? it.qty + ' × ' : '') + '</td><td>' + eur(it.price) + '</td></tr>').join('') + '</table>'
+    + '<h3>Prodotti</h3><p class="mini">Tocca un prodotto per correggere il reparto: l\'app se lo ricorderà.</p>'
+    + r.items.map(it => '<div class="tx" onclick="changeDepartment(' + jsArg(it.name) + ',' + jsArg(it.category) + ')"><div class="txicon">' + Products.icon(it.category) + '</div>'
+      + '<div class="txmain"><strong>' + esc(it.name) + '</strong><small>' + esc(it.category || 'Altro') + (it.qty !== 1 ? ' · ' + it.qty + ' × ' + eur(it.unit) : '') + (it.userCat ? ' · corretto da te' : '') + '</small></div>'
+      + '<div class="amount">' + eur(it.price) + '</div></div>').join('')
     + (r.photos ? '<details ontoggle="if(this.open)act(\'receiptPhotos\',{id:' + r.id + '})"><summary>Foto (' + r.photos + ')</summary><div id="photos-' + r.id + '"><p class="sub">Caricamento…</p></div></details>' : '')
     + '<div class="actions"><button class="btn secondary" onclick="editReceipt(Object.assign({},S.data.receipts.find(x=>x.id===' + r.id + ')))">Modifica</button>'
     + '<button class="btn danger" onclick="if(confirm(\'Eliminare lo scontrino?\')){act(\'deleteReceipt\',{id:' + r.id + '});closeModal()}">Elimina</button></div>');
