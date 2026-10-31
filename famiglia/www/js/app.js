@@ -25,8 +25,9 @@ const S = {
   todo: [],           // movimenti con informazioni mancanti
   gaps: null,         // analisi dei buchi di importazione
   page: 'home',
-  month: '',          // mese selezionato "AAAA-MM" ('' = tutti)
-  query: '', filterState: 'active', filterAccount: '', filterCat: '', filterFamily: '', filterPerson: '',
+  period: { preset: 'all', from: '', to: '' },   // periodo scelto (vedi logic/search.js)
+  month: '',          // se il periodo è un solo mese: "AAAA-MM" (usato da avvisi e budget), altrimenti ''
+  query: '', flow: 'all', filterKind: '', filterState: 'active', filterAccount: '', filterCat: '', filterFamily: '', filterPerson: '',
   filterExtra: {},    // filtri sui campi extra (necessità, etichette...)
   limit: 80,
   sub: {},            // sotto-schede di ogni schermata (es. S.sub.reports = 'alerts')
@@ -34,7 +35,7 @@ const S = {
 };
 const Screens = {};
 const $ = id => document.getElementById(id);
-const C = Classify, G = Gaps, F = Finance, L = Links, R = Receipts, U = Util, FL = Fields, SJ = Subjects, D = Duplicates;
+const C = Classify, G = Gaps, F = Finance, L = Links, R = Receipts, U = Util, FL = Fields, SJ = Subjects, D = Duplicates, SR = Search;
 
 // ---------------------------------------------------------------------
 // Formattazione
@@ -112,7 +113,8 @@ window.receive = function (d) {
   }
   S.data.prefsParsed = S.prefs;
   if (!S.loaded && S.data.transactions.length) {
-    S.month = S.data.transactions.map(t => t.date.slice(0, 7)).sort().pop();
+    // All'apertura: l'ultimo mese con movimenti
+    setPeriod('m:' + S.data.transactions.map(t => t.date.slice(0, 7)).sort().pop(), true);
   }
   S.loaded = true;
   derive();
@@ -156,10 +158,14 @@ function nav(page, sub) {
   window.scrollTo(0, 0);
 }
 
+/** Pagine che si aprono dal menu "Altro": "indietro" riporta lì. */
+const MORE_PAGES = { imports: 'Importa e buchi', checks: 'Doppioni', review: 'Riconciliazione', receipts: 'Scontrini', cash: 'Contanti', plan: 'Progetti', settings: 'Impostazioni' };
+
 /** Tasto "indietro" di Android. */
 window.back = function () {
   if (!$('picker').hidden) closePicker();
   else if (!$('modal').hidden) closeModal();
+  else if (MORE_PAGES[S.page]) nav('more');
   else if (S.page !== 'home') nav('home');
 };
 
@@ -186,14 +192,16 @@ function closeModal() {
 /** Disegna la schermata attuale e la barra di navigazione. */
 function render() {
   const screen = Screens[S.page] || Screens.home;
-  $('app').innerHTML = '<div class="screenin">' + screen() + '</div>';
-  const todoCount = S.todo.length;
-  const gapCount = S.gaps ? S.gaps.gaps.filter(g => g.level !== 'minima' && g.level !== 'bassa').length : 0;
+  // Le pagine aperte da "Altro" hanno in cima il ritorno al menu
+  const backbar = MORE_PAGES[S.page] ? '<button class="link backbar" onclick="nav(\'more\')">← Altro</button>' : '';
+  $('app').innerHTML = '<div class="screenin">' + backbar + screen() + '</div>';
+  // Barra in basso: 5 voci. Il numero rosso su "Altro" somma le cose da sistemare lì dentro.
   const items = [
-    ['home', '⌂', 'Home', 0], ['moves', '⇄', 'Movimenti', 0], ['todo', '✓', 'Classifica', todoCount],
-    ['imports', '⤓', 'Importa', gapCount], ['reports', '▥', 'Analisi', 0], ['more', '☰', 'Altro', 0]
+    ['home', '⌂', 'Home', 0], ['moves', '⇄', 'Movimenti', 0], ['todo', '✓', 'Classifica', S.todo.length],
+    ['reports', '▥', 'Analisi', 0], ['more', '☰', 'Altro', moreBadges().total]
   ];
-  $('nav').innerHTML = items.map(([p, i, l, n]) => '<button class="' + (S.page === p ? 'active' : '') + '" onclick="nav(\'' + p + '\')"><b>' + i + '</b>' + l
+  const current = MORE_PAGES[S.page] ? 'more' : S.page;
+  $('nav').innerHTML = items.map(([p, i, l, n]) => '<button class="' + (current === p ? 'active' : '') + '" onclick="nav(\'' + p + '\')"><b>' + i + '</b>' + l
     + (n ? '<span class="count">' + (n > 99 ? '99+' : n) + '</span>' : '') + '</button>').join('');
   if (window.afterRender) window.afterRender();
 }
@@ -202,9 +210,28 @@ function render() {
 // Componenti comuni
 // ---------------------------------------------------------------------
 
-/** Movimenti del mese selezionato. */
+/** Date del periodo scelto: { from, to, label } */
+function periodRange() {
+  return SR.range(S.period.preset, U.today(), S.period);
+}
+
+/** Cambia periodo (vale per Home, Movimenti e Analisi). */
+function setPeriod(preset, quiet) {
+  S.period = Object.assign({}, S.period, { preset });
+  if (preset === 'custom' && !S.period.from && !S.period.to) S.period.from = U.today().slice(0, 7) + '-01';
+  S.month = SR.singleMonth(periodRange());
+  if (!quiet) render();
+}
+
+function setPeriodDate(which, value) {
+  S.period = Object.assign({}, S.period, { [which]: value });
+  setPeriod('custom');
+}
+
+/** Movimenti del periodo scelto. */
 function selected() {
-  return S.data.transactions.filter(t => !S.month || t.date.startsWith(S.month));
+  const r = periodRange();
+  return S.data.transactions.filter(t => SR.inRange(t.date, r));
 }
 
 function txById(id) {
@@ -216,12 +243,23 @@ function ctx() {
   return { links: S.data.links, all: S.data.transactions, taxonomy: S.tax };
 }
 
-function monthControl() {
+/**
+ * Scelta del periodo: periodi pronti (da sempre, questo mese, ultimi 12
+ * mesi...), un mese o un anno preciso, oppure date a scelta.
+ */
+function periodControl() {
   const ms = [...new Set(S.data.transactions.map(t => t.date.slice(0, 7)))].sort().reverse();
+  const ys = [...new Set(ms.map(m => m.slice(0, 4)))];
+  const p = S.period.preset;
+  const o = (v, l) => '<option value="' + v + '"' + (v === p ? ' selected' : '') + '>' + esc(l) + '</option>';
   const covered = S.month ? G.monthCovered(S.month, S.data.imports) : null;
-  return '<div class="selectbar"><select aria-label="Periodo" onchange="S.month=this.value;render()"><option value="">Tutti i periodi</option>'
-    + ms.map(m => '<option ' + (m === S.month ? 'selected' : '') + ' value="' + m + '">' + esc(monthName(m)) + '</option>').join('')
-    + '</select><span>' + (S.month ? (covered ? 'Periodo coperto dai file' : 'Mese parziale') : 'Tutto lo storico') + '</span></div>';
+  return '<div class="selectbar"><select aria-label="Periodo" onchange="setPeriod(this.value)">'
+    + SR.PRESETS.map(([v, l]) => o(v, l)).join('')
+    + '<optgroup label="Mesi">' + ms.map(m => o('m:' + m, monthName(m))).join('') + '</optgroup>'
+    + '<optgroup label="Anni">' + ys.map(y => o('y:' + y, 'Anno ' + y)).join('') + '</optgroup></select>'
+    + '<span>' + (S.month ? (covered ? 'Periodo coperto dai file' : 'Mese parziale') : p === 'all' ? 'Tutto lo storico' : esc(periodRange().label)) + '</span></div>'
+    + (p === 'custom' ? '<div class="grid"><label class="field">Dal<input type="date" value="' + esc(S.period.from) + '" onchange="setPeriodDate(\'from\',this.value)"></label>'
+      + '<label class="field">Al<input type="date" value="' + esc(S.period.to) + '" onchange="setPeriodDate(\'to\',this.value)"></label></div>' : '');
 }
 
 /** Soggetto dell'anagrafica a cui appartiene il movimento (o null). */

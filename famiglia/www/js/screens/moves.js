@@ -1,15 +1,68 @@
 /*
- * moves.js - Elenco dei movimenti con ricerca e filtri, e finestra di
- * DETTAGLIO di un movimento (classificazione, collegamenti, regole).
+ * moves.js - MOVIMENTI: CERCA E SOMMA e finestra di DETTAGLIO.
+ *
+ * In alto cerchi (testo, periodo, uscite/entrate, famiglia, categoria...) e
+ * subito sotto vedi il TOTALE di quello che hai trovato, con la ripartizione
+ * per famiglia, categoria, soggetto e mese. Le ricerche usate spesso si
+ * salvano e tornano con un tocco. La logica di ricerca e somma è in
+ * logic/search.js.
  */
 'use strict';
 
 Screens.moves = function () {
-  const q = U.norm(S.query);
-  const a = selected()
+  const a = filteredMoves();
+  const accounts = knownAccounts();
+  const families = [...new Set(S.data.transactions.map(t => C.familyOf(t, S.tax)).filter(Boolean))].sort();
+  const cats = [...new Set(S.data.transactions.filter(t => !S.filterFamily || C.familyOf(t, S.tax) === S.filterFamily).map(t => t.category).filter(Boolean))].sort();
+  const persons = [...new Set(S.data.transactions.map(t => t.person).filter(Boolean))];
+  const opts = (vals, cur, label) => '<option value="">' + esc(label) + '</option>' + vals.map(v => '<option ' + (v === cur ? 'selected' : '') + ' value="' + esc(v) + '">' + esc(v) + '</option>').join('');
+  const more = [S.filterAccount, S.filterPerson, S.filterKind].concat(Object.values(S.filterExtra)).filter(Boolean).length + (S.filterState !== 'active' ? 1 : 0);
+  const saved = pref('savedSearches', []);
+
+  return '<span class="eyebrow">CERCA E SOMMA</span><h1>Movimenti</h1>'
+    // Ricerche salvate: un tocco e tutti i filtri tornano come li avevi lasciati
+    + (saved.length ? '<div class="chips-row">' + saved.map((x, i) => '<span class="chip pick' + (sameSearch(x) ? ' ok' : '') + '"><span role="button" onclick="applySearch(' + i + ')">☆ ' + esc(x.name) + '</span>'
+      + ' <button class="chip-x" aria-label="Elimina" onclick="deleteSearch(' + i + ')">×</button></span>').join('') + '</div>' : '')
+    + '<div class="searchbar"><input id="search" type="search" placeholder="Cerca: amazon, netflix, -prime…" value="' + esc(S.query) + '" onkeydown="if(event.key===\'Enter\')this.blur()" onchange="S.query=this.value;render()">'
+    + (S.query ? '<button class="btn secondary small" onclick="S.query=\'\';render()">×</button>' : '') + '</div>'
+    + '<details class="mini help"><summary>Come cercare</summary><b>amazon prime</b>: tutte le parole · <b>netflix, spotify</b>: l\'una o l\'altra · <b>amazon -prime</b>: escludi una parola. Cerca in descrizione, esercizio, soggetto, note e categoria.</details>'
+    + periodControl()
+    + '<div class="tabs seg">' + [['out', 'Uscite'], ['in', 'Entrate'], ['all', 'Tutti']].map(([v, l]) => '<button class="' + (S.flow === v ? 'on' : '') + '" onclick="S.flow=\'' + v + '\';render()">' + l + '</button>').join('') + '</div>'
+    + '<div class="grid"><label class="field">Famiglia<select onchange="S.filterFamily=this.value;S.filterCat=\'\';render()">' + opts(families, S.filterFamily, 'Tutte') + '</select></label>'
+    + '<label class="field">Categoria<select onchange="S.filterCat=this.value;render()">' + opts(cats, S.filterCat, 'Tutte') + '</select></label></div>'
+    + '<details' + (more ? ' open' : '') + '><summary>Altri filtri' + (more ? ' (' + more + ' attivi)' : '') + '</summary>'
+    + '<label class="field">Tipo di movimento<select onchange="S.filterKind=this.value;render()"><option value="">Tutti</option>'
+    + Object.entries(KINDS).map(([v, l]) => '<option value="' + v + '"' + (S.filterKind === v ? ' selected' : '') + '>' + esc(l) + '</option>').join('') + '</select></label>'
+    + '<label class="field">Stato<select onchange="S.filterState=this.value;render()">'
+    + [['active', 'Attivi'], ['missing', 'Con informazioni mancanti'], ['pending', 'In attesa'], ['replaced', 'Riconciliati'], ['excluded', 'Esclusi'], ['all', 'Tutti, incluso storico']]
+      .map(([v, l]) => '<option value="' + v + '" ' + (S.filterState === v ? 'selected' : '') + '>' + l + '</option>').join('') + '</select></label>'
+    + '<label class="field">Conto o carta<select onchange="S.filterAccount=this.value;render()">' + opts(accounts, S.filterAccount, 'Tutti i conti')
+    + '<option value="missing" ' + (S.filterAccount === 'missing' ? 'selected' : '') + '>Non indicato</option></select></label>'
+    + '<label class="field">Persona<select onchange="S.filterPerson=this.value;render()">' + opts(persons, S.filterPerson, 'Tutta la famiglia') + '</select></label>'
+    + ['need', 'nature', 'tax', 'rating', 'refund'].map(k => {
+      const f = FL.byKey[k], cur = S.filterExtra[k] || '';
+      return '<label class="field">' + esc(f.label) + '<select onchange="S.filterExtra.' + k + '=this.value;render()"><option value="">Tutti</option>'
+        + f.options.map(([v, l]) => '<option value="' + v + '"' + (cur === v ? ' selected' : '') + '>' + esc(l) + '</option>').join('')
+        + '<option value="__none"' + (cur === '__none' ? ' selected' : '') + '>Non indicato</option></select></label>';
+    }).join('')
+    + '<label class="field">Etichetta / progetto<select onchange="S.filterExtra.tags=this.value;render()">' + opts(knownValues('tags'), S.filterExtra.tags || '', 'Tutte') + '</select></label>'
+    + '<label class="field">Esercizio<select onchange="S.filterExtra.merchant=this.value;render()">' + opts(knownValues('merchant'), S.filterExtra.merchant || '', 'Tutti') + '</select></label>'
+    + '</details>'
+    + totalsCard(a)
+    + '<div class="card">' + (a.length ? a.slice(0, S.limit).map(t => txrow(t)).join('') : '<p class="sub">Nessun movimento per questa ricerca.</p>') + '</div>'
+    + (a.length > S.limit ? '<button class="btn secondary wide" onclick="S.limit+=80;render()">Mostra altri 80</button>' : '')
+    + '<div class="actions"><button class="btn" onclick="act(\'import\')">Importa Excel</button><button class="btn secondary" onclick="newCash()">＋ Contanti</button></div>';
+};
+
+/** I movimenti che corrispondono a ricerca, periodo e filtri (dal più recente). */
+function filteredMoves() {
+  const q = SR.parseQuery(S.query);
+  return selected()
+    .filter(t => S.flow === 'out' ? t.cents < 0 : S.flow === 'in' ? t.cents > 0 : true)
     .filter(t => S.filterState === 'all' ? true : S.filterState === 'pending' ? (t.state === 'active' && t.status === 'NO')
       : S.filterState === 'missing' ? C.missingInfo(t, S.tax).length > 0 : t.state === S.filterState)
-    .filter(t => !q || U.norm(t.operation + ' ' + t.details + ' ' + t.note + ' ' + t.category + ' ' + title(t) + ' ' + ((subjectOf(t) || {}).description || '')).includes(q))
+    .filter(t => SR.matchText([t.operation, t.details, t.note, t.category, C.familyOf(t, S.tax), title(t), (subjectOf(t) || {}).description, (t.extra || {}).merchant].join(' '), q))
+    .filter(t => !S.filterKind || t.kind === S.filterKind)
     .filter(t => !S.filterAccount || (S.filterAccount === 'missing' ? !U.account(t) : U.account(t) === S.filterAccount))
     .filter(t => !S.filterFamily || C.familyOf(t, S.tax) === S.filterFamily)
     .filter(t => !S.filterCat || t.category === S.filterCat)
@@ -21,42 +74,90 @@ Screens.moves = function () {
       return Array.isArray(x) ? x.includes(v) : x === v;
     }))
     .sort((x, y) => y.date.localeCompare(x.date) || y.id - x.id);
-  const accounts = knownAccounts();
-  const families = [...new Set(S.data.transactions.map(t => C.familyOf(t, S.tax)).filter(Boolean))].sort();
-  const cats = [...new Set(S.data.transactions.map(t => t.category).filter(Boolean))].sort();
-  const persons = [...new Set(S.data.transactions.map(t => t.person).filter(Boolean))];
-  const opts = (vals, cur, label) => '<option value="">' + esc(label) + '</option>' + vals.map(v => '<option ' + (v === cur ? 'selected' : '') + ' value="' + esc(v) + '">' + esc(v) + '</option>').join('');
-  const active = [S.filterAccount, S.filterFamily, S.filterCat, S.filterPerson].concat(Object.values(S.filterExtra)).filter(Boolean).length + (S.filterState !== 'active' ? 1 : 0);
+}
 
-  return '<span class="eyebrow">TUTTO SOTTO CONTROLLO</span><h1>Movimenti</h1>' + monthControl()
-    + '<label class="field">Cerca descrizione, note o categoria<input id="search" placeholder="Supermercato, mutuo, Anthropic…" value="' + esc(S.query) + '" onchange="S.query=this.value;render()"></label>'
-    + '<details' + (active ? ' open' : '') + '><summary>Filtri' + (active ? ' (' + active + ' attivi)' : '') + '</summary>'
-    + '<label class="field">Stato<select onchange="S.filterState=this.value;render()">'
-    + [['active', 'Attivi'], ['missing', 'Con informazioni mancanti'], ['pending', 'In attesa'], ['replaced', 'Riconciliati'], ['excluded', 'Esclusi'], ['all', 'Tutti, incluso storico']]
-      .map(([v, l]) => '<option value="' + v + '" ' + (S.filterState === v ? 'selected' : '') + '>' + l + '</option>').join('') + '</select></label>'
-    + '<label class="field">Conto o carta<select onchange="S.filterAccount=this.value;render()">' + opts(accounts, S.filterAccount, 'Tutti i conti')
-    + '<option value="missing" ' + (S.filterAccount === 'missing' ? 'selected' : '') + '>Non indicato</option></select></label>'
-    + '<label class="field">Famiglia di spesa<select onchange="S.filterFamily=this.value;render()">' + opts(families, S.filterFamily, 'Tutte le famiglie') + '</select></label>'
-    + '<label class="field">Categoria<select onchange="S.filterCat=this.value;render()">' + opts(cats, S.filterCat, 'Tutte le categorie') + '</select></label>'
-    + '<label class="field">Persona<select onchange="S.filterPerson=this.value;render()">' + opts(persons, S.filterPerson, 'Tutta la famiglia') + '</select></label>'
-    + ['need', 'nature', 'tax', 'rating', 'refund'].map(k => {
-      const f = FL.byKey[k], cur = S.filterExtra[k] || '';
-      return '<label class="field">' + esc(f.label) + '<select onchange="S.filterExtra.' + k + '=this.value;render()"><option value="">Tutti</option>'
-        + f.options.map(([v, l]) => '<option value="' + v + '"' + (cur === v ? ' selected' : '') + '>' + esc(l) + '</option>').join('')
-        + '<option value="__none"' + (cur === '__none' ? ' selected' : '') + '>Non indicato</option></select></label>';
-    }).join('')
-    + '<label class="field">Etichetta / progetto<select onchange="S.filterExtra.tags=this.value;render()">' + opts(knownValues('tags'), S.filterExtra.tags || '', 'Tutte') + '</select></label>'
-    + '<label class="field">Esercizio<select onchange="S.filterExtra.merchant=this.value;render()">' + opts(knownValues('merchant'), S.filterExtra.merchant || '', 'Tutti') + '</select></label>'
-    + (active ? '<button class="btn secondary wide" onclick="resetFilters()">Azzera filtri</button>' : '') + '</details>'
-    + '<div class="row"><span class="sub">' + a.length + ' movimenti · somma ' + eur(U.sum(a, t => t.cents)) + '</span></div>'
-    + '<div class="card">' + (a.length ? a.slice(0, S.limit).map(t => txrow(t)).join('') : '<p class="sub">Nessun movimento per questi filtri.</p>') + '</div>'
-    + (a.length > S.limit ? '<button class="btn secondary wide" onclick="S.limit+=80;render()">Mostra altri 80</button>' : '')
-    + '<div class="actions"><button class="btn" onclick="act(\'import\')">Importa Excel</button><button class="btn secondary" onclick="newCash()">＋ Contanti</button></div>';
-};
+/**
+ * RIEPILOGO della ricerca: totale, numero di movimenti, media al mese,
+ * andamento mese per mese e ripartizione per famiglia/categoria/soggetto.
+ * Tocca una voce della ripartizione per restringere la ricerca.
+ */
+function totalsCard(list) {
+  if (!list.length) return '';
+  const s0 = SR.summarize(list, 0);
+  const sign = S.flow === 'in' ? 1 : S.flow === 'out' ? -1 : (s0.out >= s0.in ? -1 : 1);
+  const s = SR.summarize(list, sign, {
+    family: t => C.familyOf(t, S.tax) || 'Senza famiglia',
+    category: t => t.category || 'Da classificare',
+    subject: t => title(t)
+  });
+  const by = S.sub.totalsBy || 'family';
+  const parts = by === 'category' ? s.byCategory : by === 'subject' ? s.bySubject : s.byFamily;
+  const filtered = S.query || S.filterFamily || S.filterCat || S.period.preset !== 'all' || S.flow !== 'all';
+  return '<section class="hero totals"><div class="row"><span class="eyebrow">' + (sign < 0 ? 'TOTALE USCITE' : 'TOTALE ENTRATE') + ' · ' + esc(periodRange().label) + '</span></div>'
+    + '<div class="big">' + eur(s.total) + '</div>'
+    + '<div class="sub">' + s.count + (s.count === 1 ? ' movimento' : ' movimenti') + (s.months.length > 1 ? ' · ' + eur(s.perMonth) + ' al mese in media' : '') + ' · ' + eur(s.average) + ' a movimento'
+    + (s.first ? '<br>dal ' + fmt(s.first) + ' al ' + fmt(s.last) : '') + '</div>'
+    + (S.flow === 'all' ? '<div class="line"><div><span class="eyebrow">USCITE</span><strong>' + eur(-s.out) + '</strong></div><div><span class="eyebrow">ENTRATE</span><strong class="green">' + eur(s.in) + '</strong></div>'
+      + '<div><span class="eyebrow">SALDO</span><strong>' + eur(s.net) + '</strong></div></div>' : '')
+    + '<div class="row" style="margin-top:12px;justify-content:flex-start;gap:8px">'
+    + (S.query || S.filterFamily || S.filterCat ? '<button class="btn gold small" onclick="saveSearch()">☆ Salva ricerca</button>' : '')
+    + (filtered ? '<button class="btn secondary small" onclick="resetFilters()">Azzera tutto</button>' : '') + '</div></section>'
+    + '<details class="card"' + (S.sub.totalsOpen ? ' open' : '') + ' ontoggle="S.sub.totalsOpen=this.open"><summary>Ripartizione e andamento</summary>'
+    + '<div class="tabs" style="margin:10px 0">' + [['family', 'Famiglie'], ['category', 'Categorie'], ['subject', 'Soggetti']].map(([v, l]) => '<button class="' + (by === v ? 'on' : '') + '" onclick="S.sub.totalsBy=\'' + v + '\';S.sub.totalsOpen=true;render()">' + l + '</button>').join('') + '</div>'
+    + bars(parts.slice(0, 10), by === 'category' ? 'narrowCategory' : by === 'subject' ? 'narrowSubject' : 'narrowFamily')
+    + (parts.length > 10 ? '<p class="mini">… e altre ' + (parts.length - 10) + ' voci</p>' : '')
+    + (s.months.length > 1 ? '<h3 style="margin-top:16px">Mese per mese</h3>' + bars(s.months.slice(-24).reverse().map(([m, v]) => [monthName(m), v])) : '')
+    + '</details>';
+}
+
+// Tocchi su una voce della ripartizione: restringono la ricerca
+function narrowFamily(f) { S.filterFamily = f === 'Senza famiglia' ? '' : f; S.filterCat = ''; render(); }
+function narrowCategory(c) { if (c !== 'Da classificare') S.filterCat = c; else S.filterState = 'missing'; render(); }
+function narrowSubject(name) { S.query = name; render(); }
+
+// ---------------------------------------------------------------------
+// Ricerche salvate (prefs.savedSearches)
+// ---------------------------------------------------------------------
+const SEARCH_KEYS = ['query', 'flow', 'filterFamily', 'filterCat', 'filterKind', 'filterAccount', 'filterPerson', 'filterState'];
+
+function currentSearch() {
+  const x = { period: Object.assign({}, S.period), filterExtra: Object.assign({}, S.filterExtra) };
+  for (const k of SEARCH_KEYS) x[k] = S[k];
+  return x;
+}
+
+function sameSearch(x) {
+  const c = currentSearch();
+  return SEARCH_KEYS.every(k => (x[k] || '') === (c[k] || '')) && x.period.preset === c.period.preset;
+}
+
+function saveSearch() {
+  const name = prompt('Nome della ricerca (es. "Servizi AI")', S.query || S.filterCat || S.filterFamily);
+  if (!name) return;
+  put('savedSearches', pref('savedSearches', []).concat([Object.assign({ name: name.trim() }, currentSearch())]));
+  render();
+  notice('Ricerca salvata: la trovi in cima a Movimenti');
+}
+
+function applySearch(i) {
+  const x = pref('savedSearches', [])[i];
+  if (!x) return;
+  for (const k of SEARCH_KEYS) S[k] = x[k] || (k === 'flow' ? 'all' : k === 'filterState' ? 'active' : '');
+  S.filterExtra = Object.assign({}, x.filterExtra);
+  S.period = Object.assign({}, x.period);
+  setPeriod(S.period.preset);
+}
+
+function deleteSearch(i) {
+  const list = pref('savedSearches', []);
+  if (!confirm('Eliminare la ricerca salvata "' + list[i].name + '"?')) return;
+  put('savedSearches', list.filter((_, k) => k !== i));
+  render();
+}
 
 function resetFilters() {
-  S.filterState = 'active'; S.filterAccount = ''; S.filterFamily = ''; S.filterCat = ''; S.filterPerson = ''; S.query = ''; S.filterExtra = {};
-  render();
+  S.filterState = 'active'; S.filterAccount = ''; S.filterFamily = ''; S.filterCat = ''; S.filterPerson = ''; S.filterKind = ''; S.query = ''; S.filterExtra = {}; S.flow = 'all';
+  setPeriod('all');
 }
 
 /** Finestra di dettaglio di un movimento. */

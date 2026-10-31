@@ -15,7 +15,7 @@ function budgetHtml() {
   const budgets = pref('budgets', {});
   const spend = Object.fromEntries(F.categories(selected(), ctx()));
   const cats = [...new Set([...Object.keys(budgets), ...Object.keys(spend)])].sort();
-  return monthControl() + '<div class="hint">Limiti mensili per categoria. Quando superi l\'80% ricevi un avviso in Analisi.</div>'
+  return periodControl() + '<div class="hint">Limiti mensili per categoria. Quando superi l\'80% ricevi un avviso in Analisi.</div>'
     + (!S.month ? '<p class="hint warn">Seleziona un mese per confrontare il budget.</p>' : '')
     + cats.map(c => {
       const b = budgets[c] || 0, s = spend[c] || 0;

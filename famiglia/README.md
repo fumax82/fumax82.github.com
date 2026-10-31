@@ -1,12 +1,40 @@
-# Famiglia 2.5 — finanze di famiglia, offline
+# Famiglia 2.6 — finanze di famiglia, offline
 
 App Android per analizzare entrate e uscite importando gli estratti Excel di Intesa Sanpaolo.
 Tutto resta sul telefono: nessun permesso Internet, database locale, backup cifrato.
 
-**APK pronto da installare:** [`dist/Famiglia-2.5.apk`](dist/Famiglia-2.5.apk)
+**APK pronto da installare:** [`dist/Famiglia-2.6.apk`](dist/Famiglia-2.6.apk)
 Si installa sopra le versioni 2.x senza disinstallare: i dati restano.
 
 ---
+
+## Novità della versione 2.6: cerca e somma, menu più semplici
+
+### Cerca e somma (scheda Movimenti)
+
+Quanto ho speso per Amazon da sempre? E per i servizi AI quest'anno? Scrivi, scegli il periodo e
+il totale compare subito sopra l'elenco.
+
+- **Ricerca**: `amazon prime` = tutte le parole · `netflix, spotify` = l'una o l'altra ·
+  `amazon -prime` = escludi una parola. Cerca in descrizione, esercizio, soggetto, note, famiglia e categoria.
+- **Periodo**: da sempre, questo mese, mese scorso, ultimi 3 o 12 mesi, quest'anno, anno scorso,
+  un mese o un anno preciso, oppure **date a scelta** (dal… al…). Il periodo vale anche per Home e Analisi.
+- **Uscite / Entrate / Tutti**, famiglia e categoria sempre a vista; gli altri filtri in *Altri filtri*
+  (tipo di movimento, conto, persona, necessità, etichette, esercizio...).
+- **Totale**: somma, numero di movimenti, media al mese e a movimento, prima e ultima data.
+  In *Ripartizione e andamento*: per famiglia, categoria, soggetto e mese per mese (tocca una voce per restringere).
+- **☆ Salva ricerca**: le ricerche usate spesso restano in cima a Movimenti e tornano con un tocco.
+
+### Menu riorganizzati
+
+- Barra in basso con **5 voci**: Home, Movimenti, Classifica, Analisi, Altro.
+- **Home**: una sola lista **Da fare** con tutto quello che aspetta un tuo tocco (classificare, doppioni,
+  buchi, scontrini e contanti da collegare, abbinamenti, regole proposte), più la scorciatoia *Cerca e somma*.
+- **Altro** diviso in gruppi: *Dati della banca* (Importa e verifica, Doppioni, Riconciliazione),
+  *Spesa e contanti* (Scontrini, Contanti), *Futuro* (Progetti e budget), *App* (Impostazioni).
+  I numeri rossi indicano cosa c'è da sistemare; la somma compare sull'icona *Altro*.
+- Soggetti, famiglie, categorie e regole stanno solo in **Classifica** (non più doppi in Altro).
+- Le pagine aperte da Altro hanno **← Altro** in cima, e il tasto indietro del telefono torna lì.
 
 ## Novità della versione 2.5: reparti dei prodotti (alcolici, frutta, uova...)
 
@@ -214,11 +242,12 @@ famiglia/
 │   │   ├── finance.js          totali, categorie, mesi, contanti non tracciati
 │   │   ├── links.js            collegamenti: contanti↔prelievi, giroconti, rimborsi
 │   │   ├── insights.js         avvisi su sprechi e abitudini
+│   │   ├── search.js           CERCA E SOMMA: periodi, ricerca nel testo, totali e ripartizioni
 │   │   ├── products.js         REPARTI DEI PRODOTTI: dizionario (tipi, marche, gusti) e correzioni ricordate
 │   │   └── receipts.js         lettura del testo degli scontrini, insegne, analisi prodotti
 │   ├── js/ocr.js               foto → ritaglio e pulizia → testo (Tesseract, offline), più tentativi
 │   ├── js/app.js               stato, comunicazione con Android, componenti comuni
-│   ├── js/screens/*.js         una schermata per file: todo.js (Classifica), subjects.js, categories.js,
+│   ├── js/screens/*.js         una schermata per file: moves.js (Cerca e somma), todo.js (Classifica), subjects.js, categories.js,
 │   │                           picker.js (scelta categoria), checks.js (doppioni), products.js (correzione reparti)…
 │   ├── js/demo.js              database finto per l'anteprima sul PC
 │   └── vendor/tesseract/       motore OCR + modello italiano (non modificare)
@@ -255,6 +284,10 @@ famiglia/
 - **Nuova insegna di negozio**: in `www/js/logic/receipts.js` aggiungi una riga in `SHOPS`.
 - **Nuovo campo manuale** (es. "Canale: online/negozio"): aggiungilo in `FIELDS` dentro `www/js/logic/fields.js`.
   Dettaglio, finestra di copia, memoria e filtri lo useranno da soli; per l'esportazione CSV aggiungilo anche in `Store.csv()`.
+- **Nuovo periodo pronto** (es. "ultimi 6 mesi"): in `www/js/logic/search.js` aggiungi una riga in
+  `PRESETS` e il caso corrispondente in `range()`.
+- **Voce del menu Altro**: in `www/js/screens/settings.js`, funzione `Screens.more`; se la pagina è nuova
+  aggiungila anche in `MORE_PAGES` (`www/js/app.js`) per avere il ritorno ad Altro.
 - **Colori**: le variabili sono in cima a `www/css/style.css`.
 
 ---

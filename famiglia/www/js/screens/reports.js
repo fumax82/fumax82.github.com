@@ -8,7 +8,7 @@ Screens.reports = function () {
   const tab = S.sub.reports || 'overview';
   const alerts = Insights.compute(S.data, S.month, U.today());
   const tabs = [['overview', 'Panoramica'], ['alerts', 'Avvisi (' + alerts.length + ')'], ['habits', 'Abitudini'], ['recurring', 'Ricorrenti'], ['shopping', 'Spesa e prodotti']];
-  return '<span class="eyebrow">DAI NUMERI ALLE SCELTE</span><h1>Analisi</h1>' + monthControl()
+  return '<span class="eyebrow">DAI NUMERI ALLE SCELTE</span><h1>Analisi</h1>' + periodControl()
     + '<div class="tabs">' + tabs.map(([v, l]) => '<button class="' + (tab === v ? 'on' : '') + '" onclick="S.sub.reports=\'' + v + '\';render()">' + l + '</button>').join('') + '</div>'
     + (tab === 'alerts' ? alertsHtml(alerts) : tab === 'habits' ? habitsHtml() : tab === 'recurring' ? recurringHtml() : tab === 'shopping' ? shoppingHtml() : overviewHtml());
 };
@@ -97,14 +97,14 @@ function habitsHtml() {
       + m.count + ' spese · media ' + eur(Math.round(m.total / m.count)) + '</small></div><b>' + eur(m.total) + '</b></div>').join('') + '</div>';
 }
 
-function filterByTag(tag) { S.filterExtra = { tags: tag }; S.filterFamily = ''; S.filterCat = ''; nav('moves'); }
+function filterByTag(tag) { S.filterExtra = { tags: tag }; S.filterFamily = ''; S.filterCat = ''; S.query = ''; nav('moves'); }
 
 function kpi(title, sub, value) {
   return '<div class="kpi row"><div>' + title + '<small class="sub" style="display:block">' + esc(sub) + '</small></div>' + value + '</div>';
 }
 
-function filterByFamily(f) { S.filterFamily = f === 'Senza famiglia' ? '' : f; S.filterCat = ''; nav('moves'); }
-function filterByCategory(c) { S.filterCat = c; S.filterFamily = ''; nav('moves'); }
+function filterByFamily(f) { S.filterFamily = f === 'Senza famiglia' ? '' : f; S.filterCat = ''; S.query = ''; S.flow = 'out'; nav('moves'); }
+function filterByCategory(c) { S.filterCat = c; S.filterFamily = ''; S.query = ''; S.flow = 'out'; nav('moves'); }
 
 function alertsHtml(list) {
   const saving = U.sum(list, a => a.saving || 0);

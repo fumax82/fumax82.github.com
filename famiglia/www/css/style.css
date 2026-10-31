@@ -226,3 +226,21 @@ button.chip { cursor: pointer; }
 
 /* ---------- Controlli ---------- */
 .reasons { margin: 8px 0; padding-left: 18px; font-size: 13px; line-height: 1.5; color: #4c6563; }
+
+/* Cerca e somma (Movimenti) */
+.searchbar { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+.searchbar input { flex: 1; min-width: 0; border: 1px solid #dce4dc; background: #fff; color: #173c43; border-radius: 14px; padding: 13px 14px; min-height: 48px; font-size: 16px; }
+details.help { margin: 4px 0 0; }
+details.help summary { font-size: 12px; padding: 6px 0; color: var(--brand); }
+.chips-row { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 10px; }
+.chip-x { background: none; border: 0; padding: 0 2px; font-size: 15px; color: #7b8a87; }
+.tabs.seg { margin: 4px 0 10px; }
+.tabs.seg button { flex: 1; }
+.hero.totals .big { font-size: 36px; }
+.hero.totals .line strong { font-size: 15px; }
+.hero .btn.secondary { background: #ffffff1c; color: #fff; border-color: #ffffff30; }
+
+/* Barra "indietro" delle pagine aperte da Altro */
+.backbar { display: block; margin: 0 0 6px; text-decoration: none; font-weight: 600; }
+.todo-row .txicon { font-size: 18px; }
+.menu-group { font-size: 11px; letter-spacing: .08em; color: #788785; margin: 20px 4px 6px; text-transform: uppercase; }

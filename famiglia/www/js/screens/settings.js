@@ -1,25 +1,43 @@
 /*
- * settings.js - Menu "Altro", impostazioni (profilo, backup), riconciliazione
+ * settings.js - Menu "Altro" (raggruppato), impostazioni (profilo, backup), riconciliazione
  * dei movimenti in attesa e modifica delle famiglie/categorie.
  */
 'use strict';
 
-/** Menu "Altro": accesso a tutte le funzioni. */
+/** Numeri rossi delle voci di "Altro" (cose da sistemare). */
+function moreBadges() {
+  const b = {
+    imports: S.gaps ? S.gaps.gaps.filter(g => ['alta', 'critica', 'media'].includes(g.level)).length : 0,
+    checks: (S.checks || []).filter(c => c.level !== 'info').length,
+    review: S.data.pairs.length,
+    receipts: receiptsReady(),
+    cash: L.cashPayments(S.data.transactions).filter(t => !L.cashLinkOf(t.id, S.data.links)).length
+  };
+  b.total = b.imports + b.checks + b.review + b.receipts + b.cash;
+  return b;
+}
+
+/**
+ * Menu "Altro": le funzioni meno quotidiane, divise in gruppi.
+ * (Soggetti, famiglie, categorie e regole stanno tutti in "Classifica".)
+ */
 Screens.more = function () {
+  const b = moreBadges();
   const item = (page, icon, title, sub, badge) => '<div class="tx" role="button" onclick="nav(\'' + page + '\')"><div class="txicon">' + icon + '</div><div class="txmain"><strong>' + title + '</strong><small>' + sub + '</small></div>'
     + (badge ? '<span class="badge warn">' + badge + '</span>' : '<span>→</span>') + '</div>';
-  const unlinked = L.cashPayments(S.data.transactions).filter(t => !L.cashLinkOf(t.id, S.data.links)).length;
-  return '<span class="eyebrow">TUTTE LE FUNZIONI</span><h1>Altro</h1><div class="card">'
-    + item('receipts', '🧾', 'Scontrini', 'Fotografa la spesa e analizza cosa compri', S.data.receipts.length ? '' : '')
-    + item('cash', '💶', 'Contanti e collegamenti', 'Pagamenti in contanti, prelievi, giroconti, rimborsi', unlinked || '')
-    + item('subjects', '👥', 'Soggetti', 'Anagrafica di negozi, servizi, persone: nome, descrizione e dati da assegnare', '')
-    + item('categories', '▦', 'Famiglie e categorie', 'Rinomina, sposta, unisci', '')
-    + item('rules', '⚙', 'Regole per parole chiave', pref('rules', []).length + ' regole', '')
-    + item('checks', '⧉', 'Controlli sui doppioni', 'Doppie importazioni, doppi addebiti', (S.checks || []).filter(c => c.level !== 'info').length || '')
-    + item('plan', '◎', 'Progetti', 'Budget, obiettivi, simulatore', '')
-    + item('review', '⇋', 'Riconciliazione', 'Movimenti in attesa da abbinare', S.data.pairs.length || '')
+  return '<span class="eyebrow">TUTTE LE ALTRE FUNZIONI</span><h1>Altro</h1>'
+    + '<div class="menu-group">Dati della banca</div><div class="card">'
+    + item('imports', '⤓', 'Importa e verifica', 'Estratti Excel, periodi coperti e buchi', b.imports)
+    + item('checks', '⧉', 'Doppioni', 'Doppie importazioni, doppi addebiti', b.checks)
+    + item('review', '⇋', 'Riconciliazione', 'Movimenti in attesa da abbinare', b.review)
+    + '</div><div class="menu-group">Spesa e contanti</div><div class="card">'
+    + item('receipts', '🧾', 'Scontrini', 'Fotografa la spesa, prodotti e reparti', b.receipts)
+    + item('cash', '💶', 'Contanti e collegamenti', 'Prelievi, pagamenti in contanti, giroconti, rimborsi', b.cash)
+    + '</div><div class="menu-group">Futuro</div><div class="card">'
+    + item('plan', '◎', 'Progetti e budget', 'Limiti per categoria, obiettivi, simulatore', '')
+    + '</div><div class="menu-group">App</div><div class="card">'
     + item('settings', '☷', 'Impostazioni e backup', 'Profilo familiare, backup cifrato, esportazioni', '')
-    + '</div>';
+    + '</div><p class="mini">Soggetti, famiglie, categorie e regole: nella scheda <button class="link" onclick="nav(\'todo\')">Classifica</button>.</p>';
 };
 
 Screens.settings = function () {
@@ -40,7 +58,7 @@ Screens.settings = function () {
     + '<details class="card"><summary>Registro delle ultime 100 azioni</summary>' + S.data.audit.map(a => '<p class="mini"><b>' + esc(a.action) + '</b> · ' + esc(a.date) + '<br>' + esc(a.detail) + '</p>').join('') + '</details>'
     + '<div class="card"><h2>Come leggere i risultati</h2><p class="sub">Accantonamenti, investimenti e giroconti non sono consumi. I rimborsi sono separati dalle entrate. I prelievi bancomat non sono spese: lo diventano i pagamenti in contanti che registri; la parte non registrata appare come "Contanti non tracciati".</p>'
     + '<p class="sub">Non essendoci un ID univoco nell\'Excel, due operazioni perfettamente identiche non sono sempre distinguibili. Si conserva la massima molteplicità osservata nei file sovrapposti.</p>'
-    + '<p class="mini">Famiglia 2.5 · build personale offline</p></div>';
+    + '<p class="mini">Famiglia 2.6 · build personale offline</p></div>';
 };
 
 function saveHouse() {
@@ -66,7 +84,7 @@ Screens.review = function () {
         + '<button class="btn secondary" onclick="act(\'distinct\',{pending:' + a.id + ',booked:' + b.id + '})">Sono distinti</button></div></div>';
     }).join('')
     + '<div class="card"><h2>In attesa: ' + pending.length + '</h2>' + pending.map(t => txrow(t)).join('') + '</div>'
-    + '<button class="btn secondary wide" onclick="S.month=\'\';S.filterState=\'replaced\';nav(\'moves\')">Vedi riconciliazioni e annulla abbinamenti</button>';
+    + '<button class="btn secondary wide" onclick="setPeriod(\'all\',true);S.filterState=\'replaced\';nav(\'moves\')">Vedi riconciliazioni e annulla abbinamenti</button>';
 };
 
 function linkPending(p, b) {
