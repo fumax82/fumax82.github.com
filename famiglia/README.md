@@ -1,12 +1,35 @@
-# Famiglia 2.7 — finanze di famiglia, offline
+# Famiglia 2.8 — finanze di famiglia, offline
 
 App Android per analizzare entrate e uscite importando gli estratti Excel di Intesa Sanpaolo.
 Tutto resta sul telefono: nessun permesso Internet, database locale, backup cifrato.
 
-**APK pronto da installare:** [`dist/Famiglia-2.7.apk`](dist/Famiglia-2.7.apk)
+**APK pronto da installare:** [`dist/Famiglia-2.8.apk`](dist/Famiglia-2.8.apk)
 Si installa sopra le versioni 2.x senza disinstallare: i dati restano.
 
 ---
+
+## Novità della versione 2.8: voci figlie nelle spese fisse
+
+Una voce può avere delle **voci figlie** che la dettagliano: *Abbonamenti › AI, Streaming*,
+*Canoni › Cellulare, Internet casa*. Anche su più livelli.
+
+- **Il totale di una voce è la sua parte propria più le figlie.** Una voce madre creata solo per
+  raggruppare ha importo 0 e vale la somma delle figlie. Raggruppare non cambia mai i totali.
+- **⊞ Nuovo gruppo**: crea la voce madre e fa scegliere subito le voci da metterci sotto.
+- Nella scheda di una voce:
+  - **Voce madre**: per spostarla sotto un'altra voce;
+  - **Voci figlie**: elenco, ＋ Voce figlia e ⇣ Sposta qui voci esistenti.
+- **Figlia già compresa**: se la madre ha già un importo, una nuova figlia propone di toglierlo da lì
+  (era già compreso), così non si conta due volte.
+- Nell'elenco le figlie sono rientrate sotto la madre. Il triangolo ▾ le chiude e le apre.
+  La spunta della madre esclude anche le figlie.
+- **Eliminare una voce madre**: si sceglie se eliminare anche le figlie o farle salire di livello.
+- **Incolla un elenco**:
+  - `Abbonamenti > AI — 22 €` (la madre viene creata, o riusata se c'è già);
+  - oppure righe rientrate di due spazi sotto la madre: in quel caso l'importo della madre è il totale
+    e le figlie ne sono il dettaglio.
+- In *Analisi › Previsioni* ogni figlia è confrontata nella sua famiglia e categoria, con il nome
+  completo (`Abbonamenti › AI`).
 
 ## Novità della versione 2.7: spese fisse e previsioni
 
@@ -285,7 +308,7 @@ famiglia/
 │   │   ├── links.js            collegamenti: contanti↔prelievi, giroconti, rimborsi
 │   │   ├── insights.js         avvisi su sprechi e abitudini
 │   │   ├── search.js           CERCA E SOMMA: periodi, ricerca nel testo, totali e ripartizioni
-│   │   ├── forecast.js         SPESE FISSE E PREVISIONI: periodicità, lettura elenchi, confronto con il reale
+│   │   ├── forecast.js         SPESE FISSE E PREVISIONI: periodicità, voci figlie, lettura elenchi, confronto con il reale
 │   │   ├── products.js         REPARTI DEI PRODOTTI: dizionario (tipi, marche, gusti) e correzioni ricordate
 │   │   └── receipts.js         lettura del testo degli scontrini, insegne, analisi prodotti
 │   ├── js/ocr.js               foto → ritaglio e pulizia → testo (Tesseract, offline), più tentativi

@@ -11,11 +11,14 @@
  *     month:    mese del pagamento (1-12) per le spese non mensili; 0 = non indicato
  *     family, category:  le stesse famiglie e categorie dei movimenti
  *     match:    parole per ritrovarla nei movimenti (facoltativo, come in "Cerca e somma")
+ *     parent:   id della VOCE MADRE se è il dettaglio di una voce più generica
+ *               (es. "AI" sotto "Abbonamenti"); '' = voce principale
  *     note, active (false = esclusa dai calcoli, per fare delle prove)
  *   }
  *
  * Qui ci sono solo calcoli, senza grafica (testati in tests/forecast.test.js):
  *   1. PERIODICITÀ: importo equivalente al mese e all'anno
+ *      VOCI FIGLIE: il totale di una voce è la sua parte propria più le figlie
  *   2. LETTURA DI UN ELENCO incollato ("Mutuo — 600 €", "Annuale", "BONUS:" ...)
  *   3. FAMIGLIA E CATEGORIA proposte, coerenti con quelle dei movimenti
  *   4. CONFRONTO CON IL REALE: previsioni ottimistiche, pessimistiche o coerenti
@@ -57,13 +60,101 @@
   const monthly = it => (it.amount || 0) / Math.max(1, it.every || 1);
   const isOn = it => it.active !== false && (it.amount || 0) > 0;
 
+  // -------------------------------------------------------------------
+  // 1b. Voci figlie: il dettaglio di una voce più generica
+  //     (es. Abbonamenti › AI, Canoni › Cellulare)
+  //
+  //   TOTALE di una voce = il suo importo "proprio" (la parte non dettagliata,
+  //   spesso 0) + i totali delle sue voci figlie. Così raggruppare delle voci
+  //   non cambia mai i totali, e ciò che vedi è sempre la somma di ciò che hai scritto.
+  //   Una voce esclusa dai calcoli esclude anche tutte le sue figlie.
+  // -------------------------------------------------------------------
+
+  /**
+   * Albero delle voci: { byId, roots (voci principali), children(it), parentOf(it) }.
+   * Una voce con una madre inesistente, o in un giro chiuso (A figlia di B e
+   * B figlia di A), viene trattata come voce principale.
+   */
+  function tree(items) {
+    const byId = new Map(items.filter(it => it.id).map(it => [it.id, it]));
+    const parentOf = it => (it.parent && it.parent !== it.id && byId.get(it.parent)) || null;
+    const loops = it => {
+      const seen = new Set([it.id]);
+      for (let p = parentOf(it); p; p = parentOf(p)) {
+        if (seen.has(p.id)) return true;
+        seen.add(p.id);
+      }
+      return false;
+    };
+    const kids = new Map(), roots = [];
+    for (const it of items) {
+      const p = parentOf(it);
+      if (p && !loops(it)) {
+        if (!kids.has(p.id)) kids.set(p.id, []);
+        kids.get(p.id).push(it);
+      } else roots.push(it);
+    }
+    const rootSet = new Set(roots);
+    const children = it => (it.id && kids.get(it.id)) || [];
+    return { byId, roots, children, parentOf: it => (rootSet.has(it) ? null : parentOf(it)) };
+  }
+
+  /** Totale al mese di una voce: parte propria + figlie (0 se esclusa). */
+  function effective(t, it) {
+    if (it.active === false) return 0;
+    return monthly(it) + t.children(it).reduce((s, c) => s + effective(t, c), 0);
+  }
+
+  /** "Abbonamenti › AI": il nome con le voci madri davanti. */
+  function pathName(t, it) {
+    const names = [it.name];
+    for (let p = t.parentOf(it), n = 0; p && n < 20; p = t.parentOf(p), n++) names.unshift(p.name);
+    return names.join(' › ');
+  }
+
+  /** Tutte le voci sotto una voce (figlie, nipoti...): elenco di id. */
+  function descendants(items, id) {
+    const t = tree(items), out = [];
+    const walk = it => t.children(it).forEach(c => { out.push(c.id); walk(c); });
+    const it = t.byId.get(id);
+    if (it) walk(it);
+    return out;
+  }
+
+  /** Le voci sopra una voce (madre, nonna...): elenco di id. */
+  function ancestors(items, id) {
+    const t = tree(items), out = [];
+    const it = t.byId.get(id);
+    for (let p = it ? t.parentOf(it) : null, n = 0; p && n < 20; p = t.parentOf(p), n++) out.push(p.id);
+    return out;
+  }
+
+  /**
+   * L'albero "appiattito" per i calcoli: ogni voce con un importo proprio
+   * diventa una riga, con il nome completo ("Abbonamenti › AI").
+   * La parte propria di una voce madre si chiama "Abbonamenti (altro)".
+   * Le voci escluse (o con una madre esclusa) non ci sono.
+   */
+  function flatten(items) {
+    const t = tree(items), out = [];
+    const walk = (it, path) => {
+      if (it.active === false) return;
+      const name = path ? path + ' › ' + it.name : it.name;
+      const kids = t.children(it);
+      if ((it.amount || 0) > 0) out.push(Object.assign({}, it, { name: kids.length ? name + ' (altro)' : name, parent: '', nodeId: it.id }));
+      kids.forEach(c => walk(c, name));
+    };
+    t.roots.forEach(r => walk(r, ''));
+    return out;
+  }
+
   /**
    * Totali delle voci attive, al mese:
    *   expense (spese), saving (accantonamenti), bonus, out (spese + accantonamenti),
    *   net (out − bonus), setAside (quota delle voci non mensili da mettere da parte)
    */
   function totals(items) {
-    const on = items.filter(isOn);
+    const on = flatten(items).filter(isOn);
     const sum = f => Math.round(on.filter(f).reduce((s, it) => s + monthly(it), 0));
     const expense = sum(it => it.section !== 'bonus' && it.kind !== 'saving');
     const saving = sum(it => it.section !== 'bonus' && it.kind === 'saving');
@@ -118,17 +209,33 @@
    *   - voci: "Mutuo — 600 €", "Assegno unico +140€ mese", "Gomme — 600 € ogni 4 anni"
    *   - note tra parentesi: "(una volta l'anno)" cambia anche la periodicità
    *   - voci senza importo ("Scuola materna — da valutare"): importo 0, escluse
+   *   - VOCI FIGLIE: "Abbonamenti > AI — 22 €" (la voce madre viene creata se
+   *     manca) oppure una riga rientrata (due spazi o tab) sotto la sua voce madre.
+   *     Se la voce madre ha un importo, è il TOTALE: le figlie ne sono il dettaglio
+   *     e alla madre resta solo la differenza ("altro").
    * Le righe che non sembrano voci (frasi, titoli) vengono ignorate.
-   * Restituisce [{ name, amount, every, section, note, active, line }]
+   * Restituisce [{ name, amount, every, section, note, active, parentIndex, group, line }]
+   * (parentIndex: posizione della voce madre nell'elenco, -1 = voce principale;
+   *  group: voce madre creata solo per raggruppare, senza importo proprio)
    */
   function parseList(text) {
     const out = [];
-    let section = 'expense', every = 1;
+    let section = 'expense', every = 1, lastTop = -1;
+    const cap = x => x.charAt(0).toUpperCase() + x.slice(1);
+    // Voce madre scritta solo come "Madre > Figlia": la riusa se c'è già, altrimenti la crea
+    const parentNamed = (name, parentIndex, sec) => {
+      const i = out.findIndex(x => U.norm(x.name) === U.norm(name) && x.parentIndex === parentIndex);
+      if (i >= 0) return i;
+      out.push({ name: cap(name), amount: 0, every: 1, section: sec, note: '', active: true, parentIndex, group: true, line: '' });
+      return out.length - 1;
+    };
     for (const raw of String(text || '').split(/\r?\n/)) {
-      const line = raw.replace(/[’`´]/g, '\'').replace(/^\s*(?:[•*·]|-(?=\s)|\d+[.)](?=\s))\s*/, '').trim();
+      const fixed = raw.replace(/[’`´]/g, '\'');
+      const indented = /^(\t|[ \u00a0]{2,})\S/.test(fixed);
+      const line = fixed.replace(/^\s*(?:[•*·]|-(?=\s)|\d+[.)](?=\s))\s*/, '').trim();
       if (!line) continue;
       const head = headerOf(line);
-      if (head && !AMOUNT_AFTER.test(line) && !AMOUNT_BEFORE.test(line)) { section = head.section; every = head.every; continue; }
+      if (head && !AMOUNT_AFTER.test(line) && !AMOUNT_BEFORE.test(line)) { section = head.section; every = head.every; lastTop = -1; continue; }
 
       // Le note tra parentesi si mettono da parte: non devono confondere importo e periodicità
       const notes = [];
@@ -166,15 +273,43 @@
       // Quello che resta dopo l'importo e non è una periodicità diventa nota ("a rata", "circa")
       const extra = rest.replace(/ogni\s+\d+\s+(anni|mesi)|al mese|all'anno|\/?mese|\/?anno|mensil[ei]|annual[ei]|[—–\-:,;]/gi, ' ').replace(/\s+/g, ' ').trim();
       const note = [extra, ...notes].filter(Boolean).join(' · ');
+
+      // Voce figlia? "Madre > Figlia" oppure riga rientrata sotto l'ultima voce principale
+      let parentIndex = -1;
+      if (name.includes('>')) {
+        const parts = name.split('>').map(x => x.trim()).filter(Boolean);
+        name = parts.pop() || name;
+        for (const p of parts) parentIndex = parentNamed(p, parentIndex, parentIndex >= 0 ? out[parentIndex].section : sign === '+' ? 'bonus' : section);
+      } else if (indented && lastTop >= 0) parentIndex = lastTop;
       out.push({
-        name: name.charAt(0).toUpperCase() + name.slice(1),
+        name: cap(name),
         amount,
         every: itemEvery,
-        section: sign === '+' ? 'bonus' : section,
+        section: parentIndex >= 0 ? out[parentIndex].section : sign === '+' ? 'bonus' : section,
         note,
         active: amount > 0,
+        parentIndex,
         line: raw.trim()
       });
+      if (parentIndex < 0) lastTop = out.length - 1;
+    }
+
+    // Voci madri con un importo: era il totale, alla madre resta la parte non dettagliata.
+    // Si parte dal fondo, così le figlie sono già sistemate quando si arriva alla madre.
+    const sub = out.map(() => 0);
+    for (let i = out.length - 1; i >= 0; i--) {
+      const it = out[i];
+      const hasKids = out.some(x => x.parentIndex === i);
+      const kidsMonthly = out.reduce((s, x, j) => s + (x.parentIndex === i ? sub[j] : 0), 0);
+      if (hasKids) {
+        it.active = true;                                    // una voce madre conta anche senza importo proprio
+        if (it.amount > 0) {
+          const own = monthly(it) - kidsMonthly;
+          if (own < -0.5) it.note = [it.note, 'il totale scritto (' + (it.amount / 100).toFixed(2).replace('.', ',') + ' €) era più basso delle voci figlie'].filter(Boolean).join(' · ');
+          it.amount = Math.max(0, Math.round(own * it.every));
+        }
+      }
+      sub[i] = (it.active === false ? 0 : monthly(it)) + kidsMonthly;
     }
     return out;
   }
@@ -188,7 +323,9 @@
    * Le famiglie e categorie sono quelle predefinite dei movimenti (classify.js),
    * più poche nuove dove non c'era una categoria adatta.
    * Scrittura delle parole: "gas" = parola esatta, "pannolin*" = parola che
-   * inizia così, "spesa alimentare" = frase intera. Vince la prima che corrisponde.
+   * inizia così, "spesa alimentare" = frase intera, "=ai" = il nome è proprio
+   * quello (per parole brevi che altrimenti sbaglierebbero, come "ai" in
+   * "regali ai nonni"). Vince la prima che corrisponde.
    */
   const EXPENSE_MAP = [
     [['fondo pensione', 'previdenza complementare', 'pensione integrativa'], 'Movimenti interni', 'Fondo pensione', 'saving'],
@@ -205,12 +342,12 @@
     [['nido', 'asilo', 'materna', 'scuola', 'bimba', 'bimbo', 'bambin*', 'figli*', 'pannolin*', 'neonat*', 'baby*', 'mensa', 'babysitter', 'tata'], 'Persona e famiglia', 'Figli e scuola'],
     [['telepass', 'pedagg*', 'parchegg*', 'autostrad*'], 'Trasporti', 'Pedaggi e parcheggi'],
     [['rca', 'assicurazione auto', 'assicuraz*', 'polizza', 'polizze'], 'Finanza e tasse', 'Assicurazioni'],
-    [['bollo auto', 'imu', 'tasi', 'f24', 'tasse', 'tassa', 'imposte', 'caf', '730', 'commercialista', 'dichiarazione'], 'Finanza e tasse', 'Tasse e imposte'],
-    [['imposta di bollo', 'commission*', 'canone conto', 'conto e carte', 'canone carta', 'canoni'], 'Finanza e tasse', 'Commissioni bancarie'],
+    [['bollo auto', 'imu', 'tasi', 'f24', 'tasse', 'tassa', 'imposte', 'caf', '730', 'commercialista', 'dichiarazione', 'canone rai', 'canone tv', 'rai'], 'Finanza e tasse', 'Tasse e imposte'],
+    [['imposta di bollo', 'commission*', 'canone conto', 'conto e carte', 'canone carta', 'canone carte'], 'Finanza e tasse', 'Commissioni bancarie'],
     [['tagliand*', 'revision*', 'gomme', 'pneumatic*', 'batteria auto', 'manutenzione macchina', 'manutenzione auto', 'meccanic*', 'officina',
       'carrozzeria', 'cambio auto', 'auto nuova', 'patente', 'macchina', 'auto', 'moto'], 'Trasporti', 'Auto e moto'],
     [['treno', 'treni', 'autobus', 'bus', 'abbonamento trasporti', 'mezzi pubblici'], 'Trasporti', 'Mezzi pubblici'],
-    [['abbonamento ai', 'intelligenza artificiale', 'chatgpt', 'claude'], 'Tecnologia e abbonamenti', 'AI'],
+    [['=ai', 'abbonamento ai', 'abbonamenti ai', 'servizi ai', 'intelligenza artificiale', 'chatgpt', 'claude'], 'Tecnologia e abbonamenti', 'AI'],
     [['streaming', 'netflix', 'spotify', 'disney', 'dazn'], 'Tecnologia e abbonamenti', 'Streaming'],
     [['cloud', 'software', 'icloud', 'dropbox'], 'Tecnologia e abbonamenti', 'Software e cloud'],
     [['internet', 'cellular*', 'telefon*', 'fibra', 'wifi', 'sim'], 'Tecnologia e abbonamenti', 'Telefonia e internet'],
@@ -240,6 +377,7 @@
   ];
 
   function keywordHit(norm, tokens, kw) {
+    if (kw.startsWith('=')) return norm === kw.slice(1);
     if (kw.includes(' ')) return (' ' + norm + ' ').includes(' ' + kw + ' ');
     if (kw.endsWith('*')) return tokens.some(t => t.startsWith(kw.slice(0, -1)));
     return tokens.includes(kw);
@@ -374,8 +512,9 @@
     const months = Math.max(1, win.months);
     const act = actuals(transactions, ctx, win.list);
     const isRare = it => it.section !== 'bonus' && it.every > win.months;
-    const rare = items.filter(it => isOn(it) && isRare(it));
-    const on = items.filter(it => isOn(it) && !(opts && opts.excludeRare && isRare(it)));
+    const flat = flatten(items).filter(isOn);
+    const rare = flat.filter(isRare);
+    const on = flat.filter(it => !(opts && opts.excludeRare && isRare(it)));
     const perMonth = v => Math.round(v / months);
 
     /** Righe per famiglia (con le categorie) di un tipo di voci. */
@@ -435,13 +574,17 @@
     const unclassified = expenseRows.filter(r => r.family === 'Senza famiglia' || r.family === 'Contanti non tracciati').reduce((s, r) => s + r.actual, 0);
 
     // Voci con una parola di ricerca: confronto anche voce per voce
-    const itemActual = on.filter(it => it.match).map(it => {
+    // (per una voce madre il previsto comprende le sue figlie)
+    const tr = tree(items);
+    const activeChain = it => { for (let p = it; p; p = tr.parentOf(p)) if (p.active === false) return false; return true; };
+    const itemActual = items.filter(it => it.match && activeChain(it) && effective(tr, it) > 0).map(it => {
       const wanted = SR.parseQuery(it.match);
       const inWin = new Set(win.list);
       const hits = transactions.filter(x => inWin.has(x.date.slice(0, 7)) && F.booked(x) && (it.section === 'bonus' ? x.cents > 0 : x.cents < 0)
         && SR.matchText([x.operation, x.details, x.note, (x.extra || {}).merchant].join(' '), wanted));
       const actual = perMonth(hits.reduce((s, x) => s + Math.abs(x.cents), 0));
-      return { item: it, forecast: Math.round(monthly(it)), actual, ids: hits.map(x => x.id), verdict: verdict(Math.round(monthly(it)), actual, it.section === 'bonus' ? 'in' : 'out') };
+      const forecast = Math.round(effective(tr, it));
+      return { item: Object.assign({}, it, { name: pathName(tr, it) }), forecast, actual, ids: hits.map(x => x.id), verdict: verdict(forecast, actual, it.section === 'bonus' ? 'in' : 'out') };
     });
 
     return {
@@ -471,7 +614,7 @@
    *   bonus:     bonus del mese (stessa logica)
    */
   function projection(items, startYm, n) {
-    const on = items.filter(isOn);
+    const on = flatten(items).filter(isOn);
     const out = [];
     for (let i = 0; i < (n || 12); i++) {
       const ym = SR.shiftMonth(startYm, i);
@@ -499,7 +642,7 @@
 
   /** Le voci non mensili più pesanti, con la quota mensile da accantonare. */
   function setAsideList(items) {
-    return items.filter(it => isOn(it) && it.section !== 'bonus' && it.every > 1)
+    return flatten(items).filter(it => isOn(it) && it.section !== 'bonus' && it.every > 1)
       .map(it => ({ item: it, monthly: Math.round(monthly(it)) }))
       .sort((a, b) => b.monthly - a.monthly);
   }
@@ -509,6 +652,7 @@
 
   const Forecast = {
     PERIODS, GROUPS, periodName, groupOf, monthly, isOn, totals,
+    tree, effective, pathName, descendants, ancestors, flatten,
     parseList, periodInText, guess, resolve, EXPENSE_MAP, INCOME_MAP,
     lastMonths, actuals, verdict, compare, projection, setAsideList, CADENCE_EVERY
   };

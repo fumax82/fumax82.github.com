@@ -155,3 +155,58 @@ test('prossimi 12 mesi: rate nel loro mese, il resto accantonato', () => {
   // Quota al mese: cambio auto 200 €, IMU 41,67 €, RCA 40 €
   assert.deepStrictEqual(FC.setAsideList(items).map(x => [x.item.name, x.monthly]), [['Cambio auto', 20000], ['IMU', 4167], ['RCA', 4000]]);
 });
+
+test('voci figlie: il totale è la parte propria più le figlie', () => {
+  const items = [
+    { id: 'a', name: 'Abbonamenti', section: 'expense', amount: 0, every: 1 },
+    { id: 'ai', name: 'AI', parent: 'a', section: 'expense', amount: 2200, every: 1, category: 'AI' },
+    { id: 'st', name: 'Streaming', parent: 'a', section: 'expense', amount: 2500, every: 1, category: 'Streaming' },
+    { id: 'c', name: 'Canoni', section: 'expense', amount: 1200, every: 12 },                 // parte propria: 1 € al mese
+    { id: 'cel', name: 'Cellulare', parent: 'c', section: 'expense', amount: 2000, every: 1 },
+    { id: 'tv', name: 'Canone TV', parent: 'c', section: 'expense', amount: 9000, every: 12, month: 1 },
+    { id: 'off', name: 'Prova', section: 'expense', amount: 0, every: 1, active: false },
+    { id: 'x', name: 'Esclusa con la madre', parent: 'off', section: 'expense', amount: 9900, every: 1 },
+    { id: 'g1', name: 'Giro 1', parent: 'g2', section: 'expense', amount: 100, every: 1 },      // madri in un giro chiuso:
+    { id: 'g2', name: 'Giro 2', parent: 'g1', section: 'expense', amount: 100, every: 1 }       // diventano voci principali
+  ];
+  const t = FC.tree(items);
+  assert.strictEqual(FC.effective(t, t.byId.get('a')), 4700);
+  assert.strictEqual(FC.effective(t, t.byId.get('c')), 100 + 2000 + 750);
+  assert.strictEqual(FC.effective(t, t.byId.get('off')), 0);
+  assert.strictEqual(FC.pathName(t, t.byId.get('cel')), 'Canoni › Cellulare');
+  assert.deepStrictEqual(FC.flatten(items).map(it => it.name),
+    ['Abbonamenti › AI', 'Abbonamenti › Streaming', 'Canoni (altro)', 'Canoni › Cellulare', 'Canoni › Canone TV', 'Giro 1', 'Giro 2']);
+  assert.strictEqual(FC.totals(items).expense, 4700 + 2850 + 200);
+  assert.deepStrictEqual(FC.descendants(items, 'c'), ['cel', 'tv']);
+  assert.deepStrictEqual(FC.ancestors(items, 'cel'), ['c']);
+  // Le figlie mantengono la loro periodicità e il loro mese di pagamento
+  const jan = FC.projection(items, '2027-01', 1)[0];
+  assert.deepStrictEqual(jan.dueItems, ['Canoni › Canone TV']);
+  // Spostare voci sotto una madre senza importo non cambia il totale
+  const flat = [{ id: 'm', name: 'Madre', amount: 0, every: 1, section: 'expense' }, { id: 'f', name: 'Figlia', amount: 3000, every: 1, section: 'expense' }];
+  const before = FC.totals(flat).expense;
+  flat[1].parent = 'm';
+  assert.strictEqual(FC.totals(flat).expense, before);
+});
+
+test('elenco incollato a più livelli: "Madre > Figlia" e righe rientrate', () => {
+  const items = FC.parseList(['Mensile', 'Abbonamenti — 50 €', '  AI — 22 €', '  Streaming — 25 €', 'Canoni > Cellulare — 20 €',
+    'Canoni > Internet casa — 30 €', 'Luce — 70 €', 'BONUS:', 'Bonus > Assegno unico +140€ mese'].join('\n'));
+  const row = it => [it.name, it.amount, it.parentIndex, !!it.group, it.section];
+  assert.deepStrictEqual(items.map(row), [
+    ['Abbonamenti', 300, -1, false, 'expense'],          // 50 € in tutto: 47 € dettagliati, 3 € "altro"
+    ['AI', 2200, 0, false, 'expense'],
+    ['Streaming', 2500, 0, false, 'expense'],
+    ['Canoni', 0, -1, true, 'expense'],                   // voce madre creata per raggruppare
+    ['Cellulare', 2000, 3, false, 'expense'],
+    ['Internet casa', 3000, 3, false, 'expense'],
+    ['Luce', 7000, -1, false, 'expense'],
+    ['Bonus', 0, -1, true, 'bonus'],
+    ['Assegno unico', 14000, 7, false, 'bonus']
+  ]);
+  // Nomi brevi delle figlie: "AI" da solo è il servizio, "ai" in una frase no
+  const tax = C.DEFAULT_TAXONOMY;
+  assert.strictEqual(FC.guess('AI', 'expense', tax).category, 'AI');
+  assert.strictEqual(FC.guess('Regali ai nonni', 'expense', tax).category, 'Regali');
+  assert.strictEqual(FC.guess('Canone RAI', 'expense', tax).category, 'Tasse e imposte');
+});

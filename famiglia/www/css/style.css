@@ -267,3 +267,8 @@ details.help summary { font-size: 12px; padding: 6px 0; color: var(--brand); }
 .badge.ok { background: #dff0e5; color: #20613f; }
 .badge.info { background: #dfeaf2; color: #2f5a74; }
 .fc-verdict .big { font-size: 34px; letter-spacing: -1px; }
+.fc-fold { background: #e7ebe2; border: 0; border-radius: 6px; width: 22px; height: 22px; font-size: 11px; margin-right: 6px; padding: 0; color: var(--ink); vertical-align: 1px; }
+.fc-branch { color: #9aa8a4; margin-right: 6px; font-weight: 400; }
+.fc-row.fc-child { background: linear-gradient(90deg, transparent 0, transparent 12px, #f6f8f3 12px); }
+.fc-row.fc-child .txmain strong { font-weight: 600; }
+.fc-kids { margin-top: 16px; background: #f7f8f3; }

@@ -7,7 +7,9 @@
  * le spese non mensili. Famiglie e categorie sono le stesse dei movimenti:
  * così in Analisi › Previsioni si può confrontare il previsto con il reale.
  *
- * Le voci stanno in prefs.forecast (vedi logic/forecast.js per i campi).
+ * Le voci possono avere delle VOCI FIGLIE che le dettagliano (Abbonamenti ›
+ * AI, Canoni › Cellulare): il totale di una voce è la sua parte propria più
+ * le figlie. Le voci stanno in prefs.forecast (vedi logic/forecast.js).
  * Modi per riempire l'elenco:
  *   - "Incolla un elenco": una voce per riga, con intestazioni come
  *     "Mensile", "Annuale", "BONUS:" (l'app capisce importi e periodicità)
@@ -54,49 +56,97 @@ Screens.forecast = function () {
       + [['period', 'per periodicità'], ['family', 'per famiglia']].map(([v, l]) => '<button class="chip pick' + ((v === 'family') === byFamily ? ' ok' : '') + '" onclick="S.sub.fcGroup=\'' + v + '\';render()">' + l + '</button>').join('') + '</div>' : '')
     + fcGroups(list, tab === 'expense' && byFamily)
     + '<div class="actions"><button class="btn" onclick="fcEdit(\'\',\'' + tab + '\')">＋ ' + (tab === 'bonus' ? 'Nuovo bonus' : 'Nuova spesa') + '</button>'
-    + '<button class="btn secondary" onclick="fcPaste()">📋 Incolla un elenco</button></div>'
-    + '<button class="btn secondary wide" onclick="fcFromRecurring()">↻ Aggiungi dalle spese ricorrenti dei movimenti</button>'
-    + '<p class="mini">Tocca una voce per cambiare importo, periodicità, famiglia o note. La spunta a sinistra la include o la esclude dai calcoli: utile per fare delle prove ("e se non ci fosse l\'affitto?").</p>';
+    + '<button class="btn secondary" onclick="fcNewGroup(\'' + tab + '\')">⊞ Nuovo gruppo</button></div>'
+    + '<div class="actions"><button class="btn secondary" onclick="fcPaste()">📋 Incolla un elenco</button>'
+    + '<button class="btn secondary" onclick="fcFromRecurring()">↻ Dalle ricorrenti</button></div>'
+    + '<p class="mini">Tocca una voce per modificarla o per aggiungerle delle <b>voci figlie</b>, che la dettagliano (es. Abbonamenti › AI, Canoni › Cellulare). '
+    + '<b>Nuovo gruppo</b> crea una voce madre e ti fa scegliere le voci da metterci sotto. Il totale di una voce è la sua parte propria più le figlie. '
+    + 'La spunta a sinistra include o esclude dai calcoli la voce e le sue figlie: utile per le prove ("e se non ci fosse l\'affitto?").</p>';
 };
 
-/** Voci raggruppate per periodicità (come le scrivi) oppure per famiglia. */
+/**
+ * Elenco ad albero: le voci principali raggruppate per periodicità (come le
+ * scrivi) oppure per famiglia; sotto ogni voce madre, rientrate, le sue figlie.
+ */
 function fcGroups(list, byFamily) {
   if (!list.length) return '<p class="sub">Nessuna voce. Aggiungine una con i pulsanti qui sotto.</p>';
+  const t = FC.tree(list);
+  const keyOf = it => (byFamily ? it.family || fcCommonFamily(t, it) || 'Senza famiglia' : FC.groupOf(it.every));
   const groups = new Map();
-  const keyOf = it => (byFamily ? it.family || 'Senza famiglia' : FC.groupOf(it.every));
-  const order = byFamily ? null : FC.GROUPS.map(g => g[0]);
-  for (const it of list) {
-    const k = keyOf(it);
+  for (const r of t.roots) {
+    const k = keyOf(r);
     if (!groups.has(k)) groups.set(k, []);
-    groups.get(k).push(it);
+    groups.get(k).push(r);
   }
-  const keys = [...groups.keys()].sort((a, b) => (order ? order.indexOf(a) - order.indexOf(b)
-    : U.sum(groups.get(b), it => (FC.isOn(it) ? FC.monthly(it) : 0)) - U.sum(groups.get(a), it => (FC.isOn(it) ? FC.monthly(it) : 0))));
+  const total = roots => U.sum(roots, r => FC.effective(t, r));
+  const order = byFamily ? null : FC.GROUPS.map(g => g[0]);
+  const keys = [...groups.keys()].sort((a, b) => (order ? order.indexOf(a) - order.indexOf(b) : total(groups.get(b)) - total(groups.get(a))));
   return keys.map(k => {
-    const rows = groups.get(k).slice().sort((a, b) => FC.monthly(b) - FC.monthly(a));
-    const month = U.sum(rows.filter(FC.isOn), FC.monthly);
+    const roots = groups.get(k).slice().sort((a, b) => fcNominal(t, b) - fcNominal(t, a));
+    const month = total(roots);
     return '<div class="row fc-group"><h3>' + (byFamily ? familyIcon(k) + ' ' : '') + esc(k) + '</h3><span class="mini">' + fcEur(month) + ' al mese · ' + fcEur(month * 12) + ' all\'anno</span></div>'
-      + '<div class="card" style="margin-top:6px">' + rows.map(fcRow).join('') + '</div>';
+      + '<div class="card" style="margin-top:6px">' + roots.map(r => fcNode(t, r, 0, false)).join('') + '</div>';
   }).join('');
 }
 
-/** Una voce: spunta (inclusa/esclusa), nome, famiglia, importo e quota mensile. */
-function fcRow(it) {
+/** Totale al mese "sulla carta" (anche se la voce è esclusa): parte propria + figlie incluse. */
+function fcNominal(t, it) {
+  return FC.monthly(it) + t.children(it).reduce((s, c) => s + (c.active === false ? 0 : fcNominal(t, c)), 0);
+}
+
+/** La famiglia più usata dalle voci figlie (per i gruppi senza famiglia propria). */
+function fcCommonFamily(t, it) {
+  const weight = {};
+  const walk = x => t.children(x).forEach(c => {
+    if (c.family) weight[c.family] = (weight[c.family] || 0) + fcNominal(t, c) + 1;
+    walk(c);
+  });
+  walk(it);
+  return Object.keys(weight).sort((a, b) => weight[b] - weight[a])[0] || '';
+}
+
+/** Una voce e, se è aperta, le sue figlie (anche su più livelli). */
+function fcNode(t, it, depth, parentOff) {
+  const kids = t.children(it).slice().sort((a, b) => fcNominal(t, b) - fcNominal(t, a));
+  const off = parentOff || it.active === false || (!kids.length && !(it.amount > 0));
+  const open = !(S.sub.fcClosed || {})[it.id];
+  return fcRow(t, it, kids, depth, off, open) + (kids.length && open ? kids.map(c => fcNode(t, c, depth + 1, off)).join('') : '');
+}
+
+/**
+ * Riga di una voce: spunta (inclusa/esclusa), nome, famiglia, importo.
+ * Una voce madre mostra il totale con le figlie e il triangolo per chiuderle.
+ */
+function fcRow(t, it, kids, depth, off, open) {
   const bonus = it.section === 'bonus';
-  const where = it.category ? (it.family ? it.family + ' › ' : '') + it.category : 'famiglia da scegliere';
-  return '<div class="tx fc-row' + (FC.isOn(it) ? '' : ' off') + '" role="button" onclick="fcEdit(' + jsArg(it.id) + ')">'
+  const common = kids.length ? fcCommonFamily(t, it) : '';
+  const where = it.category ? (it.family ? it.family + ' › ' : '') + it.category : kids.length ? 'gruppo' + (common ? ' · ' + common : '') : 'famiglia da scegliere';
+  const amount = kids.length
+    ? (bonus ? '+' : '') + fcEur(fcNominal(t, it)) + '<small>al mese · ' + kids.length + (kids.length === 1 ? ' voce' : ' voci')
+      + (it.amount > 0 ? '<br>di cui ' + fcEur(FC.monthly(it)) + ' non dettagliati' : '') + '</small>'
+    : (bonus ? '+' : '') + eur(it.amount) + '<small>' + (it.every === 1 ? 'al mese' : esc(FC.periodName(it.every).toLowerCase()) + '<br>= ' + fcEur(FC.monthly(it)) + '/mese') + '</small>';
+  return '<div class="tx fc-row' + (off ? ' off' : '') + (depth ? ' fc-child' : '') + (kids.length ? ' fc-parent' : '') + '"'
+    + (depth ? ' style="padding-left:' + Math.min(depth, 4) * 20 + 'px"' : '') + ' role="button" onclick="fcEdit(' + jsArg(it.id) + ')">'
     + '<label class="fc-on" onclick="event.stopPropagation()"><input type="checkbox" aria-label="Includi nei calcoli"' + (it.active !== false ? ' checked' : '')
     + ' onchange="fcToggle(' + jsArg(it.id) + ',this.checked)"></label>'
-    + '<div class="txmain"><strong>' + esc(it.name) + '</strong>'
-    + '<small' + (it.category ? '' : ' class="orange"') + '>' + familyIcon(it.family) + ' ' + esc(where) + (it.kind === 'saving' ? ' · accantonamento' : '')
+    + '<div class="txmain"><strong>' + (kids.length ? '<button class="fc-fold" aria-label="' + (open ? 'Chiudi' : 'Apri') + ' le voci figlie" onclick="event.stopPropagation();fcFold(' + jsArg(it.id) + ')">' + (open ? '▾' : '▸') + '</button>'
+      : depth ? '<span class="fc-branch">↳</span>' : '') + esc(it.name) + '</strong>'
+    + '<small' + (it.category || kids.length ? '' : ' class="orange"') + '>' + familyIcon(it.family || common) + ' ' + esc(where) + (it.kind === 'saving' ? ' · accantonamento' : '')
     + (it.month && it.every > 1 && it.every <= 12 ? ' · ' + FC_MONTHS[it.month - 1] : '') + '</small>'
     + (it.note ? '<small>' + esc(it.note) + '</small>' : '') + '</div>'
-    + '<div class="amount fc-amount' + (bonus ? ' green' : '') + '">' + (bonus ? '+' : '') + eur(it.amount)
-    + '<small>' + (it.every === 1 ? 'al mese' : esc(FC.periodName(it.every).toLowerCase()) + '<br>= ' + fcEur(FC.monthly(it)) + '/mese') + '</small></div></div>';
+    + '<div class="amount fc-amount' + (bonus ? ' green' : '') + '">' + amount + '</div></div>';
 }
 
 function fcToggle(id, on) {
   fcStore(fcItems().map(it => (it.id === id ? Object.assign({}, it, { active: on }) : it)));
+}
+
+/** Chiude o apre le voci figlie di una voce madre. */
+function fcFold(id) {
+  const closed = Object.assign({}, S.sub.fcClosed);
+  closed[id] = !closed[id];
+  S.sub.fcClosed = closed;
+  render();
 }
 
 function fcEmpty() {
@@ -108,21 +158,48 @@ function fcEmpty() {
     + '<button class="btn secondary wide" onclick="fcEdit(\'\',\'expense\')">＋ Aggiungi una voce a mano</button>';
 }
 
+/** Voci di una sezione in ordine d'albero: [{ it, depth }] (per i menu di scelta). */
+function fcOrdered(list) {
+  const t = FC.tree(list), out = [];
+  const byName = (a, b) => a.name.localeCompare(b.name, 'it');
+  const walk = (it, depth) => { out.push({ it, depth }); t.children(it).slice().sort(byName).forEach(c => walk(c, depth + 1)); };
+  t.roots.slice().sort(byName).forEach(r => walk(r, 0));
+  return out;
+}
+
 // ---------------------------------------------------------------------
-// Modifica di una voce
+// Modifica di una voce (e delle sue voci figlie)
 // ---------------------------------------------------------------------
 
-function fcEdit(id, section) {
-  const bonus0 = section === 'bonus';
-  const it = fcItems().find(x => x.id === id)
-    || { id: '', name: '', section: bonus0 ? 'bonus' : 'expense', kind: bonus0 ? 'income' : 'expense', amount: 0, every: 1, month: 0, family: '', category: '', match: '', note: '', active: true };
+/**
+ * Apre la scheda di una voce. id vuoto = nuova voce; parentId = nuova voce
+ * figlia di quella voce madre.
+ */
+function fcEdit(id, section, parentId) {
+  const items = fcItems();
+  const t = FC.tree(items);
+  const mother = parentId ? t.byId.get(parentId) : null;
+  const sec = mother ? mother.section : section === 'bonus' ? 'bonus' : 'expense';
+  const it = t.byId.get(id)
+    || { id: '', name: '', section: sec, kind: sec === 'bonus' ? 'income' : 'expense', amount: 0, every: 1, month: 0, family: '', category: '', match: '', note: '', active: true, parent: parentId || '' };
   const bonus = it.section === 'bonus';
+  const kids = it.id ? t.children(it) : [];
+  const kidsMonthly = U.sum(kids, c => FC.effective(t, c));
   window.fcEditing = it;
+  // Possibili voci madri: stessa sezione, esclusa la voce stessa e le sue discendenti (niente giri chiusi)
+  const banned = new Set(it.id ? [it.id].concat(FC.descendants(items, it.id)) : []);
+  const mothers = fcOrdered(items.filter(x => x.section === it.section)).filter(x => !banned.has(x.it.id));
   const periods = FC.PERIODS.some(p => p[0] === it.every) ? FC.PERIODS : FC.PERIODS.concat([[it.every, FC.periodName(it.every)]]);
-  modal(it.id ? it.name : bonus ? 'Nuovo bonus' : 'Nuova spesa',
-    '<label class="field">Nome<input id="fcName" value="' + esc(it.name) + '" placeholder="' + (bonus ? 'es. Assegno unico' : 'es. Bollo auto') + '"' + (it.id ? '' : ' onchange="fcGuessCat()"') + '></label>'
-    + '<div class="grid"><label class="field">Importo di ogni ' + (bonus ? 'incasso' : 'pagamento') + ' €<input id="fcAmount" type="number" min="0" step="0.01" inputmode="decimal" value="' + (it.amount ? it.amount / 100 : '') + '" oninput="fcLive()"></label>'
+  modal(it.id ? it.name : mother ? 'Voce figlia di «' + mother.name + '»' : bonus ? 'Nuovo bonus' : 'Nuova spesa',
+    '<label class="field">Nome<input id="fcName" value="' + esc(it.name) + '" placeholder="' + (bonus ? 'es. Assegno unico' : mother ? 'es. AI, Cellulare' : 'es. Bollo auto') + '"' + (it.id ? '' : ' onchange="fcGuessCat()"') + '></label>'
+    + '<label class="field">Voce madre (facoltativo: per il dettaglio di una voce più generica)<select id="fcParent" onchange="fcParentChanged()">'
+    + '<option value="">— Nessuna: voce principale —</option>'
+    + mothers.map(x => '<option value="' + esc(x.it.id) + '"' + (x.it.id === (it.parent || '') ? ' selected' : '') + '>' + ' '.repeat(x.depth) + esc(x.it.name) + '</option>').join('') + '</select></label>'
+    + '<div id="fcIncludedBox" hidden><label class="check"><input type="checkbox" id="fcIncluded"><span id="fcIncludedText"></span></label></div>'
+    + '<div class="grid"><label class="field">' + (kids.length ? 'Importo non dettagliato €' : 'Importo di ogni ' + (bonus ? 'incasso' : 'pagamento') + ' €')
+    + '<input id="fcAmount" type="number" min="0" step="0.01" inputmode="decimal" value="' + (it.amount ? it.amount / 100 : '') + '" oninput="fcLive()"></label>'
     + '<label class="field">Ogni quanto<select id="fcEvery" onchange="fcLive()">' + periods.map(([v, l]) => '<option value="' + v + '"' + (v === it.every ? ' selected' : '') + '>' + esc(l) + '</option>').join('') + '</select></label></div>'
+    + (kids.length ? '<p class="mini">Il totale della voce è questo importo <b>più le voci figlie</b> (' + fcEur(kidsMonthly) + ' al mese). Lascia 0 se le figlie bastano.</p>' : '')
     + '<p class="mini" id="fcMonthly"></p>'
     + '<label class="field" id="fcMonthBox">Mese del pagamento (facoltativo: mostra i mesi più pesanti)<select id="fcMonth"><option value="0">Non indicato: quota distribuita sui mesi</option>'
     + FC_MONTHS.map((m, i) => '<option value="' + (i + 1) + '"' + (it.month === i + 1 ? ' selected' : '') + '>' + m + '</option>').join('') + '</select></label>'
@@ -130,10 +207,21 @@ function fcEdit(id, section) {
     + (bonus ? '' : '<label class="field">Tipo<select id="fcKind"><option value="expense">Spesa</option><option value="saving"' + (it.kind === 'saving' ? ' selected' : '') + '>Accantonamento o investimento</option></select></label>')
     + '<label class="field">Parole per ritrovarla nei movimenti (facoltativo)<input id="fcMatch" value="' + esc(it.match || '') + '" placeholder="es. telepass · anthropic, openai"></label>'
     + '<label class="field">Note<input id="fcNote" value="' + esc(it.note || '') + '"></label>'
-    + '<label class="check"><input type="checkbox" id="fcActive"' + (it.active !== false ? ' checked' : '') + '><span>Inclusa nei calcoli</span></label>'
+    + '<label class="check"><input type="checkbox" id="fcActive"' + (it.active !== false ? ' checked' : '') + '><span>Inclusa nei calcoli' + (kids.length ? ' (con le sue voci figlie)' : '') + '</span></label>'
     + '<button class="btn wide" onclick="fcSaveEdit()">Salva</button>'
-    + (it.id ? '<div class="actions"><button class="btn secondary" onclick="fcDuplicate()">Duplica</button><button class="btn danger" onclick="fcDelete()">Elimina</button></div>' : ''));
+    + (it.id ? fcKidsHtml(t, it, kids, kidsMonthly)
+      + '<div class="actions"><button class="btn secondary" onclick="fcDuplicate()">Duplica</button><button class="btn danger" onclick="fcDelete()">Elimina</button></div>' : ''));
   fcLive();
+  fcParentChanged();
+}
+
+/** Nella scheda di una voce: le sue voci figlie e come aggiungerne. */
+function fcKidsHtml(t, it, kids, kidsMonthly) {
+  return '<div class="card fc-kids"><div class="row"><h3 style="margin:0">Voci figlie</h3><span class="mini">' + (kids.length ? kids.length + ' · ' + fcEur(kidsMonthly) + ' al mese' : 'nessuna') + '</span></div>'
+    + (kids.length ? kids.map(c => '<div class="kpi row" role="button" onclick="fcOpenOther(' + jsArg(c.id) + ')"><span>↳ ' + esc(c.name)
+      + (c.active === false ? ' <span class="mini">(esclusa)</span>' : '') + '</span><b>' + fcEur(FC.effective(t, c)) + '</b></div>').join('')
+      : '<p class="mini">Dettaglia questa voce con voci più precise: ad esempio sotto "Abbonamenti" metti AI e Streaming, sotto "Canoni" Cellulare e Internet casa.</p>')
+    + '<div class="actions"><button class="btn secondary" onclick="fcNewChild()">＋ Voce figlia</button><button class="btn secondary" onclick="fcMoveHere()">⇣ Sposta qui voci</button></div></div>';
 }
 
 /** Mentre scrivi: quanto pesa la voce al mese e all'anno. */
@@ -143,37 +231,143 @@ function fcLive() {
   $('fcMonthBox').hidden = every === 1 || every > 12;
 }
 
-/** Nuova voce: propone famiglia e categoria dal nome. */
+/**
+ * Cambiata (o scelta) la voce madre: se la madre ha già un importo proprio,
+ * chiede se questa voce era già compresa lì (allora si toglie dalla madre e il
+ * totale non cambia). Proposto sì per una voce nuova, no per una voce spostata.
+ */
+function fcParentChanged() {
+  const it = window.fcEditing;
+  const pid = $('fcParent').value;
+  const mother = pid ? fcItems().find(x => x.id === pid) : null;
+  const changed = !it.id || pid !== (it.parent || '');
+  $('fcIncludedBox').hidden = !(mother && mother.amount > 0 && changed);
+  if (!$('fcIncludedBox').hidden) {
+    $('fcIncludedText').innerHTML = 'Era già compresa nell\'importo di <b>' + esc(mother.name) + '</b> (' + fcEur(FC.monthly(mother)) + ' al mese): toglila da lì, così il totale non cambia';
+    $('fcIncluded').checked = !it.id;
+  }
+  if (!it.id && $('fcName').value.trim()) fcGuessCat();
+}
+
+/**
+ * Nuova voce: propone famiglia e categoria dal nome. Per una voce figlia
+ * prova anche "madre + figlia" (es. "Abbonamenti AI") e poi la famiglia della madre.
+ */
 function fcGuessCat() {
   const cur = readCat('fcCat');
   if (cur && cur.category) return;
-  const g = FC.guess($('fcName').value, window.fcEditing.section, S.tax);
+  const name = $('fcName').value;
+  const pid = $('fcParent') ? $('fcParent').value : '';
+  const mother = pid ? fcItems().find(x => x.id === pid) : null;
+  const sec = window.fcEditing.section;
+  let g = FC.guess(name, sec, S.tax);
+  if (!g.category && mother) g = FC.guess(mother.name + ' ' + name, sec, S.tax);
+  if (!g.category && mother && mother.category) g = { family: mother.family, category: mother.category, kind: mother.kind };
   if (!g.category) return;
   setCat('fcCat', g.family, g.category);              // se è nuova, la categoria viene creata al salvataggio
   if ($('fcKind')) $('fcKind').value = g.kind === 'saving' ? 'saving' : 'expense';
 }
 
-function fcSaveEdit() {
+/**
+ * Salva la voce aperta. Restituisce la voce salvata (o null se mancano dati).
+ * opts.quiet: senza messaggio (quando si passa subito a un'altra scheda).
+ */
+function fcSaveEdit(opts) {
   const base = window.fcEditing;
   const name = $('fcName').value.trim();
-  const amount = Math.round(Number($('fcAmount').value) * 100);
-  if (!name) { notice('Scrivi il nome della voce'); return; }
-  if (!Number.isFinite(amount) || amount < 0) { notice('Importo non valido'); return; }
+  const amount = Math.round(Number($('fcAmount').value) * 100) || 0;
+  if (!name) { notice('Scrivi il nome della voce'); return null; }
+  if (amount < 0) { notice('Importo non valido'); return null; }
   const cat = readCat('fcCat') || { family: '', category: '' };
   if (cat.category) fcEnsureCategories([cat]);
   const every = Number($('fcEvery').value) || 1;
+  const parent = $('fcParent').value;
   const it = Object.assign({}, base, {
-    id: base.id || U.uid(), name, amount, every,
+    id: base.id || U.uid(), name, amount, every, parent,
     month: every > 1 && every <= 12 ? Number($('fcMonth').value) || 0 : 0,
     family: cat.family || '', category: cat.category || '',
     kind: base.section === 'bonus' ? 'income' : $('fcKind').value,
     match: $('fcMatch').value.trim(), note: $('fcNote').value.trim(), active: $('fcActive').checked
   });
-  const items = fcItems();
+  let items = fcItems();
   const i = items.findIndex(x => x.id === it.id);
+  items = i >= 0 ? items.map(x => (x.id === it.id ? it : x)) : items.concat([it]);
+  // "Era già compresa nella voce madre": si toglie il suo totale dalla parte propria della madre
+  let msg = i >= 0 ? 'Voce aggiornata' : 'Voce aggiunta';
+  if (!$('fcIncludedBox').hidden && $('fcIncluded').checked) {
+    const t = FC.tree(items);
+    const mother = t.byId.get(parent);
+    const part = FC.effective(t, Object.assign({}, it, { active: true }));
+    const left = Math.round(mother.amount - part * Math.max(1, mother.every));
+    items = items.map(x => (x.id === parent ? Object.assign({}, x, { amount: Math.max(0, left) }) : x));
+    msg += left >= 0 ? ' e tolta da «' + mother.name + '»: il totale non cambia' : '. «' + mother.name + '» non bastava a contenerla: il totale cresce di ' + fcEur(-left / Math.max(1, mother.every)) + ' al mese';
+  }
   closeModal();
-  fcStore(i >= 0 ? items.map(x => (x.id === it.id ? it : x)) : items.concat([it]));
-  notice(i >= 0 ? 'Voce aggiornata' : 'Voce aggiunta');
+  if (parent) S.sub.fcClosed = Object.assign({}, S.sub.fcClosed, { [parent]: false });
+  fcStore(items);
+  if (!(opts && opts.quiet)) notice(msg);
+  return it;
+}
+
+/** Dalla scheda di una voce: nuova voce figlia (prima salva la voce aperta). */
+function fcNewChild() {
+  const saved = fcSaveEdit({ quiet: true });
+  if (saved) fcEdit('', saved.section, saved.id);
+}
+
+/** Dalla scheda di una voce: scegli voci esistenti da mettere sotto di lei. */
+function fcMoveHere() {
+  const saved = fcSaveEdit({ quiet: true });
+  if (saved) fcMoveDialog(saved.id);
+}
+
+/** Apre un'altra voce (es. una figlia) salvando prima quella aperta. */
+function fcOpenOther(id) {
+  if (fcSaveEdit({ quiet: true })) fcEdit(id);
+}
+
+/** Nuovo gruppo: una voce madre senza importo proprio, poi si scelgono le figlie. */
+function fcNewGroup(section) {
+  const name = prompt('Nome del gruppo, cioè la voce madre (es. "Abbonamenti" o "Canoni")');
+  if (!name || !name.trim()) return;
+  const it = { id: U.uid(), name: name.trim(), section, kind: section === 'bonus' ? 'income' : 'expense', amount: 0, every: 1, month: 0, family: '', category: '', match: '', note: '', active: true, parent: '' };
+  put('forecast', fcItems().concat([it]));
+  render();
+  fcMoveDialog(it.id);
+}
+
+/** Elenco delle voci da mettere sotto una voce madre. */
+function fcMoveDialog(parentId) {
+  const items = fcItems();
+  const t = FC.tree(items);
+  const mother = t.byId.get(parentId);
+  const banned = new Set([parentId].concat(FC.ancestors(items, parentId)));
+  const cands = fcOrdered(items.filter(x => x.section === mother.section)).filter(x => !banned.has(x.it.id) && x.it.parent !== parentId);
+  window.fcMoveTo = parentId;
+  modal('Metti sotto «' + mother.name + '»', '<p class="sub">Scegli le voci di cui «' + esc(mother.name) + '» è la voce più generica. Il totale non cambia: le voci vengono solo raggruppate.</p>'
+    + (cands.length ? cands.map(x => '<label class="check fc-prev"><input type="checkbox" class="fcm" value="' + esc(x.it.id) + '"><span>' + ' '.repeat(x.depth) + '<b>' + esc(x.it.name) + '</b> · '
+      + fcEur(FC.effective(t, x.it)) + ' al mese' + (x.it.parent ? ' <span class="mini">(ora sotto «' + esc((t.byId.get(x.it.parent) || {}).name || '') + '»)</span>' : '')
+      + (x.it.category ? '<br><span class="mini">' + familyIcon(x.it.family) + ' ' + esc(x.it.family + ' › ' + x.it.category) + '</span>' : '') + '</span></label>').join('')
+      : '<p class="sub">Non ci sono altre voci da spostare.</p>')
+    + (mother.amount > 0 ? '<label class="check"><input type="checkbox" id="fcMoveIncluded"><span>Erano già comprese nei ' + fcEur(FC.monthly(mother)) + ' al mese di «' + esc(mother.name) + '»: toglile da lì</span></label>' : '')
+    + '<button class="btn wide" onclick="fcMoveApply()">Metti sotto «' + esc(mother.name) + '»</button>');
+}
+
+function fcMoveApply() {
+  const ids = [...document.querySelectorAll('.fcm')].filter(c => c.checked).map(c => c.value);
+  if (!ids.length) { notice('Nessuna voce selezionata'); return; }
+  const parentId = window.fcMoveTo;
+  let items = fcItems().map(x => (ids.includes(x.id) ? Object.assign({}, x, { parent: parentId }) : x));
+  const t = FC.tree(items);
+  const mother = t.byId.get(parentId);
+  if ($('fcMoveIncluded') && $('fcMoveIncluded').checked) {
+    const moved = U.sum(ids.map(id => t.byId.get(id)), x => FC.effective(t, x));
+    items = items.map(x => (x.id === parentId ? Object.assign({}, x, { amount: Math.max(0, Math.round(x.amount - moved * Math.max(1, x.every))) }) : x));
+  }
+  closeModal();
+  S.sub.fcClosed = Object.assign({}, S.sub.fcClosed, { [parentId]: false });
+  fcStore(items);
+  notice(ids.length + (ids.length === 1 ? ' voce messa' : ' voci messe') + ' sotto «' + mother.name + '»');
 }
 
 function fcDuplicate() {
@@ -183,11 +377,28 @@ function fcDuplicate() {
   fcEdit(copy.id);
 }
 
+/** Elimina una voce; se ha figlie chiede se eliminarle o farle salire di livello. */
 function fcDelete() {
   const it = window.fcEditing;
-  if (!confirm('Eliminare "' + it.name + '"?')) return;
+  const items = fcItems();
+  const kids = FC.tree(items).children(it);
+  if (!kids.length) {
+    if (!confirm('Eliminare "' + it.name + '"?')) return;
+    closeModal();
+    fcStore(items.filter(x => x.id !== it.id));
+    return;
+  }
+  modal('Eliminare «' + it.name + '»?', '<p class="sub">Ha ' + kids.length + (kids.length === 1 ? ' voce figlia' : ' voci figlie') + ': ' + esc(kids.map(k => k.name).join(', ')) + '.</p>'
+    + '<button class="btn secondary wide" onclick="fcDeleteNode(false)">Elimina solo «' + esc(it.name) + '»: le figlie salgono di livello</button>'
+    + '<button class="btn danger wide" onclick="fcDeleteNode(true)">Elimina anche le voci figlie</button>');
+}
+
+function fcDeleteNode(withKids) {
+  const it = window.fcEditing;
+  const items = fcItems();
+  const drop = new Set([it.id].concat(withKids ? FC.descendants(items, it.id) : []));
   closeModal();
-  fcStore(fcItems().filter(x => x.id !== it.id));
+  fcStore(items.filter(x => !drop.has(x.id)).map(x => (x.parent === it.id ? Object.assign({}, x, { parent: it.parent || '' }) : x)));
 }
 
 // ---------------------------------------------------------------------
@@ -196,8 +407,9 @@ function fcDelete() {
 
 function fcPaste() {
   modal('Incolla un elenco', '<p class="sub">Una voce per riga, con nome e importo. Le intestazioni indicano la periodicità delle voci che seguono; '
-    + 'le frasi senza importo vengono ignorate, quindi puoi incollare anche un messaggio intero.</p>'
-    + '<pre class="detail mini">Mensile\nMutuo — 600 €\nBolletta luce — 70 €\nAnnuale\nRCA — 450 €\nGomme — 600 € ogni 4 anni\nFerie — 2.000 € (una volta l\'anno)\nBONUS:\nAssegno unico +140€ mese</pre>'
+    + 'le frasi senza importo vengono ignorate, quindi puoi incollare anche un messaggio intero. '
+    + 'Per le <b>voci figlie</b> scrivi «Madre > Figlia — importo» oppure rientra la riga (due spazi) sotto la voce madre: in quel caso l\'importo della madre è il totale.</p>'
+    + '<pre class="detail mini">Mensile\nMutuo — 600 €\nAbbonamenti > AI — 22 €\nAbbonamenti > Streaming — 25 €\nCanoni — 50 €\n  Cellulare — 20 €\n  Internet casa — 30 €\nAnnuale\nRCA — 450 €\nGomme — 600 € ogni 4 anni\nFerie — 2.000 € (una volta l\'anno)\nBONUS:\nAssegno unico +140€ mese</pre>'
     + '<label class="field">Elenco<textarea id="fcText" rows="10" placeholder="Incolla qui"></textarea></label>'
     + '<button class="btn wide" onclick="fcPreview()">Leggi l\'elenco</button>');
 }
@@ -206,29 +418,59 @@ function fcPaste() {
 function fcPreview() {
   const parsed = FC.parseList($('fcText').value).map(p => Object.assign(p, FC.guess(p.name, p.section, S.tax)));
   if (!parsed.length) { notice('Nessuna voce trovata: scrivi una voce per riga, es. "Mutuo — 600 €"'); return; }
+  // Voci figlie senza famiglia riconosciuta: prova "madre + figlia", poi la famiglia della madre
+  parsed.forEach(p => {
+    if (p.category || p.parentIndex < 0) return;
+    const mother = parsed[p.parentIndex];
+    const g = FC.guess(mother.name + ' ' + p.name, p.section, S.tax);
+    Object.assign(p, g.category ? g : mother.category ? { family: mother.family, category: mother.category, kind: mother.kind, isNew: mother.isNew } : {});
+  });
   window.fcParsed = parsed;
+  const depth = p => { let d = 0; for (let q = p; q.parentIndex >= 0 && d < 10; q = parsed[q.parentIndex]) d++; return d; };
+  const hasKids = i => parsed.some(x => x.parentIndex === i);
+  // Totale al mese di una voce letta, figlie comprese (per mostrare i gruppi)
+  const sum = i => FC.monthly(parsed[i]) + parsed.reduce((s, x, j) => s + (x.parentIndex === i ? sum(j) : 0), 0);
+  const already = p => p.group && p.parentIndex < 0 && fcItems().some(x => U.norm(x.name) === U.norm(p.name) && x.section === p.section && !x.parent);
   const existing = fcItems().length;
-  const created = [...new Set(parsed.filter(p => p.isNew).map(p => p.family + ' › ' + p.category))];
+  const created = [...new Set(parsed.filter(p => p.isNew && p.category).map(p => p.family + ' › ' + p.category))];
   modal('Voci trovate: ' + parsed.length, '<p class="sub">Controlla e togli la spunta a quelle da non aggiungere. Importi, periodicità e famiglie si possono cambiare anche dopo.</p>'
     + (created.length ? '<div class="hint">Nuove categorie, che potrai usare anche per i movimenti: <b>' + created.map(esc).join(', ') + '</b></div>' : '')
     + (existing ? '<label class="check"><input type="checkbox" id="fcReplace"><span>Sostituisci le ' + existing + ' voci che hai già (altrimenti le nuove si aggiungono)</span></label>' : '')
-    + parsed.map((p, i) => '<label class="check fc-prev"><input type="checkbox" class="fcp" data-i="' + i + '" checked><span><b>' + esc(p.name) + '</b> · '
-      + (p.section === 'bonus' ? '<span class="green">+' + eur(p.amount) + '</span>' : eur(p.amount)) + ' ' + esc(FC.periodName(p.every).toLowerCase())
-      + (p.every > 1 ? ' <span class="mini">(= ' + fcEur(FC.monthly(p)) + '/mese)</span>' : '')
-      + '<br><span class="mini">' + (p.category ? familyIcon(p.family) + ' ' + esc(p.family + ' › ' + p.category) + (p.isNew ? ' (nuova)' : '') : '<span class="orange">famiglia da scegliere</span>')
-      + (p.kind === 'saving' ? ' · accantonamento' : '') + (p.note ? ' · ' + esc(p.note) : '') + (p.amount ? '' : ' · <span class="orange">senza importo: esclusa dai calcoli</span>') + '</span></span></label>').join('')
+    + parsed.map((p, i) => '<label class="check fc-prev"' + (depth(p) ? ' style="padding-left:' + depth(p) * 20 + 'px"' : '') + '><input type="checkbox" class="fcp" data-i="' + i + '" checked><span>'
+      + (depth(p) ? '↳ ' : '') + '<b>' + esc(p.name) + '</b> · '
+      + (already(p) ? '<span class="mini">voce che hai già: le figlie vanno sotto di lei</span>'
+        : hasKids(i) ? 'gruppo · ' + fcEur(sum(i)) + ' al mese in tutto' + (p.amount ? ' <span class="mini">(di cui ' + fcEur(FC.monthly(p)) + ' non dettagliati)</span>' : '')
+          : (p.section === 'bonus' ? '<span class="green">+' + eur(p.amount) + '</span>' : eur(p.amount)) + ' ' + esc(FC.periodName(p.every).toLowerCase())
+            + (p.every > 1 ? ' <span class="mini">(= ' + fcEur(FC.monthly(p)) + '/mese)</span>' : ''))
+      + (p.group ? '' : '<br><span class="mini">' + (p.category ? familyIcon(p.family) + ' ' + esc(p.family + ' › ' + p.category) + (p.isNew ? ' (nuova)' : '')
+        : hasKids(i) ? 'gruppo di voci' : '<span class="orange">famiglia da scegliere</span>')
+        + (p.kind === 'saving' ? ' · accantonamento' : '') + (p.note ? ' · ' + esc(p.note) : '') + (p.amount || hasKids(i) ? '' : ' · <span class="orange">senza importo: esclusa dai calcoli</span>') + '</span>')
+      + '</span></label>').join('')
     + '<button class="btn wide" onclick="fcImport()">Aggiungi le voci selezionate</button>');
 }
 
 function fcImport() {
-  const chosen = [...document.querySelectorAll('.fcp')].filter(c => c.checked).map(c => window.fcParsed[+c.dataset.i]);
-  if (!chosen.length) { notice('Nessuna voce selezionata'); return; }
-  fcEnsureCategories(chosen);
+  const parsed = window.fcParsed;
+  const chosen = new Set([...document.querySelectorAll('.fcp')].filter(c => c.checked).map(c => +c.dataset.i));
+  if (!chosen.size) { notice('Nessuna voce selezionata'); return; }
+  fcEnsureCategories(parsed.filter((p, i) => chosen.has(i)));
   const keep = $('fcReplace') && $('fcReplace').checked ? [] : fcItems();
-  const added = chosen.map(p => ({
-    id: U.uid(), name: p.name, section: p.section, kind: p.kind, amount: p.amount, every: p.every, month: 0,
-    family: p.family, category: p.category, match: '', note: p.note, active: p.active
-  }));
+  const idOf = {}, added = [];
+  parsed.forEach((p, i) => {
+    if (!chosen.has(i)) return;
+    // La madre non selezionata: la figlia diventa voce principale
+    const parent = p.parentIndex >= 0 && idOf[p.parentIndex] ? idOf[p.parentIndex] : '';
+    // Gruppo scritto come "Abbonamenti > ...": se "Abbonamenti" c'è già, si usa quella voce
+    if (p.group) {
+      const same = keep.find(x => U.norm(x.name) === U.norm(p.name) && x.section === p.section && (x.parent || '') === parent);
+      if (same) { idOf[i] = same.id; return; }
+    }
+    idOf[i] = U.uid();
+    added.push({
+      id: idOf[i], name: p.name, section: p.section, kind: p.kind, amount: p.amount, every: p.every, month: 0,
+      family: p.family || '', category: p.category || '', match: '', note: p.note, active: p.active, parent
+    });
+  });
   closeModal();
   S.sub.fcTab = 'expense';
   fcStore(keep.concat(added));
