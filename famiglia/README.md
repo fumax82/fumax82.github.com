@@ -1,12 +1,54 @@
-# Famiglia 2.6 — finanze di famiglia, offline
+# Famiglia 2.7 — finanze di famiglia, offline
 
 App Android per analizzare entrate e uscite importando gli estratti Excel di Intesa Sanpaolo.
 Tutto resta sul telefono: nessun permesso Internet, database locale, backup cifrato.
 
-**APK pronto da installare:** [`dist/Famiglia-2.6.apk`](dist/Famiglia-2.6.apk)
+**APK pronto da installare:** [`dist/Famiglia-2.7.apk`](dist/Famiglia-2.7.apk)
 Si installa sopra le versioni 2.x senza disinstallare: i dati restano.
 
 ---
+
+## Novità della versione 2.7: spese fisse e previsioni
+
+### Spese fisse e previsioni (Altro › Futuro)
+
+L'elenco delle spese che tornano, ognuna con la sua **periodicità** (mensile, semestrale, annuale,
+ogni 2, 4, 10 anni...), e dei **bonus** che le compensano (assegno unico, bonus nido, aiuti, rimborsi 730...).
+
+- L'app calcola quanto pesa ogni voce **al mese e all'anno**, il netto dopo i bonus e la **quota da
+  mettere da parte** ogni mese per le spese non mensili.
+- Voci raggruppate **per periodicità** (come le scrivi) o **per famiglia**.
+- **Famiglie e categorie sono quelle dei movimenti** (stesso selettore). Se manca una categoria adatta
+  viene creata e diventa usabile anche per i movimenti (es. *Entrate › Assegni e bonus*,
+  *Movimenti interni › Fondo pensione*, *Svago e viaggi › Weekend e uscite*).
+- Tocca una voce per cambiare importo, periodicità, mese del pagamento, famiglia, tipo (spesa oppure
+  accantonamento/investimento), parole per ritrovarla nei movimenti e note.
+  La **spunta** a sinistra la include o la esclude dai calcoli, per fare delle prove.
+- Tre modi per riempire l'elenco:
+  - **Incolla un elenco**: una voce per riga. Capisce le intestazioni *Mensile, Semestrale, Annuale,
+    Biennale, Quadriennale*, la sezione *BONUS:*, importi come `25.000 €` o `+140€ mese`,
+    `ogni 4 anni` e le note tra parentesi (`(una volta l'anno)` cambia anche la periodicità).
+    Le frasi senza importo vengono ignorate: si può incollare un messaggio intero.
+  - **Dalle spese ricorrenti**: i pagamenti regolari trovati nei movimenti, con importo e cadenza reali.
+  - **＋ Nuova spesa / Nuovo bonus**, a mano.
+
+### Analisi › Previsioni: il previsto confrontato con il reale
+
+- **Giudizio**: previsioni **ottimistiche** (spendi più del previsto), **pessimistiche** (spendi meno)
+  o **coerenti** (entro il 10%), sugli ultimi 3, 6, 12 o 24 **mesi completi**. Restano fuori il mese in
+  corso e i mesi con buchi importanti tra le importazioni.
+- **Famiglia per famiglia**, con barre previsto/reale. Toccando una famiglia vedi le categorie, le voci
+  previste e i movimenti reali.
+- **Spese reali non previste**, con *Aggiungi alle previsioni* che usa la media reale.
+- **Previste ma non trovate** nei movimenti (contanti, altra famiglia, non ancora capitate).
+- **Accantonamenti**, **bonus** e confronto **voce per voce** per le voci con parole di ricerca.
+- **Il futuro**:
+  - margine previsto = entrate reali senza bonus + bonus previsti − uscite previste;
+  - i **prossimi 12 mesi** con i mesi più pesanti (indica il mese di pagamento di RCA, IMU...);
+  - la quota da accantonare.
+- Le voci più rare del periodo confrontato (es. cambio auto ogni 10 anni) sono escluse dal giudizio,
+  con un tasto per includerle.
+- In *Panoramica* un riquadro riassume il giudizio.
 
 ## Novità della versione 2.6: cerca e somma, menu più semplici
 
@@ -243,11 +285,12 @@ famiglia/
 │   │   ├── links.js            collegamenti: contanti↔prelievi, giroconti, rimborsi
 │   │   ├── insights.js         avvisi su sprechi e abitudini
 │   │   ├── search.js           CERCA E SOMMA: periodi, ricerca nel testo, totali e ripartizioni
+│   │   ├── forecast.js         SPESE FISSE E PREVISIONI: periodicità, lettura elenchi, confronto con il reale
 │   │   ├── products.js         REPARTI DEI PRODOTTI: dizionario (tipi, marche, gusti) e correzioni ricordate
 │   │   └── receipts.js         lettura del testo degli scontrini, insegne, analisi prodotti
 │   ├── js/ocr.js               foto → ritaglio e pulizia → testo (Tesseract, offline), più tentativi
 │   ├── js/app.js               stato, comunicazione con Android, componenti comuni
-│   ├── js/screens/*.js         una schermata per file: moves.js (Cerca e somma), todo.js (Classifica), subjects.js, categories.js,
+│   ├── js/screens/*.js         una schermata per file: moves.js (Cerca e somma), forecast.js (Spese fisse e Analisi › Previsioni), todo.js (Classifica), subjects.js, categories.js,
 │   │                           picker.js (scelta categoria), checks.js (doppioni), products.js (correzione reparti)…
 │   ├── js/demo.js              database finto per l'anteprima sul PC
 │   └── vendor/tesseract/       motore OCR + modello italiano (non modificare)
@@ -284,6 +327,9 @@ famiglia/
 - **Nuova insegna di negozio**: in `www/js/logic/receipts.js` aggiungi una riga in `SHOPS`.
 - **Nuovo campo manuale** (es. "Canale: online/negozio"): aggiungilo in `FIELDS` dentro `www/js/logic/fields.js`.
   Dettaglio, finestra di copia, memoria e filtri lo useranno da soli; per l'esportazione CSV aggiungilo anche in `Store.csv()`.
+- **Famiglia proposta per una voce di previsione**: in `www/js/logic/forecast.js` modifica `EXPENSE_MAP`
+  (spese) o `INCOME_MAP` (bonus): parola → famiglia, categoria.
+- **Soglia "coerente"** (oggi 10% e almeno 15 € al mese): funzione `verdict` in `www/js/logic/forecast.js`.
 - **Nuovo periodo pronto** (es. "ultimi 6 mesi"): in `www/js/logic/search.js` aggiungi una riga in
   `PRESETS` e il caso corrispondente in `range()`.
 - **Voce del menu Altro**: in `www/js/screens/settings.js`, funzione `Screens.more`; se la pagina è nuova

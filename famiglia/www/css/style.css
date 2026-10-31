@@ -244,3 +244,26 @@ details.help summary { font-size: 12px; padding: 6px 0; color: var(--brand); }
 .backbar { display: block; margin: 0 0 6px; text-decoration: none; font-weight: 600; }
 .todo-row .txicon { font-size: 18px; }
 .menu-group { font-size: 11px; letter-spacing: .08em; color: #788785; margin: 20px 4px 6px; text-transform: uppercase; }
+
+/* Spese fisse e previsioni */
+.fc-group { margin: 18px 4px 0; align-items: baseline; }
+.fc-group h3 { margin: 0; }
+.fc-row .fc-on { flex: 0 0 26px; display: grid; place-items: center; height: 39px; }
+.fc-row .fc-on input { width: 20px; height: 20px; margin: 0; }
+.fc-row.off .txmain, .fc-row.off .fc-amount { opacity: .45; }
+.fc-amount { text-align: right; }
+.fc-amount small { display: block; font-weight: 400; font-size: 10px; color: #788684; margin-top: 3px; line-height: 1.35; }
+.fc-prev { padding: 6px 0; border-bottom: 1px solid #edf0e9; margin: 0; }
+.fc-cmp { padding: 12px 0; border-bottom: 1px solid #edf0e9; cursor: pointer; }
+.fc-cmp:last-child { border: 0; }
+.fc-cmp .row { font-size: 13px; }
+.fc-cmp .row.mini { font-size: 11px; margin-top: 4px; }
+.fc-bar { height: 7px; background: #eef1e9; border-radius: 9px; overflow: hidden; margin-top: 6px; }
+.fc-bar span { display: block; height: 100%; border-radius: 9px; }
+.fc-bar .f { background: #c9d3cb; }
+.fc-bar .a { background: var(--ok); }
+.fc-bar .a.optimistic, .fc-bar .a.missing { background: #d9822b; }
+.fc-bar .a.pessimistic { background: #6f9fb8; }
+.badge.ok { background: #dff0e5; color: #20613f; }
+.badge.info { background: #dfeaf2; color: #2f5a74; }
+.fc-verdict .big { font-size: 34px; letter-spacing: -1px; }

@@ -7,17 +7,19 @@
 Screens.reports = function () {
   const tab = S.sub.reports || 'overview';
   const alerts = Insights.compute(S.data, S.month, U.today());
-  const tabs = [['overview', 'Panoramica'], ['alerts', 'Avvisi (' + alerts.length + ')'], ['habits', 'Abitudini'], ['recurring', 'Ricorrenti'], ['shopping', 'Spesa e prodotti']];
-  return '<span class="eyebrow">DAI NUMERI ALLE SCELTE</span><h1>Analisi</h1>' + periodControl()
+  const tabs = [['overview', 'Panoramica'], ['forecast', 'Previsioni'], ['alerts', 'Avvisi (' + alerts.length + ')'], ['habits', 'Abitudini'], ['recurring', 'Ricorrenti'], ['shopping', 'Spesa e prodotti']];
+  // "Previsioni" ha la sua scelta del periodo (ultimi mesi completi): lì il periodo generale non serve
+  return '<span class="eyebrow">DAI NUMERI ALLE SCELTE</span><h1>Analisi</h1>' + (tab === 'forecast' ? '' : periodControl())
     + '<div class="tabs">' + tabs.map(([v, l]) => '<button class="' + (tab === v ? 'on' : '') + '" onclick="S.sub.reports=\'' + v + '\';render()">' + l + '</button>').join('') + '</div>'
-    + (tab === 'alerts' ? alertsHtml(alerts) : tab === 'habits' ? habitsHtml() : tab === 'recurring' ? recurringHtml() : tab === 'shopping' ? shoppingHtml() : overviewHtml());
+    + (tab === 'alerts' ? alertsHtml(alerts) : tab === 'habits' ? habitsHtml() : tab === 'recurring' ? recurringHtml() : tab === 'shopping' ? shoppingHtml()
+      : tab === 'forecast' ? forecastReportHtml() : overviewHtml());
 };
 
 function overviewHtml() {
   const a = selected(), s = F.totals(a, ctx()), ms = F.months(S.data.transactions, ctx());
   const byFamily = S.sub.breakdown !== 'category';
   const parts = byFamily ? F.families(a, ctx()) : F.categories(a, ctx());
-  return '<div class="card"><div class="row"><h2>Dove vanno i soldi</h2><div class="tabs" style="margin:0">'
+  return fcOverviewCard() + '<div class="card"><div class="row"><h2>Dove vanno i soldi</h2><div class="tabs" style="margin:0">'
     + '<button class="' + (byFamily ? 'on' : '') + '" onclick="S.sub.breakdown=\'family\';render()">Famiglie</button>'
     + '<button class="' + (!byFamily ? 'on' : '') + '" onclick="S.sub.breakdown=\'category\';render()">Categorie</button></div></div>'
     + '<p class="sub">Spese contabilizzate, contanti inclusi. Rimborsi separati: ' + eur(s.refund) + '.</p>'
@@ -119,6 +121,7 @@ function recurringHtml() {
   const subs = groups.filter(g => g.subscription);
   const monthly = U.sum(subs, g => g.monthly);
   return '<div class="card"><h2>Abbonamenti e spese fisse</h2><p class="sub">Pagamenti regolari verso la stessa controparte, con importo stabile.</p>'
+    + '<button class="btn secondary wide" style="margin-bottom:8px" onclick="nav(\'forecast\');fcFromRecurring()">↻ Usali come base per le spese fisse e previsioni</button>'
     + '<div class="grid"><div><span class="eyebrow">AL MESE</span><div class="value">' + eur(monthly) + '</div></div><div><span class="eyebrow">ALL\'ANNO</span><div class="value">' + eur(monthly * 12) + '</div></div></div>'
     + subs.map(g => '<div class="kpi"><div class="row"><strong style="font-size:14px">' + esc(g.label) + '</strong><b>' + eur(g.typical) + '</b></div>'
       + '<p class="mini">' + g.cadence + ' · ' + g.count + ' volte · ultimo ' + fmt(g.last) + (g.next ? ' · prossimo ' + fmt(g.next) : '') + ' · ' + esc(g.category || 'senza categoria')

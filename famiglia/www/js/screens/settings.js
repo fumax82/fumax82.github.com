@@ -23,6 +23,7 @@ function moreBadges() {
  */
 Screens.more = function () {
   const b = moreBadges();
+  const fcOut = FC.totals(pref('forecast', [])).out;
   const item = (page, icon, title, sub, badge) => '<div class="tx" role="button" onclick="nav(\'' + page + '\')"><div class="txicon">' + icon + '</div><div class="txmain"><strong>' + title + '</strong><small>' + sub + '</small></div>'
     + (badge ? '<span class="badge warn">' + badge + '</span>' : '<span>→</span>') + '</div>';
   return '<span class="eyebrow">TUTTE LE ALTRE FUNZIONI</span><h1>Altro</h1>'
@@ -34,6 +35,7 @@ Screens.more = function () {
     + item('receipts', '🧾', 'Scontrini', 'Fotografa la spesa, prodotti e reparti', b.receipts)
     + item('cash', '💶', 'Contanti e collegamenti', 'Prelievi, pagamenti in contanti, giroconti, rimborsi', b.cash)
     + '</div><div class="menu-group">Futuro</div><div class="card">'
+    + item('forecast', '📅', 'Spese fisse e previsioni', fcOut ? 'Uscite previste ' + eur(fcOut) + ' al mese · confronto con il reale' : 'Spese ricorrenti e bonus, con la loro periodicità', '')
     + item('plan', '◎', 'Progetti e budget', 'Limiti per categoria, obiettivi, simulatore', '')
     + '</div><div class="menu-group">App</div><div class="card">'
     + item('settings', '☷', 'Impostazioni e backup', 'Profilo familiare, backup cifrato, esportazioni', '')
@@ -58,7 +60,7 @@ Screens.settings = function () {
     + '<details class="card"><summary>Registro delle ultime 100 azioni</summary>' + S.data.audit.map(a => '<p class="mini"><b>' + esc(a.action) + '</b> · ' + esc(a.date) + '<br>' + esc(a.detail) + '</p>').join('') + '</details>'
     + '<div class="card"><h2>Come leggere i risultati</h2><p class="sub">Accantonamenti, investimenti e giroconti non sono consumi. I rimborsi sono separati dalle entrate. I prelievi bancomat non sono spese: lo diventano i pagamenti in contanti che registri; la parte non registrata appare come "Contanti non tracciati".</p>'
     + '<p class="sub">Non essendoci un ID univoco nell\'Excel, due operazioni perfettamente identiche non sono sempre distinguibili. Si conserva la massima molteplicità osservata nei file sovrapposti.</p>'
-    + '<p class="mini">Famiglia 2.6 · build personale offline</p></div>';
+    + '<p class="mini">Famiglia 2.7 · build personale offline</p></div>';
 };
 
 function saveHouse() {

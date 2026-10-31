@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.Native) return; // nel telefono non serve
-  const KEY = 'famiglia-demo-v4';
+  const KEY = 'famiglia-demo-v5';
   const U = window.Util;
   let db = null;
   const photos = {}; // foto scontrini (solo in memoria)
@@ -144,6 +144,32 @@
     db.prefs.subjects = JSON.stringify([{ id: 'demo-mutuo', name: 'Mutuo prima casa', description: 'Rata mensile del mutuo con Intesa Sanpaolo',
       type: 'banca', direction: 'out', match: 'mutuo casa', auto: true, since: 0, created: today,
       set: { class: { family: 'Casa', category: 'Mutuo e affitto' }, need: 'essenziale', nature: 'fissa', tax: 'mutuo' } }]);
+    // Spese fisse e previsioni di esempio (inventate), con le due categorie nuove che usano
+    const tax = JSON.parse(JSON.stringify(window.Classify.DEFAULT_TAXONOMY));
+    tax.find(f => f.family === 'Movimenti interni').categories.push('Fondo pensione');
+    tax.find(f => f.family === 'Entrate').categories.push('Assegni e bonus');
+    db.prefs.taxonomy = JSON.stringify(tax);
+    const fc = (name, euro, every, family, category, more) => Object.assign({ id: 'demo-fc-' + name.toLowerCase().replace(/\W+/g, '-'), name, section: 'expense', kind: 'expense',
+      amount: euro * 100, every, month: 0, family, category, match: '', note: '', active: true }, more || {});
+    db.prefs.forecast = JSON.stringify([
+      fc('Mutuo prima casa', 780, 1, 'Casa', 'Mutuo e affitto', { match: 'mutuo' }),
+      fc('Luce e gas', 120, 1, 'Casa', 'Utenze'),
+      fc('Spesa alimentare', 450, 1, 'Alimentari', 'Supermercato'),
+      fc('Carburante', 120, 1, 'Trasporti', 'Carburante'),
+      fc('Abbonamenti streaming', 26, 1, 'Tecnologia e abbonamenti', 'Streaming', { match: 'netflix, spotify' }),
+      fc('Servizi AI', 45, 1, 'Tecnologia e abbonamenti', 'AI', { match: 'anthropic, openai, gemini' }),
+      fc('Ristoranti e bar', 120, 1, 'Ristoranti e bar', 'Ristoranti'),
+      fc('Fondo pensione', 100, 1, 'Movimenti interni', 'Fondo pensione', { kind: 'saving' }),
+      fc('Assicurazione auto', 420, 12, 'Finanza e tasse', 'Assicurazioni', { month: 3 }),
+      fc('Bollo auto', 210, 12, 'Finanza e tasse', 'Tasse e imposte', { month: 5 }),
+      fc('IMU seconda casa', 300, 6, 'Finanza e tasse', 'Tasse e imposte', { month: 6 }),
+      fc('Vacanze estive', 1800, 12, 'Svago e viaggi', 'Viaggi', { month: 8, note: 'una volta l\'anno' }),
+      fc('Regali di Natale', 350, 12, 'Persona e famiglia', 'Regali', { month: 12 }),
+      fc('Manutenzione auto', 400, 24, 'Trasporti', 'Auto e moto'),
+      fc('Cambio auto', 20000, 120, 'Trasporti', 'Auto e moto'),
+      fc('Asilo', 0, 1, 'Persona e famiglia', 'Figli e scuola', { active: false, note: 'da valutare' }),
+      fc('Assegno unico', 150, 1, 'Entrate', 'Assegni e bonus', { section: 'bonus', kind: 'income' })
+    ]);
     db.audit.push({ date: today, action: 'Anteprima', detail: 'Dati dimostrativi generati' });
   }
 

@@ -35,7 +35,7 @@ const S = {
 };
 const Screens = {};
 const $ = id => document.getElementById(id);
-const C = Classify, G = Gaps, F = Finance, L = Links, R = Receipts, U = Util, FL = Fields, SJ = Subjects, D = Duplicates, SR = Search;
+const C = Classify, G = Gaps, F = Finance, L = Links, R = Receipts, U = Util, FL = Fields, SJ = Subjects, D = Duplicates, SR = Search, FC = Forecast;
 
 // ---------------------------------------------------------------------
 // Formattazione
@@ -159,7 +159,7 @@ function nav(page, sub) {
 }
 
 /** Pagine che si aprono dal menu "Altro": "indietro" riporta lì. */
-const MORE_PAGES = { imports: 'Importa e buchi', checks: 'Doppioni', review: 'Riconciliazione', receipts: 'Scontrini', cash: 'Contanti', plan: 'Progetti', settings: 'Impostazioni' };
+const MORE_PAGES = { imports: 'Importa e buchi', checks: 'Doppioni', review: 'Riconciliazione', receipts: 'Scontrini', cash: 'Contanti', forecast: 'Spese fisse', plan: 'Progetti', settings: 'Impostazioni' };
 
 /** Tasto "indietro" di Android. */
 window.back = function () {
