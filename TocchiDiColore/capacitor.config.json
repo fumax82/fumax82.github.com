@@ -1,0 +1,13 @@
+{
+  "appId": "io.github.fumax82.tocchidicolore",
+  "appName": "Tocchi di Colore",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#f4eedf"
+  },
+  "plugins": {
+    "SystemBars": {
+      "hidden": true
+    }
+  }
+}

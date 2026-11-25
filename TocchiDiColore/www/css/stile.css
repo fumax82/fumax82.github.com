@@ -1,0 +1,205 @@
+/* ==========================================================================
+ *  stile.css — ASPETTO DELL'INTERFACCIA
+ *  Carta, acquerello e inchiostro seppia, come nel cortometraggio.
+ *  Pensato prima di tutto per il touch su Android, in orizzontale.
+ * ========================================================================== */
+:root {
+  --carta: #fbf6ea;
+  --carta-scura: #f1e7d2;
+  --inchiostro: #6b4b37;
+  --viola: #7b6a92;
+  --turchese: #5fb9b9;
+  --rosa: #f2b9b3;
+  --giallo: #ffe08a;
+  --scrittura: "Segoe Print", "Bradley Hand", "Chalkboard SE", "Comic Neue", "Comic Sans MS", cursive, sans-serif;
+  --testo: "Trebuchet MS", "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0; height: 100%; overflow: hidden;
+  background: var(--carta); color: var(--inchiostro);
+  font-family: var(--testo);
+  -webkit-user-select: none; user-select: none;
+  touch-action: none;
+}
+
+#schermo { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; touch-action: none; }
+#mano { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; }
+
+.nascosto { display: none !important; }
+
+button { font-family: var(--scrittura); color: var(--inchiostro); cursor: pointer; }
+
+/* ------------------------------- HUD -------------------------------------- */
+#hud { position: fixed; inset: 0; pointer-events: none; }
+
+#angoloAlto {
+  position: absolute; top: max(10px, env(safe-area-inset-top)); left: max(14px, env(safe-area-inset-left));
+  max-width: 46vw;
+}
+#capitoloHud { font-family: var(--scrittura); font-size: 14px; opacity: 0.8; text-shadow: 0 0 6px var(--carta); }
+#obiettivo {
+  margin-top: 6px; padding: 7px 12px; font-size: 15px;
+  background: rgba(251, 246, 234, 0.88); border: 2px solid var(--inchiostro);
+  border-radius: 14px 18px 12px 16px; box-shadow: 2px 3px 0 rgba(107, 75, 55, 0.18);
+}
+#obiettivo.nuovo { animation: nuovoObiettivo 1.2s ease-out; }
+@keyframes nuovoObiettivo { 0% { transform: scale(1.12); background: #fff3c0; } 100% { transform: scale(1); } }
+
+#ricordi {
+  position: absolute; top: calc(max(10px, env(safe-area-inset-top)) + 56px); right: max(14px, env(safe-area-inset-right));
+  display: flex; gap: 6px; padding: 4px 10px;
+  background: rgba(251, 246, 234, 0.75); border: 2px solid rgba(107, 75, 55, 0.6); border-radius: 16px;
+}
+#ricordi .icona { width: 34px; height: 34px; }
+#ricordi .icona.nuova { animation: nuovoRicordo 1.4s ease-out; }
+@keyframes nuovoRicordo { 0% { transform: scale(2.4) rotate(-20deg); } 60% { transform: scale(0.9); } 100% { transform: scale(1); } }
+
+#pulsantiAlto {
+  position: absolute; top: max(10px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right));
+  display: flex; gap: 10px; pointer-events: auto;
+}
+button.tondo {
+  width: 46px; height: 46px; padding: 9px;
+  background: rgba(251, 246, 234, 0.88); border: 2px solid var(--inchiostro); border-radius: 50% 46% 52% 48%;
+}
+button.tondo svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#btnVista .icona-terza { display: none; }
+#btnVista.terza .icona-prima { display: none; }
+#btnVista.terza .icona-terza { display: block; }
+
+/* joystick e pulsanti touch */
+#joystickBase {
+  position: absolute; width: 124px; height: 124px; margin: -62px 0 0 -62px;
+  border: 2px dashed rgba(107, 75, 55, 0.5); border-radius: 50%; background: rgba(251, 246, 234, 0.22);
+  opacity: 0; transition: opacity 0.2s;
+}
+#joystickBase.attivo { opacity: 1; }
+#joystickPomello {
+  position: absolute; left: 50%; top: 50%; width: 52px; height: 52px;
+  border: 2px solid var(--inchiostro); border-radius: 50%; background: rgba(95, 185, 185, 0.8);
+  transform: translate(-50%, -50%);
+}
+#btnToc {
+  position: absolute; right: max(24px, env(safe-area-inset-right)); bottom: max(26px, env(safe-area-inset-bottom));
+  width: 92px; height: 92px; font-size: 22px; pointer-events: auto; touch-action: none;
+  background: radial-gradient(circle at 40% 35%, #fff8e0, #f2d99a); border: 3px solid var(--inchiostro);
+  border-radius: 50% 47% 52% 49%; box-shadow: 3px 4px 0 rgba(107, 75, 55, 0.25);
+}
+#btnToc.magico { background: radial-gradient(circle at 40% 35%, #fff6c8, #c9b6ea); animation: brilla 2.2s infinite; }
+@keyframes brilla { 50% { box-shadow: 0 0 18px 4px rgba(255, 224, 138, 0.85); } }
+#btnToc:active { transform: scale(0.92); }
+#btnAzione {
+  position: absolute; right: max(132px, calc(env(safe-area-inset-right) + 120px)); bottom: max(40px, env(safe-area-inset-bottom));
+  min-width: 110px; height: 56px; padding: 0 18px; font-size: 19px; pointer-events: auto; touch-action: none;
+  background: #fffaf0; border: 3px solid var(--inchiostro); border-radius: 22px 16px 24px 18px;
+  box-shadow: 3px 4px 0 rgba(107, 75, 55, 0.25); animation: invito 1.4s infinite;
+}
+@keyframes invito { 50% { transform: translateY(-4px); } }
+body:not(.touch) #btnAzione::after { content: '  (E)'; font-size: 13px; opacity: 0.6; }
+body:not(.touch) #btnToc { width: 70px; height: 70px; font-size: 17px; }
+
+/* ---------------------------- pensieri ----------------------------------- */
+#messaggio {
+  position: fixed; left: 50%; bottom: max(78px, calc(env(safe-area-inset-bottom) + 66px));
+  transform: translate(-50%, 10px); max-width: min(680px, 70vw);
+  padding: 10px 20px; font-family: var(--scrittura); font-size: clamp(15px, 2.3vw, 21px); font-style: italic; text-align: center;
+  background: rgba(251, 246, 234, 0.9); border: 2px solid var(--inchiostro); border-radius: 20px 14px 22px 12px;
+  box-shadow: 3px 4px 0 rgba(107, 75, 55, 0.18);
+  opacity: 0; pointer-events: none; transition: opacity 0.5s, transform 0.5s;
+}
+#messaggio.visibile { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------------------------- dialoghi ----------------------------------- */
+#dialogo {
+  position: fixed; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%);
+  width: min(860px, 92vw); min-height: 120px; display: flex; gap: 16px; align-items: center;
+  padding: 14px 20px 14px 14px;
+  background: rgba(251, 246, 234, 0.96); border: 3px solid var(--inchiostro); border-radius: 26px 18px 28px 20px;
+  box-shadow: 4px 5px 0 rgba(107, 75, 55, 0.22);
+}
+#ritratto { width: 96px; height: 96px; flex: none; border-radius: 50%; border: 2px solid var(--inchiostro); background: #fff8ea; }
+#dialogo .testi { flex: 1; }
+#nomeDialogo { font-family: var(--scrittura); font-size: 17px; color: var(--viola); margin-bottom: 4px; }
+#testoDialogo { font-size: clamp(16px, 2.2vw, 20px); line-height: 1.4; min-height: 2.8em; }
+#avantiDialogo { position: absolute; right: 18px; bottom: 8px; font-size: 16px; animation: invito 0.9s infinite; }
+
+/* --------------------------- cartello capitoli --------------------------- */
+#cartello {
+  position: fixed; left: 50%; top: 34%; transform: translate(-50%, -50%) rotate(-1.5deg);
+  padding: 18px 46px; text-align: center; pointer-events: none;
+  background: rgba(251, 246, 234, 0.95); border: 3px solid var(--inchiostro); border-radius: 30px 18px 34px 22px;
+  box-shadow: 5px 6px 0 rgba(107, 75, 55, 0.2);
+  opacity: 0; transition: opacity 0.8s;
+}
+#cartello.visibile { opacity: 1; }
+#cartelloNumero { font-family: var(--scrittura); font-size: 18px; color: var(--viola); }
+#cartelloTitolo { font-family: var(--scrittura); font-size: clamp(26px, 5vw, 46px); }
+
+/* ---------------------------- schermate ---------------------------------- */
+.schermata { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; }
+#caricamento { flex-direction: column; gap: 18px; background: var(--carta); transition: opacity 0.9s; z-index: 20; }
+#caricamento.sparisce { opacity: 0; }
+#caricamento .titolo { font-family: var(--scrittura); font-size: clamp(30px, 6vw, 56px); }
+#caricamento .barra { width: min(420px, 70vw); height: 14px; border: 2px solid var(--inchiostro); border-radius: 10px; overflow: hidden; background: #fffaf0; }
+#barraCaricamento { height: 100%; width: 0; background: linear-gradient(90deg, var(--turchese), var(--viola), var(--rosa)); transition: width 0.3s; }
+#testoCaricamento { font-style: italic; }
+
+#menu { z-index: 10; }
+#sfondoMenu { position: absolute; inset: 0; background: var(--carta) center / cover no-repeat; }
+.pannelloMenu {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 18px 34px; margin-left: auto; margin-right: 4vw;
+  background: rgba(251, 246, 234, 0.9); border: 3px solid var(--inchiostro); border-radius: 30px 20px 34px 22px;
+  box-shadow: 5px 6px 0 rgba(107, 75, 55, 0.2); transform: rotate(0.8deg);
+}
+.pannelloMenu h1 { margin: 0; font-family: var(--scrittura); font-weight: normal; font-size: clamp(30px, 5.5vw, 52px); }
+.sottotitolo { margin: 0 0 6px; font-style: italic; opacity: 0.8; }
+.nota { margin: 4px 0 0; font-size: 13px; opacity: 0.7; }
+button.grande, button.medio {
+  min-width: 220px; padding: 10px 26px; font-size: 22px;
+  background: #fffaf0; border: 3px solid var(--inchiostro); border-radius: 22px 16px 24px 18px;
+  box-shadow: 3px 4px 0 rgba(107, 75, 55, 0.22);
+}
+button.grande { background: var(--giallo); }
+button.medio { font-size: 18px; padding: 7px 20px; }
+button.grande:active, button.medio:active { transform: translate(2px, 3px); box-shadow: 1px 1px 0 rgba(107, 75, 55, 0.22); }
+
+#opzioni, #crediti, #pausa { background: rgba(251, 246, 234, 0.55); z-index: 15; }
+.foglio {
+  display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center;
+  max-width: 560px; width: 100%; padding: 20px 28px;
+  background: rgba(251, 246, 234, 0.97); border: 3px solid var(--inchiostro); border-radius: 28px 18px 30px 20px;
+  box-shadow: 5px 6px 0 rgba(107, 75, 55, 0.2);
+}
+.foglio h2 { margin: 0; font-family: var(--scrittura); font-weight: normal; font-size: 30px; }
+.foglio label { display: flex; justify-content: space-between; align-items: center; gap: 14px; width: 100%; font-size: 17px; }
+.foglio select, .foglio input { font-size: 16px; accent-color: var(--viola); }
+
+#fine { z-index: 12; flex-direction: column; justify-content: flex-end; }
+#illustrazioneFine { position: absolute; inset: 0; background: var(--carta) center / cover no-repeat; }
+/* il testo finale compare dopo qualche secondo: prima si guarda l'illustrazione */
+.foglio.basso { position: relative; margin-bottom: 3vh; max-width: 760px; padding: 12px 24px; gap: 8px; animation: compari 1.2s 3.5s both; }
+@keyframes compari { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: none; } }
+#testoFine { font-size: 16px; line-height: 1.45; margin: 0; }
+
+#avvisoRotazione {
+  display: none; position: fixed; left: 50%; top: 40%; transform: translateX(-50%);
+  padding: 10px 18px; font-family: var(--scrittura); font-size: 18px; text-align: center;
+  background: var(--giallo); border: 2px solid var(--inchiostro); border-radius: 14px; z-index: 30; pointer-events: none;
+}
+@media (orientation: portrait) and (pointer: coarse) {
+  #avvisoRotazione { display: block; }
+}
+
+/* telefoni in orizzontale: tutto un po' più compatto */
+@media (max-height: 460px) {
+  .pannelloMenu { padding: 12px 24px; gap: 7px; }
+  button.grande { font-size: 19px; padding: 7px 22px; }
+  button.medio { font-size: 16px; padding: 5px 18px; }
+  #dialogo { min-height: 96px; padding: 10px 16px 10px 10px; }
+  #ritratto { width: 72px; height: 72px; }
+  #obiettivo { font-size: 13px; }
+}

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Tocchi di Colore</string>
+    <string name="title_activity_main">Tocchi di Colore</string>
+    <string name="package_name">io.github.fumax82.tocchidicolore</string>
+    <string name="custom_url_scheme">io.github.fumax82.tocchidicolore</string>
+</resources>

@@ -1,0 +1,64 @@
+# Costruisce l'APK Android (versione di debug) del gioco "Tocchi di Colore".
+# Il file APK si scarica dalla pagina dell'esecuzione, nella sezione "Artifacts".
+name: APK Android
+
+on:
+  # Parte a ogni push (su qualsiasi branch) che modifica il gioco o questo file.
+  push:
+    paths:
+      - "TocchiDiColore/**"
+      - ".github/workflows/android-apk.yml"
+  # Permette anche di avviarlo a mano dalla scheda "Actions" di GitHub.
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    # Tutti i comandi "run" partono dalla cartella del gioco.
+    defaults:
+      run:
+        working-directory: TocchiDiColore
+
+    steps:
+      # 1. Scarica il codice del repository.
+      - name: Scarica il codice
+        uses: actions/checkout@v7
+
+      # 2. Installa Node.js 22 (richiesto da Capacitor 8) e riusa la cache di npm.
+      - name: Installa Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: TocchiDiColore/package-lock.json
+
+      # 3. Installa Java 21 (richiesto dal progetto Android di Capacitor 8)
+      #    e riusa la cache di Gradle tra un'esecuzione e l'altra.
+      - name: Installa Java 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      # 4. Installa le dipendenze esatte scritte in package-lock.json.
+      - name: Installa le dipendenze npm
+        run: npm ci
+
+      # 5. Copia i file web (cartella www) e i plugin dentro il progetto Android.
+      - name: Sincronizza Capacitor
+        run: npx cap sync android
+
+      # 6. Compila l'APK di debug con Gradle (l'SDK Android e' gia' presente sul server di GitHub).
+      - name: Compila l'APK
+        working-directory: TocchiDiColore/android
+        run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
+
+      # 7. Salva l'APK come "artifact" scaricabile per 30 giorni.
+      - name: Carica l'APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: TocchiDiColore-apk
+          path: TocchiDiColore/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30

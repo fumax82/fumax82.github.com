@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<!--
+  TOCCHI DI COLORE — avventura pseudo-3D in prima e terza persona
+  Ispirata al cortometraggio «Out of Sight» (敲敲, 2010).
+  Tutta la grafica, la musica e i suoni sono generati dal codice (cartella js/).
+  Il motore 3D è Three.js (cartella lib/).
+
+  Per provarlo sul computer serve un piccolo server (i moduli JavaScript non
+  funzionano aprendo il file con un doppio clic):
+      cd www  →  python3 -m http.server 8000  →  http://localhost:8000
+  Per Android vedi il file LEGGIMI.md nella cartella principale.
+-->
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#fbf6ea">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Tocchi di Colore</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icona.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icona-180.png">
+  <link rel="stylesheet" href="css/stile.css">
+  <!-- dove trovare Three.js quando il codice scrive: import * as THREE from 'three' -->
+  <script type="importmap">
+    { "imports": { "three": "./lib/three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <!-- il mondo 3D -->
+  <canvas id="schermo"></canvas>
+  <!-- la mano di Lia con il bastone (prima persona) -->
+  <canvas id="mano"></canvas>
+
+  <!-- ====================== HUD ====================== -->
+  <div id="hud" class="nascosto">
+    <div id="angoloAlto">
+      <div id="capitoloHud"></div>
+      <div id="obiettivo" class="nascosto"></div>
+    </div>
+    <div id="ricordi" class="nascosto"></div>
+    <div id="pulsantiAlto">
+      <button id="btnVista" class="tondo terza" aria-label="Prima o terza persona">
+        <svg class="icona-prima" viewBox="0 0 24 24"><path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg class="icona-terza" viewBox="0 0 24 24"><path d="M6 9 L12 2 L18 9 Z"/><circle cx="12" cy="12" r="3"/><path d="M12 15v4M8 22l4-3 4 3"/></svg>
+      </button>
+      <button id="btnPausa" class="tondo" aria-label="Pausa">
+        <svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg>
+      </button>
+    </div>
+    <!-- comandi touch -->
+    <div id="joystickBase"><div id="joystickPomello"></div></div>
+    <button id="btnToc" class="nascosto" aria-label="Batti il bastone">Toc!</button>
+    <button id="btnAzione" class="nascosto">Parla</button>
+  </div>
+
+  <!-- pensieri di Lia -->
+  <div id="messaggio"></div>
+
+  <!-- dialoghi -->
+  <div id="dialogo" class="nascosto">
+    <canvas id="ritratto" width="160" height="160"></canvas>
+    <div class="testi">
+      <div id="nomeDialogo"></div>
+      <div id="testoDialogo"></div>
+    </div>
+    <div id="avantiDialogo" class="nascosto">▼</div>
+  </div>
+
+  <!-- cartello dei capitoli -->
+  <div id="cartello" class="nascosto">
+    <div id="cartelloNumero"></div>
+    <div id="cartelloTitolo"></div>
+  </div>
+
+  <!-- ====================== SCHERMATE ====================== -->
+  <div id="caricamento" class="schermata">
+    <div class="titolo">Tocchi di Colore</div>
+    <div class="barra"><div id="barraCaricamento"></div></div>
+    <div id="testoCaricamento">Preparo i pennelli...</div>
+  </div>
+
+  <div id="menu" class="schermata nascosto">
+    <div id="sfondoMenu"></div>
+    <div class="pannelloMenu">
+      <h1>Tocchi di Colore</h1>
+      <p class="sottotitolo">un'avventura da ascoltare, toccare e immaginare</p>
+      <button id="btnNuova" class="grande">Nuova storia</button>
+      <button id="btnContinua" class="grande nascosto">Continua</button>
+      <button id="btnOpzioni" class="medio">Opzioni</button>
+      <button id="btnCrediti" class="medio">Crediti</button>
+      <p class="nota">Gioca in orizzontale, meglio con le cuffie.</p>
+    </div>
+  </div>
+
+  <div id="opzioni" class="schermata nascosto">
+    <div class="foglio">
+      <h2>Opzioni</h2>
+      <label>Qualità grafica
+        <select id="optQualita">
+          <option value="auto">Automatica</option>
+          <option value="alta">Alta</option>
+          <option value="media">Media</option>
+          <option value="bassa">Bassa (telefoni meno potenti)</option>
+        </select>
+      </label>
+      <label>Musica <input id="optMusica" type="range" min="0" max="1" step="0.05"></label>
+      <label>Effetti sonori <input id="optEffetti" type="range" min="0" max="1.2" step="0.05"></label>
+      <label>Sensibilità dello sguardo <input id="optSensibilita" type="range" min="2" max="14" step="0.5"></label>
+      <button id="btnChiudiOpzioni" class="medio">Fatto</button>
+    </div>
+  </div>
+
+  <div id="crediti" class="schermata nascosto">
+    <div class="foglio">
+      <h2>Crediti</h2>
+      <p>Un gioco ispirato al cortometraggio animato <i>«Out of Sight» (敲敲, 2010)</i> di Ya-Ting Yu,
+        Ya-Hsuan Yeh e Ling Chung — National Taiwan University of Arts.</p>
+      <p>Disegni, musica ed effetti sonori sono generati dal codice.<br>Motore 3D: Three.js (licenza MIT).</p>
+      <button id="btnChiudiCrediti" class="medio">Chiudi</button>
+    </div>
+  </div>
+
+  <div id="pausa" class="schermata nascosto">
+    <div class="foglio">
+      <h2>Pausa</h2>
+      <button id="btnRiprendi" class="grande">Riprendi</button>
+      <button id="btnOpzioniPausa" class="medio">Opzioni</button>
+      <button id="btnMenuPrincipale" class="medio">Menu principale</button>
+    </div>
+  </div>
+
+  <div id="fine" class="schermata nascosto">
+    <div id="illustrazioneFine"></div>
+    <div class="foglio basso">
+      <h2>Fine</h2>
+      <p id="testoFine"></p>
+      <button id="btnFineMenu" class="medio">Torna al menu</button>
+    </div>
+  </div>
+
+  <div id="avvisoRotazione">Ruota il telefono in orizzontale</div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
