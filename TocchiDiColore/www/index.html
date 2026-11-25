@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <!--
-  TOCCHI DI COLORE — avventura pseudo-3D in prima e terza persona
-  Ispirata al cortometraggio «Out of Sight» (敲敲, 2010).
+  TOCCHI DI COLORE — un cartone animato da giocare
+  Ispirato al cortometraggio «Out of Sight» (敲敲, 2010).
+  Lia cammina come in un gioco a piattaforme, ma la telecamera la riprende
+  come in un film: piani dipinti ad acquerello appesi nello spazio
+  (tecnica "multiplane") e inquadrature che cambiano mentre cammina.
   Tutta la grafica, la musica e i suoni sono generati dal codice (cartella js/).
-  Il motore 3D è Three.js (cartella lib/).
+  Il motore grafico è Three.js (cartella lib/).
 
   Per provarlo sul computer serve un piccolo server (i moduli JavaScript non
   funzionano aprendo il file con un doppio clic):
@@ -28,10 +31,8 @@
   </script>
 </head>
 <body>
-  <!-- il mondo 3D -->
+  <!-- la scena dipinta -->
   <canvas id="schermo"></canvas>
-  <!-- la mano di Lia con il bastone (prima persona) -->
-  <canvas id="mano"></canvas>
 
   <!-- ====================== HUD ====================== -->
   <div id="hud" class="nascosto">
@@ -41,16 +42,19 @@
     </div>
     <div id="ricordi" class="nascosto"></div>
     <div id="pulsantiAlto">
-      <button id="btnVista" class="tondo terza" aria-label="Prima o terza persona">
-        <svg class="icona-prima" viewBox="0 0 24 24"><path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
-        <svg class="icona-terza" viewBox="0 0 24 24"><path d="M6 9 L12 2 L18 9 Z"/><circle cx="12" cy="12" r="3"/><path d="M12 15v4M8 22l4-3 4 3"/></svg>
-      </button>
       <button id="btnPausa" class="tondo" aria-label="Pausa">
         <svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg>
       </button>
     </div>
-    <!-- comandi touch -->
-    <div id="joystickBase"><div id="joystickPomello"></div></div>
+    <!-- comandi touch: frecce per camminare (tenere premuto a lungo = correre) -->
+    <div id="frecce">
+      <button id="btnSinistra" class="freccia" aria-label="Cammina a sinistra">
+        <svg viewBox="0 0 24 24"><path d="M15 4 L7 12 L15 20"/></svg>
+      </button>
+      <button id="btnDestra" class="freccia" aria-label="Cammina a destra">
+        <svg viewBox="0 0 24 24"><path d="M9 4 L17 12 L9 20"/></svg>
+      </button>
+    </div>
     <button id="btnToc" class="nascosto" aria-label="Batti il bastone">Toc!</button>
     <button id="btnAzione" class="nascosto">Parla</button>
   </div>
@@ -107,7 +111,6 @@
       </label>
       <label>Musica <input id="optMusica" type="range" min="0" max="1" step="0.05"></label>
       <label>Effetti sonori <input id="optEffetti" type="range" min="0" max="1.2" step="0.05"></label>
-      <label>Sensibilità dello sguardo <input id="optSensibilita" type="range" min="2" max="14" step="0.5"></label>
       <button id="btnChiudiOpzioni" class="medio">Fatto</button>
     </div>
   </div>
@@ -117,7 +120,7 @@
       <h2>Crediti</h2>
       <p>Un gioco ispirato al cortometraggio animato <i>«Out of Sight» (敲敲, 2010)</i> di Ya-Ting Yu,
         Ya-Hsuan Yeh e Ling Chung — National Taiwan University of Arts.</p>
-      <p>Disegni, musica ed effetti sonori sono generati dal codice.<br>Motore 3D: Three.js (licenza MIT).</p>
+      <p>Disegni, musica ed effetti sonori sono generati dal codice.<br>Motore grafico: Three.js (licenza MIT).</p>
       <button id="btnChiudiCrediti" class="medio">Chiudi</button>
     </div>
   </div>

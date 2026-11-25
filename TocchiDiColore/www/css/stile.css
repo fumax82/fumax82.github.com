@@ -26,7 +26,6 @@ html, body {
 }
 
 #schermo { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; touch-action: none; }
-#mano { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; }
 
 .nascosto { display: none !important; }
 
@@ -66,22 +65,21 @@ button.tondo {
   background: rgba(251, 246, 234, 0.88); border: 2px solid var(--inchiostro); border-radius: 50% 46% 52% 48%;
 }
 button.tondo svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-#btnVista .icona-terza { display: none; }
-#btnVista.terza .icona-prima { display: none; }
-#btnVista.terza .icona-terza { display: block; }
+/* frecce per camminare (in basso a sinistra) */
+#frecce {
+  position: absolute; left: max(20px, env(safe-area-inset-left)); bottom: max(22px, env(safe-area-inset-bottom));
+  display: flex; gap: 14px; pointer-events: auto;
+}
+button.freccia {
+  width: 84px; height: 84px; padding: 18px; touch-action: none;
+  background: rgba(251, 246, 234, 0.82); border: 3px solid var(--inchiostro);
+  border-radius: 48% 52% 46% 54%; box-shadow: 3px 4px 0 rgba(107, 75, 55, 0.22);
+}
+button.freccia svg { width: 100%; height: 100%; fill: none; stroke: var(--inchiostro); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+button.freccia.premuto { transform: scale(0.92); background: rgba(255, 236, 170, 0.92); }
+body:not(.touch) #frecce { opacity: 0.55; }
+body:not(.touch) button.freccia { width: 58px; height: 58px; padding: 13px; }
 
-/* joystick e pulsanti touch */
-#joystickBase {
-  position: absolute; width: 124px; height: 124px; margin: -62px 0 0 -62px;
-  border: 2px dashed rgba(107, 75, 55, 0.5); border-radius: 50%; background: rgba(251, 246, 234, 0.22);
-  opacity: 0; transition: opacity 0.2s;
-}
-#joystickBase.attivo { opacity: 1; }
-#joystickPomello {
-  position: absolute; left: 50%; top: 50%; width: 52px; height: 52px;
-  border: 2px solid var(--inchiostro); border-radius: 50%; background: rgba(95, 185, 185, 0.8);
-  transform: translate(-50%, -50%);
-}
 #btnToc {
   position: absolute; right: max(24px, env(safe-area-inset-right)); bottom: max(26px, env(safe-area-inset-bottom));
   width: 92px; height: 92px; font-size: 22px; pointer-events: auto; touch-action: none;

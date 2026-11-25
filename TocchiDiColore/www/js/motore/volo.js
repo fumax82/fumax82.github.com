@@ -174,7 +174,7 @@ export class Volo {
       const z = -170 + rng() * 340;
       const f = this.fiume.getPoint(Math.min(1, Math.max(0, (z + 180) / 360)));
       const lato = k % 2 ? 1 : -1;
-      s.posiziona(f.x + lato * (45 + rng() * 70), z, 34 + rng() * 30);
+      s.posiziona(f.x + lato * (45 + rng() * 70), 34 + rng() * 30, z);
     }
 
     // stormo di uccellini che ci accompagna
@@ -225,7 +225,7 @@ export class Volo {
     for (const u of this.uccelli) {
       const w = u.off.clone().applyQuaternion(this.camera.quaternion).add(pos);
       w.y += Math.sin(this.tempo * 2 + u.fase) * 0.5;
-      u.s.posiziona(w.x, w.z, w.y);
+      u.s.posiziona(w.x, w.y, w.z);
       u.s.mostra('f' + (Math.floor(this.tempo * 10 + u.fase) % 4), false);
     }
     for (const p of this.pinne) {

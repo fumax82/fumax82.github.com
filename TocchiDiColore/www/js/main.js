@@ -2,9 +2,11 @@
  *  main.js — IL CUORE DEL GIOCO
  *  --------------------------------------------------------------------------
  *  Qui nasce l'oggetto "Gioco" che tiene insieme tutto:
- *    - prepara la grafica (Three.js) e fa dipingere le immagini
- *    - carica i LUOGHI (la via, la città immaginata, il forno...)
- *    - circa 60 volte al secondo aggiorna il mondo e lo disegna
+ *    - prepara la grafica (Three.js) e fa dipingere personaggi e oggetti
+ *    - monta le SCENE (la via, la piazza, il forno, il canale...): piani
+ *      dipinti appesi nello spazio, come in un teatrino di carta
+ *    - circa 60 volte al secondo muove Lia lungo il suo percorso, aggiorna
+ *      il mondo che si colora, la regia delle telecamere, e disegna
  *    - offre alla STORIA (dati/storia.js) dei comandi semplici:
  *        g.vai('forno'), g.dialogo('fornaia', [...]), g.pensa('...'),
  *        g.obiettivo('...'), g.attendi(2), g.evento('...'), g.musica('...')
@@ -15,28 +17,29 @@ import * as THREE from 'three';
 import { CONFIG } from './config.js';
 import { Galleria } from './arte/galleria.js';
 import { UNIFORMI, creaRumore } from './motore/materiali.js';
-import { costruisciLuogo } from './motore/costruttore.js';
-import { Telecamera } from './motore/camera.js';
+import { Scena, dimenticaDipinti } from './motore/scena.js';
+import { Regia } from './motore/regia.js';
 import { Acquerello } from './motore/acquerello.js';
 import { Particelle, FORME } from './motore/particelle.js';
 import { Volo } from './motore/volo.js';
 import { Sagoma } from './motore/sagoma.js';
-import { Mondo } from './gioco/mondo.js';
-import { Giocatore } from './gioco/giocatore.js';
-import { creaAttore, Guinzaglio, Persona } from './gioco/attori.js';
+import { Lia } from './gioco/lia.js';
+import { Guinzaglio } from './gioco/attori.js';
 import { Audio } from './gioco/audio.js';
 import { Musica } from './gioco/musica.js';
 import { Input } from './gioco/input.js';
 import { Interfaccia } from './gioco/interfaccia.js';
 import { Regista } from './gioco/regista.js';
-import via from './dati/luoghi/via.js';
-import oltre from './dati/luoghi/oltre.js';
-import { forno, libreria, piazzetta } from './dati/luoghi/interni.js';
+import via from './dati/scene/via.js';
+import piazza from './dati/scene/piazza.js';
+import forno from './dati/scene/forno.js';
+import canale from './dati/scene/canale.js';
+import libreria from './dati/scene/libreria.js';
+import terrazza from './dati/scene/terrazza.js';
+import piazzetta from './dati/scene/piazzetta.js';
 import { avviaStoria } from './dati/storia.js';
 
-const LUOGHI = { via, oltre, forno, libreria, piazzetta };
-const FERMO = { avanti: 0, laterale: 0, rotazione: 0, corsa: false };
-const NESSUNO_SGUARDO = { dx: 0, dy: 0 };
+const SCENE = { via, piazza, forno, canale, libreria, terrazza, piazzetta };
 const CHIAVE = 'tocchi-di-colore-salvataggio';
 const CARTA = '#fbf6ea';
 
@@ -46,9 +49,7 @@ class Gioco {
     this.tempo = 0;
     this.inPausa = false;
     this.inScena = false;          // true durante le scene della storia
-    this.luoghi = {};
-    this.corrente = null;
-    this.mondo = null;
+    this.corrente = null;          // la Scena montata adesso
     this.onde = CONFIG.onde;
     this.dialoghiSpeciali = {};    // id del personaggio → dialogo della storia
     this.porteAperte = {};
@@ -61,6 +62,8 @@ class Gioco {
     this.qualita = 'media';
     this.mediaLavoro = 12;
     this.tempoLento = 0;
+    this.direzioneSchermo = 0;     // freccia premuta (-1, 0, +1)
+    this.mappaDirezione = 1;       // come la freccia si traduce in avanti/indietro sul percorso
     this.ui = Interfaccia;
   }
 
@@ -75,6 +78,7 @@ class Gioco {
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
     this.renderer.setClearColor(new THREE.Color(CARTA), 1);
     UNIFORMI.uRumore.value = creaRumore();
+    UNIFORMI.uSchizzo.value = CONFIG.grafica.schizzo;
 
     Interfaccia.caricamento(0.02, 'Preparo i pennelli...');
     const anisotropia = Math.min(8, this.renderer.capabilities.getMaxAnisotropy());
@@ -82,12 +86,12 @@ class Gioco {
 
     this.scena = new THREE.Scene();
     this.scena.background = new THREE.Color(CARTA);
-    this.telecamera = new Telecamera();
+    this.regia = new Regia();
     this.acquerello = new Acquerello(this.renderer);
     this.particelle = new Particelle();
     this.scena.add(this.particelle.punti);
     this.regista = new Regista();
-    this.lia = new Giocatore(this);
+    this.lia = new Lia(this);
     this.lia.aggiungiA(this.scena);
     this.guinzaglioLinea = new Guinzaglio();
     this.scena.add(this.guinzaglioLinea.linea);
@@ -104,14 +108,17 @@ class Gioco {
     this.impostaQualita(CONFIG.grafica.qualita);
     window.addEventListener('resize', () => this.ridimensiona());
 
-    // Quando Lia sbatte contro qualcosa nel mondo bianco, l'ostacolo "appare"
-    // (come nel cortometraggio, dove al posto dell'urto spunta un albero)
-    this.regista.su('urto', () => {
-      if (!this.mondo || this.mondo.rivelaTutto > 0.5) return;
-      const x = this.lia.x + Math.cos(this.lia.angolo) * 0.5, y = this.lia.y + Math.sin(this.lia.angolo) * 0.5;
-      this.mondo.creaOnda(x, y, { velocita: 4, raggio: 2.4, forza: 0.6, colore: '#9fd08a', livello: 1 });
-      this.particelle.emetti(x, this.lia.quota + 0.9, y, 10, { forma: [FORME.foglia], colori: ['#8fc27f', '#6faa5e', '#b4dea1'], velocita: 1, su: 0.6, gravita: 0.8, vita: 1.6, dim: 0.2 });
+    // Nel mondo bianco, quando Lia sbatte contro qualcosa, quella cosa
+    // "appare" (come nel cortometraggio, dove dopo l'urto spunta un albero)
+    this.regista.su('urto', (o) => {
+      if (!o || !this.corrente) return;
+      const p = this.corrente.percorso.punto(o.s);
+      const z = p.z + (o.dz || 0);
+      this.onda(p.x, z, 'bastone', { raggio: 3.2, velocita: 4, colore: o.colore || '#9fd08a' });
+      this.particelle.emetti(p.x, p.y + 1.2, z, 14, { forma: [FORME.foglia], colori: ['#8fc27f', '#6faa5e', '#b4dea1'], velocita: 1.2, su: 0.7, gravita: 0.8, vita: 1.8, dim: 0.18 });
+      this.regia.scuoti(0.6);
       Audio.botta();
+      this.pensa('Ahi! C\'era qualcosa... un albero!', 2.5, true);
     });
 
     Interfaccia.caricamento(1, 'Pronto!');
@@ -126,7 +133,6 @@ class Gioco {
   async inizia(capitolo) {
     Audio.avvia();
     Interfaccia.nascondiMenu();
-    Input.richiediAggancio();
     UNIFORMI.uRivelaTutto.value = 0;
     this.acquerello.uniformi.uBianco.value = 1;
     this.fase = 'gioco';
@@ -151,11 +157,6 @@ class Gioco {
         this._interagisci(it).catch((e) => console.error(e)).finally(() => { this.occupato = false; this.interazioneAttuale = null; });
       }
     });
-    Input.su('vista', () => {
-      if (this.fase !== 'gioco') return;
-      this.telecamera.cambiaModo();
-      document.getElementById('btnVista').classList.toggle('terza', this.telecamera.modo === 'terza');
-    });
     Input.su('pausa', () => { if (this.fase === 'gioco' || this.fase === 'volo') this.pausa(!this.inPausa); });
     Input.su('perdiFuoco', () => { if ((this.fase === 'gioco' || this.fase === 'volo') && !this.inPausa) this.pausa(true); });
   }
@@ -164,7 +165,6 @@ class Gioco {
     this.inPausa = si;
     Interfaccia.pausa(si);
     Audio.sospendi(si);
-    if (si) Input.rilasciaAggancio();
   }
 
   /* ====================================================================== */
@@ -183,7 +183,7 @@ class Gioco {
     this.renderer.setPixelRatio(dpr);
     this.renderer.setSize(L, A);
     this.acquerello.imposta(L, A, dpr, p.scala, p.campioni);
-    this.telecamera.ridimensiona(L, A);
+    this.regia.ridimensiona(L, A);
     if (this.volo) this.volo.ridimensiona(L, A);
     this.particelle.ridimensiona(A * dpr * p.scala);
   }
@@ -203,100 +203,89 @@ class Gioco {
   }
 
   /* ====================================================================== */
-  /*  LUOGHI                                                                */
+  /*  SCENE                                                                 */
   /* ====================================================================== */
-  _prepara(id) {
-    if (this.luoghi[id]) return this.luoghi[id];
-    const dati = LUOGHI[id];
-    const mondo = new Mondo(dati);
-    const costruito = costruisciLuogo(mondo, dati);
-    const attori = (dati.attori || []).map((def) => {
-      const a = creaAttore(this, def);
-      a.aggiungiA(costruito.gruppo);
-      if (def.visibile === false) a.visibile = false;
-      return a;
-    });
-    const interazioni = [];
-    for (const p of dati.porte || []) interazioni.push({ ...p, tipo: 'porta', attiva: true });
-    for (const i of dati.interazioni || []) interazioni.push({ ...i, tipo: 'evento', attiva: false });
-    for (const a of attori) {
-      if (a instanceof Persona) interazioni.push({ id: a.id, tipo: 'persona', attore: a, raggio: 1.6, etichetta: 'Parla', attiva: true });
-    }
-    const L = { id, dati, mondo, costruito, attori, interazioni };
-    this.luoghi[id] = L;
-    return L;
-  }
-
   /**
-   * Porta Lia in un altro luogo, con una dissolvenza al bianco.
+   * Porta Lia in un'altra scena, con una dissolvenza al bianco.
    * opz: { subito: true } = senza dissolvenza; { senzaMusica: true }
    */
   async vai(id, arrivo, opz) {
     const o = opz || {};
+    const def = SCENE[id];
+    if (!def) throw new Error('Scena sconosciuta: ' + id);
     if (this.corrente && !o.subito) await this.bianco(1, 0.55);
+    this.caricaScena = true;
     if (this.corrente) this._esci();
-    const L = this._prepara(id);
-    this.corrente = L;
-    this.mondo = L.mondo;
-    this.scena.add(L.costruito.gruppo);
-    UNIFORMI.uRiv.value = L.mondo.textureRiv;
-    UNIFORMI.uDimMondo.value.set(L.mondo.larghezza, L.mondo.altezza);
-    const atm = L.dati.atmosfera || {};
-    UNIFORMI.uNebbiaColore.value.set(atm.nebbiaColore || '#f6efe2');
-    UNIFORMI.uNebbia.value.set(...(atm.nebbia || CONFIG.grafica.nebbia));
+    // teniamo in memoria solo i dipinti di questa scena e di quelle vicine
+    const vicine = { piazza: ['forno'], forno: ['piazza'], canale: ['libreria', 'terrazza'], libreria: ['canale'], terrazza: ['canale'] };
+    dimenticaDipinti([id, ...(vicine[id] || [])].map((k) => SCENE[k].arte.modulo + ':' + SCENE[k].arte.nome));
+    this._indicatore(true);
+    const S = await new Scena(def, this).monta();
+    this._indicatore(false);
+    this.corrente = S;
+    this.scena.add(S.gruppo);
+    S.percezione.collega(UNIFORMI);
+    const atm = def.atmosfera || {};
+    UNIFORMI.uFoschia.value.set(...(atm.foschia || [18, 100]));
+    UNIFORMI.uLuceScena.value.set(atm.luce || '#ffffff');
     if (atm.sole) UNIFORMI.uSole.value.set(...atm.sole).normalize();
+    this.scena.background = new THREE.Color(CARTA);
     // gli interni (forno, libreria) sono caldi e accoglienti: tutti a colori
-    if (atm.tuttoVisibile) L.mondo.rivelaTutto = 1;
+    if (atm.tuttoVisibile) S.percezione.rivelaTutto = 1;
     if (atm.bordoBianco !== undefined) this.bordoBianco(atm.bordoBianco, o.subito ? 0 : 0.8);
-    Audio.mondo = L.mondo;
-    this.lia.mondo = L.mondo;
-    const a = (L.dati.arrivi || {})[arrivo] || Object.values(L.dati.arrivi)[0];
-    this.lia.posiziona(a.x, a.y, a.angolo);
-    this.lia.inclinazione = 0;
-    this.telecamera.angoloLiscio = a.angolo;
-    this.telecamera.libera();
-    this.suoniLuogo = (L.dati.suoni || []).map((s) => Audio.continuo(s.tipo, s.x, s.y, s.volume));
-    if (L.dati.musica && !o.senzaMusica) Musica.suona(L.dati.musica);
+    Audio.mondo = null;
+    const a = (def.arrivi || {})[arrivo] || Object.values(def.arrivi)[0];
+    this.lia.entra(S, a.s, a.verso);
+    this.regia.imposta(def.inquadrature);
+    this.regia.aggiorna(0, this.lia);
+    // effetti di particelle della scena (profumi, foglie, scintille)
+    for (const e of def.effetti || []) {
+      const em = this.emettitore(e.x, e.y, e.z, e.ritmo, { ...e, forma: FORME[e.forma] !== undefined ? FORME[e.forma] : FORME.punto });
+      if (e.id) S['effetto_' + e.id] = em;
+    }
+    this.suoniLuogo = (def.suoni || []).map((s) => Audio.continuo(s.tipo, s.x, s.y, s.volume));
+    if (def.musica && !o.senzaMusica) Musica.suona(def.musica);
+    this.caricaScena = false;
     this.regista.emetti('entrato:' + id);
     if (!o.subito) await this.bianco(0, 0.7);
   }
 
+  /** Un piccolo "sto dipingendo..." mentre la scena nuova viene preparata. */
+  _indicatore(si) {
+    const el = document.getElementById('messaggio');
+    if (!el) return;
+    if (si) { el.textContent = '...'; el.classList.add('visibile'); } else el.classList.remove('visibile');
+  }
+
   _esci() {
-    const L = this.corrente;
-    this.scena.remove(L.costruito.gruppo);
+    const S = this.corrente;
     Audio.fermaContinui();
-    for (const a of L.attori) {
-      if (a.silenzia) a.silenzia();
-      if (a.emettitore) a.emettitore.attivo = false;
-    }
+    for (const a of S.attori) if (a.emettitore) a.emettitore.attivo = false;
     this.particelle.emettitori = this.particelle.emettitori.filter((e) => !e.delLuogo);
+    S.smonta();
+    this.corrente = null;
+    this.mostraGuinzaglio = false;
   }
 
-  attore(id) {
-    const L = this.corrente;
-    return L ? L.attori.find((a) => a.id === id) : null;
-  }
-
-  attoriSolidi() {
-    return this.corrente ? this.corrente.attori.filter((a) => a.solido && a.visibile && a.x !== undefined && !a.def.galleggia) : [];
-  }
+  attore(id) { return this.corrente ? this.corrente.attore(id) : null; }
 
   /* ====================================================================== */
   /*  INTERAZIONI (porte, persone, punti speciali)                          */
   /* ====================================================================== */
   _cercaInterazione() {
-    const L = this.corrente;
-    if (!L || !this.lia.controllo || this.inScena || Interfaccia.dialogoAperto) return null;
+    const S = this.corrente;
+    if (!S || !this.lia.controllo || this.inScena || Interfaccia.dialogoAperto) return null;
     let migliore = null, dMin = Infinity;
-    for (const it of L.interazioni) {
+    for (const it of S.interazioni) {
       if (!it.attiva) continue;
-      let x = it.x, y = it.y;
-      if (it.attore) { if (!it.attore.visibile) continue; x = it.attore.x; y = it.attore.y; }
-      if (it.segue) { const a = this.attore(it.segue); if (!a || !a.visibile) continue; x = a.x; y = a.y; }
-      const d = Math.hypot(x - this.lia.x, y - this.lia.y);
+      let d;
+      if (it.attore) {
+        if (!it.attore.visibile) continue;
+        const v = S.percorso.piuVicino(it.attore.x, it.attore.z);
+        if (v.distanza > 2.2) continue;
+        d = Math.abs(v.s - this.lia.s);
+      } else d = Math.abs(it.s - this.lia.s);
       if (d > it.raggio) continue;
-      let diff = Math.abs(((Math.atan2(y - this.lia.y, x - this.lia.x) - this.lia.angolo) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI);
-      if (d > 0.8 && diff > 1.4) continue;   // deve essere più o meno davanti a Lia
       if (d < dMin) { dMin = d; migliore = it; }
     }
     return migliore;
@@ -311,7 +300,10 @@ class Gioco {
       const a = it.attore;
       this.lia.controllo = false;
       a.parlando = true;
-      a.guarda(this.lia.x, this.lia.y);
+      a.guarda(this.lia.x, this.lia.z);
+      // Lia si gira verso chi le parla
+      const v = this.corrente.percorso.piuVicino(a.x, a.z);
+      if (Math.abs(v.s - this.lia.s) > 0.05) this.lia.verso = Math.sign(v.s - this.lia.s);
       const speciale = this.dialoghiSpeciali[a.id];
       if (speciale) await speciale(this, a);
       else {
@@ -344,7 +336,7 @@ class Gioco {
       this.tempo += dt;
       UNIFORMI.uTempo.value = this.tempo;
       if (this.fase === 'volo') this._aggiornaVolo(dt);
-      else if (this.corrente) this._aggiornaGioco(dt);
+      else if (this.corrente && !this.caricaScena) this._aggiornaGioco(dt);
       this.regista.aggiorna(dt);
       this.particelle.aggiorna(dt, this.tempo);
       this._aggiornaAnimazioni(dt);
@@ -355,18 +347,44 @@ class Gioco {
     this._qualitaAutomatica(dt);
   }
 
+  /**
+   * La freccia premuta (sinistra/destra SULLO SCHERMO) diventa "avanti" o
+   * "indietro" sul percorso, a seconda di come la telecamera lo inquadra.
+   * La scelta si blocca finché il dito resta sulla freccia: così, se
+   * l'inquadratura cambia mentre Lia cammina, lei non torna indietro.
+   */
+  _direzioneSulPercorso() {
+    const d = Input.direzione();
+    if (d !== this.direzioneSchermo) {
+      this.direzioneSchermo = d;
+      if (d !== 0) {
+        const e = this.regia.camera.matrixWorld.elements;   // colonna 0 = destra della camera
+        const t = this.lia.tangente;
+        const dx = t.x * e[0] + t.z * e[2];
+        // se il percorso va "dentro lo schermo", destra = avanti
+        this.mappaDirezione = Math.abs(dx) > 0.3 ? Math.sign(dx) : 1;
+      }
+    }
+    return d * this.mappaDirezione;
+  }
+
   _aggiornaGioco(dt) {
-    const L = this.corrente;
+    const S = this.corrente;
     const libero = this.lia.controllo && !this.inScena && !Interfaccia.dialogoAperto;
-    const mov = libero ? Input.leggiMovimento() : FERMO;
-    const sguardo = Input.consumaSguardo();
-    this.lia.aggiorna(dt, mov, libero ? sguardo : NESSUNO_SGUARDO);
-    for (const a of L.attori) a.aggiorna(dt, L.mondo);
-    L.mondo.aggiorna(dt, this.lia);
-    UNIFORMI.uNumOnde.value = L.mondo.scriviOnde(UNIFORMI.uOnde.value, UNIFORMI.uOndeColori.value);
-    UNIFORMI.uRivelaTutto.value = L.mondo.rivelaTutto;
-    this.telecamera.aggiorna(dt, this.lia, L.mondo);
-    Audio.aggiorna(this.lia.x, this.lia.y, this.lia.angolo);
+    const dir = libero ? this._direzioneSulPercorso() : 0;
+    if (!libero) this.direzioneSchermo = 0;
+    this.lia.aggiorna(dt, dir, Input.corsa());
+    for (const a of S.attori) a.aggiorna(dt, S);
+    S.percezione.aggiorna(dt, { x: this.lia.x, z: this.lia.z });
+    UNIFORMI.uNumOnde.value = S.percezione.scriviOnde(UNIFORMI.uOnde.value, UNIFORMI.uOndeColori.value);
+    UNIFORMI.uRivelaTutto.value = S.percezione.rivelaTutto;
+    this.regia.aggiorna(dt, this.lia);
+    // la messa a fuoco segue Lia (vedi la profondità di campo in materiali.js)
+    const c = this.regia.camera.position;
+    const fuoco = Math.hypot(c.x - this.lia.x, c.y - this.lia.y - 0.6, c.z - this.lia.z);
+    UNIFORMI.uFuoco.value += (fuoco - UNIFORMI.uFuoco.value) * Math.min(1, dt * 4);
+    const e = this.regia.camera.matrixWorld.elements;
+    Audio.aggiorna(this.lia.x, this.lia.z, Math.atan2(-e[10], -e[8]));
     const it = this._cercaInterazione();
     if (it !== this.interazioneAttuale && !this.occupato) {
       this.interazioneAttuale = it;
@@ -377,27 +395,25 @@ class Gioco {
   _disegna(dt) {
     if (this.fase === 'volo') {
       this.acquerello.disegna(this.volo.scena, this.volo.camera);
-      Interfaccia.disegnaMano(this.lia, 1, this.tempo);
       return;
     }
-    const L = this.corrente;
-    if (!L) return;
-    const cam = this.telecamera.camera;
-    const cx = cam.position.x, cy = cam.position.z;
-    for (const a of L.attori) a.disegna(cx, cy);
-    const terza = !!this.telecamera.cinematica || (this.telecamera.transizione > 0.35 && this.telecamera.distanza > 0.45);
-    this.lia.disegna(cx, cy, terza && !this.liaNascosta);
+    const S = this.corrente;
+    if (!S) return;
+    const cam = this.regia.camera;
+    for (const a of S.attori) a.disegna(cam);
+    this.lia.disegna(cam);
     // guinzaglio tra la mano di Lia e il collare di Biscotto
     const b = this.attore('biscotto');
     const g = this.guinzaglioLinea;
-    g.linea.visible = !!(this.mostraGuinzaglio && b && b.visibile && terza);
+    g.linea.visible = !!(this.mostraGuinzaglio && b && b.visibile && !this.lia.nascosta);
     if (g.linea.visible) {
-      const dx = Math.cos(this.lia.angolo + Math.PI / 2) * 0.17, dy = Math.sin(this.lia.angolo + Math.PI / 2) * 0.17;
-      g.aggiorna([this.lia.x + dx, this.lia.quota + 0.42, this.lia.y + dy], [b.x, b.h + 0.3, b.y]);
+      // il collare è verso la testa: davanti, nella direzione in cui il cane guarda sullo schermo
+      const e = cam.matrixWorld.elements;
+      const verso = (b.dir.x * e[0] + b.dir.z * e[2]) >= 0 ? 1 : -1;
+      g.aggiorna(this.lia.mano(cam), [b.x + e[0] * 0.15 * verso, b.y + 0.4, b.z + e[2] * 0.15 * verso]);
     }
-    L.costruito.aggiorna(dt, this.tempo, cam);
+    S.aggiorna(dt, this.tempo, cam);
     this.acquerello.disegna(this.scena, cam);
-    Interfaccia.disegnaMano(this.lia, this.telecamera.cinematica ? 1 : this.telecamera.transizione, this.tempo);
   }
 
   /* ====================================================================== */
@@ -504,7 +520,7 @@ class Gioco {
     this.lia.controllo = primaControllo && !this.inScena;
   }
 
-  /** Abilita o disabilita un punto di interazione del luogo attuale. */
+  /** Abilita o disabilita un punto di interazione della scena attuale. */
   interazione(id, attiva) {
     const it = this.corrente && this.corrente.interazioni.find((i) => i.id === id);
     if (it) it.attiva = attiva;
@@ -512,29 +528,31 @@ class Gioco {
 
   apriPorta(id) { this.porteAperte[id] = true; }
 
-  inquadra(pos, guarda, durata) { this.telecamera.inquadra(pos, guarda, durata); }
-  libera() { this.telecamera.libera(); }
+  /** Inquadratura scelta dalla storia: pos e guarda sono punti del mondo [x, y, z]. */
+  inquadra(pos, guarda, durata, fov) { this.regia.inquadra(pos, guarda, durata, fov); }
+  libera(stacco) { this.regia.libera(stacco); }
 
-  vista(modo) {
-    this.telecamera.modo = modo;
-    document.getElementById('btnVista').classList.toggle('terza', modo === 'terza');
+  /** Punto del percorso dopo s metri, come [x, y, z] (comodo per le inquadrature). */
+  punto(s, dx, dy, dz) {
+    const p = this.corrente.percorso.punto(s);
+    return [p.x + (dx || 0), p.y + (dy || 0), p.z + (dz || 0)];
   }
 
-  /** Onda di percezione: tipo = 'bastone' | 'abbaio' | 'profumo' | 'suono' | 'magia' */
-  onda(x, y, tipo, extra) {
-    if (this.mondo) this.mondo.creaOnda(x, y, { ...CONFIG.onde[tipo], ...(extra || {}) });
+  /** Onda di percezione in (x, z): tipo = 'bastone' | 'abbaio' | 'profumo' | 'suono' | 'magia' | 'passo' */
+  onda(x, z, tipo, extra) {
+    if (this.corrente) this.corrente.percezione.creaOnda(x, z, { ...CONFIG.onde[tipo], ...(extra || {}) });
   }
 
-  scintille(x, h, y, quante, opz) {
-    this.particelle.emetti(x, h, y, quante, {
+  scintille(x, y, z, quante, opz) {
+    this.particelle.emetti(x, y, z, quante, {
       forma: [FORME.stella, FORME.scintilla, FORME.punto], colori: ['#fff0a0', '#ffd36b', '#ffffff', '#f7b6d8'],
-      velocita: 1.5, su: 1, gravita: 0.8, vita: 1.6, dim: 0.22, ...(opz || {}),
+      velocita: 1.5, su: 1, gravita: 0.8, vita: 1.6, dim: 0.2, ...(opz || {}),
     });
   }
 
-  /** Emettitore di particelle legato al luogo attuale (sparisce uscendo). */
-  emettitore(x, h, y, ritmo, opz) {
-    const e = this.particelle.aggiungiEmettitore(x, h, y, ritmo, opz);
+  /** Emettitore di particelle legato alla scena attuale (sparisce uscendo). */
+  emettitore(x, y, z, ritmo, opz) {
+    const e = this.particelle.aggiungiEmettitore(x, y, z, ritmo, opz);
     e.delLuogo = true;
     return e;
   }
@@ -544,15 +562,16 @@ class Gioco {
   bordoBianco(valore, durata) { return this.anima(this.acquerello.uniformi.uBordoBianco, valore, durata || 0); }
   cieloColore(valore, durata) { return this.anima(UNIFORMI.uColoreCielo, valore, durata || 0); }
 
-  /** Tutto il luogo visibile (1) o tutto bianco (0), con eventuale transizione. */
+  /** Tutta la scena visibile (1) o tutta bianca (0), con eventuale transizione. */
   coloraMondo(livello, durata) {
-    if (!this.mondo) return Promise.resolve();
-    if (livello <= 0) { this.mondo.rivelaTutto = 0; this.mondo.coloraTutto(0); return Promise.resolve(); }
-    const ogg = { value: this.mondo.rivelaTutto };
-    const m = this.mondo;
+    const S = this.corrente;
+    if (!S) return Promise.resolve();
+    const P = S.percezione;
+    if (livello <= 0) { P.rivelaTutto = 0; P.coloraTutto(0); return Promise.resolve(); }
+    const ogg = { value: P.rivelaTutto };
     const p = this.anima(ogg, livello, durata || 0);
-    const r = this.ogni(0.02, () => { m.rivelaTutto = ogg.value; if (ogg.value >= livello - 0.001) r.ferma(); });
-    if (!durata) m.rivelaTutto = livello;
+    const r = this.ogni(0.02, () => { P.rivelaTutto = ogg.value; if (ogg.value >= livello - 0.001) r.ferma(); });
+    if (!durata) P.rivelaTutto = livello;
     return p;
   }
 
@@ -561,7 +580,7 @@ class Gioco {
     this.ricordiPresi.push({ arte, titolo });
     Interfaccia.ricordo(arte, titolo);
     Audio.ricordo();
-    this.scintille(this.lia.x, this.lia.quota + 0.8, this.lia.y, 30, { forma: [FORME.stella, FORME.cuore, FORME.scintilla] });
+    this.scintille(this.lia.x, this.lia.y + 0.9, this.lia.z, 30, { forma: [FORME.stella, FORME.cuore, FORME.scintilla] });
     this.pensa('Nuovo ricordo: ' + titolo, 3, true);
   }
 
@@ -576,12 +595,14 @@ class Gioco {
   /** Mostra o nasconde il guinzaglio. */
   guinzaglio(si) { this.mostraGuinzaglio = si; }
 
-  /** La sagoma dell'abbraccio finale (Lia e Biscotto insieme). */
-  sagomaAbbraccio(x, y) {
+  /** La sagoma dell'abbraccio finale (Lia e Biscotto insieme) in (x, z). */
+  sagomaAbbraccio(x, z) {
     const s = new Sagoma('abbraccio', { ombra: 0.45, luce: 1 });
-    s.aggiungiA(this.corrente.costruito.gruppo);
-    s.posiziona(x, y, this.mondo.quota(x, y));
-    this.ogni(0.6, () => s.mostra(s.fotogramma === 'base_0' ? 'base_1' : 'base_0'));
+    s.aggiungiA(this.corrente.gruppo);
+    s.posiziona(x, this.corrente.quota(x, z), z);
+    const nomi = s.atlante.nomi;
+    let k = 0;
+    this.ogni(0.45, () => { k = (k + 1) % nomi.length; s.mostra(nomi[k]); });
     return s;
   }
 
@@ -595,8 +616,10 @@ class Gioco {
 /* -------------------------------------------------------------------------- */
 const gioco = new Gioco();
 window.Gioco = gioco; // per curiosare dalla console del browser
+window.__input = Input; // per i collaudi automatici
 gioco.avvia().catch((errore) => {
   console.error(errore);
   const el = document.getElementById('testoCaricamento');
   if (el) el.textContent = 'Si è verificato un errore: ' + errore.message;
 });
+

@@ -3,7 +3,7 @@
  *  --------------------------------------------------------------------------
  *  Caricamento, menu, opzioni, dialoghi con ritratto, pensieri di Lia,
  *  cartelli dei capitoli, obiettivo, ricordi raccolti, pulsanti touch,
- *  la mano con il bastone in prima persona, pausa e finale.
+ *  pausa e finale.
  * ========================================================================== */
 import { Galleria } from '../arte/galleria.js';
 import { Audio } from './audio.js';
@@ -41,7 +41,6 @@ Interfaccia.inizializza = function (azioni) {
   };
   premi('btnToc', 'tocco');
   premi('btnAzione', 'azione');
-  premi('btnVista', 'vista');
   premi('btnPausa', 'pausa');
   // il dialogo avanza toccando ovunque
   $('dialogo').addEventListener('pointerdown', (e) => { e.preventDefault(); this.avanzaDialogo(); });
@@ -50,18 +49,11 @@ Interfaccia.inizializza = function (azioni) {
   const qualita = $('optQualita');
   qualita.value = CONFIG.grafica.qualita;
   qualita.onchange = () => azioni.qualita(qualita.value);
-  const musica = $('optMusica'), effetti = $('optEffetti'), sens = $('optSensibilita');
+  const musica = $('optMusica'), effetti = $('optEffetti');
   musica.value = CONFIG.audio.musica; effetti.value = CONFIG.audio.effetti;
-  sens.value = CONFIG.giocatore.sensibilitaTouch * 1000;
   musica.oninput = effetti.oninput = () => Audio.impostaVolumi(parseFloat(musica.value), parseFloat(effetti.value));
-  sens.oninput = () => {
-    CONFIG.giocatore.sensibilitaTouch = parseFloat(sens.value) / 1000;
-    CONFIG.giocatore.sensibilitaMouse = CONFIG.giocatore.sensibilitaTouch * 0.37;
-  };
 
   if (Input.eTouch) document.body.classList.add('touch');
-  this.mano = $('mano');
-  this.ctxMano = this.mano.getContext('2d');
 };
 
 /* ------------------------------------------------------------------------ */
@@ -268,45 +260,6 @@ Interfaccia.aggiorna = function (dt) {
   }
 };
 
-/**
- * La mano di Lia con il bastone (o la bacchetta) in prima persona.
- * transizione: 0 = prima persona (si vede), 1 = terza (nascosta)
- */
-Interfaccia.disegnaMano = function (lia, transizione, tempo) {
-  const t = this.mano, c = this.ctxMano;
-  const L = window.innerWidth, A = window.innerHeight;
-  if (t.width !== L || t.height !== A) { t.width = L; t.height = A; }
-  c.clearRect(0, 0, L, A);
-  if (transizione > 0.95 || !lia.puoToccare) return;
-  const nome = lia.magica ? 'bacchetta' : 'bastone';
-  const at = Galleria.atlante(nome);
-  const f = at.fotogrammi[lia.magica && Math.floor(tempo * 3) % 2 ? 'f1' : (at.fotogrammi.f0 ? 'f0' : at.nomi[0])] || at.fotogrammi[at.nomi[0]];
-  const k = lia.faseTocco();
-  const abbassa = transizione * A * 0.8;
-  const ondeggia = lia.inMovimento ? Math.sin(lia.faseP * Math.PI) * A * 0.015 : Math.sin(tempo * 1.5) * A * 0.004;
-  const alt = A * 0.62;
-  const lar = alt * (f.l / f.a);
-  const cx = L * 0.74 + ondeggia - k * L * 0.03;
-  const cy = A * 0.98 + abbassa + Math.abs(ondeggia) - k * A * 0.06;
-  c.save();
-  c.translate(cx, cy);
-  c.rotate(-0.42 - k * 0.35);
-  c.drawImage(at.tela, f.x, f.y, f.l, f.a, -lar / 2, -alt, lar, alt);
-  c.restore();
-  // manica e mano (colori del vestito)
-  const manica = lia.costume === 'lia_strega' ? '#7b6a92' : '#5fb9b9';
-  c.save();
-  c.translate(cx + A * 0.02, cy - A * 0.04);
-  c.rotate(-0.5);
-  c.fillStyle = manica;
-  c.strokeStyle = '#6b4b37';
-  c.lineWidth = 2.5;
-  c.beginPath(); c.ellipse(A * 0.06, A * 0.1, A * 0.12, A * 0.09, 0, 0, Math.PI * 2); c.fill(); c.stroke();
-  c.fillStyle = '#fbe6cf';
-  c.beginPath(); c.ellipse(-A * 0.02, -A * 0.02, A * 0.055, A * 0.05, 0, 0, Math.PI * 2); c.fill(); c.stroke();
-  c.restore();
-};
-
 /* ------------------------------------------------------------------------ */
 /*  Finale                                                                  */
 /* ------------------------------------------------------------------------ */
@@ -316,5 +269,4 @@ Interfaccia.fine = function (testo) {
   if (tela) $('illustrazioneFine').style.backgroundImage = 'url(' + tela.toDataURL('image/jpeg', 0.9) + ')';
   $('testoFine').textContent = testo;
   $('fine').classList.remove('nascosto');
-  Input.rilasciaAggancio();
 };

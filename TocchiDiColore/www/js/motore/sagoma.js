@@ -86,10 +86,10 @@ export class Sagoma {
     this.mostra(Galleria.fotogramma(this.atlante, vista, posa, n), specchio);
   }
 
-  /** Posiziona la sagoma: (x, y) sulla mappa, h = altezza da terra (quota compresa). */
-  posiziona(x, y, h) {
-    this.mesh.position.set(x, h, y);
-    if (this.ombra) this.ombra.position.set(x, this._quotaOmbra === undefined ? h + 0.012 : this._quotaOmbra, y);
+  /** Posiziona la sagoma nel mondo: x destra, y alto (i piedi), z verso lo spettatore. */
+  posiziona(x, y, z) {
+    this.mesh.position.set(x, y, z);
+    if (this.ombra) this.ombra.position.set(x, this._quotaOmbra === undefined ? y + 0.012 : this._quotaOmbra, z);
   }
 
   /** Quota del terreno sotto l'oggetto (per l'ombra degli oggetti sospesi). */

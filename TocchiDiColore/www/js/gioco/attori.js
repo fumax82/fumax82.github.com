@@ -1,31 +1,73 @@
 /* ==========================================================================
- *  attori.js — CHI ABITA IL MONDO
+ *  attori.js — CHI ABITA LE SCENE
  *  --------------------------------------------------------------------------
  *  Un ATTORE è un personaggio o un oggetto che si muove: Biscotto, il
  *  gattino, il ladro, la fornaia, gli abitanti-animali, le auto...
- *  Ogni attore ha una Sagoma (il disegno) e sa:
- *    - camminare verso un punto o lungo un percorso (vaiA, percorri)
- *    - scegliere il disegno giusto: di fronte, di spalle o di lato,
- *      a seconda di dove si trova la telecamera
+ *  Ogni attore ha una Sagoma (il disegno di carta) e sa:
+ *    - camminare verso un punto o lungo una lista di punti (vaiA, percorri)
+ *    - scegliere il disegno giusto (di lato, di fronte, di spalle) secondo
+ *      la direzione in cui va RISPETTO ALLA TELECAMERA
  *    - fare una "posa" speciale (abbaiare, ringhiare, parlare...)
- *  Le funzioni che richiedono tempo (camminare) restituiscono una
- *  Promise: la storia può scrivere "await biscotto.vaiA(10, 5)".
+ *  Le funzioni che richiedono tempo restituiscono una Promise: la storia
+ *  può scrivere "await biscotto.vaiA(10, 0)".
+ *
+ *  Coordinate: x destra, y alto, z verso lo spettatore. I piedi stanno in y.
  * ========================================================================== */
 import * as THREE from 'three';
 import { Sagoma } from '../motore/sagoma.js';
 import { Audio } from './audio.js';
 
-const DUE_PI = Math.PI * 2;
-const diff = (a, b) => { let d = (b - a) % DUE_PI; if (d > Math.PI) d -= DUE_PI; if (d < -Math.PI) d += DUE_PI; return d; };
+/* ------------------------------------------------------------------------ */
+/*  Da che parte vediamo chi cammina?                                       */
+/* ------------------------------------------------------------------------ */
+const _destra = new THREE.Vector3();
+const _avanti = new THREE.Vector3();
 
-/** Da dove vediamo l'attore? → 'fronte' | 'retro' | 'lato' (+ specchio) */
-export function vistaDa(angoloAttore, ax, ay, camX, camY) {
-  const angVista = Math.atan2(ay - camY, ax - camX);
-  const d = diff(angVista, angoloAttore);
-  const ad = Math.abs(d);
-  if (ad < Math.PI / 4) return { vista: 'retro', specchio: false };
-  if (ad > (3 * Math.PI) / 4) return { vista: 'fronte', specchio: false };
-  return { vista: 'lato', specchio: d < 0 };
+/**
+ * dir = { x, z } direzione in cui guarda/cammina l'attore.
+ * Restituisce { vista: 'lato' | 'fronte' | 'retro', specchio }.
+ * I disegni "di lato" guardano a DESTRA: se va verso sinistra sullo
+ * schermo li specchiamo.
+ */
+export function vistaDa(dir, camera) {
+  _destra.set(1, 0, 0).applyQuaternion(camera.quaternion);
+  _avanti.set(0, 0, -1).applyQuaternion(camera.quaternion);
+  const lr = Math.hypot(_destra.x, _destra.z) || 1, la = Math.hypot(_avanti.x, _avanti.z) || 1;
+  const dx = (dir.x * _destra.x + dir.z * _destra.z) / lr;
+  const df = (dir.x * _avanti.x + dir.z * _avanti.z) / la;
+  if (df > 0.78) return { vista: 'retro', specchio: false };
+  if (df < -0.78) return { vista: 'fronte', specchio: false };
+  return { vista: 'lato', specchio: dx < 0 };
+}
+
+/** Quanti fotogrammi numerati esistono con quel prefisso (es. lato_cammina_0..7 → 8). */
+const cacheConteggi = new Map();
+export function conta(atlante, prefisso) {
+  const chiave = atlante.nome + '|' + prefisso;
+  if (cacheConteggi.has(chiave)) return cacheConteggi.get(chiave);
+  let n = 0;
+  while (atlante.fotogrammi[prefisso + '_' + n]) n++;
+  cacheConteggi.set(chiave, n);
+  return n;
+}
+
+/**
+ * Sceglie un fotogramma esistente: prova "vista_posa_n", poi le stesse pose
+ * in altre viste, poi le pose di riposo. Così un personaggio con pochi
+ * disegni funziona lo stesso.
+ */
+export function scegliFotogramma(atlante, vista, posa, tempo, fps) {
+  const f = atlante.fotogrammi;
+  const viste = [vista, 'lato', 'fronte', 'retro'];
+  for (const v of viste) {
+    const n = conta(atlante, v + '_' + posa);
+    if (n > 0) return { nome: v + '_' + posa + '_' + (Math.floor(tempo * fps) % n), vista: v };
+    if (f[v + '_' + posa]) return { nome: v + '_' + posa, vista: v };
+  }
+  if (posa !== 'fermo') return scegliFotogramma(atlante, vista, 'fermo', tempo, 1.5);
+  if (f[vista]) return { nome: vista, vista };
+  if (f.lato) return { nome: 'lato', vista: 'lato' };
+  return { nome: atlante.nomi[0], vista: 'fronte' };
 }
 
 /* ======================================================================== */
@@ -33,32 +75,34 @@ export function vistaDa(angoloAttore, ax, ay, camX, camY) {
 /* ======================================================================== */
 export class Attore {
   /**
-   * def: { id, arte, x, y, angolo, scala, ombra, velocita, solido, raggio,
-   *        nome (per i dialoghi), sempreDiFronte, luce }
+   * def: { id, arte, x, z, y (quota fissa, facoltativa), dir: 1|-1 (guarda a destra/sinistra),
+   *        scala, ombra, velocita, nome (per i dialoghi), sempreDiFronte, luce, visibile }
    */
   constructor(gioco, def) {
     this.gioco = gioco;
     this.def = def;
     this.id = def.id;
     this.nome = def.nome || def.id;
-    this.x = def.x; this.y = def.y; this.h = 0;
-    this.angolo = def.angolo || 0;
-    this.velocita = def.velocita || 1.4;
-    this.solido = def.solido !== false;
-    this.raggio = def.raggio || 0.28;
+    this.x = def.x || 0;
+    this.z = def.z || 0;
+    this.y = def.y || 0;
+    this.quotaFissa = def.y;           // se indicata, non segue il pavimento
+    this.dir = { x: def.dir === -1 ? -1 : 1, z: 0 };
+    this.velocita = def.velocita || 1.3;
     this.sempreDiFronte = !!def.sempreDiFronte;
     this.sagoma = new Sagoma(def.arte, { scala: def.scala || 1, ombra: def.ombra === undefined ? 0.3 : def.ombra, luce: def.luce || 0 });
     this.tAnim = Math.random() * 5;
+    this.passo = 0;                    // fase del passo (cresce con la strada fatta)
     this.inMovimento = false;
-    this.posaSpeciale = null;     // es. 'abbaia', 'ringhia', 'parla'
+    this.posaSpeciale = null;
     this.tempoPosa = 0;
     this.percorso = null;
     this.vel = 0;
     this.alArrivo = null;
     this.parlando = false;
+    this.galleggia = 0;
+    this.lunghezzaPasso = def.lunghezzaPasso || 1.1;  // metri per un ciclo completo di camminata
     this.visibile = def.visibile !== false;
-    this.galleggia = 0;           // ampiezza dell'ondeggiare (auto sull'acqua)
-    this.fpsCammina = def.fpsCammina || 8;
   }
 
   aggiungiA(gruppo) { this.sagoma.aggiungiA(gruppo); }
@@ -67,17 +111,15 @@ export class Attore {
   set visibile(v) { this._visibile = v; if (this.sagoma) this.sagoma.visibile = v; }
   get visibile() { return this._visibile; }
 
-  /** Cambia disegno (es. Lia con o senza borsa). */
   cambiaArte(nome) { this.sagoma.cambiaAtlante(nome); }
 
-  /** Cammina fino a (x, y). Restituisce una Promise che si risolve all'arrivo. */
-  vaiA(x, y, velocita) {
-    return this.percorri([[x, y]], velocita);
-  }
+  /** Cammina fino a (x, z). Restituisce una Promise che si risolve all'arrivo. */
+  vaiA(x, z, velocita) { return this.percorri([[x, z]], velocita); }
 
-  /** Percorre una lista di punti [[x, y], ...]. */
+  /** Percorre una lista di punti [[x, z], ...] (o [[x, z, y], ...] con quota). */
   percorri(punti, velocita) {
-    this.percorso = punti.map((p) => [p[0], p[1]]);
+    if (this.alArrivo) { const f = this.alArrivo; this.alArrivo = null; f(); }
+    this.percorso = punti.map((p) => p.slice());
     this.vel = velocita || this.velocita;
     return new Promise((ok) => { this.alArrivo = ok; });
   }
@@ -87,39 +129,48 @@ export class Attore {
     if (this.alArrivo) { const f = this.alArrivo; this.alArrivo = null; f(); }
   }
 
-  /** Si gira verso un punto. */
-  guarda(x, y) {
-    this.angolo = Math.atan2(y - this.y, x - this.x);
+  /** Si gira verso il punto (x, z). */
+  guarda(x, z) {
+    const dx = x - this.x, dz = z - this.z, l = Math.hypot(dx, dz);
+    if (l > 0.001) this.dir = { x: dx / l, z: dz / l };
   }
 
-  /** Posa speciale per un certo tempo (in secondi; Infinity = finché non cambia). */
+  /** Posa speciale per un certo tempo (secondi; Infinity = finché non cambia). */
   posa(nome, durata) {
     this.posaSpeciale = nome;
     this.tempoPosa = durata === undefined ? 0.8 : durata;
+    this.tPosa = 0;
   }
 
-  teletrasporta(x, y, angolo) {
-    this.x = x; this.y = y;
-    if (angolo !== undefined) this.angolo = angolo;
+  teletrasporta(x, z, dir) {
+    this.x = x; this.z = z;
+    if (dir !== undefined) this.dir = { x: dir, z: 0 };
     this.percorso = null;
   }
 
-  aggiorna(dt, mondo) {
+  /** Quota del pavimento: fissa, oppure quella della scena (segue ponti e scale). */
+  _quota(scena) {
+    if (this.quotaFissa !== undefined) return this.quotaFissa;
+    return scena ? scena.quota(this.x, this.z) : 0;
+  }
+
+  aggiorna(dt, scena) {
     this.tAnim += dt;
+    if (this.tPosa !== undefined) this.tPosa += dt;
     if (this.tempoPosa !== Infinity) {
       this.tempoPosa -= dt;
       if (this.tempoPosa <= 0) this.posaSpeciale = null;
     }
     this.inMovimento = false;
-    // "ronda": chi passeggia avanti e indietro lungo un percorso fisso
+    // chi fa la "ronda" passeggia avanti e indietro tra due punti
     if (this.def.ronda && !this.percorso && !this.parlando && this.visibile) this.percorri(this.def.ronda, this.def.velocita);
     if (this.percorso && this.percorso.length) {
-      const [tx, ty] = this.percorso[0];
-      const dx = tx - this.x, dy = ty - this.y, d = Math.hypot(dx, dy);
+      const meta = this.percorso[0];
+      const dx = meta[0] - this.x, dz = meta[1] - this.z, d = Math.hypot(dx, dz);
       const passo = this.vel * dt;
-      if (d > 0.001) this.angolo = Math.atan2(dy, dx);
+      if (d > 0.001) this.dir = { x: dx / d, z: dz / d };
       if (d <= passo) {
-        this.x = tx; this.y = ty;
+        this.x = meta[0]; this.z = meta[1];
         this.percorso.shift();
         if (!this.percorso.length) {
           this.percorso = null;
@@ -127,51 +178,43 @@ export class Attore {
         }
       } else {
         this.x += (dx / d) * passo;
-        this.y += (dy / d) * passo;
+        this.z += (dz / d) * passo;
+        this.passo += passo / this.lunghezzaPasso;
         this.inMovimento = true;
       }
     }
-    const quota = mondo ? Math.max(mondo.quota(this.x, this.y), 0) : 0;
-    this.h = quota + (this.galleggia ? Math.sin(this.tAnim * 1.7) * this.galleggia : 0) + (this.altezzaExtra || 0);
+    this.y = this._quota(scena) + (this.galleggia ? Math.sin(this.tAnim * 1.7) * this.galleggia : 0);
   }
 
-  /** Nome della "posa" da mostrare quando si muove. */
-  posaMovimento() {
-    return this.vel > 2.2 ? 'corre' : 'cammina';
-  }
+  /** La posa da mostrare quando si muove. */
+  posaMovimento() { return this.vel > 2.2 ? 'corre' : 'cammina'; }
 
-  /** Sceglie il fotogramma in base alla telecamera. */
-  disegna(camX, camY) {
+  /** Sceglie il fotogramma in base alla telecamera e posiziona la sagoma. */
+  disegna(camera) {
     if (!this.visibile) return;
     const at = this.sagoma.atlante;
-    let v = this.sempreDiFronte && !this.inMovimento ? { vista: 'fronte', specchio: false } : vistaDa(this.angolo, this.x, this.y, camX, camY);
-    let posa = this.posaSpeciale || (this.inMovimento ? this.posaMovimento() : 'fermo');
-    // se manca il disegno di fronte/di spalle per questa posa, usiamo quello di lato
-    if (v.vista !== 'lato' && !at.fotogrammi[v.vista + '_' + posa + '_0'] && !at.fotogrammi[v.vista + '_' + posa] && at.fotogrammi['lato_' + posa + '_0']) {
-      const camDestraX = -(camY - this.y), camDestraY = camX - this.x; // perpendicolare alla vista
-      const dirX = Math.cos(this.angolo), dirY = Math.sin(this.angolo);
-      v = { vista: 'lato', specchio: dirX * camDestraX + dirY * camDestraY > 0 };
+    let v = (this.sempreDiFronte && !this.inMovimento) || this.parlando ? { vista: 'fronte', specchio: false } : vistaDa(this.dir, camera);
+    let posa = this.posaSpeciale || (this.parlando ? 'parla' : this.inMovimento ? this.posaMovimento() : 'fermo');
+    let scelta;
+    if (this.inMovimento && !this.posaSpeciale) {
+      // la camminata segue la strada fatta: i piedi non "pattinano"
+      const n = Math.max(1, conta(at, v.vista + '_' + posa) || conta(at, 'lato_' + posa));
+      scelta = scegliFotogramma(at, v.vista, posa, (this.passo % 1) * n, 1);
+    } else {
+      const fps = posa === 'parla' ? 6 : posa === 'fermo' ? 2.2 : 5;
+      scelta = scegliFotogramma(at, v.vista, posa, this.tAnim, fps);
     }
-    let n = 0;
-    const fps = posa === 'corre' ? 12 : posa === 'cammina' ? this.fpsCammina : posa === 'parla' ? 7 : 1.4;
-    const quanti = contaFotogrammi(at, v.vista, posa);
-    if (quanti > 1) n = Math.floor(this.tAnim * fps) % quanti;
-    this.sagoma.posa(v.vista, posa, n, v.specchio);
-    this.sagoma.quotaTerreno(this.h - (this.galleggia ? 0 : 0));
-    this.sagoma.posiziona(this.x, this.y, this.h);
+    // se manca la vista richiesta usiamo quella di lato, specchiata secondo la direzione
+    const specchio = scelta.vista === 'lato' ? (v.vista === 'lato' ? v.specchio : vistaLaterale(this.dir, camera)) : false;
+    this.sagoma.mostra(scelta.nome, specchio);
+    this.sagoma.quotaTerreno(this.galleggia ? this.y - 0.05 : this.y);
+    this.sagoma.posiziona(this.x, this.y + (this.altezzaExtra || 0), this.z);
   }
 }
 
-/** Quanti fotogrammi numerati esistono per vista + posa (es. lato_cammina_0..3 → 4). */
-const cacheConteggi = new Map();
-function contaFotogrammi(atlante, vista, posa) {
-  const chiave = atlante.nome + '|' + vista + '|' + posa;
-  if (cacheConteggi.has(chiave)) return cacheConteggi.get(chiave);
-  let n = 0;
-  while (atlante.fotogrammi[vista + '_' + posa + '_' + n]) n++;
-  if (n === 0 && vista !== 'fronte') { while (atlante.fotogrammi['fronte_' + posa + '_' + n]) n++; }
-  cacheConteggi.set(chiave, n);
-  return n;
+function vistaLaterale(dir, camera) {
+  _destra.set(1, 0, 0).applyQuaternion(camera.quaternion);
+  return dir.x * _destra.x + dir.z * _destra.z < 0;
 }
 
 /* ======================================================================== */
@@ -183,37 +226,35 @@ export class Persona extends Attore {
     this.chiacchiere = def.chiacchiere || null;   // frasi dette se le si parla
     this.emettitore = null;
     if (def.scia) {   // profumo, fumo della pipa, odore di pane...
-      this.emettitore = gioco.particelle.aggiungiEmettitore(this.x, 1.2, this.y, def.scia.ritmo || 6, def.scia);
+      this.emettitore = gioco.particelle.aggiungiEmettitore(this.x, 1.2, this.z, def.scia.ritmo || 6, def.scia);
+      this.emettitore.delLuogo = true;
       this.sciaAltezza = def.scia.altezza || 1.2;
     }
   }
 
-  aggiorna(dt, mondo) {
-    if (this.parlando && this.percorso) this.ferma();   // chi parla si ferma
-    super.aggiorna(dt, mondo);
-    if (this.parlando) this.posaSpeciale = 'parla';
-    else if (this.posaSpeciale === 'parla') this.posaSpeciale = null;
+  aggiorna(dt, scena) {
+    if (this.parlando && this.percorso) this.ferma();
+    super.aggiorna(dt, scena);
     if (this.emettitore) {
       this.emettitore.posizione[0] = this.x;
-      this.emettitore.posizione[1] = this.h + this.sciaAltezza;
-      this.emettitore.posizione[2] = this.y;
+      this.emettitore.posizione[1] = this.y + this.sciaAltezza;
+      this.emettitore.posizione[2] = this.z;
       this.emettitore.attivo = this.visibile;
     }
   }
 }
 
 /* ======================================================================== */
-/*  BISCOTTO (e il gattino): al guinzaglio, in corsa, con la borsa          */
+/*  ANIMALI: Biscotto (al guinzaglio, in corsa, con la borsa) e il gattino  */
 /* ======================================================================== */
 export class Animale extends Attore {
   constructor(gioco, def) {
-    super(gioco, { ombra: 0.26, velocita: 3.2, solido: false, ...def });
-    this.guinzaglio = null;        // se legato a Lia
+    super(gioco, { ombra: 0.26, velocita: 3.2, lunghezzaPasso: 0.75, ...def });
+    this.guinzaglio = null;        // se legato a Lia: la segue sul percorso
     this.conBorsa = false;
-    this.verso = def.verso || 'abbaio'; // 'abbaio' o 'miagolio'
+    this.verso = def.verso || 'abbaio';  // 'abbaio' o 'miagolio'
     this.timerVerso = 2 + Math.random() * 3;
     this.versiAutomatici = !!def.versiAutomatici;
-    this.fpsCammina = 9;
   }
 
   posaMovimento() {
@@ -222,106 +263,126 @@ export class Animale extends Attore {
   }
 
   /** Abbaia (o miagola): suono, onda di percezione, posa con la bocca aperta. */
-  faVerso(mondo) {
+  faVerso() {
+    const g = this.gioco;
     if (this.verso === 'abbaio') {
-      Audio.abbaio(this.x, this.y);
-      this.posa(this.inMovimento ? null : 'abbaia', 0.5);
-      if (mondo) mondo.creaOnda(this.x, this.y, this.gioco.onde.abbaio);
+      Audio.abbaio(this.x, this.z);
+      if (!this.inMovimento) this.posa('abbaia', 0.5);
+      g.onda(this.x, this.z, 'abbaio');
     } else {
-      Audio.miagolio(this.x, this.y);
-      this.posa(this.inMovimento ? null : 'miagola', 0.6);
-      if (mondo) mondo.creaOnda(this.x, this.y, this.gioco.onde.suono);
+      Audio.miagolio(this.x, this.z);
+      if (!this.inMovimento) this.posa('miagola', 0.6);
+      g.onda(this.x, this.z, 'suono');
     }
   }
 
-  aggiorna(dt, mondo) {
-    // al guinzaglio: cammina un po' davanti e di lato a Lia
-    if (this.guinzaglio) {
-      const g = this.guinzaglio;
-      const tx = g.x + Math.cos(g.angolo) * 0.95 + Math.cos(g.angolo + Math.PI / 2) * 0.35;
-      const ty = g.y + Math.sin(g.angolo) * 0.95 + Math.sin(g.angolo + Math.PI / 2) * 0.35;
-      const d = Math.hypot(tx - this.x, ty - this.y);
-      if (d > 0.08) {
-        const v = Math.min(d * 3, 3);
-        this.x += ((tx - this.x) / d) * v * dt;
-        this.y += ((ty - this.y) / d) * v * dt;
-        this.angolo = Math.atan2(ty - this.y, tx - this.x);
-        this.inMovimentoGuinzaglio = d > 0.12;
-      } else this.inMovimentoGuinzaglio = false;
+  aggiorna(dt, scena) {
+    // al guinzaglio: trotterella un metro davanti a Lia, un po' più verso di noi
+    if (this.guinzaglio && scena) {
+      const L = this.guinzaglio;
+      const p = scena.percorso.punto(Math.max(0, Math.min(scena.percorso.lunghezza, L.s + L.verso * 1.05)));
+      const tx = p.x, tz = p.z + 0.32;
+      const dx = tx - this.x, dz = tz - this.z, d = Math.hypot(dx, dz);
+      if (d > 0.06) {
+        const v = Math.min(d * 3.2, 3.4);
+        this.x += (dx / d) * v * dt;
+        this.z += (dz / d) * v * dt;
+        if (d > 0.12) this.dir = { x: dx / d, z: dz / d };
+        this.passo += (v * dt) / this.lunghezzaPasso;
+        this.vel = v;
+        this._trotta = d > 0.1;
+      } else {
+        this._trotta = false;
+        this.dir = { x: L.verso * L.tangente.x, z: L.verso * L.tangente.z };
+      }
     }
-    super.aggiorna(dt, mondo);
-    if (this.guinzaglio && this.inMovimentoGuinzaglio) { this.inMovimento = true; this.vel = 1.5; }
+    super.aggiorna(dt, scena);
+    if (this.guinzaglio && this._trotta) this.inMovimento = true;
     if (this.versiAutomatici && this.visibile) {
       this.timerVerso -= dt;
-      if (this.timerVerso <= 0) { this.timerVerso = 3 + Math.random() * 3; this.faVerso(mondo); }
+      if (this.timerVerso <= 0) { this.timerVerso = 3 + Math.random() * 3; this.faVerso(); }
     }
+  }
+
+  disegna(camera) {
+    // con la borsa in bocca, da fermo usa "borsa_fermo"
+    if (this.conBorsa && !this.inMovimento && !this.posaSpeciale) {
+      this.posaSpeciale = 'borsa_fermo';
+      this.tempoPosa = 0.01;
+    }
+    super.disegna(camera);
   }
 }
 
 /* ======================================================================== */
-/*  VEICOLI: auto e autobus che vanno avanti e indietro (o galleggiano)      */
+/*  VEICOLI: auto e autobus (sulla strada o a galla sul canale)             */
 /* ======================================================================== */
 export class Veicolo extends Attore {
-  /** def: { corsia: y, da: x0, a: x1, velocita, galleggia } */
+  /**
+   * def: { da: [x, z], a: [x, z], velocita, galleggia, pingpong, y }
+   * Va da "da" ad "a" e ricomincia (oppure torna indietro se pingpong).
+   */
   constructor(gioco, def) {
-    super(gioco, { ombra: def.galleggia ? 0 : 0.9, solido: false, ...def });
-    this.direzione = def.a > def.da ? 1 : -1;
-    this.angolo = this.direzione > 0 ? 0 : Math.PI;
+    super(gioco, { ombra: def.galleggia ? 0 : 0.9, ...def, x: def.da[0], z: def.da[1] });
     this.velBase = def.velocita || 2.5;
     this.vel = this.velBase;
     this.galleggia = def.galleggia ? 0.06 : 0;
-    this.motore = null;          // il suono del motore nasce quando l'audio è pronto
+    this.motore = null;
     this.timerClacson = 0;
-    this.pingpong = !!def.pingpong; // va avanti e indietro invece di ricominciare
-    this.da = def.da; this.a = def.a;
+    this.da = def.da.slice();
+    this.a = def.a.slice();
+    this.t = def.parti || 0;    // 0..1 lungo il tragitto
+    this._dirDa();
   }
 
-  /** Chiamata quando si lascia il luogo: il suono verrà ricreato al ritorno. */
+  _dirDa() {
+    const dx = this.a[0] - this.da[0], dz = this.a[1] - this.da[1];
+    this.lungo = Math.hypot(dx, dz) || 1;
+    this.dir = { x: dx / this.lungo, z: dz / this.lungo };
+  }
+
   silenzia() {
     if (this.motore) this.motore.ferma();
     this.motore = null;
   }
 
-  aggiorna(dt, mondo) {
+  aggiorna(dt, scena) {
     const d = this.def;
     const lia = this.gioco.lia;
-    if (!this.motore && Audio.ctx) this.motore = Audio.continuo('motore', this.x, this.y, d.galleggia ? 0.1 : 0.2);
-    // si ferma se Lia è sulla sua strada, poco più avanti
-    const davanti = (lia.x - this.x) * this.direzione;
-    const sullaCorsia = Math.abs(lia.y - this.y) < 0.9;
-    const ostacolo = sullaCorsia && davanti > 0 && davanti < 3.2 && !d.galleggia;
+    if (!this.motore && Audio.ctx && this.visibile) this.motore = Audio.continuo('motore', this.x, this.z, d.galleggia ? 0.08 : 0.16);
+    // si ferma (e suona il clacson) se Lia è sulla sua strada
+    const davanti = (lia.x - this.x) * this.dir.x + (lia.z - this.z) * this.dir.z;
+    const lato = Math.abs((lia.x - this.x) * this.dir.z - (lia.z - this.z) * this.dir.x);
+    const ostacolo = !d.galleggia && lato < 1.0 && davanti > 0 && davanti < 3.4;
     const meta = ostacolo ? 0 : this.velBase;
     this.vel += (meta - this.vel) * Math.min(1, dt * 3);
     if (ostacolo) {
       this.timerClacson -= dt;
-      if (this.timerClacson <= 0) { Audio.clacson(this.x, this.y); this.timerClacson = 2.5; }
+      if (this.timerClacson <= 0) { Audio.clacson(this.x, this.z); this.timerClacson = 2.5; }
     }
-    this.x += this.direzione * this.vel * dt;
-    const oltre = (this.direzione > 0 && this.x > this.a) || (this.direzione < 0 && this.x < this.a);
-    if (oltre) {
-      if (this.pingpong) {
-        // inverte la marcia: scambia partenza e arrivo
-        [this.da, this.a] = [this.a, this.da];
-        this.direzione = -this.direzione;
-        this.angolo = this.direzione > 0 ? 0 : Math.PI;
-      } else this.x = this.da;
+    this.t += (this.vel * dt) / this.lungo;
+    if (this.t >= 1) {
+      this.t = 0;
+      if (d.pingpong) { [this.da, this.a] = [this.a, this.da]; this._dirDa(); }
     }
+    this.x = this.da[0] + (this.a[0] - this.da[0]) * this.t;
+    this.z = this.da[1] + (this.a[1] - this.da[1]) * this.t;
     this.inMovimento = this.vel > 0.1;
     this.tAnim += dt;
-    this.h = Math.max(mondo.quota(this.x, this.y), d.galleggia ? -0.2 : 0) + (this.galleggia ? Math.sin(this.tAnim * 1.6) * this.galleggia : 0);
-    if (this.motore) { this.motore.x = this.x; this.motore.y = this.y; }
+    this.y = (d.y || 0) + (this.galleggia ? Math.sin(this.tAnim * 1.6) * this.galleggia : 0);
+    if (this.motore) { this.motore.x = this.x; this.motore.y = this.z; }
   }
 
-  disegna(camX, camY) {
-    const v = vistaDa(this.angolo, this.x, this.y, camX, camY);
-    this.sagoma.mostra(this.sagoma.atlante.fotogrammi[v.vista] ? v.vista : 'lato', v.specchio);
-    this.sagoma.posiziona(this.x, this.y, this.h);
+  disegna(camera) {
+    if (!this.visibile) return;
+    const v = vistaDa(this.dir, camera);
+    const f = this.sagoma.atlante.fotogrammi;
+    this.sagoma.mostra(f[v.vista] ? v.vista : 'lato', v.vista === 'lato' ? v.specchio : false);
+    this.sagoma.quotaTerreno(this.y);
+    this.sagoma.posiziona(this.x, this.y, this.z);
   }
 
-  rimuovi() {
-    super.rimuovi();
-    this.silenzia();
-  }
+  rimuovi() { super.rimuovi(); this.silenzia(); }
 }
 
 /* ======================================================================== */
@@ -331,45 +392,47 @@ export class Piccioni {
   constructor(gioco, def) {
     this.gioco = gioco;
     this.def = def;
+    this.id = def.id || 'piccioni';
     this.uccelli = [];
     for (let k = 0; k < (def.quanti || 4); k++) {
-      const s = new Sagoma('piccione', { ombra: 0.12, scala: 1 });
-      const casa = [def.x + (Math.random() - 0.5) * 1.6, def.y + (Math.random() - 0.5) * 1.2];
-      this.uccelli.push({ s, casa, x: casa[0], y: casa[1], h: 0, volo: 0, specchio: Math.random() < 0.5, t: Math.random() * 3 });
+      const s = new Sagoma('piccione', { ombra: 0.12, scala: 1.3 });
+      const casa = [def.x + (Math.random() - 0.5) * 1.8, def.z + (Math.random() - 0.5) * 0.8];
+      this.uccelli.push({ s, casa, x: casa[0], z: casa[1], h: 0, specchio: Math.random() < 0.5, t: Math.random() * 3 });
     }
     this.inVolo = false;
     this.tornaTra = 0;
     this.timerVerso = 3;
+    this.visibile = true;
   }
 
   aggiungiA(gruppo) { for (const u of this.uccelli) u.s.aggiungiA(gruppo); }
   rimuovi() { for (const u of this.uccelli) u.s.rimuovi(); }
 
-  aggiorna(dt, mondo) {
+  aggiorna(dt, scena) {
     const lia = this.gioco.lia;
-    const vicino = Math.hypot(lia.x - this.def.x, lia.y - this.def.y) < 2.3;
+    const vicino = Math.hypot(lia.x - this.def.x, lia.z - this.def.z) < 2.4;
     if (vicino && !this.inVolo) {
       this.inVolo = true;
-      this.tornaTra = 12;
-      Audio.ali(this.def.x, this.def.y);
-      for (const u of this.uccelli) u.dir = [Math.random() - 0.5, Math.random() - 0.5];
+      this.tornaTra = 14;
+      Audio.ali(this.def.x, this.def.z);
+      for (const u of this.uccelli) u.dir = [(Math.random() < 0.5 ? -1 : 1) * (0.5 + Math.random()), -Math.random() * 0.6];
     }
     this.timerVerso -= dt;
-    if (!this.inVolo && this.timerVerso <= 0) { this.timerVerso = 4 + Math.random() * 5; Audio.piccione(this.def.x, this.def.y); }
+    if (!this.inVolo && this.timerVerso <= 0) { this.timerVerso = 4 + Math.random() * 5; Audio.piccione(this.def.x, this.def.z); }
     if (this.inVolo) {
       this.tornaTra -= dt;
       if (this.tornaTra <= 0 && !vicino) {
         this.inVolo = false;
-        for (const u of this.uccelli) { u.x = u.casa[0]; u.y = u.casa[1]; u.h = 0; }
+        for (const u of this.uccelli) { u.x = u.casa[0]; u.z = u.casa[1]; u.h = 0; }
       }
     }
     for (const u of this.uccelli) {
       u.t += dt;
-      const q = Math.max(0, mondo.quota(u.x, u.y));
+      const q = scena ? scena.quota(u.x, u.z) : 0;
       if (this.inVolo) {
-        u.h += dt * 2.2;
+        u.h += dt * 2.4;
         u.x += u.dir[0] * dt * 3;
-        u.y += u.dir[1] * dt * 3;
+        u.z += u.dir[1] * dt * 3;
         u.s.mostra(Math.floor(u.t * 12) % 2 ? 'f2' : 'f3', u.dir[0] < 0);
         u.s.visibile = u.h < 14;
       } else {
@@ -377,7 +440,7 @@ export class Piccioni {
         u.s.mostra(Math.sin(u.t * 3 + u.casa[0]) > 0.6 ? 'f1' : 'f0', u.specchio);
       }
       u.s.quotaTerreno(q);
-      u.s.posiziona(u.x, u.y, q + u.h);
+      u.s.posiziona(u.x, q + u.h, u.z);
     }
   }
 
@@ -385,7 +448,7 @@ export class Piccioni {
 }
 
 /* ======================================================================== */
-/*  Fabbrica: crea l'attore giusto dalla definizione del luogo              */
+/*  Fabbrica: crea l'attore giusto dalla definizione della scena            */
 /* ======================================================================== */
 export function creaAttore(gioco, def) {
   switch (def.tipo) {
@@ -397,24 +460,25 @@ export function creaAttore(gioco, def) {
   }
 }
 
-/** Linea del guinzaglio tra la mano di Lia e il collare di Biscotto. */
+/** Il guinzaglio: una linea che pende un poco tra la mano di Lia e il collare. */
 export class Guinzaglio {
   constructor() {
     const geo = new THREE.BufferGeometry();
-    this.punti = new Float32Array(12 * 3);
+    this.punti = new Float32Array(14 * 3);
     geo.setAttribute('position', new THREE.BufferAttribute(this.punti, 3));
     this.linea = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x5b6f9a }));
     this.linea.frustumCulled = false;
     this.linea.visible = false;
+    this.linea.renderOrder = 5;
   }
 
   aggiorna(da, a) {
-    // una curva che pende un poco verso il basso
-    for (let k = 0; k < 12; k++) {
-      const t = k / 11;
-      const x = da[0] + (a[0] - da[0]) * t, z = da[2] + (a[2] - da[2]) * t;
-      const y = da[1] + (a[1] - da[1]) * t - Math.sin(t * Math.PI) * 0.12;
-      this.punti[k * 3] = x; this.punti[k * 3 + 1] = y; this.punti[k * 3 + 2] = z;
+    const n = 14;
+    for (let k = 0; k < n; k++) {
+      const t = k / (n - 1);
+      this.punti[k * 3] = da[0] + (a[0] - da[0]) * t;
+      this.punti[k * 3 + 1] = da[1] + (a[1] - da[1]) * t - Math.sin(t * Math.PI) * 0.12;
+      this.punti[k * 3 + 2] = da[2] + (a[2] - da[2]) * t;
     }
     this.linea.geometry.attributes.position.needsUpdate = true;
   }

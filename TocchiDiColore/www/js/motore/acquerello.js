@@ -42,7 +42,7 @@ const FRAG = /* glsl */ `
     // tremolio "a passo uno": il disegno si muove appena, come fatto a mano
     float scatto = floor(uTempo * 6.0);
     vec2 n = texture2D(tRumore, uv * 2.3 + vec2(scatto * 0.137, scatto * 0.071)).rg - 0.5;
-    vec2 uvT = uv + n * 0.0016 * uIntensita;
+    vec2 uvT = uv + n * 0.0011 * uIntensita;
 
     vec3 col = texture2D(tScena, uvT).rgb;
 
@@ -56,19 +56,28 @@ const FRAG = /* glsl */ `
     col = mix(col, col * vec3(0.80, 0.74, 0.80), bordo * 0.5 * uIntensita);
 
     // sbavature e bagliore (usiamo versioni sfocate dell'immagine: i "mipmap")
-    vec3 sfocata = textureLod(tScena, uvT, 3.0).rgb;
-    vec3 moltoSfocata = textureLod(tScena, uv, 5.0).rgb;
+    // (quattro campioni sfalsati: un solo mipmap molto piccolo farebbe "quadretti")
+    vec3 sfocata = textureLod(tScena, uvT, 2.5).rgb;
+    vec2 o = 10.0 / uRis;
+    vec3 moltoSfocata = (textureLod(tScena, uv + vec2(o.x, o.y), 4.0).rgb + textureLod(tScena, uv + vec2(-o.x, o.y), 4.0).rgb
+                       + textureLod(tScena, uv + vec2(o.x, -o.y), 4.0).rgb + textureLod(tScena, uv - o, 4.0).rgb) * 0.25;
     col = mix(col, sfocata, 0.10 * uIntensita);
-    col += max(moltoSfocata - vec3(0.74), 0.0) * 0.8 * uIntensita;
+    col += max(moltoSfocata - vec3(0.78), 0.0) * 0.55 * uIntensita;
 
     // saturazione
     float g = lum(col);
     col = mix(vec3(g), col, uSaturazione);
 
     // grana della carta e macchie di pigmento
-    float grana = texture2D(tRumore, uv * uRis / 300.0).b;
-    float macchie = texture2D(tRumore, uv * 1.3 + 0.37).r;
-    col *= mix(1.0, (0.9 + grana * 0.14) * (0.95 + macchie * 0.08), uIntensita);
+    // (due campioni ruotati e di scala diversa: così non si vede la griglia
+    //  del rumore, che altrimenti farebbe dei "quadretti" come i pixel)
+    vec2 q = uv * uRis;
+    mat2 ruota = mat2(0.8, -0.6, 0.6, 0.8);
+    float g1 = texture2D(tRumore, q / 173.0).b;
+    float g2 = texture2D(tRumore, ruota * q / 101.0 + 0.31).g;
+    float grana = (g1 + g2) * 0.5;
+    float macchie = texture2D(tRumore, ruota * uv * 1.1 + 0.37).r;
+    col *= mix(1.0, (0.962 + grana * 0.06) * (0.955 + macchie * 0.075), uIntensita);
 
     // bordi: nel mondo immaginato svaniscono nella carta bianca
     vec2 c = (uv - 0.5) * vec2(uRis.x / uRis.y, 1.0);

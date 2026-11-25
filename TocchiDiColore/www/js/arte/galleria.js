@@ -7,8 +7,8 @@
  *
  *  Gli altri file chiedono le immagini alla galleria per nome:
  *    Galleria.atlante('lia')        → personaggio/oggetto con i fotogrammi
- *    Galleria.muro('casa_rosa')     → texture di un muro (con la sua altezza)
- *    Galleria.pavimento('erba')     → texture di un pavimento
+ *  (I fondali delle scene invece li dipingono i moduli scene_*.js, solo
+ *  quando servono: vedi motore/scena.js.)
  *  Se un'immagine manca, la galleria ne crea una provvisoria (un riquadro
  *  colorato): il gioco non si blocca e si vede subito che cosa manca.
  * ========================================================================== */
@@ -35,14 +35,6 @@ export const Galleria = {
 Galleria.carica = async function (progresso, anisotropia) {
   this.anisotropia = anisotropia || 4;
   const passi = [
-    ['Preparo le texture dei muri...', async () => {
-      const m = await importa('./texture.js');
-      if (m && m.creaTexture) {
-        const r = await m.creaTexture();
-        for (const [nome, t] of Object.entries(r.muri || {})) this.muri[nome] = this._superficie(t, false);
-        for (const [nome, t] of Object.entries(r.pavimenti || {})) this.pavimenti[nome] = this._superficie(t, true);
-      }
-    }],
     ['Disegno Lia e Biscotto...', async () => {
       const m = await importa('./personaggi.js');
       if (m && m.creaPersonaggi) this._aggiungiAtlanti(await m.creaPersonaggi());

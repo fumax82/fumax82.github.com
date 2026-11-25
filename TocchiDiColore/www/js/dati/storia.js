@@ -4,27 +4,30 @@
  *  Ispirata al cortometraggio «Out of Sight» (敲敲, 2010), e ampliata:
  *
  *    PROLOGO    La passeggiata — Lia e Biscotto nella Via del Caffè; il
- *               ladro, la borsa rubata, Biscotto che sparisce nella
- *               staccionata. Il mondo diventa bianco.
+ *               ladro, la borsa rubata, Biscotto che sparisce nel buco
+ *               della staccionata. Il mondo diventa bianco.
  *    CAPITOLO 1 Toc toc — il bastoncino nel buco, il mondo che si disegna,
- *               la bacchetta magica e il vestito da streghetta.
- *    CAPITOLO 2 Il profumo del pane — la città immaginata, il forno.
- *    CAPITOLO 3 Il gattino del vicolo — un gattino fa strada fino al canale.
+ *               l'albero contro cui si sbatte, la bacchetta magica.
+ *    CAPITOLO 2 Il profumo del pane — la piazza immaginata, il forno.
+ *    CAPITOLO 3 Il gattino del vicolo — un gattino fa strada nel vicolo.
  *    CAPITOLO 4 La città sull'acqua — le auto che galleggiano, gli
  *               abitanti-animali sul ponte, la libreria della Tigre.
- *    CAPITOLO 5 La balena del cielo — il volo sopra la città.
+ *    CAPITOLO 5 La balena del cielo — la terrazza e il volo sulla città.
  *    FINALE     Ritrovati — Biscotto torna con la borsa.
  *
  *  Ogni capitolo ha:
  *    prepara(g): rimette le cose a posto se si riprende da un salvataggio
  *    gioca(g):   la sequenza degli eventi (con "await" si aspetta)
  *  "g" è il Gioco: vedi i "COMANDI PER LA STORIA" in main.js.
+ *  Le posizioni sul percorso si chiamano "s" (metri dall'inizio della scena);
+ *  per le inquadrature si usano punti del mondo [x, y, z] (vedi g.punto).
  * ========================================================================== */
 import { Audio } from '../gioco/audio.js';
 import { Input } from '../gioco/input.js';
 import { FORME } from '../motore/particelle.js';
+import { Sagoma } from '../motore/sagoma.js';
 
-const distanza = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const distanza = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 
 /** Mette Lia in modalità streghetta (serve per riprendere dai salvataggi). */
 function streghetta(g) {
@@ -46,88 +49,93 @@ const PROLOGO = {
   async prepara() {},
   async gioca(g) {
     await g.vai('via', 'inizio', { subito: true });
-    g.lia.vestiti('lia_borsa');
-    g.lia.puoToccare = false;
-    g.lia.magica = false;
+    const L = g.lia;
+    L.vestiti('lia_borsa');
+    L.puoToccare = false;
+    L.magica = false;
     g.ui.mostraToc(false);
     g.coloraMondo(1);          // Biscotto guida Lia: il mondo è tutto colorato
     g.cieloColore(1);
     g.bordoBianco(0);
-    g.vista('terza');
     const b = g.attore('biscotto');
     b.visibile = true;
-    b.guinzaglio = g.lia;
+    b.guinzaglio = L;
     g.guinzaglio(true);
+    L.limiti = [0, 30];
     g.bianco(0, 2);
     await g.capitolo('Prologo', 'La passeggiata');
     g.obiettivo('Passeggia con Biscotto lungo la via');
     g.pensa('Che bella giornata! Senti, Biscotto? Profumo di caffè.', 4.5);
     g.pensa(Input.eTouch
-      ? 'Joystick a sinistra per camminare, trascina a destra per guardarti intorno.'
-      : 'Muoviti con W A S D o le frecce, guarda col mouse. V cambia la vista.', 6);
+      ? 'Tieni premute le frecce ◀ ▶ per camminare. Tenendole a lungo, Lia corre.'
+      : 'Cammina con A / D o le frecce ← →. Tieni premuto Shift per correre.', 6);
+    const abbai = g.ogni(7, () => { if (Math.random() < 0.6) b.faVerso(); });
 
     // --- il ladro --------------------------------------------------------
-    await g.quando(() => g.lia.x > 13);
+    await g.quando(() => L.s > 22);
     const ladro = g.attore('ladro');
-    ladro.teletrasporta(Math.min(42.5, g.lia.x + 15), 4.45, Math.PI);
+    ladro.teletrasporta(L.x + 13, 0.72, -1);
     ladro.visibile = true;
     g.pensa('Passi pesanti... qualcuno ci viene incontro.', 3);
-    while (distanza(ladro, g.lia) > 1.3) {
-      ladro.vaiA(g.lia.x + 0.8, g.lia.y < 4.6 ? 4.9 : 4.3, 1.4);
+    while (ladro.x - L.x > 1.0) {
+      ladro.vaiA(L.x + 0.9, 0.72, 1.35);
       await g.attendi(0.2);
     }
+    abbai.ferma();
     g.controllo(false);
     ladro.ferma();
-    ladro.guarda(g.lia.x, g.lia.y);
-    ladro.posa('scippo', 0.7);
-    Audio.scippo(ladro.x, ladro.y);
-    g.lia.vestiti('lia');
-    g.lia.posa('sorpresa', 2.5);
-    g.telecamera.scuoti(0.7);
+    ladro.guarda(L.x, L.z);
+    // primo piano: lo scippo
+    g.inquadra([L.x + 0.6, 1.05, 2.9], [L.x + 0.55, 0.95, 0.2], 0, 40);
+    ladro.posa('scippo', 0.9);
+    Audio.scippo(ladro.x, ladro.z);
+    L.vestiti('lia');
+    L.posa('sorpresa', 2.5);
+    g.regia.scuoti(0.7);
     g.pensa('Ehi! La mia borsa!', 2.5, true);
     b.guinzaglio = null;
     g.guinzaglio(false);
-    b.guarda(ladro.x, ladro.y);
+    b.guarda(ladro.x, ladro.z);
     b.posa('ringhia', 1.3);
-    Audio.ringhio(b.x, b.y);
-    await g.attendi(0.7);
-    ladro.percorri([[48, 4.45]], 3.6);
-    await g.attendi(0.6);
-    b.faVerso(g.mondo);
-    b.percorri([[37.6, 4.55], [38.5, 3.7]], 4.2).then(() => { b.visibile = false; });
+    Audio.ringhio(b.x, b.z);
+    await g.attendi(0.9);
+    g.libera(true);
+    ladro.percorri([[54, 0.72]], 3.8).then(() => { ladro.visibile = false; });
+    await g.attendi(0.5);
+    b.faVerso();
+    b.percorri([[46.0, 0.1], [46.9, 0.0]], 4.2).then(() => { b.visibile = false; });
     g.pensa('«Biscotto! Aspetta!»', 2.5);
-    await g.attendi(1.0);
+    await g.attendi(0.8);
+    L.limiti = null;
     g.controllo(true);
     g.obiettivo('Corri dietro a Biscotto!');
-    g.quando(() => ladro.x > 45).then(() => { ladro.visibile = false; });
 
     // --- la staccionata --------------------------------------------------
-    await g.quando(() => g.lia.x > 36.0);
+    await g.quando(() => L.s > 44.2);
     g.controllo(false);
-    await g.lia.vaiA(38.5, 4.35, 2.2);
-    g.lia.angolo = -Math.PI / 2;
+    await L.vaiA(45.75, 2.4);
     Audio.botta();
-    g.telecamera.scuoti(1.2);
-    g.lia.posa('sorpresa', 1.5);
+    g.regia.scuoti(1.2);
+    L.posa('urto', 1.2);
     await g.bianco(1, 0.3);
     // il mondo diventa bianco: senza Biscotto, Lia non sa più dove si trova
     g.coloraMondo(0);
     g.cieloColore(0.15);
     g.bordoBianco(1);
     g.musica('bianco');
-    g.inquadra([37.1, 1.05, 5.4], [38.6, 0.7, 3.9], 0.1);
+    g.inquadra([44.7, 0.9, 1.9], [46.2, 0.72, 0], 0, 42);
     await g.bianco(0, 2.2);
-    g.lia.posa('ascolta', Infinity);
+    L.posa('ascolta', Infinity);
     await g.attendi(1.2);
-    Audio.abbaio(38.5, 0.8);
-    g.onda(38.5, 3.6, 'abbaio');
+    Audio.abbaio(46.9, 0);
+    g.onda(46.9, 0, 'abbaio');
     g.pensa('Bau... bau... È dall\'altra parte!', 3, true);
     await g.attendi(2);
     await g.dialogo('lia', [
       'Biscotto... dove sei? Senza di te è tutto bianco... non so più dove sono.',
       'Però posso ascoltare. E posso toccare.',
     ]);
-    g.lia.posa(null, 0);
+    L.posa(null, 0);
     g.libera();
     g.controllo(true);
   },
@@ -136,52 +144,64 @@ const PROLOGO = {
 /* ======================================================================== */
 const CAPITOLO_1 = {
   async prepara(g) {
-    await g.vai('via', 'inizio', { subito: true });
+    await g.vai('via', 'staccionata', { subito: true });
     g.lia.vestiti('lia');
-    g.lia.posiziona(38.5, 4.4, -Math.PI / 2);
     g.attore('biscotto').visibile = false;
     g.coloraMondo(0); g.cieloColore(0.15); g.bordoBianco(1);
     g.musica('bianco');
     g.bianco(0, 1.5);
   },
   async gioca(g) {
+    const L = g.lia;
+    g.attore('biscotto').visibile = false;
     await g.capitolo('Capitolo 1', 'Toc toc');
     g.obiettivo('Tocca la staccionata, in basso');
     g.interazione('buco', true);
     await g.evento('interagisci:buco');
     g.interazione('buco', false);
     g.controllo(false);
-    g.lia.posa('ascolta', 2);
+    L.posa('china', Infinity);
+    g.inquadra([45.0, 0.45, 1.35], [46.4, 0.3, 0], 1.0, 44);
     await g.dialogo('lia', [
       'C\'è un buco, qui in basso... Biscotto è passato di qui!',
       'È troppo piccolo per me. Ma dentro c\'è... qualcosa di liscio.',
       'Un bastoncino!',
     ]);
-    g.lia.puoToccare = true;
+    L.posa(null, 0);
+    g.libera();
+    L.puoToccare = true;
     g.ui.mostraToc(true, false);
     g.ricordo('bastone', 'Il bastoncino');
     g.controllo(true);
     g.obiettivo('Batti il bastone per «vedere» intorno a te');
     g.pensa(Input.eTouch
-      ? 'Tocca il pulsante «Toc!» oppure la parte destra dello schermo.'
+      ? 'Tocca il pulsante «Toc!» oppure lo schermo.'
       : 'Premi SPAZIO o clicca per battere il bastone.', 6, true);
-    for (let k = 0; k < 4; k++) {
+    for (let k = 0; k < 3; k++) {
       await g.evento('tocco');
       if (k === 0) g.pensa('Toc toc... il suono rimbalza e il mondo si disegna!', 4, true);
       if (k === 2) g.pensa('Più busso, più vedo. Come un pennello fatto di suoni.', 4, true);
     }
-    await g.attendi(1);
+
+    // --- l'esplorazione nel mondo bianco (e l'albero!) --------------------
+    g.obiettivo('Torna indietro lungo la via, battendo il bastone');
+    g.pensa('E se torno indietro? Attenta... non so che cosa c\'è davanti a me.', 4.5);
+    L.limiti = [18, 46.2];
+    await Promise.race([g.evento('urto'), g.quando(() => L.s < 24)]);
+    await g.attendi(1.2);
+    g.pensa('Ogni cosa che tocco o che sento... prende colore.', 4);
+    await g.quando(() => L.s < 30 || L.colpi > 9);
+    await g.attendi(0.6);
 
     // --- la trasformazione -------------------------------------------------
     g.controllo(false);
     await g.dialogo('lia', ['Ogni volta che il bastone bussa, il mondo si colora...', 'Ehi... il bastoncino è tiepido. Brilla!']);
-    const L = g.lia;
-    const fx = Math.cos(L.angolo), fy = Math.sin(L.angolo);
-    g.inquadra([L.x + fx * 2.3, 0.95, L.y + fy * 2.3], [L.x, 0.55, L.y], 1.2);
+    const p = g.punto(L.s);
+    g.inquadra([p[0] + 1.0, p[1] + 0.85, p[2] + 2.5], [p[0], p[1] + 0.6, p[2]], 1.2, 40);
     await g.attendi(1.2);
     Audio.trasformazione();
-    g.onda(L.x, L.y, 'magia');
-    const giro = g.ogni(0.08, () => g.scintille(L.x, L.quota + 0.1 + Math.random() * 0.9, L.y, 6, { velocita: 2, su: 1.4, sparpaglia: 0.3 }));
+    g.onda(L.x, L.z, 'magia');
+    const giro = g.ogni(0.08, () => g.scintille(L.x, L.y + 0.1 + Math.random() * 1.0, L.z, 6, { velocita: 2, su: 1.4, sparpaglia: 0.3 }));
     await g.attendi(0.9);
     await g.bianco(0.92, 0.35);
     streghetta(g);
@@ -190,24 +210,28 @@ const CAPITOLO_1 = {
     await g.bianco(0, 1.2);
     giro.ferma();
     L.posa('saluta', 3);
-    g.scintille(L.x, L.quota + 1, L.y, 50, { forma: [FORME.stella, FORME.cuore, FORME.scintilla], velocita: 2.5 });
+    g.scintille(L.x, L.y + 1, L.z, 50, { forma: [FORME.stella, FORME.cuore, FORME.scintilla], velocita: 2.5 });
     await g.dialogo('lia', [
       'Una bacchetta con la stella... e un vestito da streghetta!',
       'Con questa posso immaginare tutto quello che sento.',
       'Arrivo, Biscotto!',
     ]);
+    L.posa(null, 0);
+    L.limiti = null;
     g.libera();
     g.controllo(true);
     // la staccionata incantata
-    const brillio = g.emettitore(38.5, 0.35, 3.9, 10, { forma: [FORME.stella, FORME.scintilla], colori: ['#fff0a0', '#ffd36b', '#ffffff'], su: 0.7, velocita: 0.5, vita: 1.4, dim: 0.15 });
+    const brillio = g.emettitore(46.5, 0.32, 0, 10, { forma: [FORME.stella, FORME.scintilla], colori: ['#fff0a0', '#ffd36b', '#ffffff'], su: 0.7, velocita: 0.5, vita: 1.4, dim: 0.13 });
+    const richiamo = g.ogni(4, () => g.onda(46.4, 0, 'magia', { raggio: 4, forza: 0.5 }));
     g.interazione('passaggio', true);
-    g.obiettivo('Attraversa la staccionata incantata');
+    g.obiettivo('Torna alla staccionata incantata');
     g.pensa('Il buco nella staccionata brilla... ora ci posso passare!', 4, true);
     await g.evento('interagisci:passaggio');
     brillio.attivo = false;
+    richiamo.ferma();
     g.interazione('passaggio', false);
     Audio.magia(0.6);
-    await g.vai('oltre', 'ingresso');
+    await g.vai('piazza', 'staccionata');
   },
 };
 
@@ -215,38 +239,38 @@ const CAPITOLO_1 = {
 const CAPITOLO_2 = {
   async prepara(g) {
     streghetta(g);
-    await g.vai('oltre', 'ingresso', { subito: true });
+    await g.vai('piazza', 'staccionata', { subito: true });
     g.bianco(0, 1.5);
   },
   async gioca(g) {
+    const L = g.lia;
     mondoImmaginato(g);
     g.musica('magia');
     await g.capitolo('Capitolo 2', 'Il profumo del pane');
     g.pensa('Che profumo... pane appena sfornato!', 4);
     g.obiettivo('Segui il profumo del pane');
-    const scie = [[5.4, 15.2], [4.4, 16.8], [3.6, 18.4]].map(([x, y]) => g.emettitore(x, 0.9, y, 4, {
-      forma: [FORME.briciole, FORME.punto, FORME.fiore], colori: ['#f2d49a', '#e8b878', '#fff3d6'],
-      velocita: 0.25, su: 0.15, vita: 2.4, dim: 0.14, vortice: 0.7, sparpaglia: 0.4,
-    }));
-    const profumo = g.ogni(3.5, () => g.onda(5.5, 14.4, 'profumo'));
-    await g.quando(() => Math.hypot(g.lia.x - 5, g.lia.y - 14.9) < 2.6);
-    scie.forEach((s) => { s.attivo = false; });
+    const profumo = g.ogni(3.2, () => g.onda(7.6, -1.6, 'profumo'));
+    await g.quando(() => Math.abs(L.s - 7.5) < 1.5);
     profumo.ferma();
 
     g.controllo(false);
-    g.onda(5.5, 14.4, 'profumo', { raggio: 9 });
+    g.onda(7.6, -1.6, 'profumo', { raggio: 9 });
     const f = g.attore('fornaia');
     f.visibile = true;
-    f.teletrasporta(4.5, 14.1);
+    f.teletrasporta(7.6, -1.75);
     Audio.campanello();
-    f.vaiA(3.7, 14.7, 0.8);
+    f.vaiA(8.1, -0.85, 0.8);
+    // campo e controcampo davanti alla vetrina
+    g.inquadra([L.x - 0.9, 1.25, 3.5], [L.x + 0.5, 1.05, -0.6], 1.2, 40);
     await g.attendi(1.2);
     await g.dialogo('fornaia', [
       'Oh! Una piccola streghetta davanti alla mia vetrina!',
       'Hai sentito il profumo, vero? È appena uscito dal forno.',
       'Vieni dentro, ti faccio assaggiare qualcosa.',
     ]);
+    f.vaiA(7.6, -1.9, 0.9).then(() => { f.visibile = false; });
     g.apriPorta('porta_forno');
+    g.libera();
     g.controllo(true);
     g.obiettivo('Entra nel forno');
     await g.evento('entrato:forno');
@@ -254,6 +278,7 @@ const CAPITOLO_2 = {
     // --- dentro il forno ---------------------------------------------------
     await g.attendi(0.8);
     g.controllo(false);
+    await L.vaiA(3.4, 1.2);
     await g.dialogo('fornaia_dentro', [
       'Benvenuta! Senti come scoppietta il forno a legna?',
       'Dimmi, cosa ti porta da queste parti?',
@@ -264,13 +289,13 @@ const CAPITOLO_2 = {
     ]);
     await g.dialogo('fornaia_dentro', [
       'Un cagnolino giallo? Sì! È passato di corsa poco fa.',
-      'Correva verso il vicolo dei gatti, quello che porta al canale.',
+      'Correva verso il vicolo dei gatti, dopo la casa gialla.',
       'Tieni: una pagnotta calda per te... e un pezzetto per lui, quando lo ritroverai!',
     ]);
     g.ricordo('pagnotta', 'Il profumo del pane');
     g.controllo(true);
     g.obiettivo('Esci dal forno e cerca il vicolo dei gatti');
-    await g.evento('entrato:oltre');
+    await g.evento('entrato:piazza');
   },
 };
 
@@ -279,25 +304,27 @@ const CAPITOLO_3 = {
   async prepara(g) {
     streghetta(g);
     g.apriPorta('porta_forno');
-    await g.vai('oltre', 'dal_forno', { subito: true });
+    await g.vai('piazza', 'dal_forno', { subito: true });
     mondoImmaginato(g);
     g.bianco(0, 1.5);
   },
   async gioca(g) {
+    const L = g.lia;
+    mondoImmaginato(g);
     await g.capitolo('Capitolo 3', 'Il gattino del vicolo');
     const gatto = g.attore('gattino');
     gatto.visibile = true;
-    gatto.teletrasporta(12.9, 13.6, Math.PI / 2);
+    gatto.teletrasporta(21.5, 0.3, -1);
     gatto.versiAutomatici = true;
-    g.obiettivo('Cerca il vicolo a nord della piazzetta');
-    await g.quando(() => distanza(g.lia, gatto) < 3.2);
+    g.obiettivo('Cammina verso la casa gialla');
+    await g.quando(() => distanza(L, gatto) < 3.4);
     g.pensa('Miao? Un gattino! Sembra che voglia farmi strada.', 3.5, true);
     g.obiettivo('Segui il gattino');
-    const tappe = [[12.8, 10.4], [13.1, 7.6], [17.5, 7.5], [21.8, 7.5], [23.3, 7.6]];
+    const tappe = [[26.3, 0.3], [27.9, -1.7], [28.3, -6.4], [28.3, -10.4], [28.3, -13.4]];
     for (let k = 0; k < tappe.length; k++) {
-      await gatto.percorri([tappe[k]], 2.4);
-      gatto.guarda(g.lia.x, g.lia.y);
-      if (k < tappe.length - 1) await g.quando(() => distanza(g.lia, gatto) < 2.4);
+      await gatto.percorri([tappe[k]], 1.7);
+      gatto.guarda(L.x, L.z);
+      if (k < tappe.length - 1) await g.quando(() => distanza(L, gatto) < 2.6);
     }
     gatto.versiAutomatici = false;
     gatto.sempreDiFronte = true;
@@ -308,11 +335,25 @@ const CAPITOLO_3 = {
     await g.evento('interagisci:gattino');
     g.interazione('gattino', false);
     g.controllo(false);
-    Audio.miagolio(gatto.x, gatto.y);
-    g.particelle.emetti(gatto.x, 0.6, gatto.y, 12, { forma: [FORME.cuore], colori: ['#f7a8c8', '#ffd1e8'], su: 0.8, velocita: 0.4, vita: 1.6, dim: 0.16 });
-    await g.dialogo('lia', ['Che morbido... sembra una nuvola calda.', 'Grazie, micio! Mi hai portata fino al canale.']);
+    L.posa('china', Infinity);
+    gatto.sempreDiFronte = false;
+    gatto.guarda(L.x, L.z);
+    gatto.posa('strofina', Infinity);
+    g.inquadra([L.x + 1.5, 0.7, L.z - 1.6], [L.x + 0.1, 0.4, L.z - 0.4], 1.0, 42);
+    Audio.miagolio(gatto.x, gatto.z);
+    g.particelle.emetti(gatto.x, 0.6, gatto.z, 12, { forma: [FORME.cuore], colori: ['#f7a8c8', '#ffd1e8'], su: 0.8, velocita: 0.4, vita: 1.6, dim: 0.14 });
+    await g.dialogo('lia', ['Che morbido... sembra una nuvola calda.', 'Grazie, micio! Mi hai portata fino in fondo al vicolo.']);
     g.ricordo('gattino', 'Il pelo morbido');
+    L.posa(null, 0);
+    gatto.sempreDiFronte = true;
+    gatto.posa('seduto', Infinity);
+    g.libera();
     g.controllo(true);
+    g.interazione('uscita_vicolo', true);
+    g.obiettivo('Prosegui oltre il vicolo');
+    g.pensa('Sento dell\'acqua che scorre, più avanti...', 3.5);
+    await g.evento('interagisci:uscita_vicolo');
+    await g.vai('canale', 'vicolo');
   },
 };
 
@@ -321,16 +362,18 @@ const CAPITOLO_4 = {
   async prepara(g) {
     streghetta(g);
     g.apriPorta('porta_forno');
-    await g.vai('oltre', 'dal_forno', { subito: true });
-    g.lia.posiziona(22.5, 7.5, 0);
+    await g.vai('canale', 'vicolo', { subito: true });
     mondoImmaginato(g);
     g.bianco(0, 1.5);
   },
   async gioca(g) {
+    const L = g.lia;
+    mondoImmaginato(g);
     g.musica('citta');
     await g.capitolo('Capitolo 4', 'La città sull\'acqua');
-    g.pensa('La strada... è diventata un fiume! E le auto galleggiano!', 4.5, true);
+    g.pensa('La strada... è diventata un canale! E le auto galleggiano come barchette!', 4.5, true);
     g.obiettivo('Chiedi agli abitanti del ponte se hanno visto Biscotto');
+    L.limiti = [0, 36.2];
     const parlati = new Set();
     g.dialoghiSpeciali.lepre = async () => {
       await g.dialogo('lepre', [
@@ -368,25 +411,26 @@ const CAPITOLO_4 = {
       parlati.add('tigre');
       g.obiettivo('Entra nella libreria della Tigre');
     };
-    await g.quando(() => parlati.has('uccello') || parlati.has('tigre'));
-    if (!parlati.has('tigre')) g.obiettivo('Cerca la Tigre davanti alla libreria, sulla riva nord');
+    await g.quando(() => parlati.has('uccello') || parlati.has('tigre') || parlati.has('cavallo'));
+    if (!parlati.has('tigre')) g.obiettivo('Cerca la Tigre davanti alla libreria, dopo il ponte');
     await g.quando(() => parlati.has('tigre'));
     await g.evento('entrato:libreria');
 
     // --- in libreria -------------------------------------------------------
     await g.attendi(0.6);
     g.controllo(false);
-    Audio.pagine(4.5, 3.8);
+    await L.vaiA(5.0, 1.2);
+    Audio.pagine(5.5, -1.5);
     await g.dialogo('tigre_dentro', [
       'Ecco: «La Balena del Cielo». Senti come frusciano le pagine?',
-      'Qui c\'è scritto: chi la chiama dalla terrazza in fondo al canale...',
+      'Qui c\'è scritto: chi la chiama da una terrazza alta, battendo tre volte...',
       '...può volare sopra tutta la città e vedere ogni cosa.',
-      'Il tuo cane non potrà nascondersi! Vai, piccola streghetta.',
+      'C\'è una terrazza in cima alla scala, in fondo alla via. Vai, piccola streghetta.',
     ]);
     g.ricordo('libro_volante', 'Il fruscio delle pagine');
     g.controllo(true);
-    g.obiettivo('Esci e vai sulla terrazza in fondo al canale (a est)');
-    await g.evento('entrato:oltre');
+    g.obiettivo('Esci dalla libreria');
+    await g.evento('entrato:canale');
   },
 };
 
@@ -396,31 +440,57 @@ const CAPITOLO_5 = {
     streghetta(g);
     g.apriPorta('porta_forno');
     g.apriPorta('porta_libreria');
-    await g.vai('oltre', 'dalla_libreria', { subito: true });
+    await g.vai('canale', 'dalla_libreria', { subito: true });
     mondoImmaginato(g);
     g.musica('citta');
     g.bianco(0, 1.5);
   },
   async gioca(g) {
+    const L = g.lia;
+    mondoImmaginato(g);
     await g.capitolo('Capitolo 5', 'La balena del cielo');
+    L.limiti = null;
+    g.interazione('scala', true);
+    g.obiettivo('Sali la scala in fondo alla via');
+    await g.evento('interagisci:scala');
+    g.interazione('scala', false);
+    await g.vai('terrazza', 'scala');
+    mondoImmaginato(g);
+    g.cieloColore(0.9, 2);
+    g.pensa('Quanto vento quassù... e quanti tetti!', 3.5);
     g.interazione('terrazza', true);
-    g.obiettivo('Sulla terrazza in fondo al canale, chiama la balena');
+    g.obiettivo('Vai in fondo alla terrazza e chiama la balena');
     await g.evento('interagisci:terrazza');
     g.interazione('terrazza', false);
     g.controllo(false);
-    const L = g.lia;
-    L.angolo = 0;
-    L.posa('tocca', 1.2);
-    Audio.toc(true);
-    g.onda(L.x, L.y, 'magia');
-    g.scintille(L.x, L.quota + 1.2, L.y, 40, { su: 2.5 });
-    g.inquadra([L.x - 3, 1.3, L.y + 2], [L.x + 12, 9, L.y - 2], 2);
+    L.verso = 1;
+    // tre colpi di bacchetta, come dice il libro
+    g.inquadra([L.x - 2.6, 1.2, 6.4], [L.x + 5, 6.5, -12], 2.4, 46);
+    for (let k = 0; k < 3; k++) {
+      L.tocca(true);
+      g.onda(L.x, L.z, 'magia', { raggio: 25 });
+      g.scintille(L.x, L.y + 1.2, L.z, 30, { su: 2.5 });
+      await g.attendi(0.8);
+    }
+    // la balena arriva da lontano, nuotando nel cielo
+    const balena = new Sagoma('balena', { cielo: true, ancora: 0.5, scala: 0.9 });
+    balena.aggiungiA(g.corrente.gruppo);
+    const da = [L.x + 60, 26, -70], a = [L.x + 6, 7.5, -16];
+    let t = 0;
+    const nuota = g.ogni(0.016, () => {
+      t = Math.min(1, t + 0.016 / 6);
+      const e = t * t * (3 - 2 * t);
+      balena.posiziona(da[0] + (a[0] - da[0]) * e, da[1] + (a[1] - da[1]) * e + Math.sin(g.tempo * 0.8) * 0.4, da[2] + (a[2] - da[2]) * e);
+      balena.mostra('f' + (Math.floor(g.tempo * 0.8) % 2), true);
+    });
     Audio.balena();
     await g.dialogo('lia', ['Balena del cielo! Mi porti a cercare Biscotto?']);
-    await g.attendi(1.5);
+    await g.quando(() => t >= 1);
     Audio.balena();
+    await g.attendi(1.2);
+    nuota.ferma();
     await g.voloSullaBalena();
-    g.libera();
+    g.libera(true);
   },
 };
 
@@ -432,6 +502,7 @@ const FINALE = {
   },
   async gioca(g) {
     await g.vai('piazzetta', 'arrivo', { subito: true });
+    const L = g.lia;
     g.particelle.punti.visible = true;
     g.coloraMondo(0);
     g.coloraMondo(1, 4);
@@ -445,27 +516,27 @@ const FINALE = {
     const b = g.attore('biscotto');
     b.visibile = true;
     b.conBorsa = true;
-    b.teletrasporta(13.5, 5.2, Math.PI);
-    Audio.abbaio(b.x, b.y);
-    g.onda(11, 5.2, 'abbaio');
+    b.teletrasporta(14.5, 0.25, -1);
+    Audio.abbaio(b.x, b.z);
+    g.onda(11, 0.2, 'abbaio');
     g.pensa('Questo abbaio... lo riconoscerei tra mille!', 3, true);
     g.controllo(false);
-    const L = g.lia;
-    L.angolo = 0;
-    g.inquadra([L.x + 1.4, 1.05, L.y + 2.8], [L.x + 2.2, 0.45, L.y], 1.5);
-    await b.percorri([[L.x + 1.05, L.y + 0.1]], 3.2);
-    b.guarda(L.x, L.y);
+    L.verso = 1;
+    g.inquadra([L.x + 1.7, 0.95, 3.4], [L.x + 1.3, 0.6, 0], 1.5, 40);
+    await b.percorri([[L.x + 0.95, 0.22]], 3.2);
+    b.guarda(L.x, L.z);
     L.posa('sorpresa', 2);
-    g.scintille(L.x, L.quota + 1.2, L.y, 20, { forma: [FORME.stella] });
+    g.scintille(L.x, L.y + 1.2, L.z, 20, { forma: [FORME.stella] });
     await g.attendi(1.4);
     // l'abbraccio
     await g.bianco(0.7, 0.25);
-    g.liaNascosta = true;
+    L.nascosta = true;
     b.visibile = false;
-    const abbraccio = g.sagomaAbbraccio(L.x + 0.5, L.y + 0.05);
-    g.inquadra([L.x + 0.5, 0.75, L.y + 2.1], [L.x + 0.5, 0.45, L.y], 0.1);
+    const abbraccio = g.sagomaAbbraccio(L.x + 0.45, 0.1);
+    g.inquadra([L.x + 0.45, 0.85, 2.7], [L.x + 0.45, 0.62, 0.1], 0, 38);
     await g.bianco(0, 0.8);
-    const cuori = g.ogni(0.25, () => g.particelle.emetti(L.x + 0.5, 0.9, L.y, 3, { forma: [FORME.cuore, FORME.stella], colori: ['#f7a8c8', '#ffd36b', '#ffffff'], su: 0.9, velocita: 0.5, vita: 1.8, dim: 0.16 }));
+    g.inquadra([L.x + 0.45, 0.8, 2.2], [L.x + 0.45, 0.6, 0.1], 6, 36);
+    const cuori = g.ogni(0.25, () => g.particelle.emetti(L.x + 0.45, 0.9, L.z, 3, { forma: [FORME.cuore, FORME.stella], colori: ['#f7a8c8', '#ffd36b', '#ffffff'], su: 0.9, velocita: 0.5, vita: 1.8, dim: 0.14 }));
     await g.dialogo('lia', ['Biscotto! Mi hai ritrovata!', 'E... questa è la mia borsa! L\'hai ripresa tu?']);
     await g.dialogo('biscotto', ['Bau! Bau!']);
     g.ricordo('borsa', 'La borsa ritrovata');
