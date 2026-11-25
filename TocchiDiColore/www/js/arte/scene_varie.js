@@ -84,7 +84,8 @@ function striscia(c, x, y, lu, h, ang, col, alfa) {
 /** Sfumatura lineare su un rettangolo: tappe = [[0, colore], [1, colore], ...]. */
 function sfuma(c, x, y, l, a, tappe, orizzontale) {
   const g = orizzontale ? c.createLinearGradient(x, 0, x + l, 0) : c.createLinearGradient(0, y, 0, y + a);
-  for (const [t, col] of tappe) g.addColorStop(t, col); c.fillStyle = g; c.fillRect(x, y, l, a);
+  for (const [t, col] of tappe) g.addColorStop(t, col);
+  c.fillStyle = g; c.fillRect(x, y, l, a);
 }
 
 /** Punti attorno a un'ellisse un po' storta (macchie, chiome). */
@@ -170,7 +171,8 @@ function lava(c, forma, colore, box, r, o) {
     c.globalAlpha = 0.22; c.lineWidth = 1.6; c.strokeStyle = scurisci(colore, 0.3); c.stroke(f);
   }
   c.globalAlpha = 1; if (o.luce) sfuma(c, x, y, l, a, [[0, 'rgba(255,250,232,0.42)'], [0.55, 'rgba(255,250,232,0)']]);
-  if (o.ombra) sfuma(c, x, y, l, a, [[0.4, conAlfa(OMBRA, 0)], [1, conAlfa(OMBRA, o.ombra)]]); const b = o.bordo === undefined ? 0.35 : o.bordo;
+  if (o.ombra) sfuma(c, x, y, l, a, [[0.4, conAlfa(OMBRA, 0)], [1, conAlfa(OMBRA, o.ombra)]]);
+  const b = o.bordo === undefined ? 0.35 : o.bordo;
   if (b > 0) {
     const lb = o.lb || 3; c.strokeStyle = scurisci(colore, 0.32); c.globalAlpha = b * 0.45; c.lineWidth = lb * 2.6; c.stroke(p);
     c.globalAlpha = b; c.lineWidth = lb; c.stroke(p);
@@ -800,7 +802,8 @@ function ringhiera() {
     }
   }
   c.save(); c.globalCompositeOperation = 'source-atop';              // umido e muschio alla base
-  for (let i = 0; i < 40; i++) alone(c, r() * W, H - r() * 0.1 * s, tra(r, 0.08, 0.25) * s, r() < 0.6 ? '#8d9f68' : '#fff6e8', 0.35); c.restore();
+  for (let i = 0; i < 40; i++) alone(c, r() * W, H - r() * 0.1 * s, tra(r, 0.08, 0.25) * s, r() < 0.6 ? '#8d9f68' : '#fff6e8', 0.35);
+  c.restore();
   sfuma(c, 0, yM, W, 0.07 * s, [[0, conAlfa(OMBRA, 0.45)], [1, conAlfa(OMBRA, 0)]]);
   for (let x = 0; x < W;) {                                          // copertina di pietra
     const l = tra(r, 0.5, 0.8) * s;
@@ -854,7 +857,8 @@ function gronda(Q, x0, x1, yG, h, colore) {
   const p = new Path2D(); p.moveTo(x0, yG - 0.02 * s);
   for (let x = x0; x < x1 - 1; x += coppo) p.quadraticCurveTo(x + coppo / 2, yG + 0.06 * s, Math.min(x1, x + coppo), yG - 0.02 * s);
   const fase = r() * 9, cima = (x) => yG - h + Math.sin(x / (1.3 * s) + fase) * 0.04 * s + Math.sin(x / (0.37 * s)) * 0.015 * s;
-  for (let x = x1; x >= x0; x -= 0.1 * s) p.lineTo(x, cima(x)); p.lineTo(x0, cima(x0)); p.closePath();
+  for (let x = x1; x >= x0; x -= 0.1 * s) p.lineTo(x, cima(x));
+  p.lineTo(x0, cima(x0)); p.closePath();
   lava(c, p, colore, [x0, yG - h - 0.1 * s, x1 - x0, h + 0.2 * s], r, { var: 0.3, tinta: '#c9584a', bordo: 0.3 }); c.save(); c.clip(p);
   for (let x = x0; x < x1; x += coppo) {                                // canali dei coppi: luce e ombra
     c.fillStyle = 'rgba(255,238,215,0.22)'; c.fillRect(x + coppo * 0.15, yG - h - 0.1 * s, coppo * 0.3, h + 0.2 * s);
@@ -924,7 +928,8 @@ function casotto() {
 function bucato() {
   const s = 200, Q = quadro(7, 1, s, 241), { c, r } = Q; const X = (x) => (x - 4) * s, Y = (y) => (2.6 - y) * s;
   const filo = (x) => { const t = (x - 4.12) / 6.76; return 2.47 - 0.68 * t * (1 - t); }; const pts = [];
-  for (let x = 4.12; x <= 10.89; x += 0.1) pts.push([X(x), Y(filo(x))]); inchiostro(c, Forme.curva(pts), 2.2, 0.95, '#6e6058');
+  for (let x = 4.12; x <= 10.89; x += 0.1) pts.push([X(x), Y(filo(x))]);
+  inchiostro(c, Forme.curva(pts), 2.2, 0.95, '#6e6058');
   // [x0, x1, lunghezza, forma, colore, motivo]
   const PANNI = [[4.6, 5.45, 0.52, 'maglia', '#8fbbe0', 'righe'], [5.75, 6.5, 0.7, 'vestito', '#f2a7b8', 'pois'],
     [6.8, 7.05, 0.26, 'calzino', '#f5cf5a', ''], [7.12, 7.37, 0.24, 'calzino', '#e9715b', ''],
@@ -1132,7 +1137,8 @@ function basamentoSassi(Q, x0, x1, yTop, yPav) {
     if (sassi.every((q) => ((cx - q[0]) / (rx + q[2])) ** 2 + ((cy - q[1]) / (ry + q[3])) ** 2 > 0.8)) sassi.push([cx, cy, rx, ry]);
   }
   sassi.sort((a, b) => a[1] - b[1]); c.save(); c.beginPath(); c.rect(x0, yTop - 0.3 * s, x1 - x0, yPav - yTop + 0.3 * s); c.clip();
-  for (const [cx, cy, rx, ry] of sassi) sasso(c, r, cx, cy, rx * 0.95, ry * 0.92); c.restore();
+  for (const [cx, cy, rx, ry] of sassi) sasso(c, r, cx, cy, rx * 0.95, ry * 0.92);
+  c.restore();
   inchiostro(c, mano(r, bordo.slice(1, -2), false, 0.6), 1.3, 0.5);
 }
 
@@ -1165,7 +1171,8 @@ function finestraVetri(Q, x0, yT, x1, yB, col, rig, cornice, vetroScuro) {
   c.beginPath(); c.moveTo(vx + vl * 0.35, vy + va); c.lineTo(vx + vl * 0.42, vy + va); c.lineTo(vx + vl * 0.97, vy); c.lineTo(vx + vl * 0.9, vy); c.fill();
   sfuma(c, vx, vy, vl, 0.12 * s, [[0, conAlfa(OMBRA, 0.3)], [1, conAlfa(OMBRA, 0)]]); c.restore(); c.fillStyle = cornice;
   for (let i = 1; i < col; i++) c.fillRect(vx + vl * i / col - m / 2, vy, m, va);
-  for (let j = 1; j < rig; j++) c.fillRect(vx, vy + va * j / rig - m / 2, vl, m); const scuro = scurisci(cornice, 0.3);
+  for (let j = 1; j < rig; j++) c.fillRect(vx, vy + va * j / rig - m / 2, vl, m);
+  const scuro = scurisci(cornice, 0.3);
   for (let i = 0; i < col; i++) for (let j = 0; j < rig; j++) {
     const px = vx + vl * i / col + (i ? m / 2 : 0), py = vy + va * j / rig + (j ? m / 2 : 0);
     inchiostro(c, rettMano(r, px, py, vl / col - (i ? m / 2 : 0) - (i < col - 1 ? m / 2 : 0), va / rig - (j ? m / 2 : 0) - (j < rig - 1 ? m / 2 : 0), 0.4), 1.1, 0.75, scuro);
@@ -1378,7 +1385,9 @@ const SCENE = {
  * Tra uno strato e l'altro lascia respirare la pagina.
  */
 export async function dipingiScena(nome) {
-  const scena = SCENE[nome]; if (!scena) throw new Error('scene_varie: scena sconosciuta "' + nome + '"'); const strati = [];
+  const scena = SCENE[nome];
+  if (!scena) throw new Error('scene_varie: scena sconosciuta "' + nome + '"');
+  const strati = [];
   await scena(async (Q, d) => { strati.push(...affetta(Q.tela, d)); await respira(); });
   return { strati };
 }

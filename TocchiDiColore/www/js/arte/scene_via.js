@@ -212,11 +212,8 @@ function lava(f, forma, col, area, o) {
   if (o.luce !== false && !f.giu) sfumaV(f, x, y, l, a, lu(0), lu(0.3));
   // 5) bordo bagnato: il colore si accumula dove l'acqua si asciuga
   const b = o.bordo === undefined ? 0.5 : o.bordo;
-  if (b > 0) {
-    c.strokeStyle = scurisci(col, 0.32);
-    c.globalAlpha = b * 0.35; c.lineWidth = 5 * f.px; c.stroke(p);
-    c.globalAlpha = b * 0.7; c.lineWidth = 1.5 * f.px; c.stroke(p);
-  }
+  c.strokeStyle = scurisci(col, 0.32);
+  if (b > 0) for (const [k, w] of [[0.35, 5], [0.7, 1.5]]) { c.globalAlpha = b * k; c.lineWidth = w * f.px; c.stroke(p); }
   c.restore();
 }
 
@@ -235,9 +232,7 @@ function scritta(f, testo, x, y, dim, col, stile) {
 function foglia(f, x, y, ang, lung, larg, col, inkA) {
   const c = f.c, co = Math.cos(ang), si = Math.sin(ang), p = new Path2D();
   const mx = x + co * lung * 0.45, my = y + si * lung * 0.45, nx = -si * larg, ny = co * larg;
-  p.moveTo(x, y);
-  p.quadraticCurveTo(mx + nx, my + ny, x + co * lung, y + si * lung);
-  p.quadraticCurveTo(mx - nx, my - ny, x, y);
+  p.moveTo(x, y); p.quadraticCurveTo(mx + nx, my + ny, x + co * lung, y + si * lung); p.quadraticCurveTo(mx - nx, my - ny, x, y);
   c.globalAlpha = 0.9; c.fillStyle = col; c.fill(p);
   if (inkA) { c.globalAlpha = inkA; c.strokeStyle = INK; c.lineWidth = 0.9 * f.px; c.stroke(p); }
   c.globalAlpha = 1;
@@ -246,13 +241,9 @@ function foglia(f, x, y, ang, lung, larg, col, inkA) {
 function fogliaEdera(f, x, y, d, ang, col, inkA) {
   const p = new Path2D(), pt = (k, a) => [x + Math.cos(ang + a) * d * k, y + Math.sin(ang + a) * d * k];
   const T = pt(1, 0), L = pt(0.72, 1.2), R = pt(0.72, -1.2);
-  p.moveTo(x, y);
-  p.quadraticCurveTo(...pt(0.45, 2.2), ...L);
-  p.quadraticCurveTo(...pt(0.8, 0.55), ...T);
-  p.quadraticCurveTo(...pt(0.8, -0.55), ...R);
-  p.quadraticCurveTo(...pt(0.45, -2.2), x, y);
-  piatto(f, p, col, 0.92);
-  if (inkA) ink(f, p, 0.9, inkA);
+  p.moveTo(x, y); p.quadraticCurveTo(...pt(0.45, 2.2), ...L); p.quadraticCurveTo(...pt(0.8, 0.55), ...T);
+  p.quadraticCurveTo(...pt(0.8, -0.55), ...R); p.quadraticCurveTo(...pt(0.45, -2.2), x, y);
+  piatto(f, p, col, 0.92); if (inkA) ink(f, p, 0.9, inkA);
 }
 /**
  * Un ciuffo di fogliame: una macchia morbida + tante foglie.
@@ -269,11 +260,9 @@ function cespo(f, cx, cy, rx, ry, o) {
   const n = o.quante || Math.round(rx * ry * 300);
   for (let k = 0; k < n; k++) {
     const a = r() * Math.PI * 2, d = Math.sqrt(r()) * 1.05;
-    const x = cx + Math.cos(a) * d * rx, y = cy + Math.sin(a) * d * ry;
-    const t = (y - (cy - ry)) / (2 * ry) + ((cx - x) / rx) * 0.12;      // 0 in basso, 1 in alto
+    const x = cx + Math.cos(a) * d * rx, y = cy + Math.sin(a) * d * ry, t = (y - (cy - ry)) / (2 * ry) + ((cx - x) / rx) * 0.12; // t: 0 in basso, 1 in alto
     const col = t > 0.62 ? mescola(me, ch, tra(r, 0.3, 1)) : t > 0.3 ? mescola(sc, me, tra(r, 0.4, 1)) : mescola(sc, me, r() * 0.4);
-    const ang = d > 0.4 ? a + tra(r, -0.7, 0.7) : r() * Math.PI * 2;
-    const dim = o.dim * tra(r, 0.75, 1.25);
+    const ang = d > 0.4 ? a + tra(r, -0.7, 0.7) : r() * Math.PI * 2, dim = o.dim * tra(r, 0.75, 1.25);
     if (o.edera) fogliaEdera(f, x, y, dim, ang, col, r() < 0.35 ? o.ink : 0);
     else foglia(f, x, y, ang, dim, dim * tra(r, 0.28, 0.4), col, r() < 0.3 ? o.ink : 0);
   }
@@ -284,13 +273,11 @@ function fiori(f, x, y, l, a, colori, n, seme, d) {
   for (let k = 0; k < n; k++) {
     const fx = x + r() * l, fy = y + r() * a;
     c.globalAlpha = 0.92; c.fillStyle = scegli(r, colori); c.beginPath();
-    for (let p = 0; p < 5; p++) {
-      const an = (p / 5) * Math.PI * 2 + r();
-      c.moveTo(fx + Math.cos(an) * d * 0.6 + d * 0.5, fy + Math.sin(an) * d * 0.6);
-      c.arc(fx + Math.cos(an) * d * 0.6, fy + Math.sin(an) * d * 0.6, d * 0.5, 0, Math.PI * 2);
+    for (let p = 0; p < 5; p++) {                                   // cinque petali tondi
+      const an = (p / 5) * Math.PI * 2 + r(), px = fx + Math.cos(an) * d * 0.6, py = fy + Math.sin(an) * d * 0.6;
+      c.moveTo(px + d * 0.5, py); c.arc(px, py, d * 0.5, 0, Math.PI * 2);
     }
-    c.fill();
-    c.fillStyle = '#f6d66b'; c.beginPath(); c.arc(fx, fy, d * 0.28, 0, Math.PI * 2); c.fill();
+    c.fill(); c.fillStyle = '#f6d66b'; c.beginPath(); c.arc(fx, fy, d * 0.28, 0, Math.PI * 2); c.fill();
   }
   c.globalAlpha = 1;
 }
@@ -322,20 +309,17 @@ function ramo(f, pts, w0, w1, col) {
   c.restore();
 }
 /** Chioma d'albero: ciuffi scuri dietro, poi i rami (funzione "rami"), poi ciuffi chiari davanti. */
-function chioma(f, cx, cy, rx, ry, seme, rami, scala) {
-  const r = casuale(seme), k0 = scala || 1;
+function chioma(f, cx, cy, rx, ry, seme, rami) {
+  const r = casuale(seme);
   for (let k = 0; k < 10; k++) {                       // massa interna, scura e fresca
     const a = r() * Math.PI * 2, d = Math.sqrt(r()) * 0.72;
-    cespo(f, cx + Math.cos(a) * d * rx, cy + Math.sin(a) * d * ry, rx * tra(r, 0.34, 0.46), ry * tra(r, 0.36, 0.5),
-      { colori: VERDI.scuri, dim: 0.2 * k0, seme: nuovoSeme(r), ink: 0.4 });
+    cespo(f, cx + Math.cos(a) * d * rx, cy + Math.sin(a) * d * ry, rx * tra(r, 0.34, 0.46), ry * tra(r, 0.36, 0.5), { colori: VERDI.scuri, dim: 0.2, seme: nuovoSeme(r), ink: 0.4 });
   }
   if (rami) rami();
   for (let k = 0; k < 16; k++) {                       // ciuffi davanti: chiari dove batte il sole (in alto a sinistra)
     const a = (k / 16) * Math.PI * 2 + tra(r, -0.3, 0.3), d = k % 4 === 0 ? tra(r, 0.1, 0.4) : k % 5 === 1 ? tra(r, 0.9, 1.05) : tra(r, 0.55, 0.8);
-    const x = cx + Math.cos(a) * d * rx, y = cy + Math.sin(a) * d * ry;
     const sole = Math.sin(a) > 0.15 || Math.cos(a) < -0.5;
-    cespo(f, x, y, rx * tra(r, 0.25, 0.34), ry * tra(r, 0.28, 0.38),
-      { colori: sole ? VERDI.chiari : VERDI.medi, dim: 0.2 * k0, seme: nuovoSeme(r), ink: 0.55 });
+    cespo(f, cx + Math.cos(a) * d * rx, cy + Math.sin(a) * d * ry, rx * tra(r, 0.25, 0.34), ry * tra(r, 0.28, 0.38), { colori: sole ? VERDI.chiari : VERDI.medi, dim: 0.2, seme: nuovoSeme(r), ink: 0.55 });
   }
 }
 

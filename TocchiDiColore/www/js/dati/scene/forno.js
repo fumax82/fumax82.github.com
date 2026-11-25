@@ -24,7 +24,7 @@ export default {
       chiacchiere: ['Torna quando vuoi, piccola streghetta!', 'Il segreto del pane? Pazienza e un forno caldo.'] },
   ],
   oggetti: [
-    { arte: 'forno_fuoco', x: 8.75, z: -2.75, y: 0.35, scala: 1.1, luce: 1, animazione: 7 },
+    { arte: 'forno_fuoco', x: 8.75, z: -3.15, y: 0.42, scala: 1.0, luce: 1, animazione: 7 },   // fiamme vive dietro la bocca del forno
     { arte: 'lampada_appesa', x: 3.0, z: -0.6, y: 3.4, appeso: true, luce: 1, oscilla: 0.02 },
     { arte: 'lampada_appesa', x: 6.6, z: -0.6, y: 3.4, appeso: true, luce: 1, oscilla: 0.02 },
   ],
