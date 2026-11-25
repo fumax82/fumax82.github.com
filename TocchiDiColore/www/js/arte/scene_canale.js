@@ -164,10 +164,10 @@ function ombraSotto(c, x, y, l, h, alfa) {
   c.save(); c.fillStyle = g; c.fillRect(x, y, l, h); c.restore();
 }
 /** Velo sfumato SOLO sopra ciò che è già dipinto (foschia, lontananza, ombra). */
-function velo(F, x0, y0, x1, y1, tappe, modo) {
+function velo(F, x0, y0, x1, y1, tappe) {
   const c = F.c, g = c.createLinearGradient(x0, y0, x1, y1);
   for (const [t, col] of tappe) g.addColorStop(t, col);
-  c.save(); c.globalCompositeOperation = modo || 'source-atop'; c.fillStyle = g; c.fillRect(0, 0, F.l, F.a); c.restore();
+  c.save(); c.globalCompositeOperation = 'source-atop'; c.fillStyle = g; c.fillRect(0, 0, F.l, F.a); c.restore();
 }
 
 let telaGrana = null;   // tela di lavoro condivisa (per non crearne una per foglio)
@@ -425,7 +425,7 @@ function finestra(c, r, x, y, l, a, o = {}) {
   c.beginPath(); c.moveTo(x + l * 0.36, y + a); c.lineTo(x + l * 0.84, y + a * 0.22); c.lineTo(x + l * 0.88, y + a * 0.22); c.lineTo(x + l * 0.42, y + a); c.fill();
   c.restore();
   const tr = new Path2D(), yt = y + (arco ? l * 0.5 : a * 0.4);
-  tr.moveTo(x + l / 2, y + (arco ? t : t)); tr.lineTo(x + l / 2, y + a - t); tr.moveTo(x + t, yt); tr.lineTo(x + l - t, yt);
+  tr.moveTo(x + l / 2, y + t); tr.lineTo(x + l / 2, y + a - t); tr.moveTo(x + t, yt); tr.lineTo(x + l - t, yt);
   inchiostro(c, tr, Math.max(1.4, t * 0.7), 1, o.telaio || '#fdf9ef');
   inchiostro(c, tr, 0.7, 0.55);
   contorno(c, r, est, 1.2, 0.85, 0.35); contorno(c, r, int, 0.8, 0.55, 0.3);

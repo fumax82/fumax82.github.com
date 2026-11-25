@@ -67,8 +67,7 @@ const GRADINI = [[-5.3, 1.25], [2.95, 0.95], [7.3, 1.35], [19.3, 1.1], [25.5, 1.
  */
 function foglio(u0, v0, l, a, S, versoGiu, Sv) {
   Sv = Sv || S;
-  const tela = nuovaTela(Math.round(l * S), Math.round(a * Sv));
-  const c = tela.getContext('2d');
+  const tela = nuovaTela(Math.round(l * S), Math.round(a * Sv)), c = tela.getContext('2d');
   if (versoGiu) c.setTransform(S, 0, 0, Sv, -u0 * S, -v0 * Sv);
   else c.setTransform(S, 0, 0, -Sv, -u0 * S, (v0 + a) * Sv);
   return { tela, c, S, px: 1 / S, u0, v0, u1: u0 + l, v1: v0 + a, giu: !!versoGiu };
@@ -78,9 +77,8 @@ const vede = (f, a, b) => b > f.u0 - 0.6 && a < f.u1 + 0.6;
 
 /** Divide [u0, u1] in pezzi larghi al massimo 2048 pixel: [[inizio, larghezza], ...] */
 function pezzi(u0, u1, S) {
-  const n = Math.ceil(((u1 - u0) * S) / 2048), l = Math.ceil(((u1 - u0) * S) / n) / S, out = [];
-  for (let k = 0; k < n; k++) out.push([u0 + k * l, Math.min(l, u1 - (u0 + k * l))]);
-  return out;
+  const n = Math.ceil(((u1 - u0) * S) / 2048), l = Math.ceil(((u1 - u0) * S) / n) / S;
+  return Array.from({ length: n }, (_, k) => [u0 + k * l, Math.min(l, u1 - (u0 + k * l))]);
 }
 
 /* Grana della carta con trasparenza: puntini scuri dove il pigmento si deposita. */
@@ -89,15 +87,13 @@ function trameAlfa() {
   if (GRANA) return;
   const converti = (sorgente, soglia, forza) => {
     const t = nuovaTela(256, 256), c = t.getContext('2d');
-    c.drawImage(sorgente, 0, 0);
-    const d = c.getImageData(0, 0, 256, 256);
+    c.drawImage(sorgente, 0, 0); const d = c.getImageData(0, 0, 256, 256);
     for (let i = 0; i < d.data.length; i += 4) {
       const v = d.data[i] / 255;
       d.data[i] = 74; d.data[i + 1] = 52; d.data[i + 2] = 84;
       d.data[i + 3] = Math.max(0, Math.min(255, (soglia - v) * forza * 255));
     }
-    c.putImageData(d, 0, 0);
-    return t;
+    c.putImageData(d, 0, 0); return t;
   };
   GRANA = converti(trama('grana'), 0.9, 1.6);
   MACCHIE = converti(trama('macchie'), 0.8, 1.0);
@@ -105,18 +101,10 @@ function trameAlfa() {
 /** Granulosità finale su tutto il foglio (solo dove c'è già colore). */
 function granula(f, forza) {
   trameAlfa();
-  const c = f.c, k = forza === undefined ? 1 : forza;
-  c.save();
-  c.setTransform(1, 0, 0, 1, 0, 0);
-  c.globalCompositeOperation = 'source-atop';
-  c.globalAlpha = 0.3 * k;
-  c.fillStyle = c.createPattern(GRANA, 'repeat');
-  c.fillRect(0, 0, f.tela.width, f.tela.height);
-  const m = c.createPattern(MACCHIE, 'repeat');
-  m.setTransform(new DOMMatrix().scale(4));
-  c.globalAlpha = 0.3 * k;
-  c.fillStyle = m;
-  c.fillRect(0, 0, f.tela.width, f.tela.height);
+  const c = f.c, k = forza === undefined ? 1 : forza, m = c.createPattern(MACCHIE, 'repeat');
+  m.setTransform(new DOMMatrix().scale(4));                       // macchie larghe e morbide
+  c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-atop'; c.globalAlpha = 0.3 * k;
+  for (const motivo of [c.createPattern(GRANA, 'repeat'), m]) { c.fillStyle = motivo; c.fillRect(0, 0, f.tela.width, f.tela.height); }
   c.restore();
 }
 
@@ -166,53 +154,37 @@ function blob(r, cx, cy, rx, ry, n, irr, spigoloso) {
 /** Linea a inchiostro seppia (spessore in pixel). */
 function ink(f, forma, w, alfa, col) {
   const c = f.c;
-  c.save();
-  c.globalAlpha = alfa === undefined ? 0.8 : alfa;
-  c.strokeStyle = col || INK;
-  c.lineWidth = (w || 1.2) * f.px;
-  c.lineJoin = 'round'; c.lineCap = 'round';
-  c.stroke(percorso(forma));
-  c.restore();
+  c.save(); c.globalAlpha = alfa === undefined ? 0.8 : alfa; c.strokeStyle = col || INK;
+  c.lineWidth = (w || 1.2) * f.px; c.lineJoin = 'round'; c.lineCap = 'round';
+  c.stroke(percorso(forma)); c.restore();
 }
 /** Riempimento piatto. */
 function piatto(f, forma, col, alfa) {
   const c = f.c;
-  c.save();
-  c.globalAlpha = alfa === undefined ? 1 : alfa;
-  c.fillStyle = col;
-  c.fill(percorso(forma));
-  c.restore();
+  c.save(); c.globalAlpha = alfa === undefined ? 1 : alfa; c.fillStyle = col; c.fill(percorso(forma)); c.restore();
 }
 /** Sfumatura lungo v: col0 a v = y, col1 a v = y + a (ombre al piede, sotto i cornicioni...). */
 function sfumaV(f, x, y, l, a, col0, col1) {
   const g = f.c.createLinearGradient(0, y, 0, y + a);
-  g.addColorStop(0, col0); g.addColorStop(1, col1);
-  f.c.fillStyle = g;
-  f.c.fillRect(x, y, l, a);
+  g.addColorStop(0, col0); g.addColorStop(1, col1); f.c.fillStyle = g; f.c.fillRect(x, y, l, a);
 }
 /** Sfumatura lungo u (da sinistra a destra). */
 function sfumaU(f, x, y, l, a, col0, col1) {
   const g = f.c.createLinearGradient(x, 0, x + l, 0);
-  g.addColorStop(0, col0); g.addColorStop(1, col1);
-  f.c.fillStyle = g;
-  f.c.fillRect(x, y, l, a);
+  g.addColorStop(0, col0); g.addColorStop(1, col1); f.c.fillStyle = g; f.c.fillRect(x, y, l, a);
 }
 
 /**
  * VELATURA AD ACQUERELLO dentro una forma. area = [x, y, l, a] in metri.
  * o: { seme, alfa, variazione, raggio (macchie, in metri), macchie, segni
- *      (pennellate visibili), luce (false = niente luce dall'alto), bordo }
+ *      (pennellate visibili), fioriture (aloni chiari dal bordo scuro), luce, bordo }
  */
 function lava(f, forma, col, area, o) {
   o = o || {};
   const c = f.c, p = percorso(forma), r = casuale(o.seme || 1);
   const [x, y, l, a] = area;
-  c.save();
-  c.clip(p);
-  // 1) la stesura di base
-  c.globalAlpha = o.alfa === undefined ? 1 : o.alfa;
-  c.fillStyle = col;
-  c.fillRect(x, y, l, a);
+  c.save(); c.clip(p);
+  c.globalAlpha = o.alfa === undefined ? 1 : o.alfa; c.fillStyle = col; c.fillRect(x, y, l, a);  // 1) la stesura di base
   // 2) macchie: il pigmento non è mai uniforme (più chiaro, più scuro, virato)
   const v = o.variazione === undefined ? 0.3 : o.variazione, R = o.raggio || 1.5;
   const n = o.macchie === undefined ? Math.min(16, 2 + Math.round((l * a) / (R * R))) : o.macchie;
@@ -221,16 +193,19 @@ function lava(f, forma, col, area, o) {
     const cx = x + r() * l, cy = y + r() * a, rr = R * tra(r, 0.4, 1.1), q = r();
     const tono = q < 0.45 ? schiarisci(col, 0.4) : q < 0.8 ? scurisci(col, 0.22) : mescola(col, scegli(r, VIRATE), 0.5);
     const g = c.createRadialGradient(cx, cy, 0, cx, cy, rr);
-    g.addColorStop(0, conAlfa(tono, v)); g.addColorStop(1, conAlfa(tono, 0));
-    c.fillStyle = g;
-    c.fillRect(cx - rr, cy - rr, rr * 2, rr * 2);
+    g.addColorStop(0, conAlfa(tono, v)); g.addColorStop(1, conAlfa(tono, 0)); c.fillStyle = g; c.fillRect(cx - rr, cy - rr, rr * 2, rr * 2);
   }
   // 3) pennellate: segni allungati appena visibili
   for (let k = 0; k < (o.segni || 0); k++) {
-    const cx = x + r() * l, cy = y + r() * a, rx = R * tra(r, 0.25, 0.7);
-    c.globalAlpha = tra(r, 0.05, 0.11);
-    c.fillStyle = r() < 0.6 ? scurisci(col, 0.25) : schiarisci(col, 0.5);
+    const cx = x + r() * l, cy = y + r() * a, rx = R * tra(r, 0.3, 0.9);
+    c.globalAlpha = tra(r, 0.06, 0.13); c.fillStyle = r() < 0.6 ? scurisci(col, 0.25) : schiarisci(col, 0.5);
     c.fill(ell(cx, cy, rx, rx * tra(r, 0.12, 0.3), tra(r, -0.5, 0.5)));
+  }
+  // fioriture: l'acqua respinge il pigmento e lascia un alone chiaro col bordo scuro
+  for (let k = 0; k < (o.fioriture || 0); k++) {
+    const cx = x + r() * l, cy = y + r() * a, rr = R * tra(r, 0.25, 0.6), fo = blob(r, cx, cy, rr, rr * tra(r, 0.5, 1), 9, 0.35);
+    c.globalAlpha = 0.16; c.fillStyle = schiarisci(col, 0.55); c.fill(fo);
+    c.globalAlpha = 0.22; c.strokeStyle = scurisci(col, 0.3); c.lineWidth = 1.4 * f.px; c.stroke(fo);
   }
   // 4) la luce del sole viene dall'alto
   c.globalAlpha = 1;
@@ -248,14 +223,10 @@ function lava(f, forma, col, area, o) {
 /** Scritta dipinta (insegne): in metri, centrata in (x, y). */
 function scritta(f, testo, x, y, dim, col, stile) {
   const c = f.c;
-  c.save();
-  c.translate(x, y);
-  c.scale(f.px, f.giu ? f.px : -f.px);
+  c.save(); c.translate(x, y); c.scale(f.px, f.giu ? f.px : -f.px);    // torna ai pixel, con il testo dritto
   c.font = (stile || 'italic bold') + ' ' + Math.round(dim * f.S) + 'px Georgia, "DejaVu Serif", serif';
-  c.textAlign = 'center'; c.textBaseline = 'middle';
-  c.fillStyle = col; c.fillText(testo, 0, 0);
-  c.globalAlpha = 0.7; c.lineWidth = 0.8; c.strokeStyle = INK; c.strokeText(testo, 0, 0);
-  c.restore();
+  c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = col; c.fillText(testo, 0, 0);
+  c.globalAlpha = 0.7; c.lineWidth = 0.8; c.strokeStyle = INK; c.strokeText(testo, 0, 0); c.restore();
 }
 
 /* ================================ 4. VERDE ================================ */
@@ -360,7 +331,7 @@ function chioma(f, cx, cy, rx, ry, seme, rami, scala) {
   }
   if (rami) rami();
   for (let k = 0; k < 16; k++) {                       // ciuffi davanti: chiari dove batte il sole (in alto a sinistra)
-    const a = (k / 16) * Math.PI * 2 + tra(r, -0.3, 0.3), d = k % 4 === 0 ? tra(r, 0.1, 0.4) : tra(r, 0.55, 0.85);
+    const a = (k / 16) * Math.PI * 2 + tra(r, -0.3, 0.3), d = k % 4 === 0 ? tra(r, 0.1, 0.4) : k % 5 === 1 ? tra(r, 0.9, 1.05) : tra(r, 0.55, 0.8);
     const x = cx + Math.cos(a) * d * rx, y = cy + Math.sin(a) * d * ry;
     const sole = Math.sin(a) > 0.15 || Math.cos(a) < -0.5;
     cespo(f, x, y, rx * tra(r, 0.25, 0.34), ry * tra(r, 0.28, 0.38),
@@ -374,8 +345,9 @@ function chioma(f, cx, cy, rx, ry, seme, rami, scala) {
 function parete(f, x0, x1, alto, col, seme, o) {
   o = o || {};
   const r = casuale(seme), forma = o.forma || rettMano(f, r, x0, 0, x1 - x0, alto, 0.5);
-  lava(f, forma, col, [x0, 0, x1 - x0, alto + (o.extra || 0)],
-    { seme, raggio: 2.2, variazione: 0.32, segni: Math.round(((x1 - x0) * alto) / 2.5), bordo: 0.55 });
+  lava(f, forma, col, [x0, 0, x1 - x0, alto + (o.extra || 0)], { seme, raggio: 2, variazione: 0.4,
+    segni: Math.round(((x1 - x0) * alto) / 2), fioriture: Math.round(((x1 - x0) * alto) / 7), bordo: 0.6 });
+  sfumaU(f, x0, 0, 0.5, alto, om(0.1), om(0)); sfumaU(f, x1 - 0.6, 0, 0.6, alto, om(0), om(0.12));  // bordi più carichi
   if (o.zoccolo) {
     const z = rett(x0, 0, x1 - x0, o.zoccolo);
     lava(f, z, o.coloreZoccolo || scurisci(col, 0.15), [x0, 0, x1 - x0, o.zoccolo], { seme: seme + 1, macchie: 3, raggio: 1, luce: false });
@@ -743,12 +715,14 @@ function muroGiardino(f) {
   const coping = rett(x0 - 0.06, 2.4, x1 - x0 + 0.12, 0.1);
   piatto(f, coping, '#ebe6da'); ink(f, coping, 1, 0.75);
   // edera che scende dal muro: prima le ombre azzurre, poi le foglie
-  const trali = [[10.25, 1.0], [10.7, 0.7], [11.15, 1.3], [11.6, 0.55], [12.05, 1.1], [12.35, 0.6]];
-  f.c.save(); f.c.translate(0.12, -0.14);
-  for (const [x, lung] of trali) tralcio(f, x, 2.45, lung, { seme: s + x * 10, foglie: ['#a9bcd0', '#b2c4d6', '#bccbdb'], dim: 0.17 });
+  const trali = [[10.15, 1.0], [10.45, 1.45], [10.75, 0.8], [11.0, 1.7], [11.3, 1.1], [11.6, 1.55], [11.9, 0.7], [12.15, 1.3], [12.4, 0.9]];
+  const ombra = ['#a9bcd0', '#b2c4d6', '#bccbdb'];
+  f.c.save(); f.c.translate(0.12, -0.15);                       // prima le ombre azzurre sul muro bianco
+  for (const [x, lung] of trali) tralcio(f, x, 2.5, lung, { seme: Math.round(s + x * 10), foglie: ombra, dim: 0.2 });
+  cespo(f, 11.25, 2.55, 1.35, 0.3, { colori: ombra, dim: 0.2, seme: s + 3, quante: 140 });
   f.c.restore();
-  cespo(f, 11.25, 2.62, 1.35, 0.32, { colori: VERDI.medi, dim: 0.17, seme: s + 3, ink: 0.55, quante: 120 });
-  for (const [x, lung] of trali) tralcio(f, x, 2.45, lung, { seme: s + x * 10, foglie: VERDI.medi, dim: 0.17 });
+  cespo(f, 11.25, 2.65, 1.4, 0.38, { colori: VERDI.medi, dim: 0.2, seme: s + 3, ink: 0.55, quante: 170 });
+  for (const [x, lung] of trali) tralcio(f, x, 2.5, lung, { seme: Math.round(s + x * 10), foglie: VERDI.medi, dim: 0.2 });
   finisci(f, x0, x1, muro);
 }
 
@@ -975,10 +949,7 @@ function vasiSera(f) {
   ramo(f, [[43.5, 0.8], [43.3, 0.88], [43.12, 0.86]], 0.035, 0.015, '#7b6250');
   ramo(f, [[43.56, 0.98], [43.75, 1.05], [43.9, 1.02]], 0.03, 0.015, '#7b6250');
   for (const [x, y, rx] of [[43.1, 0.9, 0.2], [43.9, 1.06, 0.2], [43.55, 1.3, 0.24], [43.35, 1.12, 0.16], [43.72, 0.84, 0.13]]) {
-    const r = casuale(x * 100 + y * 10), cusc = blob(r, x, y, rx, rx * 0.38, 10, 0.15);
-    piatto(f, cusc, '#2f5f55'); piatto(f, blob(r, x - rx * 0.1, y + rx * 0.08, rx * 0.8, rx * 0.2, 8, 0.2), '#4f8a74');
-    for (let k = 0; k < 8; k++) foglia(f, x + tra(r, -rx, rx), y + rx * 0.2, Math.PI / 2 + tra(r, -1, 1), 0.06, 0.02, '#5c9a80', 0);
-    ink(f, cusc, 1, 0.7);
+    cespo(f, x, y, rx, rx * 0.42, { colori: ['#24504a', '#3c7462', '#77ac8c'], dim: 0.055, quante: 45, seme: Math.round(x * 100 + y * 10), ink: 0.5 });
   }
   const v3 = Forme.poligono([[43.3, 0.08], [43.72, 0.08], [43.8, 0.44], [43.22, 0.44]]);
   lava(f, v3, '#d9a94e', [43.2, 0, 0.62, 0.5], { seme: 4311, macchie: 2, raggio: 0.4, luce: false });
@@ -988,8 +959,11 @@ function vasiSera(f) {
 
 function angoloSera(f) {
   const x0 = 38, x1 = 54, alto = 9.1, s = 1001, r = casuale(s), c = f.c;
-  const forma = parete(f, x0, x1, alto, '#7d95ab', s, { zoccolo: 0.45, coloreZoccolo: '#687f95' });
-  sfumaV(f, x0, 0, x1 - x0, alto, om(0.28), 'rgba(205,216,238,0.2)');  // più scuro in basso, riflesso del cielo in alto
+  const forma = parete(f, x0, x1, alto, '#7491a3', s, { zoccolo: 0.45, coloreZoccolo: '#627d90' });
+  sfumaV(f, x0, 0, x1 - x0, alto, om(0.3), 'rgba(205,222,236,0.22)');  // più scuro in basso, riflesso del cielo in alto
+  for (const [x, y, rx, ry] of [[40.5, 7.5, 2.6, 1.6], [44.5, 5.2, 2.2, 1.4], [39.2, 1.0, 1.6, 1.0]]) {
+    piatto(f, blob(r, x, y, rx, ry, 10, 0.3), '#4f6878', 0.16);       // grandi macchie d'ombra
+  }
   // toppa di intonaco caduto: mattoni scoperti
   const toppa = blob(r, 39.35, 3.0, 0.9, 1.6, 22, 0.22, true);
   mattoni(f, toppa, 38.3, 1.2, 2.2, 3.7, { seme: s + 2, malta: '#a8a6b0', colori: ['#8e6a63', '#9b766d', '#7d5d5a', '#a88275'] });
@@ -1013,7 +987,7 @@ function angoloSera(f) {
   vasiSera(f);
   // edera che scende nell'angolo vicino allo steccato
   const edera = ['#2f5f48', '#4e8758', '#7fb36c'], steli = new Path2D();
-  for (let k = 0; k < 4; k++) mano(f, r, [[46.55, 1.9], [46.3 - k * 0.15, 2.6 + k * 0.2], [46.45 - k * 0.3, 3.3 + k * 0.25]], false, 1.5, steli);
+  for (let k = 0; k < 4; k++) mano(f, r, [[46.55, 1.9], [46.35 - k * 0.12, 2.5 + k * 0.15], [46.3 - k * 0.2, 3.0 + k * 0.15]], false, 1.5, steli);
   ink(f, steli, 1.4, 0.7, '#5a6a40');
   for (const [x, y, rx, ry] of [[46.4, 2.05, 0.32, 0.3], [46.25, 2.6, 0.28, 0.25], [46.0, 3.2, 0.22, 0.2], [45.75, 3.65, 0.16, 0.15], [46.5, 1.5, 0.15, 0.3]]) {
     cespo(f, x, y, rx, ry, { colori: edera, dim: 0.13, seme: Math.round(s + x * 10 + y * 100), ink: 0.55, edera: true });
@@ -1023,12 +997,12 @@ function angoloSera(f) {
   finisci(f, x0, x1, forma);
   // oltre lo steccato non c'è (ancora) niente: il colore si dissolve nella carta
   if (f.u1 < STECCATO_X) return;
-  const orlo = [[X1 + 1, -1]];                                       // un orlo ondulato, come un acquerello che finisce
+  const orlo = [[X1 + 5, -2]];                                       // un orlo ondulato, come un acquerello che finisce
   for (let y = -1; y <= 11; y += 0.25) orlo.push([STECCATO_X + 0.35 + Math.sin(y * 2.1) * 0.08 + tra(r, -0.06, 0.06), y]);
-  orlo.push([X1 + 1, 11]);
+  orlo.push([STECCATO_X + 0.4, 13], [X1 + 5, 13]);
   c.save(); c.globalCompositeOperation = 'destination-out';
   c.filter = 'blur(' + (0.05 * f.S).toFixed(1) + 'px)';
-  piatto(f, Forme.poligono(orlo, true), '#000');
+  piatto(f, Forme.poligono(orlo, false), '#000');
   c.restore();
 }
 
@@ -1288,79 +1262,79 @@ function dipingiAlbero(f, xt, seme) {
     ramo(f, [[xt + lean, 2.9], [xt - 0.1, 3.6], [xt - 0.35, 4.5]], 0.075, 0.025);
     ramo(f, [[xt + lean, 3.0], [xt + 0.3, 3.7], [xt + 0.5, 4.7]], 0.065, 0.025);
   });
-  // un po' di rami visibili tra le foglie in basso
-  ramo(f, [[xt + 0.02, 2.0], [xt - 0.3, 2.45], [xt - 0.6, 2.75]], 0.08, 0.05);
-  ramo(f, [[xt + 0.03, 2.2], [xt + 0.35, 2.6], [xt + 0.7, 2.95]], 0.075, 0.05);
-  ramo(f, [[xt, 0.08], [xt + 0.04, 0.8], [xt - 0.02, 1.6], [xt + 0.03, 2.3]], 0.2, 0.13);
+  ramo(f, [[xt, 0.08], [xt + 0.04, 0.8], [xt - 0.02, 1.6], [xt + 0.03, 2.25]], 0.2, 0.13);   // il fusto resta davanti
 }
 
 /* ============================ 10. LA SCENA ============================ */
+
+/**
+ * Dipinge una striscia lunga tagliandola in pezzi da al massimo 2048 pixel.
+ *   d: { nome, da, a, S, v0, alto, giu, Sv, dipingi(f), grana, strato(u, l) → campi dello strato }
+ */
+async function striscia(strati, d) {
+  const tutti = pezzi(d.da, d.a, d.S);
+  for (const [k, [u, l]] of tutti.entries()) {
+    const alto = typeof d.alto === 'function' ? d.alto(u, l) : d.alto;
+    const f = foglio(u, d.v0, l, alto, d.S, d.giu, d.Sv);
+    d.dipingi(f);
+    if (d.grana) granula(f, d.grana);
+    const nome = tutti.length > 1 ? d.nome + '_' + (k + 1) : d.nome;
+    strati.push({ nome, tela: f.tela, larghezza: l, ...d.strato(u, l, alto) });
+    await respira();
+  }
+}
 
 /** Dipinge la scena richiesta e restituisce i suoi strati. */
 export async function dipingiScena(nome) {
   if (nome !== 'via') return { strati: [] };
   const strati = [];
-  let n = 0;
-  // 1) la fila di case vicina
-  for (const [u, l] of pezzi(X0, X1, RIS.facciate)) {
-    const quali = CASE.filter(([a, b]) => b > u - 0.6 && a < u + l + 0.6);
-    const alto = Math.ceil(Math.max(...quali.map((q) => q[2])) * 4) / 4;
-    const f = foglio(u, 0, l, alto, RIS.facciate);
-    for (const q of quali) q[3](f);
-    granula(f);
-    strati.push({ nome: 'facciate_' + ++n, tela: f.tela, normale: 'z+', x: u, y: 0, z: -1.8, larghezza: l, altezza: alto, ordine: 2 });
-    await respira();
-  }
-  // 2) lo steccato
-  const fs = foglio(-1.8, 0, 3.0, 2.45, RIS.steccato);
-  dipingiSteccato(fs); granula(fs);
-  strati.push({ nome: 'steccato', tela: fs.tela, normale: 'x-', x: STECCATO_X, y: 0, z: -1.8, larghezza: 3.0, altezza: 2.45, ordine: 3 });
-  await respira();
-  // 3) marciapiede e cordolo
-  n = 0;
-  for (const [u, l] of pezzi(X0, X1, RIS.marciapiede)) {
-    const f = foglio(u, -1.8, l, 2.8, RIS.marciapiede, true);
-    dipingiMarciapiede(f); granula(f, 0.9);
-    strati.push({ nome: 'marciapiede_' + ++n, tela: f.tela, normale: 'su', x: u, y: 0.08, z: -1.8, larghezza: l, profondita: 2.8, ordine: 1 });
-  }
-  await respira();
-  n = 0;
-  for (const [u, l] of pezzi(X0, X1, RIS.cordolo)) {
-    const f = foglio(u, 0, l, 0.08, RIS.cordolo, false, 200);
-    dipingiCordolo(f, 61, true);
-    strati.push({ nome: 'cordolo_' + ++n, tela: f.tela, normale: 'z+', x: u, y: 0, z: 1.0, larghezza: l, altezza: 0.08, ordine: 1 });
-  }
-  // 4) la strada
-  n = 0;
-  for (const [u, l] of pezzi(X0, X1, RIS.strada)) {
-    const f = foglio(u, 1.0, l, 6.5, RIS.strada, true);
-    dipingiStrada(f); granula(f, 1.2);
-    strati.push({ nome: 'strada_' + ++n, tela: f.tela, normale: 'su', x: u, y: 0, z: 1.0, larghezza: l, profondita: 6.5, ordine: 0 });
-    await respira();
-  }
-  // 5) il lato di fronte: cordolo, marciapiede, facciate (coordinata s = 54 - x)
-  const fc = foglio(0, 0, X1 - X0, 0.08, RIS.cordoloFronte, false, 120);
-  dipingiCordolo(fc, 62, false);
-  strati.push({ nome: 'cordolo_fronte', tela: fc.tela, normale: 'z-', x: X0, y: 0, z: 7.5, larghezza: X1 - X0, altezza: 0.08, ordine: 1 });
-  n = 0;
-  for (const [u, l] of pezzi(X0, X1, RIS.lontano)) {
-    const f = foglio(u, 7.5, l, 1.8, RIS.lontano, true);
-    dipingiMarciapiedeFronte(f); granula(f, 0.8);
-    strati.push({ nome: 'marciapiede_fronte_' + ++n, tela: f.tela, normale: 'su', x: u, y: 0.08, z: 7.5, larghezza: l, profondita: 1.8, ordine: 1 });
-  }
-  await respira();
-  n = 0;
-  for (const [s, l] of pezzi(0, X1 - X0, RIS.lontano)) {
-    const f = foglio(s, 0, l, 10, RIS.lontano);
-    dipingiFronte(f); granula(f, 0.8);
-    strati.push({ nome: 'facciate_fronte_' + ++n, tela: f.tela, normale: 'z-', x: X1 - s - l, y: 0, z: 9.3, larghezza: l, altezza: 10, ordine: 2 });
-    await respira();
-  }
-  // 6) i due alberi del viale
-  [[7, 7001], [27, 7002]].forEach(([xt, seme], k) => {
-    const f = foglio(xt - 2.5, 0, 5.0, 5.8, RIS.albero);
-    dipingiAlbero(f, xt, seme); granula(f, 0.7);
-    strati.push({ nome: 'albero_' + (k + 1), tela: f.tela, normale: 'z+', x: xt - 2.5, y: 0, z: 0.9, larghezza: 5.0, altezza: 5.8, ordine: 4, tremola: 0.5 });
+  const vicine = (u, l) => CASE.filter(([a, b]) => b > u - 0.6 && a < u + l + 0.6);
+  // 1) la fila di case vicina (ogni pezzo è alto quanto la casa più alta che contiene)
+  await striscia(strati, {
+    nome: 'facciate', da: X0, a: X1, S: RIS.facciate, v0: 0, grana: 1,
+    alto: (u, l) => Math.ceil(Math.max(...vicine(u, l).map((q) => q[2])) * 4) / 4,
+    dipingi: (f) => vicine(f.u0, f.u1 - f.u0).forEach((q) => q[3](f)),
+    strato: (u, l, alto) => ({ normale: 'z+', x: u, y: 0, z: -1.8, altezza: alto, ordine: 2 }),
   });
+  // 2) lo steccato (u = z)
+  await striscia(strati, {
+    nome: 'steccato', da: -1.8, a: 1.2, S: RIS.steccato, v0: 0, alto: 2.45, grana: 1, dipingi: dipingiSteccato,
+    strato: () => ({ normale: 'x-', x: STECCATO_X, y: 0, z: -1.8, altezza: 2.45, ordine: 3 }),
+  });
+  // 3) marciapiede e cordolo
+  await striscia(strati, {
+    nome: 'marciapiede', da: X0, a: X1, S: RIS.marciapiede, v0: -1.8, alto: 2.8, giu: true, grana: 0.9, dipingi: dipingiMarciapiede,
+    strato: (u) => ({ normale: 'su', x: u, y: 0.08, z: -1.8, profondita: 2.8, ordine: 1 }),
+  });
+  await striscia(strati, {
+    nome: 'cordolo', da: X0, a: X1, S: RIS.cordolo, Sv: 200, v0: 0, alto: 0.08, dipingi: (f) => dipingiCordolo(f, 61, true),
+    strato: (u) => ({ normale: 'z+', x: u, y: 0, z: 1.0, altezza: 0.08, ordine: 1 }),
+  });
+  // 4) la strada
+  await striscia(strati, {
+    nome: 'strada', da: X0, a: X1, S: RIS.strada, v0: 1.0, alto: 6.5, giu: true, grana: 1.2, dipingi: dipingiStrada,
+    strato: (u) => ({ normale: 'su', x: u, y: 0, z: 1.0, profondita: 6.5, ordine: 0 }),
+  });
+  // 5) il lato di fronte. Le facce 'z-' si dipingono con s = 54 - x (a sinistra c'è x = 54)
+  await striscia(strati, {
+    nome: 'cordolo_fronte', da: 0, a: X1 - X0, S: RIS.cordoloFronte, Sv: 120, v0: 0, alto: 0.08, dipingi: (f) => dipingiCordolo(f, 62, false),
+    strato: (s, l) => ({ normale: 'z-', x: X1 - s - l, y: 0, z: 7.5, altezza: 0.08, ordine: 1 }),
+  });
+  await striscia(strati, {
+    nome: 'marciapiede_fronte', da: X0, a: X1, S: RIS.lontano, v0: 7.5, alto: 1.8, giu: true, grana: 0.8, dipingi: dipingiMarciapiedeFronte,
+    strato: (u) => ({ normale: 'su', x: u, y: 0.08, z: 7.5, profondita: 1.8, ordine: 1 }),
+  });
+  await striscia(strati, {
+    nome: 'facciate_fronte', da: 0, a: X1 - X0, S: RIS.lontano, v0: 0, alto: 10, grana: 0.8, dipingi: dipingiFronte,
+    strato: (s, l) => ({ normale: 'z-', x: X1 - s - l, y: 0, z: 9.3, altezza: 10, ordine: 2 }),
+  });
+  // 6) i due alberi del viale (ognuno è il suo strato, trasparente intorno)
+  for (const [k, xt] of [7, 27].entries()) {
+    await striscia(strati, {
+      nome: 'albero_' + (k + 1), da: xt - 2.5, a: xt + 2.5, S: RIS.albero, v0: 0, alto: 5.8, grana: 0.7,
+      dipingi: (f) => dipingiAlbero(f, xt, 7001 + k),
+      strato: (u) => ({ normale: 'z+', x: u, y: 0, z: 0.9, altezza: 5.8, ordine: 4, tremola: 0.5 }),
+    });
+  }
   return { strati };
 }

@@ -27,7 +27,7 @@ const INK = STILE.inchiostro;
 const CARTA = '#fffaf0';
 const OMBRA = '#5d4b7c';                                   // ombre lilla, mai nere
 const VIRATE = ['#f3c46a', '#e8747c', '#86a9d6', '#9cc58a']; // tinte vicine per variare il pigmento
-const MATTONI = ['#f7b59b', '#f9c2a6', '#f4a88c', '#fbcdb4', '#f6ae90', '#f2a083', '#fad3bd'];
+const MATTONI = ['#f6ab8c', '#f8b99c', '#f39e80', '#fac3a8', '#f4a585', '#f09576', '#f9cbb2'];
 const PAVE = ['#f7c39e', '#f5b690', '#f9cda9', '#f3ad86', '#f8c7a2', '#f6bc96'];
 const TEGOLE = ['#d9744a', '#e0855a', '#cf6a42', '#e89a6a', '#d47e55'];
 const SASSI = ['#e6d1a6', '#dcc497', '#eedcb5', '#d6bc8e', '#e2c9a0'];
@@ -395,7 +395,7 @@ function cornicione(D, x0, x1, y, h, colore) {
 function cantonale(D, x, y0, y1, dir, colore) {
   const c = D.c, r = D.r, k = D.k;
   for (let y = y1, j = 0; y > y0 + 4; j++, y -= 0.34 * k) {
-    const w = (j % 2 ? 0.28 : 0.42) * k, bx = dir > 0 ? x : x - w, f = P(puntiMattone(r, bx, y - 0.32 * k, w, 0.3 * k, 0.15), true);
+    const w = (j % 2 ? 0.24 : 0.36) * k, bx = dir > 0 ? x : x - w, f = P(puntiMattone(r, bx, y - 0.32 * k, w, 0.3 * k, 0.15), true);
     macchia(c, f, mescola(colore, CARTA, r() * 0.25), 0.9, 0.25, 2); ink(c, f, 0.9, 0.4);
   }
 }
@@ -720,9 +720,9 @@ function pavimentoPiazza(seme) {
   velatura(c, 0, 0, D.l, Z(-0.9), [conAlfa(OMBRA, 0.38), conAlfa(OMBRA, 0.12), conAlfa(OMBRA, 0)]);  // ombra ai piedi delle case
   bagliore(c, X(12.5), Z(-1.3), 3.6 * k, '#ffd98a', 0.25, 0.35);    // la luce calda della vetrina
   bagliore(c, X(0.2), Z(0), 1.2 * k, '#ffe08a', 0.3, 0.6);           // la luce dorata dal buco nella staccionata
-  for (let i = 0; i < 520; i++) {                                    // muschio verso il vicolo e tra le fughe
-    const vic = i < 380, x = vic ? tra(r, 26.2, 29.8) : tra(r, -3, 34), z = vic ? -2 + Math.pow(r(), 2) * 1.6 : tra(r, -2, -1.4);
-    c.globalAlpha = tra(r, 0.4, 0.8); c.fillStyle = misto(r, ['#8fa676', '#7d9866', '#b5c49a', '#a3b585']);
+  for (let i = 0; i < 300; i++) {                                    // muschio verso il vicolo e ai piedi dei muri
+    const vic = i < 200, x = vic ? tra(r, 26.6, 29.4) : tra(r, -3, 34), z = vic ? -2 + Math.pow(r(), 3) * 1.2 : tra(r, -2, -1.75);
+    c.globalAlpha = tra(r, 0.3, 0.6); c.fillStyle = misto(r, ['#8fa676', '#7d9866', '#b5c49a', '#a3b585']);
     c.beginPath(); c.ellipse(X(x), Z(z), tra(r, 2, 6), tra(r, 1.5, 3), r() * 3, 0, Math.PI * 2); c.fill();
   }
   c.globalAlpha = 1;
@@ -732,7 +732,7 @@ function pavimentoPiazza(seme) {
   }
   for (const [x, z, rx, ry] of [[3, 4.2, 0.35, 0.12], [21.1, 3.85, 1.25, 0.3]]) velo(c, X(x), Z(z), rx * k, OMBRA, 0.35, ry / rx);
   ciuffi(c, r, X(-0.6), X(-0.3), Z(2.4), 6, 0.15 * k); ciuffi(c, r, X(-0.5), X(-0.3), Z(-1.6), 5, 0.15 * k);
-  finitura(D, { basso: [2.4, 0.8, 0.4], sinistra: [1.8, 0.7, 0.45], destra: [1.8, 0.7, 0.45] });
+  finitura(D, { basso: [2.4, 0.8, 0.4], sinistra: [1.4, 0.7, 0.45], destra: [1.8, 0.7, 0.45] });
   return affetta(D, { nome: 'pavimento', normale: 'su', x: -3, y: 0, z: -2 });
 }
 
@@ -752,7 +752,8 @@ function facciate(seme) {
   posa(D, X(5), Y(7.05), X(17), Y(0), { alto: M(0.21), lungo: M(0.48), colori: MATTONI, malta: '#fbe3d4', inch: 0.5, luce: 0.35, sfasa: 0.3, varia: 0.22, tondi: 0.16 });
   for (let i = 0; i < 14; i++) velo(c, X(tra(r, 5, 17)), Y(tra(r, 0.5, 7)), M(tra(r, 0.8, 2)), scegli(r, [CARTA, CARTA, '#f6a98a']), 0.3);
   cornicione(D, X(5), X(17), Y(3.4), M(0.2), '#f8e6d4');
-  for (const x of [7.5, 11.0, 14.5]) finestra(D, X(x), Y(4.1), M(1.1), M(1.75), { arco: true, telaio: '#fbf3e6', vetro: '#c9e0ea', cornice: '#f8e6d4', tenda: true, fiori: ['#e84a5f', '#ff8fa3', '#fff3f0'], colonne: 2, righe: 3 });
+  const arcate = { arco: true, telaio: '#fbf3e6', vetro: '#c9e0ea', cornice: '#f8e6d4', tenda: true, fiori: ['#e84a5f', '#ff8fa3', '#fff3f0'] };
+  for (const x of [7.5, 11.0, 14.5]) finestra(D, X(x), Y(4.1), M(1.1), M(1.75), arcate);
   porta(D, X(7.5), Y(0.06), M(1.1), M(2.3), { arco: true, legno: '#b8977a', vetri: [2, 3], cornice: '#f2b39b', vetro: '#a9c8e6' });
   ink(c, mano(r, [[X(8.62), Y(2.2)], [X(8.82), Y(2.2)], [X(8.82), Y(2.35)]], false, 0.3), 2, 0.9);   // braccio della lanterna
   lanterna(c, r, X(8.82), Y(2.05), M(0.22));
@@ -789,12 +790,12 @@ function facciate(seme) {
   finestra(D, X(21.9), Y(1.08), M(2.6), M(1.8), { ...blu, colonne: 4, righe: 3, davanzale: false });
   porta(D, X(25.0), Y(0), M(1.05), M(2.25), { legno: '#86b2da', vetri: [2, 2], cornice: '#fbecc0', vetro: '#d3e9f4' });
   for (const x of [21.2, 24.9]) finestra(D, X(x), Y(4.0), M(1.05), M(1.5), { ...blu, persiane: '#86b4dc', telaio: '#f6f1e6', fiori: x < 22 ? ['#ffffff', '#f6c6d4', '#fff1a8'] : null });
-  cantonale(D, X(26.8), Y(6.3), Y(0.95), -1, '#fbe9b4');
+  cantonale(D, X(26.8), Y(6.3), Y(0.95), -1, '#fbe6a6');
   pluviale(D, X(19.7), Y(6.2), Y(0.95));
   // --- la casa VERDE ACQUA (29.2..34)
   lavaggio(D, null, X(29.2), Y(6.6), M(4.8), M(6.6), '#a6d8d0', { variazione: 0.24 });
   zoccolo(D, X(29.2), X(34), 0.45, '#86bcb6');
-  cantonale(D, X(29.2), Y(6.6), Y(0.45), 1, '#c4e6df');
+  cantonale(D, X(29.2), Y(6.6), Y(0.45), 1, '#bfe3dc');
   const gialle = { persiane: '#f2cf7a', telaio: '#fbf6ec', vetro: '#c9e3ee' };
   finestra(D, X(30.7), Y(1.0), M(0.95), M(1.45), { ...gialle, tenda: true });
   porta(D, X(32.8), Y(0), M(1.0), M(2.2), { legno: '#d07c62', vetri: [2, 2], cornice: '#eef3ea' });
@@ -818,7 +819,7 @@ function facciate(seme) {
   velatura(c, 0, 0, D.l, Y(4), ['rgba(255,251,240,0.4)', 'rgba(255,251,240,0)']);             // luce dall'alto
   for (const x of [26.8, 29.2]) velatura(c, X(x) - M(0.5), 0, M(1), D.a, x < 27 ? [conAlfa(OMBRA, 0), conAlfa(OMBRA, 0.22)] : [conAlfa(OMBRA, 0.22), conAlfa(OMBRA, 0)], 1, 'orizzontale');
   c.restore();
-  finitura(D, { sinistra: [2.4, 0.8, 0.5], destra: [2.0, 0.8, 0.5], alto: [1.4, 0.6, 0] });
+  finitura(D, { sinistra: [1.6, 0.8, 0.5], destra: [2.0, 0.8, 0.5], alto: [1.4, 0.6, 0] });
   return affetta(D, { nome: 'facciate', normale: 'z+', x: -3, y: 0, z: -2 });
 }
 
@@ -967,7 +968,7 @@ function fronde(seme, x, specchio) {
   const D = dipinto(3.2, 2.2, 100, seme), { c, r, k } = D;
   if (specchio) { c.translate(D.l, 0); c.scale(-1, 1); }
   for (let b = 0; b < 4; b++) {
-    const pts = [[tra(r, -0.2, 1.4) * k, -6]]; let a = tra(r, 0.7, 1.4);
+    const pts = [[tra(r, 0.3, 1.5) * k, -6]]; let a = tra(r, 0.8, 1.4);
     for (let s = 0; s < 13; s++) { a += tra(r, -0.12, 0.2); const [px, py] = pts[pts.length - 1]; pts.push([px + Math.cos(a) * 0.12 * k, py + Math.sin(a) * 0.12 * k]); }
     linea(c, Forme.curva(pts), { colore: '#5b4a35', spessore: 3, alfa: 0.9 });
     pts.forEach(([px, py], i) => {
@@ -976,7 +977,8 @@ function fronde(seme, x, specchio) {
       for (const s of [-1, 1]) foglia(c, px, py, dir + s * tra(r, 0.6, 1.2), tra(r, 0.18, 0.28) * k, 0.07 * k, scegli(r, ['#2f6b4a', '#3f7d57', '#5d9a63', '#7fb57a']), 0.65);
     });
   }
-  finitura(D, null, 0.6);
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  finitura(D, { sinistra: [0.3, 0, 1], destra: [0.3, 0, 1], basso: [0.3, 0, 1] }, 0.6);
   return affetta(D, { nome: specchio ? 'fronde_destra' : 'fronde_sinistra', normale: 'z+', x, y: 2.7, z: 4.8, tremola: 0.6, ordine: 2 });
 }
 
@@ -1114,7 +1116,10 @@ function pareteFondo(seme) {
   ink(c, bocca, 1.6); ink(c, forno, 1.4);
   const piano = R(X(7.95), Y(0.58), M(1.6), M(0.1), 2); macchia(c, piano, '#efdcc4'); ink(c, piano, 1.2); ombraSotto(c, X(7.95), Y(0.48), M(1.6), M(0.12), 0.35);
   const nicchia = R(X(8.15), Y(0.42), M(1.2), M(0.34), 3); macchia(c, nicchia, '#4a3634', 1, 0); ink(c, nicchia, 1.2);
-  for (let i = 0; i < 9; i++) { const lx = X(8.27 + (i % 5) * 0.24 + (i > 4 ? 0.12 : 0)), ly = Y(0.18 + (i > 4 ? 0.14 : 0)), t = C(lx, ly, M(0.07)); macchia(c, t, '#d9a874'); ink(c, C(lx, ly, M(0.03)), 0.7, 0.5); ink(c, t, 1); }
+  for (let i = 0; i < 9; i++) {                                     // la legna impilata
+    const lx = X(8.27 + (i % 5) * 0.24 + (i > 4 ? 0.12 : 0)), ly = Y(0.18 + (i > 4 ? 0.14 : 0)), t = C(lx, ly, M(0.07));
+    macchia(c, t, '#d9a874'); ink(c, C(lx, ly, M(0.03)), 0.7, 0.5); ink(c, t, 1);
+  }
   const pala = new Path2D(); pala.moveTo(X(7.18), Y(2.2)); pala.lineTo(X(7.3), Y(0.42));    // la pala del fornaio
   c.save(); c.strokeStyle = '#d9b07a'; c.lineWidth = M(0.05); c.lineCap = 'round'; c.stroke(pala); c.restore(); ink(c, pala, 0.9, 0.7);
   const paletta = R(X(7.12), Y(0.45), M(0.36), M(0.45), M(0.12)); macchia(c, paletta, '#e3bd88'); ink(c, paletta, 1.2);
@@ -1176,7 +1181,10 @@ function pianoBancone(seme) {
   lavaggio(D, null, 0, 0, D.l, D.a, '#c9925e', { variazione: 0.2, colature: 0, fioriture: 3 });
   const v = new Path2D(); for (let z = -1.7; z < -1.1; z += 0.13) mano(r, [[0, Z(z)], [D.l, Z(z)]], false, 0.8, v); ink(c, v, 0.8, 0.35);
   const vas = R(X(2.8), Z(-1.62), M(0.9), M(0.4), 6); macchia(c, vas, '#e8d9bc'); ink(c, vas, 1.2);
-  for (let i = 0; i < 6; i++) { const p = C(X(2.97 + (i % 3) * 0.28), Z(-1.52 + Math.floor(i / 3) * 0.2), M(0.09)); macchia(c, p, '#e9a85e', 0.97, 0.4); volumeTondo(c, p, X(2.97 + (i % 3) * 0.28), Z(-1.52 + Math.floor(i / 3) * 0.2), M(0.09), M(0.09)); ink(c, p, 1); }
+  for (let i = 0; i < 6; i++) {                                     // panini visti dall'alto
+    const px = X(2.97 + (i % 3) * 0.28), pz = Z(-1.52 + Math.floor(i / 3) * 0.2), p = C(px, pz, M(0.09));
+    macchia(c, p, '#e9a85e', 0.97, 0.4); volumeTondo(c, p, px, pz, M(0.09), M(0.09)); ink(c, p, 1);
+  }
   const camp = C(X(6.05), Z(-1.35), M(0.07)); macchia(c, camp, '#e0bb5a'); volumeTondo(c, camp, X(6.05), Z(-1.35), M(0.07), M(0.07)); ink(c, camp, 1.1);
   const torta = C(X(4.9), Z(-1.45), M(0.22)); macchia(c, torta, '#f6e6e8', 0.95); tinta(c, C(X(4.9), Z(-1.45), M(0.15)), '#f2a8b8', 0.8); ink(c, torta, 1.1);
   velatura(c, 0, D.a - M(0.05), D.l, M(0.05), ['rgba(255,240,215,0)', 'rgba(255,240,215,0.6)']);
@@ -1200,7 +1208,8 @@ function pareteSinistra(seme) {
   porta(D, U(0.95), Y(0), M(1.1), M(2.3), { legno: '#b8977a', vetri: [2, 3], vetro: '#fff6dc', cornice: '#f3e6d0', gradino: false });
   const cx = U(0.95), cy = Y(2.55);                                    // il campanello sopra la porta
   ink(c, mano(r, [[cx - M(0.25), Y(2.46)], [cx - M(0.25), cy], [cx, cy], [cx, cy + M(0.06)]], false, 0.4), 1.8);
-  const camp = new Path2D(); camp.moveTo(cx - M(0.07), cy + M(0.18)); camp.quadraticCurveTo(cx - M(0.07), cy + M(0.05), cx, cy + M(0.05)); camp.quadraticCurveTo(cx + M(0.07), cy + M(0.05), cx + M(0.07), cy + M(0.18)); camp.closePath();
+  const camp = new Path2D(); camp.moveTo(cx - M(0.07), cy + M(0.18));
+  camp.quadraticCurveTo(cx - M(0.07), cy + M(0.05), cx, cy + M(0.05)); camp.quadraticCurveTo(cx + M(0.07), cy + M(0.05), cx + M(0.07), cy + M(0.18)); camp.closePath();
   macchia(c, camp, '#e2bd5c'); volume(c, camp, cx - M(0.07), cy, M(0.14), M(0.18), 0.8); ink(c, camp, 1.2); tinta(c, C(cx, cy + M(0.2), M(0.025)), '#a8823a');
   const quadro = R(U(2.6), Y(2.4), M(0.6), M(0.45), 2); macchia(c, quadro, '#d8e8d0'); chioma(c, r, U(2.3), Y(2.05), M(0.12), M(0.1), VERDI, { ink: 0 }); ink(c, quadro, 1.2);
   c.save(); c.lineWidth = M(0.04); c.strokeStyle = '#a8714a'; c.stroke(quadro); c.restore();
@@ -1231,7 +1240,10 @@ function pareteDestra(seme) {
   for (const y of [1.15, 1.65, 2.15]) {                                 // mensole con barattoli e sacchetti
     for (let z = -2.75; z < -1.3; z += tra(r, 0.22, 0.32)) {
       const x = U(z), q = r();
-      if (q < 0.4) { const b = R(x, Y(y + 0.3), M(0.18), M(0.3), 4); macchia(c, b, '#e9f0ec', 0.8); tinta(c, R(x + 2, Y(y + 0.18), M(0.18) - 4, M(0.16)), scegli(r, ['#f3d9a0', '#e8c48a', '#f6e8c8']), 0.8); ink(c, b, 1.1); tinta(c, R(x - 1, Y(y + 0.33), M(0.2), M(0.05)), '#d9774f'); }
+      if (q < 0.4) {                                                // barattolo di vetro con il tappo
+        const b = R(x, Y(y + 0.3), M(0.18), M(0.3), 4); macchia(c, b, '#e9f0ec', 0.8);
+        tinta(c, R(x + 2, Y(y + 0.18), M(0.18) - 4, M(0.16)), scegli(r, ['#f3d9a0', '#e8c48a', '#f6e8c8']), 0.8); ink(c, b, 1.1); tinta(c, R(x - 1, Y(y + 0.33), M(0.2), M(0.05)), '#d9774f');
+      }
       else if (q < 0.7) { const s = R(x, Y(y + 0.26), M(0.2), M(0.26), 5); macchia(c, s, '#efe2c4'); ink(c, s, 1.1); }
       else paneTondo(c, r, x + M(0.12), Y(y), M(0.26));
     }
