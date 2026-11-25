@@ -11,6 +11,10 @@ on:
   # Permette anche di avviarlo a mano dalla scheda "Actions" di GitHub.
   workflow_dispatch:
 
+# Serve il permesso di scrittura per pubblicare l'APK nella Release.
+permissions:
+  contents: write
+
 jobs:
   apk:
     runs-on: ubuntu-latest
@@ -62,3 +66,20 @@ jobs:
           path: TocchiDiColore/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
+
+      # 8. Pubblica l'APK nella Release "apk": un link fisso che scarica
+      #    direttamente il file sul telefono, senza zip e senza accesso a GitHub:
+      #    https://github.com/<utente>/<repository>/releases/download/apk/TocchiDiColore.apk
+      #    A ogni nuova compilazione il file viene sostituito con quello aggiornato.
+      - name: Pubblica l'APK nella Release
+        working-directory: TocchiDiColore/android
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk TocchiDiColore.apk
+          if ! gh release view apk --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release create apk --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+              --title "Tocchi di Colore - APK per Android" \
+              --notes "Scarica TocchiDiColore.apk sul telefono Android e aprilo per installarlo (consenti le «origini sconosciute»). Il file viene aggiornato a ogni nuova versione del gioco."
+          fi
+          gh release upload apk TocchiDiColore.apk --repo "$GITHUB_REPOSITORY" --clobber
