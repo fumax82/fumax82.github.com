@@ -36,14 +36,14 @@ export default {
     ] },
     // 2. di fianco: la camera accompagna Lia e piano piano gira e sale
     { da: 9, a: 21, tipo: 'segui', taglio: true, chiavi: [
-      { s: 9, pos: [0.7, 1.3, 4.5], guarda: [0.8, 0.8, 0] },
-      { s: 15, pos: [-0.3, 1.6, 5.1], guarda: [0.7, 0.9, 0] },
-      { s: 21, pos: [-1.5, 2.0, 5.7], guarda: [0.6, 1.0, 0], fov: 37 },
+      { s: 9, pos: [0.7, 1.15, 3.5], guarda: [0.8, 0.75, 0] },
+      { s: 15, pos: [-0.3, 1.4, 4.0], guarda: [0.7, 0.85, 0] },
+      { s: 21, pos: [-1.4, 1.8, 4.6], guarda: [0.6, 0.95, 0], fov: 37 },
     ] },
     // 3. campo largo dall'altro marciapiede: tutta la via (arriva il ladro)
     { da: 21, a: 31, tipo: 'segui', taglio: true, anticipo: 1.6, chiavi: [
-      { s: 21, pos: [1.2, 2.9, 8.8], guarda: [1.2, 1.3, -0.6], fov: 36 },
-      { s: 31, pos: [-0.5, 2.5, 8.2], guarda: [1.0, 1.2, -0.6] },
+      { s: 21, pos: [1.2, 2.3, 6.9], guarda: [1.2, 1.15, -0.6], fov: 36 },
+      { s: 31, pos: [-0.5, 2.0, 6.4], guarda: [1.0, 1.05, -0.6] },
     ] },
     // 4. tre quarti da davanti: Lia ci viene incontro, la via si apre dietro di lei
     { da: 31, a: 39, tipo: 'segui', taglio: true, chiavi: [
@@ -61,8 +61,8 @@ export default {
   attori: [
     { id: 'biscotto', tipo: 'animale', arte: 'biscotto', nome: 'Biscotto', x: 3.2, z: 0.32 },
     { id: 'ladro', tipo: 'attore', arte: 'ladro', nome: 'L\'uomo col berretto', x: 60, z: 0.5, visibile: false, velocita: 1.3, lunghezzaPasso: 1.5 },
-    { id: 'signora', tipo: 'persona', arte: 'signora', nome: 'Signora', x: 8, z: 8.4, y: 0.08, ronda: [[30, 8.4], [4, 8.4]], velocita: 0.9, parla: false },
-    { id: 'signore', tipo: 'persona', arte: 'signore', nome: 'Signore', x: 30, z: -1.15, y: 0.08, ronda: [[6, -1.15], [34, -1.15]], velocita: 1.0, parla: false },
+    // una signora passeggia lungo le vetrine, dietro a Lia
+    { id: 'signora', tipo: 'persona', arte: 'signora', nome: 'Signora', x: 16, z: -1.2, y: 0.08, ronda: [[3, -1.2], [21, -1.2]], velocita: 0.8, parla: false },
     { id: 'auto1', tipo: 'veicolo', arte: 'auto_rossa', da: [-14, 3.0], a: [60, 3.0], velocita: 3.2, parti: 0.2 },
     { id: 'auto2', tipo: 'veicolo', arte: 'autobus', da: [60, 5.7], a: [-14, 5.7], velocita: 2.6, parti: 0.55 },
     { id: 'auto3', tipo: 'veicolo', arte: 'auto_gialla', da: [-14, 3.0], a: [60, 3.0], velocita: 3.0, parti: 0.75 },

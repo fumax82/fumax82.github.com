@@ -375,6 +375,9 @@ export class Veicolo extends Attore {
 
   disegna(camera) {
     if (!this.visibile) return;
+    // un'auto che passa proprio davanti all'obiettivo svanisce (non copre la scena)
+    const d = camera.position.distanceTo(this.sagoma.mesh.position);
+    this.sagoma.opacita = Math.min(1, Math.max(0, (d - 2.2) / 2.5));
     const v = vistaDa(this.dir, camera);
     const f = this.sagoma.atlante.fotogrammi;
     this.sagoma.mostra(f[v.vista] ? v.vista : 'lato', v.vista === 'lato' ? v.specchio : false);

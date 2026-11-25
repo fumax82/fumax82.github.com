@@ -101,8 +101,9 @@ body:not(.touch) #btnToc { width: 70px; height: 70px; font-size: 17px; }
 
 /* ---------------------------- pensieri ----------------------------------- */
 #messaggio {
-  position: fixed; left: 50%; bottom: max(78px, calc(env(safe-area-inset-bottom) + 66px));
-  transform: translate(-50%, 10px); max-width: min(680px, 70vw);
+  /* in alto: in basso coprirebbe Lia, che le inquadrature tengono nella parte bassa dello schermo */
+  position: fixed; left: 50%; top: max(66px, calc(env(safe-area-inset-top) + 56px));
+  transform: translate(-50%, -10px); max-width: min(640px, 62vw);
   padding: 10px 20px; font-family: var(--scrittura); font-size: clamp(15px, 2.3vw, 21px); font-style: italic; text-align: center;
   background: rgba(251, 246, 234, 0.9); border: 2px solid var(--inchiostro); border-radius: 20px 14px 22px 12px;
   box-shadow: 3px 4px 0 rgba(107, 75, 55, 0.18);
