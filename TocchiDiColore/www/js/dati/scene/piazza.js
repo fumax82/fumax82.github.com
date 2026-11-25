@@ -15,7 +15,7 @@ export default {
     staccionata: { s: 0.7, verso: 1 },
     dal_forno: { s: 7.5, verso: 1 },
   },
-  atmosfera: { foschia: [20, 110] },
+  atmosfera: { foschia: [20, 110], bordoBianco: 1 },
   cielo: {
     sfondi: [
       { arte: 'panorama_mucchio', raggio: 170, ripeti: 4, foschia: 0.25, y: -4 },

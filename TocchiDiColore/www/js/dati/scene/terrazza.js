@@ -10,7 +10,7 @@ export default {
   musica: 'citta',
   percorso: [[0, 0, 0], [14, 0, 0]],
   arrivi: { scala: { s: 1.0, verso: 1 } },
-  atmosfera: { foschia: [26, 140] },
+  atmosfera: { foschia: [26, 140], bordoBianco: 0.85 },
   cielo: {
     sfondi: [
       { arte: 'panorama_colline', raggio: 230, ripeti: 3, foschia: 0.35, y: -12 },

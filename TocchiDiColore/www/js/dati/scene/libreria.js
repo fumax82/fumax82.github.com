@@ -11,7 +11,7 @@ export default {
   percorso: [[0, 0, 0.2], [9, 0, 0.2]],
   arrivi: { ingresso: { s: 0.8, verso: 1 } },
   superficie: 'legno',
-  atmosfera: { tuttoVisibile: true, foschia: [30, 90], luce: '#fff6ea' },
+  atmosfera: { tuttoVisibile: true, foschia: [30, 90], luce: '#fff6ea', bordoBianco: 0.3 },
   inquadrature: [
     // la camera accompagna Lia dentro la stanza, senza uscire dalle pareti
     { da: 0, a: 9, tipo: 'segui', taglio: true, anticipo: 0.5, limitiX: [1.7, 7.3], seguiAltezza: 0, chiavi: [

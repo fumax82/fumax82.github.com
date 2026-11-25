@@ -31,7 +31,7 @@ export default {
     dalla_terrazza: { s: 40.2, verso: -1 },
   },
   superfici: [{ da: 12, a: 22.1, tipo: 'legno' }],
-  atmosfera: { foschia: [24, 120] },
+  atmosfera: { foschia: [24, 120], bordoBianco: 1 },
   cielo: {
     sfondi: [
       { arte: 'panorama_mucchio', raggio: 160, ripeti: 4, foschia: 0.2, y: -5, rotazione: 0.6 },

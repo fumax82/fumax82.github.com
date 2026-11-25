@@ -470,7 +470,7 @@ function finestra(f, cx, y, l, a, o) {
   g.addColorStop(0, schiarisci(vetro, 0.2)); g.addColorStop(0.55, vetro); g.addColorStop(1, scurisci(vetro, 0.35));
   c.fillStyle = g; c.fillRect(x, y, l, a);
   if (o.tende) { c.globalAlpha = 0.6; c.fillStyle = o.tende; c.fill(blob(r, x + 0.08, y + a * 0.5, l * 0.22, a * 0.55, 9, 0.12)); }
-  c.globalAlpha = 0.22; c.fillStyle = '#ffffff';
+  c.globalAlpha = 0.17; c.fillStyle = '#ffffff';
   for (const k of [0.15, 0.55]) {
     const d = l * k;
     c.fill(Forme.poligono([[x + d, y], [x + d + l * 0.22, y], [x + d + l * 0.22 + a * 0.5, y + a], [x + d + a * 0.5, y + a]]));
@@ -530,18 +530,16 @@ function porta(f, cx, l, a, o) {
     lava(f, g, '#e9e2d2', [x - 0.3, 0, l + 0.6, 0.5], { seme: seme + i, macchie: 1, raggio: 0.4, luce: false });
     sfumaV(f, x - 0.3, 0, l + 0.6, 0.12, om(0.25), om(0)); ink(f, g, 1.1, 0.8);
   }
-  const R = l / 2, forma = (d, dy) => (o.arco ? arcata(x + d, y0 + (dy || 0), l - 2 * d, a - d) : rett(x + d, y0 + (dy || 0), l - 2 * d, a - d));
+  const R = l / 2, forma = (d) => (o.arco ? arcata(x + d, y0, l - 2 * d, a - d) : rett(x + d, y0, l - 2 * d, a - d));
   lava(f, forma(-0.13), o.cornice || '#efe4cc', [x - 0.14, y0, l + 0.28, a + 0.15], { seme: seme + 3, macchie: 2, raggio: 0.6, bordo: 0.4 });
-  ink(f, forma(-0.13), 1.2, 0.8);
-  piatto(f, forma(0), scurisci(legno, 0.55));
+  ink(f, forma(-0.13), 1.2, 0.8); piatto(f, forma(0), scurisci(legno, 0.55));      // cornice di pietra e vano scuro
   const n = o.ante || 2, la = l / n, ha = o.arco ? a - R : o.lunetta ? a - 0.42 : a, venature = new Path2D();
   for (let i = 0; i < n; i++) {
     const ax = x + i * la, fa = rett(ax + 0.015, y0, la - 0.03, ha - 0.02);
     lava(f, fa, legno, [ax, y0, la, ha], { seme: seme + 10 + i, macchie: 3, raggio: 0.7, segni: 4, bordo: 0.45 });
     for (let k = 0; k < 5; k++) { const vx = ax + tra(r, 0.05, la - 0.05); mano(f, r, [[vx, y0 + 0.05], [vx + tra(r, -0.02, 0.02), y0 + ha - 0.08]], false, 0.8, venature); }
-    const basso = rett(ax + 0.09, y0 + 0.14, la - 0.21, ha * 0.36);
-    piatto(f, basso, om(0.18)); ink(f, basso, 0.9, 0.65);
-    const alto = rett(ax + 0.09, y0 + ha * 0.52, la - 0.21, ha * 0.4);
+    const basso = rett(ax + 0.09, y0 + 0.14, la - 0.21, ha * 0.36), alto = rett(ax + 0.09, y0 + ha * 0.52, la - 0.21, ha * 0.4);
+    piatto(f, basso, om(0.18)); ink(f, basso, 0.9, 0.65);                  // pannello basso e pannello alto (o vetro)
     if (o.vetri) {
       piatto(f, alto, '#8fb0c8'); sfumaV(f, ax + 0.09, y0 + ha * 0.52, la - 0.21, ha * 0.4, lu(0.4), om(0.3));
       piatto(f, Forme.poligono([[ax + 0.12, y0 + ha * 0.55], [ax + 0.2, y0 + ha * 0.55], [ax + la - 0.14, y0 + ha * 0.88], [ax + la - 0.22, y0 + ha * 0.88]]), lu(0.4));
@@ -553,8 +551,8 @@ function porta(f, cx, l, a, o) {
   ink(f, venature, 0.6, 0.25);
   if (o.arco || o.lunetta) {                            // lunetta a vetri sopra le ante
     const yl = y0 + ha, lun = o.arco ? arcata(x + 0.05, yl, l - 0.1, a - ha - 0.05) : rett(x + 0.05, yl + 0.04, l - 0.1, a - ha - 0.09);
-    piatto(f, lun, '#86a7c0'); piatto(f, lun, lu(0.25));
     const raggi = new Path2D();
+    piatto(f, lun, '#86a7c0'); piatto(f, lun, lu(0.25));
     for (let k = 1; k < 5; k++) { const an = (k / 5) * Math.PI; raggi.moveTo(cx, yl + 0.02); raggi.lineTo(cx + Math.cos(an) * R, yl + 0.02 + Math.sin(an) * (a - ha)); }
     f.c.save(); f.c.clip(lun); ink(f, raggi, 1.4, 0.7, '#f4eee2'); f.c.restore();
     ink(f, lun, 1, 0.75);
@@ -616,7 +614,7 @@ function vasoTondo(f, cx, y, l, seme, fioriti) {
 }
 
 /* ====================== 6. LE CASE DELLA FILA VICINA ====================== */
-// Ogni casa: { da, a, cima (punto più alto), dipingi(f) }. Piano terra 0.08..3.2,
+// Ogni casa è [da x, a x, cima (punto più alto), funzione che la dipinge]. Piano terra 0.08..3.2,
 // primo piano 3.2..6.2, secondo 6.2..9.2 (circa).
 
 function casaGialla(f) {
@@ -895,8 +893,7 @@ function casaAzzurra(f) {
 /** I tre vasi dell'angolo: foglie larghe, lavanda, bonsai (in ombra, colori freddi). */
 function vasiSera(f) {
   const c = f.c;
-  // ombre morbide sul muro, verso sinistra
-  c.save(); c.filter = 'blur(' + (0.08 * f.S).toFixed(1) + 'px)';
+  c.save(); c.filter = 'blur(' + (0.08 * f.S).toFixed(1) + 'px)';          // ombre morbide sul muro, verso sinistra
   for (const [x, l, a] of [[41.1, 0.7, 1.2], [42.2, 0.6, 0.9], [43.3, 0.8, 1.2]]) piatto(f, blob(casuale(x * 10), x - 0.2, a * 0.55, l * 0.6, a * 0.55, 9, 0.2), om(0.35));
   c.restore();
   // 1) foglie larghe e scure
@@ -918,9 +915,8 @@ function vasiSera(f) {
   ink(f, steli, 1.1, 0.7, '#5f7a62');
   const v2 = rett(42.12, 0.08, 0.48, 0.38);
   lava(f, v2, '#8a7464', [42, 0, 0.7, 0.5], { seme: 4211, macchie: 2, raggio: 0.4, luce: false });
-  const assi = new Path2D(); assi.moveTo(42.12, 0.2); assi.lineTo(42.6, 0.2); assi.moveTo(42.12, 0.33); assi.lineTo(42.6, 0.33);
-  ink(f, assi, 0.8, 0.5); ink(f, v2, 1.2, 0.85);
-  // 3) bonsai: tronco contorto e "cuscini" di foglie piatti
+  ink(f, rett(42.12, 0.2, 0.48, 0.13), 0.8, 0.5); ink(f, v2, 1.2, 0.85);
+  // 3) bonsai: tronco contorto e "cuscini" di aghi
   ramo(f, [[43.5, 0.45], [43.42, 0.65], [43.58, 0.85], [43.46, 1.05], [43.55, 1.25]], 0.07, 0.03, '#7b6250');
   ramo(f, [[43.5, 0.8], [43.3, 0.88], [43.12, 0.86]], 0.035, 0.015, '#7b6250');
   ramo(f, [[43.56, 0.98], [43.75, 1.05], [43.9, 1.02]], 0.03, 0.015, '#7b6250');
@@ -937,14 +933,11 @@ function angoloSera(f) {
   const x0 = 38, x1 = 54, alto = 9.1, s = 1001, r = casuale(s), c = f.c;
   const forma = parete(f, x0, x1, alto, '#7491a3', s, { zoccolo: 0.45, coloreZoccolo: '#627d90' });
   sfumaV(f, x0, 0, x1 - x0, alto, om(0.3), 'rgba(205,222,236,0.22)');  // più scuro in basso, riflesso del cielo in alto
-  for (const [x, y, rx, ry] of [[40.5, 7.5, 2.6, 1.6], [44.5, 5.2, 2.2, 1.4], [39.2, 1.0, 1.6, 1.0]]) {
-    piatto(f, blob(r, x, y, rx, ry, 10, 0.3), '#4f6878', 0.16);       // grandi macchie d'ombra
-  }
+  for (const [x, y, rx, ry] of [[40.5, 7.5, 2.6, 1.6], [44.5, 5.2, 2.2, 1.4], [39.2, 1.0, 1.6, 1.0]]) piatto(f, blob(r, x, y, rx, ry, 10, 0.3), '#4f6878', 0.16);
   // toppa di intonaco caduto: mattoni scoperti
   const toppa = blob(r, 39.35, 3.0, 0.9, 1.6, 22, 0.22, true);
   mattoni(f, toppa, 38.3, 1.2, 2.2, 3.7, { seme: s + 2, malta: '#a8a6b0', colori: ['#8e6a63', '#9b766d', '#7d5d5a', '#a88275'] });
-  c.save(); c.translate(0.035, -0.035); ink(f, toppa, 3, 0.45, '#c9d4de'); c.restore();
-  ink(f, toppa, 1.2, 0.8);
+  c.save(); c.translate(0.035, -0.035); ink(f, toppa, 3, 0.45, '#c9d4de'); c.restore(); ink(f, toppa, 1.2, 0.8); // spessore dell'intonaco
   // finestre con le persiane chiuse
   const opz = { chiuse: true, persiane: '#6b8b8e', cornice: '#a8b8c6', pietra: '#b4c0ca', vetro: '#4f6a80' };
   finestra(f, 42.4, 2.55, 1.05, 1.55, opz);
@@ -965,9 +958,7 @@ function angoloSera(f) {
   const edera = ['#2f5f48', '#4e8758', '#7fb36c'], steli = new Path2D();
   for (let k = 0; k < 4; k++) mano(f, r, [[46.55, 1.9], [46.35 - k * 0.12, 2.5 + k * 0.15], [46.3 - k * 0.2, 3.0 + k * 0.15]], false, 1.5, steli);
   ink(f, steli, 1.4, 0.7, '#5a6a40');
-  for (const [x, y, rx, ry] of [[46.4, 2.05, 0.32, 0.3], [46.25, 2.6, 0.28, 0.25], [46.0, 3.2, 0.22, 0.2], [45.75, 3.65, 0.16, 0.15], [46.5, 1.5, 0.15, 0.3]]) {
-    cespo(f, x, y, rx, ry, { colori: edera, dim: 0.13, seme: Math.round(s + x * 10 + y * 100), ink: 0.55, edera: true });
-  }
+  for (const [x, y, rx, ry] of [[46.4, 2.05, 0.32, 0.3], [46.25, 2.6, 0.28, 0.25], [46.0, 3.2, 0.22, 0.2], [45.75, 3.65, 0.16, 0.15], [46.5, 1.5, 0.15, 0.3]]) cespo(f, x, y, rx, ry, { colori: edera, dim: 0.13, seme: Math.round(s + x * 10 + y * 100), ink: 0.55, edera: true });
   for (let k = 0; k < 4; k++) tralcio(f, 46.1 + k * 0.12, 2.3 - k * 0.1, 0.6 + k * 0.3, { seme: s + 30 + k, foglie: edera, dim: 0.12, edera: true });
   tetto(f, 'ardesia', x0, x1, alto, 0.7, '#5c6e82', s + 9);
   finisci(f, x0, x1, forma);
@@ -976,17 +967,14 @@ function angoloSera(f) {
   const orlo = [[X1 + 5, -2]];                                       // un orlo ondulato, come un acquerello che finisce
   for (let y = -1; y <= 11; y += 0.25) orlo.push([STECCATO_X + 0.35 + Math.sin(y * 2.1) * 0.08 + tra(r, -0.06, 0.06), y]);
   orlo.push([STECCATO_X + 0.4, 13], [X1 + 5, 13]);
-  c.save(); c.globalCompositeOperation = 'destination-out';
-  c.filter = 'blur(' + (0.05 * f.S).toFixed(1) + 'px)';
-  piatto(f, Forme.poligono(orlo, false), '#000');
-  c.restore();
+  c.save(); c.globalCompositeOperation = 'destination-out'; c.filter = 'blur(' + (0.05 * f.S).toFixed(1) + 'px)';
+  piatto(f, Forme.poligono(orlo, false), '#000'); c.restore();
 }
 
 // (il muro del giardino è dipinto per primo: la sua chioma sta DIETRO le case vicine)
 const CASE = [
-  [9.3, 13.2, 6.8, muroGiardino], [-10, 0, 11.4, casaGialla], [0, 4, 9.8, casaMattoni], [4, 10, 9.8, casaArancio],
-  [12.5, 18, 8.4, caffe], [18, 23, 9.6, casaCrema],
-  [23, 28, 9.0, casaSalvia], [28, 33, 10.6, casaRosa], [33, 38, 9.4, casaAzzurra], [38, 54, 10.0, angoloSera],
+  [9.3, 13.2, 6.8, muroGiardino], [-10, 0, 11.4, casaGialla], [0, 4, 9.8, casaMattoni], [4, 10, 9.8, casaArancio], [12.5, 18, 8.4, caffe],
+  [18, 23, 9.6, casaCrema], [23, 28, 9.0, casaSalvia], [28, 33, 10.6, casaRosa], [33, 38, 9.4, casaAzzurra], [38, 54, 10.0, angoloSera],
 ];
 
 /* ======================= 7. LA FILA DI FRONTE (lontana) ======================= */
@@ -1058,10 +1046,8 @@ function dipingiMarciapiede(f) {
   for (let x = X0; x < X1; x += 0.4) {
     if (!vede(f, x, x + 0.4)) continue;
     tess.rect(x + 0.01, 0.46, 0.38, 0.38);
-    for (let k = 0; k < 4; k++) {
-      const z = 0.5 + k * 0.088;
-      barre.addPath(Forme.rettangolo(x + 0.045, z, 0.31, 0.045, 0.02));
-      ombre.addPath(Forme.rettangolo(x + 0.055, z + 0.014, 0.31, 0.045, 0.02));
+    for (let z = 0.5; z < 0.8; z += 0.088) {                       // quattro barre per piastrella, con la loro ombra
+      barre.addPath(Forme.rettangolo(x + 0.045, z, 0.31, 0.045, 0.02)); ombre.addPath(Forme.rettangolo(x + 0.055, z + 0.014, 0.31, 0.045, 0.02));
     }
   }
   piatto(f, tess, '#f0d676');
@@ -1074,10 +1060,9 @@ function dipingiMarciapiede(f) {
   sfumaV(f, f.u0, -1.8, f.u1 - f.u0, 0.55, om(0.3), om(0));
   for (const [cx, l] of GRADINI) {
     if (!vede(f, cx - l, cx + l)) continue;
-    const g = rett(cx - l / 2 - 0.3, -1.8, l + 0.6, 0.28);
+    const area = [cx - l / 2 - 0.3, -1.8, l + 0.6, 0.28], g = rett(...area);
     sfumaV(f, cx - l / 2 - 0.25, -1.52, l + 0.6, 0.12, om(0.3), om(0));
-    lava(f, g, '#ebe5d6', [cx - l / 2 - 0.3, -1.8, l + 0.6, 0.28], { seme: Math.round(cx * 10), macchie: 1, raggio: 0.4, luce: false });
-    ink(f, g, 1.1, 0.8);
+    lava(f, g, '#ebe5d6', area, { seme: Math.round(cx * 10), macchie: 1, raggio: 0.4, luce: false }); ink(f, g, 1.1, 0.8);
   }
   // griglia di scolo davanti alla casa azzurra
   if (vede(f, 33, 38)) {
@@ -1208,8 +1193,8 @@ function dipingiSteccato(f) {
   // il buco: scuro, con le assi spezzate intorno
   const bordo = [[-0.37, 0], [-0.35, 0.22]];
   for (let k = 0; k <= 12; k++) {                                       // denti delle assi spezzate
-    const t = k / 12, h = 0.33 + Math.sin(t * Math.PI) * 0.2;
-    bordo.push([-0.33 + t * 0.66, h + (k % 2 ? tra(r, 0.03, 0.08) : -tra(r, 0.02, 0.07))]);
+    const t = (k + (k % 12 ? tra(r, -0.35, 0.35) : 0)) / 12, h = 0.33 + Math.sin(t * Math.PI) * 0.2;
+    bordo.push([-0.33 + t * 0.66, h + (k % 2 ? tra(r, 0.0, 0.12) : -tra(r, 0.0, 0.09))]);
   }
   bordo.push([0.35, 0.18], [0.36, 0]);
   const buco = Forme.poligono(bordo);
