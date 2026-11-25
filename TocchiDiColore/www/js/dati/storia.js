@@ -320,12 +320,16 @@ const CAPITOLO_3 = {
     await g.quando(() => distanza(L, gatto) < 3.4);
     g.pensa('Miao? Un gattino! Sembra che voglia farmi strada.', 3.5, true);
     g.obiettivo('Segui il gattino');
+    // Lia non può superare il gattino: è lui che fa strada
+    const percorso = g.corrente.percorso;
+    const trattieni = g.ogni(0.1, () => { L.limiti = [0, Math.max(L.s, percorso.piuVicino(gatto.x, gatto.z).s - 0.7)]; });
     const tappe = [[26.3, 0.3], [27.9, -1.7], [28.3, -6.4], [28.3, -10.4], [28.3, -13.4]];
     for (let k = 0; k < tappe.length; k++) {
       await gatto.percorri([tappe[k]], 1.7);
       gatto.guarda(L.x, L.z);
       if (k < tappe.length - 1) await g.quando(() => distanza(L, gatto) < 2.6);
     }
+    trattieni.ferma();
     gatto.versiAutomatici = false;
     gatto.sempreDiFronte = true;
     gatto.posa('seduto', Infinity);
@@ -349,6 +353,7 @@ const CAPITOLO_3 = {
     gatto.posa('seduto', Infinity);
     g.libera();
     g.controllo(true);
+    L.limiti = null;
     g.interazione('uscita_vicolo', true);
     g.obiettivo('Prosegui oltre il vicolo');
     g.pensa('Sento dell\'acqua che scorre, più avanti...', 3.5);

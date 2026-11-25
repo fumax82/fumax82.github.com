@@ -147,6 +147,7 @@ const FRAG_STRATO = /* glsl */ `
   uniform float uOpacita;
   uniform float uLontano;
   uniform float uColoreCielo;
+  uniform float uSchizzoStrato;
   varying vec2 vUv;
   varying vec3 vMondo;
   void main() {
@@ -172,8 +173,8 @@ const FRAG_STRATO = /* glsl */ `
       float ly = lum(texture2D(uMappa, uv + vec2(0.0, uTexel.y)).rgb) - lum(texture2D(uMappa, uv - vec2(0.0, uTexel.y)).rgb);
       float ax = texture2D(uMappa, uv + vec2(uTexel.x, 0.0)).a - texture2D(uMappa, uv - vec2(uTexel.x, 0.0)).a;
       float ay = texture2D(uMappa, uv + vec2(0.0, uTexel.y)).a - texture2D(uMappa, uv - vec2(0.0, uTexel.y)).a;
-      float bordo = smoothstep(0.05, 0.25, length(vec2(lx, ly)) + length(vec2(ax, ay)) * 0.6);
-      vec3 schizzo = mix(uCarta, uInk, bordo * uSchizzo);
+      float bordo = smoothstep(0.08, 0.32, length(vec2(lx, ly)) + length(vec2(ax, ay)) * 0.6);
+      vec3 schizzo = mix(uCarta, uInk, bordo * uSchizzo * uSchizzoStrato);
       c = mix(schizzo, t.rgb * uLuceScena, v);
     }
     if (uAcqua > 0.5) {
@@ -190,7 +191,7 @@ const FRAG_STRATO = /* glsl */ `
 
 /**
  * Materiale di uno strato dipinto.
- * opz: { acqua, tremola, luce }
+ * opz: { acqua, tremola, luce, lontano, pavimento }
  */
 export function materialeStrato(texture, opz) {
   const o = opz || {};
@@ -206,6 +207,8 @@ export function materialeStrato(texture, opz) {
       uOpacita: { value: 1 },
       uLontano: { value: o.lontano ? 1 : 0 },
       uColoreCielo: UNIFORMI.uColoreCielo,
+      // sui pavimenti (tanti sassi e mattonelle) la matita è più leggera
+      uSchizzoStrato: { value: o.pavimento ? 0.4 : 1 },
     },
     vertexShader: VERT_STRATO,
     fragmentShader: FRAG_STRATO,

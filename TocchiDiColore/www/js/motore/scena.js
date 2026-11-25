@@ -95,7 +95,7 @@ export class Scena {
       const b = ingombro(d);
       const lontano = d.lontano !== undefined ? d.lontano
         : (this.percezione.fuori(b.x0, b.z0, 1) && this.percezione.fuori(b.x1, b.z1, 1) && this.percezione.fuori((b.x0 + b.x1) / 2, (b.z0 + b.z1) / 2, 1));
-      const mat = materialeStrato(tex, { acqua: d.acqua, tremola: d.tremola, luce: d.luce, lontano });
+      const mat = materialeStrato(tex, { acqua: d.acqua, tremola: d.tremola, luce: d.luce, lontano, pavimento: d.normale === 'su' || d.normale === 'giu' });
       const geo = geometriaStrato(d);
       // spostiamo la geometria intorno al suo centro: così l'ordine di disegno
       // dei piani trasparenti (dal più lontano al più vicino) è corretto
