@@ -1,0 +1,17 @@
+{
+  "name": "Tocchi di Colore",
+  "short_name": "Tocchi",
+  "description": "Un'esplorazione in prima e terza persona con l'udito, il tatto e l'immaginazione.",
+  "lang": "it",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#f4eedf",
+  "theme_color": "#f4eedf",
+  "icons": [
+    { "src": "icona-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icona-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icona.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
