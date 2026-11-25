@@ -21,8 +21,9 @@ export default {
   },
   inquadrature: [
     { da: 0, a: 13, tipo: 'segui', taglio: true, chiavi: [
-      { s: 0, pos: [0.4, 1.3, 4.4], guarda: [0.5, 0.85, -0.3] },
-      { s: 13, pos: [-0.8, 1.5, 4.8], guarda: [0.5, 0.9, -0.3] },
+      // un po' più lontana: l'erba e i fiori in primo piano scorrono davanti
+      { s: 0, pos: [0.4, 1.35, 5.4], guarda: [0.5, 0.9, -0.3], fov: 34 },
+      { s: 13, pos: [-0.8, 1.55, 5.8], guarda: [0.5, 0.95, -0.3], fov: 34 },
     ] },
   ],
   attori: [

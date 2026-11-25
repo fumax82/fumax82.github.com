@@ -357,12 +357,16 @@ function fascia(f, x0, x1, y, h, col, dentelli) {
   }
   ink(f, fo, 1.1, 0.75);
 }
-/** Ombra sotto la gronda + tetto di coppi visto di fronte (colonne di tegole curve). */
-function tettoCoppi(f, x0, x1, y, h, col, seme, travi) {
+/**
+ * Tetto visto di fronte, con l'ombra della gronda sul muro.
+ *   tipo 'coppi':   colonne di tegole curve (canali in ombra, dorsi al sole)
+ *   tipo 'ardesia': file di lastrine sfalsate
+ */
+function tetto(f, tipo, x0, x1, y, h, col, seme, travi) {
   if (!vede(f, x0, x1)) return;
-  const r = casuale(seme), xa = x0 - 0.2, xb = x1 + 0.2, c = f.c;
+  const r = casuale(seme), xa = x0 - 0.2, xb = x1 + 0.2, c = f.c, linee = new Path2D(), giunti = new Path2D();
   sfumaV(f, x0, y - 0.7, x1 - x0, 0.7, om(0), om(0.4));
-  if (travi) {
+  if (travi) {                                                      // testate delle travi sotto la gronda
     const p = new Path2D();
     for (let x = xa + 0.2; x < xb - 0.1; x += 0.42) p.rect(x, y - 0.22, 0.09, 0.22);
     piatto(f, p, '#8e5f42'); ink(f, p, 0.9, 0.6);
@@ -370,43 +374,31 @@ function tettoCoppi(f, x0, x1, y, h, col, seme, travi) {
   const forma = mano(f, r, [[xa, y], [xb, y], [xb - 0.06, y + h], [xa + 0.06, y + h]], true, 0.5);
   lava(f, forma, col, [xa, y, xb - xa, h], { seme, raggio: 1.2, variazione: 0.3, bordo: 0.5 });
   c.save(); c.clip(forma);
-  const w = 0.24, solchi = new Path2D(), giri = new Path2D(), bocche = new Path2D();
-  for (let x = xa; x < xb; x += w) {
-    c.fillStyle = conAlfa(scurisci(col, 0.45), 0.35); c.fillRect(x, y, 0.06, h);   // canale in ombra
-    c.fillStyle = lu(0.25); c.fillRect(x + 0.08, y, 0.05, h);                     // dorso al sole
-    mano(f, r, [[x, y], [x, y + h]], false, 0.4, solchi);
-    for (let yy = y + tra(r, 0.12, 0.32); yy < y + h - 0.05; yy += tra(r, 0.3, 0.38)) {
-      giri.moveTo(x + 0.06, yy); giri.quadraticCurveTo(x + w / 2 + 0.03, yy - 0.06, x + w, yy);
+  if (tipo === 'coppi') {
+    const w = 0.24, bocche = new Path2D();
+    for (let x = xa; x < xb; x += w) {
+      c.fillStyle = conAlfa(scurisci(col, 0.45), 0.35); c.fillRect(x, y, 0.06, h);   // canale in ombra
+      c.fillStyle = lu(0.25); c.fillRect(x + 0.08, y, 0.05, h);                     // dorso al sole
+      mano(f, r, [[x, y], [x, y + h]], false, 0.4, linee);
+      for (let yy = y + tra(r, 0.12, 0.32); yy < y + h - 0.05; yy += tra(r, 0.3, 0.38)) {
+        giunti.moveTo(x + 0.06, yy); giunti.quadraticCurveTo(x + w / 2 + 0.03, yy - 0.06, x + w, yy);
+      }
+      bocche.moveTo(x + w - 0.02, y + 0.02); bocche.arc(x + w / 2 + 0.02, y + 0.02, w / 2 - 0.04, 0, Math.PI, false);
     }
-    bocche.moveTo(x + w - 0.02, y + 0.02); bocche.arc(x + w / 2 + 0.02, y + 0.02, w / 2 - 0.04, 0, Math.PI, false);
+    piatto(f, bocche, scurisci(col, 0.5), 0.55);
+  } else {
+    for (let yy = y + 0.17, j = 0; yy < y + h; yy += 0.17, j++) {
+      mano(f, r, [[xa, yy], [xb, yy]], false, 0.5, linee);
+      for (let x = xa + (j % 2) * 0.16; x < xb; x += 0.32) {
+        giunti.moveTo(x, yy - 0.17); giunti.lineTo(x, yy);
+        if (r() < 0.25) piatto(f, rett(x, yy - 0.17, 0.32, 0.17), r() < 0.5 ? lu(0.25) : om(0.15));
+      }
+    }
   }
-  piatto(f, bocche, scurisci(col, 0.5), 0.55);
   c.restore();
-  ink(f, solchi, 0.8, 0.4); ink(f, giri, 0.8, 0.35);
+  ink(f, linee, 0.8, 0.42); ink(f, giunti, 0.75, 0.35);
   const gronda = rett(xa, y - 0.06, xb - xa, 0.12);
-  piatto(f, gronda, '#7d5039'); ink(f, gronda, 1, 0.75);
-  ink(f, forma, 1.3, 0.8);
-}
-/** Tetto di ardesia: file di lastrine sfalsate grigio-azzurre. */
-function tettoArdesia(f, x0, x1, y, h, col, seme) {
-  if (!vede(f, x0, x1)) return;
-  const r = casuale(seme), xa = x0 - 0.15, xb = x1 + 0.15, c = f.c;
-  sfumaV(f, x0, y - 0.6, x1 - x0, 0.6, om(0), om(0.36));
-  const forma = mano(f, r, [[xa, y], [xb, y], [xb - 0.05, y + h], [xa + 0.05, y + h]], true, 0.5);
-  lava(f, forma, col, [xa, y, xb - xa, h], { seme, raggio: 1.2, variazione: 0.3, bordo: 0.5 });
-  c.save(); c.clip(forma);
-  const righe = new Path2D(), giunti = new Path2D();
-  for (let yy = y + 0.17, j = 0; yy < y + h; yy += 0.17, j++) {
-    mano(f, r, [[xa, yy], [xb, yy]], false, 0.5, righe);
-    for (let x = xa + (j % 2) * 0.16; x < xb; x += 0.32) {
-      giunti.moveTo(x, yy - 0.17); giunti.lineTo(x, yy);
-      if (r() < 0.25) piatto(f, rett(x, yy - 0.17, 0.32, 0.17), r() < 0.5 ? lu(0.25) : om(0.15));
-    }
-  }
-  c.restore();
-  ink(f, righe, 0.8, 0.45); ink(f, giunti, 0.7, 0.35);
-  const gronda = rett(xa, y - 0.05, xb - xa, 0.1);
-  piatto(f, gronda, schiarisci(col, 0.5)); ink(f, gronda, 1, 0.7);
+  piatto(f, gronda, tipo === 'coppi' ? '#7d5039' : schiarisci(col, 0.5)); ink(f, gronda, 1, 0.75);
   ink(f, forma, 1.3, 0.8);
 }
 /** Comignolo con cappello e due vasetti. */
@@ -638,7 +630,7 @@ function casaGialla(f) {
     finestra(f, cx, 6.9, 0.95, 1.35, { persiane: sc, chiuse: cx === -8.4 });
   }
   pluviale(f, -0.3, 0.08, alto);
-  tettoCoppi(f, x0, x1, alto, 1.0, '#d9754b', s + 5, true);
+  tetto(f, 'coppi', x0, x1, alto, 1.0, '#d9754b', s + 5, true);
   camino(f, -3.6, alto + 0.6, 0.55, 1.05, '#ebc47c', s + 6);
   camino(f, -8.9, alto + 0.5, 0.45, 0.8, '#ebc47c', s + 7);
   finisci(f, x0, x1, forma);
@@ -680,7 +672,7 @@ function casaArancio(f) {
     finestra(f, cx, 4.15, 0.95, 1.6, { fioriera: cx === 7.3 ? FIORI.verde : FIORI.rossi, contorno: crema });
     finestra(f, cx, 6.75, 0.9, 1.3, { contorno: crema });
   }
-  tettoCoppi(f, x0, x1, alto, 0.9, '#c96b45', s + 9, true);
+  tetto(f, 'coppi', x0, x1, alto, 0.9, '#c96b45', s + 9, true);
   finisci(f, x0, x1, forma);
 }
 
@@ -789,7 +781,7 @@ function caffe(f) {
   ink(f, gesso, 1.3, 0.8, '#f4f1e6');
   vasoTondo(f, 12.95, 0.08, 0.42, s + 7);
   vasoTondo(f, 17.6, 0.08, 0.42, s + 8);
-  tettoArdesia(f, x0, x1, alto, 0.85, '#6f8e86', s + 6);
+  tetto(f, 'ardesia', x0, x1, alto, 0.85, '#6f8e86', s + 6);
   camino(f, 16.9, alto + 0.45, 0.45, 0.8, '#e9cf8c', s + 9);
   finisci(f, x0, x1, forma);
 }
@@ -843,7 +835,7 @@ function casaSalvia(f) {
   }
   fascia(f, x0, x1, 7.72, 0.3, chiaro, true);
   pluviale(f, 27.82, 0.08, alto);
-  tettoCoppi(f, x0, x1, alto, 0.75, '#cf6d48', s + 9, false);
+  tetto(f, 'coppi', x0, x1, alto, 0.75, '#cf6d48', s + 9, false);
   finisci(f, x0, x1, forma);
 }
 
@@ -862,7 +854,7 @@ function casaRosa(f) {
   const targa = rett(30.35, 2.0, 0.24, 0.17);                 // numero civico
   piatto(f, targa, '#3d6fa8'); ink(f, targa, 1, 0.8); scritta(f, '12', 30.47, 2.085, 0.11, '#ffffff', 'bold');
   pluviale(f, 32.85, 0.08, alto, '#d7cfc6');
-  tettoCoppi(f, x0, x1, alto, 0.95, '#d26a45', s + 9, true);
+  tetto(f, 'coppi', x0, x1, alto, 0.95, '#d26a45', s + 9, true);
   camino(f, 28.7, alto + 0.55, 0.5, 0.95, '#f0c4b6', s + 6);
   finisci(f, x0, x1, forma);
 }
@@ -896,7 +888,7 @@ function casaAzzurra(f) {
   lunghi.forEach((lung, k) => tralcio(f, 33.25 + k * 0.27, alto - 0.3 - k * 0.12, lung, { seme: s + 20 + k, foglie: FOGLIE, fiori: ['#f2703a', '#f7894a', '#e85a3a'], dim: 0.15, quantiFiori: 0.6 }));
   cespo(f, 33.9, alto - 0.35, 0.9, 0.3, { colori: VERDI.medi, dim: 0.15, seme: s + 7, ink: 0.5, quante: 70 });
   fiori(f, 33.2, alto - 0.6, 1.5, 0.5, ['#f2703a', '#ff9f3c'], 14, s + 8, 0.05);
-  tettoArdesia(f, x0, x1, alto, 0.8, '#6d7f95', s + 9);
+  tetto(f, 'ardesia', x0, x1, alto, 0.8, '#6d7f95', s + 9);
   finisci(f, x0, x1, forma);
 }
 
@@ -977,7 +969,7 @@ function angoloSera(f) {
     cespo(f, x, y, rx, ry, { colori: edera, dim: 0.13, seme: Math.round(s + x * 10 + y * 100), ink: 0.55, edera: true });
   }
   for (let k = 0; k < 4; k++) tralcio(f, 46.1 + k * 0.12, 2.3 - k * 0.1, 0.6 + k * 0.3, { seme: s + 30 + k, foglie: edera, dim: 0.12, edera: true });
-  tettoArdesia(f, x0, x1, alto, 0.7, '#5c6e82', s + 9);
+  tetto(f, 'ardesia', x0, x1, alto, 0.7, '#5c6e82', s + 9);
   finisci(f, x0, x1, forma);
   // oltre lo steccato non c'è (ancora) niente: il colore si dissolve nella carta
   if (f.u1 < STECCATO_X) return;
@@ -1006,7 +998,8 @@ const FRONTE = [
   [5.0, 7.8, '#c4dbb4', 'ardesia'], [5.6, 8.9, '#f2e5c4', 'coppi'], [5.2, 8.0, '#b7d0e8', 'cornice'],
   [5.0, 8.4, '#f3c9b8', 'coppi'],
 ];
-function casaLontana(f, x0, x1, alto, col, tetto, seme) {
+/** Una casa della fila di fronte: finestre in griglia, una porta, tetto a scelta ('coppi', 'ardesia', 'cornice'). */
+function casaLontana(f, x0, x1, alto, col, copertura, seme) {
   const r = casuale(seme), forma = parete(f, x0, x1, alto, col, seme, { zoccolo: 0.5 });
   const n = Math.max(2, Math.floor((x1 - x0) / 1.7)), passo = (x1 - x0) / n, ip = Math.floor(r() * n);
   const persiane = r() < 0.65 ? scegli(r, ['#7aa37c', '#a3693f', '#6f93a8', '#c9785a']) : null;
@@ -1019,25 +1012,22 @@ function casaLontana(f, x0, x1, alto, col, tetto, seme) {
       finestra(f, cx, 3.2 * p + 0.85, 0.95, 1.45, { persiane, chiuse: r() < 0.15, fioriera: r() < 0.25 ? scegli(r, [FIORI.rossi, FIORI.rosa, FIORI.verde]) : null, seme: seme + 20 + i * 5 + p });
     }
   }
-  if (tetto === 'coppi') tettoCoppi(f, x0, x1, alto, 0.9, '#d9805a', seme + 3, r() < 0.5);
-  else if (tetto === 'ardesia') tettoArdesia(f, x0, x1, alto, 0.8, '#7f90a4', seme + 3);
+  if (copertura === 'coppi') tetto(f, 'coppi', x0, x1, alto, 0.9, '#d9805a', seme + 3, r() < 0.5);
+  else if (copertura === 'ardesia') tetto(f, 'ardesia', x0, x1, alto, 0.8, '#7f90a4', seme + 3);
   else fascia(f, x0, x1, alto - 0.3, 0.3, schiarisci(col, 0.55), true);
   if (r() < 0.6) camino(f, x0 + tra(r, 0.5, x1 - x0 - 1), alto + 0.4, 0.45, 0.8, schiarisci(col, 0.2), seme + 4);
   finisci(f, x0, x1, forma);
 }
 function dipingiFronte(f) {
-  const r = casuale(909);
+  const r = casuale(909), c = f.c;
   let s = -0.8;
-  for (const [l, alto, col, tetto] of FRONTE) {
+  for (const [l, alto, col, copertura] of FRONTE) {
     const seme = nuovoSeme(r);
-    if (vede(f, s, s + l)) casaLontana(f, s, s + l, alto, col, tetto, seme);
+    if (vede(f, s, s + l)) casaLontana(f, s, s + l, alto, col, copertura, seme);
     s += l;
   }
-  // prospettiva aerea: un velo chiaro e azzurrino
-  const c = f.c;
-  c.save(); c.globalCompositeOperation = 'source-atop';
-  c.fillStyle = 'rgba(226,236,246,0.22)'; c.fillRect(f.u0 - 1, -1, f.u1 - f.u0 + 2, 14);
-  c.restore();
+  c.save(); c.globalCompositeOperation = 'source-atop';           // prospettiva aerea: un velo chiaro e azzurrino
+  c.fillStyle = 'rgba(226,236,246,0.22)'; c.fillRect(f.u0 - 1, -1, f.u1 - f.u0 + 2, 14); c.restore();
 }
 
 /* ============================ 8. A TERRA ============================ */
