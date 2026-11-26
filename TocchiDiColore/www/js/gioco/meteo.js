@@ -166,7 +166,8 @@ export class Meteo {
     // l'ombra della balena con le pinne (se c'è) scivola sul mondo
     const b = S && S.attore('balena_pinne');
     const ob = UNIFORMI.uOmbraBalena.value;
-    if (b && b.visibile) ob.set(b.x, b.z, 6.5, 0.42 * Math.min(1, Math.max(0, 1 - Math.abs(b.z - g.lia.z) / 40)));
+    // (non realistica: l'ombra passa proprio sopra Lia e sulle facciate, per farsi notare)
+    if (b && b.visibile) ob.set(b.x - 1, g.lia.z - 0.6, 6, 0.75);
     else ob.w = 0;
   }
 }

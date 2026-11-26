@@ -283,10 +283,10 @@ const CAPITOLO_1 = {
     // in cielo... la balena con tante pinne
     const balena = g.attore('balena_pinne');
     balena.visibile = true;
-    balena.teletrasporta(L.x - 48, 4);
-    balena.y = 19;
-    balena.def.giro = [[L.x + 70, 23, 2]];
-    g.inquadra([L.x - 1.4, 0.75, L.z + 0.5], [L.x + 3, 9.5, 5], 2.8, 56);
+    balena.teletrasporta(L.x - 34, 6);
+    balena.y = 15;
+    balena.def.giro = [[L.x + 70, 18, 5]];
+    g.inquadra([L.x - 1.2, 1.0, L.z + 0.6], [L.x + 2.5, 12.5, 6.5], 2.8, 60);
     Audio.balena();
     g.pensa('E in cielo... una balena con mille pinne che nuota nell\'aria!', 5, true);
     await g.quando(() => balena.x > L.x - 6);

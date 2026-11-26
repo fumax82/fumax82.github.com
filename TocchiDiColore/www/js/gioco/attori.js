@@ -90,7 +90,7 @@ export class Attore {
     this.dir = { x: def.dir === -1 ? -1 : 1, z: 0 };
     this.velocita = def.velocita || 1.3;
     this.sempreDiFronte = !!def.sempreDiFronte;
-    this.sagoma = new Sagoma(def.arte, { scala: def.scala || 1, ombra: def.ombra === undefined ? 0.3 : def.ombra, luce: def.luce || 0 });
+    this.sagoma = new Sagoma(def.arte, { scala: def.scala || 1, ombra: def.ombra === undefined ? 0.3 : def.ombra, luce: def.luce || 0, sferico: def.sferico });
     this.tAnim = Math.random() * 5;
     this.passo = 0;                    // fase del passo (cresce con la strada fatta)
     this.inMovimento = false;

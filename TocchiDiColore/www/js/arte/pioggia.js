@@ -324,17 +324,21 @@ function schiuma(ctx, x, y, s, seme) {
   pezzo(ctx, forme, ACQUA.schiuma, 0.35, LW * 0.9, ACQUA.ombraSchiuma, ACQUA.linea);
 }
 
-/** Un getto d'acqua a punta (base larga, punta tonda), piegato di "piega". */
-function getto(base, ang, lung, larg, piega = 0) {
+/** Un getto d'acqua a punta (base larga, punta tonda se "tonda"), piegato di "piega". */
+function getto(base, ang, lung, larg, piega = 0, tonda = true) {
   const d = polare(ang, 1), n = [-d[1], d[0]];
   const punta = piu(base, polare(ang + piega, lung));
   const mezzo = piu(base, polare(ang + piega * 0.4, lung * 0.55));
+  // la punta è un piccolo semicerchio (così il getto sembra d'acqua, non di vetro)
+  const rr = larg * 0.11, ap = ang + piega;
+  const np = [-Math.sin(ap) * rr, Math.cos(ap) * rr];
   const p = new Path2D();
   p.moveTo(base[0] + n[0] * larg / 2, base[1] + n[1] * larg / 2);
-  p.quadraticCurveTo(mezzo[0] + n[0] * larg * 0.32, mezzo[1] + n[1] * larg * 0.32, punta[0], punta[1]);
+  p.quadraticCurveTo(mezzo[0] + n[0] * larg * 0.32, mezzo[1] + n[1] * larg * 0.32, punta[0] + np[0], punta[1] + np[1]);
+  p.arc(punta[0], punta[1], rr, ap + Math.PI / 2, ap - Math.PI / 2, true);
   p.quadraticCurveTo(mezzo[0] - n[0] * larg * 0.32, mezzo[1] - n[1] * larg * 0.32, base[0] - n[0] * larg / 2, base[1] - n[1] * larg / 2);
   p.closePath();
-  p.addPath(Forme.cerchio(punta[0], punta[1], larg * 0.16));
+  if (tonda) p.addPath(Forme.cerchio(punta[0], punta[1], larg * 0.16));
   return p;
 }
 
@@ -540,7 +544,7 @@ function disegnaAutobusPesce(ctx, nome) {
   const alto = fiume(ctx, 384, 60, w);
   schiuma(ctx, 322, alto(322) + 2, 1.25 + 0.15 * Math.sin(w), 41 + k);
   schiuma(ctx, -290, alto(-290) + 2, 1.05 + 0.15 * Math.cos(w), 45 + k);
-  spruzzo(ctx, 334, alto(334) + 2, 38 + 9 * Math.sin(w), 1, 51 + k);
+  spruzzo(ctx, 328, alto(328) + 2, 34 + 8 * Math.sin(w), 1, 51 + k);
   spruzzo(ctx, -170, alto(-170) + 2, 18 + 14 * Math.max(0, Math.sin(w + Math.PI)), -1, 61 + k);
   spruzzo(ctx, 166, alto(166) + 2, 18 + 14 * Math.max(0, Math.sin(w)), -1, 71 + k);
   for (const [x, y, r] of [[-340, -90 - 12 * k, 6], [-356, -150 - 8 * ((k + 2) % 4), 4], [-330, -196 - 7 * ((k + 1) % 4), 3]]) bollicina(ctx, x, y, r);
@@ -556,7 +560,7 @@ function disegnaAutobusPesce(ctx, nome) {
  *  ondeggia appena. Origine al centro della cella (1024x512).             */
 
 const BALENA = {
-  dorso: '#9cc4ea', pancia: '#f9f7f1', lilla: '#e0d7ee', pinna: '#a9cdef', lontana: '#86afdc', solchi: '#c8b6c6', nuvola: '#fffaf0',
+  dorso: '#9cc4ea', pancia: '#f9f7f1', lilla: '#e0d7ee', pinna: '#a9cdef', lontana: '#86afdc', solchi: '#cdb5a6', nuvola: '#fffaf0',
 };
 Object.assign(TONI, { [BALENA.dorso]: '#84afdc', [BALENA.pinna]: '#8fb8e3', [BALENA.lontana]: '#7299c8', [BALENA.nuvola]: '#e9e1f0' });
 
@@ -629,20 +633,20 @@ function disegnaBalena(ctx, nome) {
     });
   }
   // la balena nuota tra le nuvole: due nuvolette dietro la coda e sotto il muso
-  nuvoletta(ctx, -330, 92, 1.5 + 0.04 * Math.sin(w), 3);
-  nuvoletta(ctx, 396, 120, 1.25 + 0.04 * Math.cos(w), 4);
+  nuvoletta(ctx, -318, 52, 1.5 + 0.04 * Math.sin(w), 3);
+  nuvoletta(ctx, 392, 78, 1.25 + 0.04 * Math.cos(w), 4);
   // le pinne dell'altro fianco (più scure) spuntano da dietro la pancia
   for (const p of pinne) pinnaRemo(ctx, piu(p.radice, [18, -12]), p.ang - 0.3, p.L * 0.9, p.W * 0.88, BALENA.lontana);
   // il corpo: bianco con l'ombra lilla, poi la fascia azzurra del dorso
   const corpo = pezzo(ctx, liscia(B.contorno), BALENA.pancia, 2.6, LW * 1.25, BALENA.lilla);
   ctx.save();
   ctx.clip(corpo);
-  const confine = B.su.map((q, i) => [q[0], lerp(q[1], B.giu[i][1], 0.3)]);
+  const confine = B.su.map((q, i) => [q[0], lerp(q[1], B.giu[i][1], 0.22)]);
   pezzo(ctx, liscia([[-520, -300], ...confine, [560, confine[confine.length - 1][1]], [560, -300]]), BALENA.dorso, 1, LW);
   // i solchi lunghi della pancia (come nel film), dal mento verso la coda
-  for (const [f, da] of [[0.66, -170], [0.76, -110], [0.86, -40]]) {
+  for (const [f, da, fino] of [[0.34, -300, 250], [0.46, -320, 290], [0.62, -250, 436], [0.71, -200, 436], [0.8, -140, 436], [0.89, -60, 436]]) {
     const punti = [];
-    for (let x = da; x <= 436; x += 24) punti.push(B.punto(x, f));
+    for (let x = da; x <= fino; x += 24) punti.push(B.punto(x, f));
     tratto(ctx, punti, LW * 0.7, BALENA.solchi);
   }
   ctx.restore();
@@ -751,8 +755,8 @@ function disegnaFermata(ctx) {
   }
   pezzo(ctx, festoni, FERMATA.frangia, 0.4, LW * 0.9);
   pezzo(ctx, tetto, FERMATA.tetto, 0.7, LW * 1.15);
-  gocciaAcqua(ctx, -120, -237, 4.5);
-  gocciaAcqua(ctx, -121, -204, 3.6);
+  gocciaAcqua(ctx, -56, -248, 4.5);
+  gocciaAcqua(ctx, -57, -212, 3.6);
   gocciaAcqua(ctx, 30, -232, 4);
   // il palo con l'orario e il cartello tondo
   tubo(ctx, [[124, -12], [124, -300]], 8, FERMATA.palo, LW, true);
@@ -785,11 +789,11 @@ function disegnaOmbrello(ctx, nome) {
   const rng = casuale(nome.length * 7 + nome.charCodeAt(0));
   ctx.rotate(INCLINA[nome]);
   // il manico ricurvo e l'asta
-  tubo(ctx, [[7, -112], [7, -16], [6, -9], [0, -5.5], [-6, -9], [-7, -15]], 6, '#c4844f', LW);
-  tubo(ctx, [[7, -112], [7, -40]], 3.5, '#9a8f98', LW, true);
+  tubo(ctx, [[7, -104], [7, -16], [6, -6], [0, -1.2], [-6, -6], [-7, -13]], 6, '#c4844f', LW);
+  tubo(ctx, [[7, -104], [7, -40]], 3.5, '#9a8f98', LW, true);
   ctx.translate(7, 0);
   // la cupola: arco in alto, festoni sotto tra una stecca e l'altra
-  const Y = -106, R = 74, CIMA = -176, N = 6;
+  const Y = -100, R = 74, CIMA = -169, N = 6;
   const punte = Array.from({ length: N + 1 }, (_, i) => [-R + (2 * R * i) / N, Y + (i === 0 || i === N ? 0 : 4 * Math.sin((Math.PI * i) / N))]);
   const cupola = new Path2D();
   cupola.moveTo(-R, Y);
@@ -827,14 +831,15 @@ function disegnaOmbrello(ctx, nome) {
   pezzo(ctx, Forme.cerchio(0, CIMA - 12, 3.2), '#9a8f98', 0, LW * 0.8);
   for (const [x, y] of punte) pezzo(ctx, Forme.cerchio(x, y + 1, 2.8), tono(C), 0, LW * 0.7);
   // le gocce che scivolano sulla cupola e quelle che pendono
-  for (let i = 0; i < 3; i++) {
-    const t = tra(rng, -0.75, 0.75);
+  for (const t0 of [-0.6, -0.05, 0.52]) {
+    const t = t0 + tra(rng, -0.12, 0.12);
     const x = t * R * 0.82, y = lerp(CIMA + 22, Y - 10, Math.abs(t) * 0.8 + tra(rng, 0, 0.15));
     gocciaAcqua(ctx, x, y, 3.8, Math.atan(t * 1.3) * 0.9);
   }
   const pende = 1 + Math.floor(rng() * (N - 1));
   gocciaAcqua(ctx, punte[pende][0], punte[pende][1] + 10, 3.6);
-  gocciaAcqua(ctx, punte[(pende + 3) % (N - 1) + 1][0] - 2, punte[0][1] + 28, 3);
+  const xg = punte[(pende + 3) % (N - 1) + 1][0] - 2;
+  gocciaAcqua(ctx, Math.abs(xg) < 14 ? xg - 26 : xg, punte[0][1] + 28, 3);   // una goccia che cade (mai sull'asta)
 }
 
 /* ------------------------------------------------------------------------ */
@@ -847,38 +852,36 @@ function disegnaOmbrello(ctx, nome) {
 
 function disegnaSchizzi(ctx, k) {
   const base = [0, -18];
+  // per ogni fotogramma: lunghezza dei 7 getti, apertura del ventaglio, larghezza,
+  // la "collinetta" d'acqua alla base [rx, ry] e le goccioline [x, y, r] (f2: cadono)
   const GETTI = [
-    { lung: [24, 36, 44, 48, 44, 36, 24], apre: 0.22, piega: 0, larg: 16, gocce: 4, salto: 74 },
-    { lung: [62, 90, 110, 120, 110, 90, 62], apre: 0.3, piega: 0, larg: 17, gocce: 9, salto: 132 },
-    { lung: [40, 52, 48, 34, 48, 52, 40], apre: 0.46, piega: 0.3, larg: 13, gocce: 7, salto: 84 },
+    { lung: [22, 34, 42, 46, 42, 34, 22], apre: 0.2, larg: 18, collina: [44, 13],
+      gocce: [[-30, -78, 3.6], [24, -84, 3.2], [2, -92, 2.8]] },
+    { lung: [62, 90, 110, 120, 110, 90, 62], apre: 0.3, larg: 17, collina: [52, 20],
+      gocce: [[-96, -96, 3.6], [-58, -134, 3.2], [-14, -158, 3.8], [36, -150, 3], [78, -124, 3.6], [104, -82, 2.8], [-6, -176, 2.4]] },
+    { lung: [24, 32, 30, 22, 30, 32, 24], apre: 0.5, larg: 15, collina: [58, 14],
+      gocce: [[-104, -40, 4.2], [-72, -70, 3.6], [-30, -86, 3], [40, -80, 3.4], [80, -60, 3.8], [108, -36, 3.2]] },
   ];
   if (k < 3) {
     const G = GETTI[k];
-    const forme = [Forme.ellisse(0, base[1] - 4, 46 + k * 6, 14 + (k === 1 ? 6 : 0))];
-    G.lung.forEach((l, i) => {
-      const lato = i - 3;
-      forme.push(getto([base[0] + lato * 8, base[1] - 4], -Math.PI / 2 + lato * G.apre, l, G.larg, Math.sign(lato) * G.piega));
-    });
+    const forme = [Forme.ellisse(0, base[1] - 4, G.collina[0], G.collina[1])];
+    const radici = G.lung.map((l, i) => [[base[0] + (i - 3) * 8, base[1] - 4], -Math.PI / 2 + (i - 3) * G.apre, l]);
+    for (const [r, a, l] of radici) forme.push(getto(r, a, l, G.larg, 0, false));
     pezzo(ctx, forme, '#cdeaf8', 0.8, LW, '#a9d6ef', ACQUA.linea);
     // i lampi bianchi dentro i getti
-    G.lung.forEach((l, i) => {
-      const lato = i - 3;
-      if (lato === 0 || Math.abs(lato) === 3) return;
-      const a = -Math.PI / 2 + lato * G.apre + Math.sign(lato) * G.piega * 0.3;
-      const da = piu([base[0] + lato * 8, base[1] - 4], polare(a, l * 0.25));
-      const fino = piu([base[0] + lato * 8, base[1] - 4], polare(a, l * 0.6));
+    radici.forEach(([r, a, l], i) => {
+      if (i === 0 || i === 3 || i === 6) return;
+      const da = piu(r, polare(a, l * 0.25)), fino = piu(r, polare(a, l * 0.6));
       tratto(ctx, [[da[0] - 2, da[1]], [fino[0] - 2, fino[1]]], LW * 1.3, '#ffffff');
     });
-    // le goccioline volanti
-    const rng = casuale(90 + k);
-    for (let i = 0; i < G.gocce; i++) {
-      const lato = tra(rng, -1, 1);
-      const a = -Math.PI / 2 + lato * (G.apre * 3.4), r = G.salto * tra(rng, 0.8, 1.15);
-      let [x, y] = piu(base, polare(a, r));
-      if (k === 2) { x *= 1.35; y += 34; }
-      const g = k === 2 ? goccia(x, y, tra(rng, 3, 4.5), 0) : Forme.cerchio(x, y, tra(rng, 2.8, 4.6));
-      pezzo(ctx, g, '#e4f4fc', 0, LW * 0.8, null, ACQUA.linea);
-      if (k === 2) tratto(ctx, [[x, y - 14], [x, y - 22]], LW * 0.6, ACQUA.linea, 0.6);   // la scia di chi cade
+    // le goccioline: staccate dalle punte (f0, f1) oppure che ricadono (f2)
+    for (const [x, y, r] of G.gocce) {
+      if (k === 2) {
+        tratto(ctx, [[x, y - 3.2 * r - 4], [x, y - 3.2 * r - 12]], LW * 0.6, ACQUA.linea, 0.6);   // la scia di chi cade
+        pezzo(ctx, goccia(x, y, r, 0), '#e4f4fc', 0, LW * 0.8, null, ACQUA.linea);
+      } else {
+        pezzo(ctx, Forme.cerchio(x, y, r), '#e4f4fc', 0, LW * 0.8, null, ACQUA.linea);
+      }
     }
   } else {
     // f3: rimangono i cerchi che si allargano e qualche goccia che rimbalza
