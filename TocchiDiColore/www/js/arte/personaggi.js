@@ -405,10 +405,10 @@ function posaLato(A, posa, t) {
   }
 
   if (posa === 'cammina') {
-    const A0 = 18, S = 0.56;
-    P.piedi = [passo(t + 0.5, A0, S, 9, -0.22, 0.45, GEO_LIA), passo(t, A0, S, 9, -0.22, 0.45, GEO_LIA)];
+    const A0 = 22, S = 0.56;
+    P.piedi = [passo(t + 0.5, A0, S, 12, -0.25, 0.5, GEO_LIA), passo(t, A0, S, 12, -0.25, 0.5, GEO_LIA)];
     const giu = ondaC(2 * (t - 0.07));           // +1 = baricentro in basso (subito dopo il contatto)
-    P.bob = 1.8 * giu;
+    P.bob = 2.2 * giu;
     P.sq = 0.03 * Math.max(0, giu);
     P.incl = 0.05 + 0.012 * giu;
     P.testa = 0.025 * onda(2 * (t - 0.18));
@@ -425,9 +425,9 @@ function posaLato(A, posa, t) {
   }
 
   if (posa === 'corre') {
-    const A0 = 26, S = 0.36;
+    const A0 = 30, S = 0.36;
     P.x = -10;
-    P.piedi = [passo(t + 0.5, A0, S, 22, -0.15, 0.62, GEO_LIA), passo(t, A0, S, 22, -0.15, 0.62, GEO_LIA)];
+    P.piedi = [passo(t + 0.5, A0, S, 26, -0.15, 0.62, GEO_LIA), passo(t, A0, S, 26, -0.15, 0.62, GEO_LIA)];
     for (const p of P.piedi) p.x += P.x + 4;
     const giu = ondaC(2 * (t - 0.17));
     P.bob = 3.6 * giu - 1.5;
@@ -438,7 +438,7 @@ function posaLato(A, posa, t) {
     const f = -0.85 * ondaC(t - 0.04);
     P.braccia[0] = braccioA(SPALLE_LATO[0], -f, -f + 1.55);
     P.braccia[1] = braccioA(SPALLE_LATO[1], f, f + 1.55);
-    if (og) P.oggetto = { tipo: og, mano: 1, rel: og === 'bastone' ? 0.35 : -1.2 };
+    if (og) P.oggetto = og === 'bastone' ? { tipo: og, mano: 1, ang: 2.6 } : { tipo: og, mano: 1, rel: -1.2 };   // il bastone resta dietro
     P.capelli = [-9 + 2 * onda(2 * (t - 0.3)), -5 + 2.5 * ondaC(2 * (t - 0.3))];
     P.orlo = [-6 + 2 * onda(2 * (t - 0.15)), -2, -11 + 3 * onda(2 * (t - 0.25)), -6 + 2.5 * ondaC(2 * (t - 0.3))];
     P.borsa = [-10 + 2 * onda(2 * (t - 0.3)), -8 + 3 * ondaC(2 * (t - 0.3))];
