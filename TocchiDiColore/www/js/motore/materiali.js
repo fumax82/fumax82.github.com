@@ -507,7 +507,7 @@ const FRAG_SPRITE = /* glsl */ `
     if (aBase > 0.5 && uContorno > 0.0) {
       vec2 versoLuce = vec2(uSpecchio > 0.5 ? 1.0 : -1.0, 1.0) * uTexel * 1.6;
       float fuori = 1.0 - alfa(vUv + versoLuce);
-      col += vec3(1.0, 0.95, 0.82) * fuori * 0.3;
+      col += vec3(1.0, 0.95, 0.82) * fuori * 0.1;   // appena (nel film i colori sono piatti)
     }
     vec3 pb = vec3(vBase.x, vMondo.y, vBase.z);
     vec3 R = rivelazione(pb);

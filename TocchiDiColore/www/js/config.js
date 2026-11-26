@@ -23,6 +23,7 @@ export const CONFIG = {
       minima: { pixelRatio: 1.0, uscita: 1.25, scala: 1.0, campioni: 2 },   // solo per telefoni molto lenti
     },
     schizzo: 0.75,           // quanto si vedono i tratti a matita delle cose non percepite (0..1)
+    finitura: 1,             // l'ultima mano di acquerello sui fondali (0 = spenta; vedi arte/finitura.js)
     effettiAcquerello: true, // filtro acquerello a tutto schermo
   },
 
@@ -45,6 +46,7 @@ export const CONFIG = {
     campoVisivo: 38,         // gradi (verticale): stretto come un obiettivo da cinema
     morbidezza: 2.6,         // quanto dolcemente la telecamera insegue Lia
     anticipo: 0.9,           // metri: l'inquadratura guarda un po' avanti, dove Lia va
+    vicinanza: 0.8,          // 1 = distanze delle inquadrature come scritte; meno di 1 = più vicino ai personaggi
   },
 
   /* ---------------------------------------------------------------------

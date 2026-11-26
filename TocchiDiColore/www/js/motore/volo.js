@@ -8,7 +8,7 @@
  *    - in mezzo, NUVOLE a diverse altezze che scorrono a velocità diverse
  *    - davanti, le PINNE della balena, attaccate alla telecamera
  *  La telecamera segue una curva morbida sopra il fiume e alla fine
- *  scende verso la piazzetta gialla dove corre un puntino giallo: Biscotto!
+ *  scende verso la piazzetta gialla dove corre un puntino giallo: Gogo!
  * ========================================================================== */
 import * as THREE from 'three';
 import { Galleria } from '../arte/galleria.js';
@@ -16,7 +16,7 @@ import { UNIFORMI, materialeCielo, materialeStrato } from './materiali.js';
 import { geometriaStrato, textureDaTela } from './strati.js';
 import { Sagoma } from './sagoma.js';
 import { casuale } from '../arte/pennello.js';
-import { dipingiMappa, fiumeX, PIAZZETTA, telaMacchinina, telaBiscottino } from '../arte/mappa_volo.js';
+import { dipingiMappa, fiumeX, PIAZZETTA, telaMacchinina, telaGogo } from '../arte/mappa_volo.js';
 
 export class Volo {
   constructor() {
@@ -73,9 +73,9 @@ export class Volo {
       });
     }
 
-    // il puntino giallo che corre in cerchio nella piazzetta: Biscotto con la borsa!
+    // il puntino giallo che corre in cerchio nella piazzetta: Gogo con la borsa!
     const bis = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4).rotateX(-Math.PI / 2),
-      new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(telaBiscottino()), transparent: true }));
+      new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(telaGogo()), transparent: true }));
     bis.renderOrder = -9;
     S.add(bis);
     this.animati.push((dt, t) => {

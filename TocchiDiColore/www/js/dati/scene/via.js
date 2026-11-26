@@ -87,7 +87,7 @@ export default {
 
   /* --- Chi c'è ------------------------------------------------------------ */
   attori: [
-    { id: 'biscotto', tipo: 'animale', arte: 'biscotto', nome: 'Biscotto', x: 3.2, z: 0.32 },
+    { id: 'gogo', tipo: 'animale', arte: 'gogo', nome: 'Gogo', x: 3.2, z: 0.32 },
     { id: 'ladro', tipo: 'attore', arte: 'ladro', nome: 'L\'uomo col berretto', x: 60, z: 0.5, visibile: false, velocita: 1.3, lunghezzaPasso: 1.5 },
     // una signora passeggia lungo le vetrine, dietro a Lia
     { id: 'signora', tipo: 'persona', arte: 'signora', nome: 'Signora', x: 16, z: -0.35, y: 0.08, ronda: [[3, -0.35], [21, -0.35]], velocita: 0.8, parla: false },

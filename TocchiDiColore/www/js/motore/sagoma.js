@@ -30,7 +30,7 @@ export class Sagoma {
     this.atlante = Galleria.atlante(nomeAtlante);
     this.materiale = materialeSprite(this.atlante.texture, {
       oscilla: o.oscilla, ancora: o.ancora, luce: o.luce, cielo: o.cielo,
-      trasparente: o.trasparente, piatto: o.piatto !== undefined, sferico: o.sferico,
+      trasparente: o.trasparente, piatto: o.piatto !== undefined, sferico: o.sferico, contorno: o.contorno,
     });
     this.mesh = new THREE.Mesh(geometriaPerSprite(), this.materiale);
     this.mesh.frustumCulled = false;

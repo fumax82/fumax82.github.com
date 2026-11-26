@@ -25,7 +25,7 @@ export function fiumeX(z) {
 export const MEZZA_LARGHEZZA_FIUME = 6.5;   // metri
 const MARCIAPIEDE = 3.2;                    // metri di riva rosa ai lati
 
-// la piazzetta gialla dove corre Biscotto (vicino alla fine del volo)
+// la piazzetta gialla dove corre Gogo (vicino alla fine del volo)
 export const PIAZZETTA = { x: fiumeX(-118) + 22, z: -118, r: 9 };
 
 const FACCIATE = ['#f2b9b3', '#f5dc8f', '#b9d9e6', '#c4e5cc', '#f6c89f', '#d9c7ef', '#fbe7c6', '#f7c6d8', '#cfe3b5', '#f4c0a0'];
@@ -126,8 +126,8 @@ export function telaMacchinina(colore) {
   return t;
 }
 
-/** Tela del puntino giallo che corre: Biscotto visto dall'alto. */
-export function telaBiscottino() {
+/** Tela del puntino giallo che corre: Gogo visto dall'alto. */
+export function telaGogo() {
   const t = nuovaTela(48, 48), c = t.getContext('2d');
   c.fillStyle = 'rgba(255, 240, 160, 0.55)';
   c.beginPath(); c.arc(24, 24, 22, 0, Math.PI * 2); c.fill();

@@ -2,7 +2,7 @@
  *  piazzetta.js — LA PIAZZETTA GIALLA (finale)
  *  --------------------------------------------------------------------------
  *  La balena lascia Lia in una piazzetta luminosa, tra una casa gialla e
- *  una azzurra. Qui Biscotto la ritrova, con la borsa in bocca.
+ *  una azzurra. Qui Gogo la ritrova, con la borsa in bocca.
  * ========================================================================== */
 export default {
   id: 'piazzetta',
@@ -34,7 +34,7 @@ export default {
     ] },
   ],
   attori: [
-    { id: 'biscotto', tipo: 'animale', arte: 'biscotto', nome: 'Biscotto', x: 15, z: 0.25, visibile: false },
+    { id: 'gogo', tipo: 'animale', arte: 'gogo', nome: 'Gogo', x: 15, z: 0.25, visibile: false },
     // i fiori che cantano, vicino al muro
     { id: 'fiori', tipo: 'animato', arte: 'fiori_cantanti', x: 1.9, y: 0, z: -1.35, fps: 3, fisso: true },
   ],

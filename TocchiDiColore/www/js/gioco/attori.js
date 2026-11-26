@@ -1,7 +1,7 @@
 /* ==========================================================================
  *  attori.js — CHI ABITA LE SCENE
  *  --------------------------------------------------------------------------
- *  Un ATTORE è un personaggio o un oggetto che si muove: Biscotto, il
+ *  Un ATTORE è un personaggio o un oggetto che si muove: Gogo, il
  *  gattino, il ladro, la fornaia, gli abitanti-animali, le auto...
  *  Ogni attore ha una Sagoma (il disegno di carta) e sa:
  *    - camminare verso un punto o lungo una lista di punti (vaiA, percorri)
@@ -9,7 +9,7 @@
  *      la direzione in cui va RISPETTO ALLA TELECAMERA
  *    - fare una "posa" speciale (abbaiare, ringhiare, parlare...)
  *  Le funzioni che richiedono tempo restituiscono una Promise: la storia
- *  può scrivere "await biscotto.vaiA(10, 0)".
+ *  può scrivere "await gogo.vaiA(10, 0)".
  *
  *  Coordinate: x destra, y alto, z verso lo spettatore. I piedi stanno in y.
  * ========================================================================== */
@@ -255,7 +255,7 @@ export class Persona extends Attore {
 }
 
 /* ======================================================================== */
-/*  ANIMALI: Biscotto (al guinzaglio, in corsa, con la borsa) e il gattino  */
+/*  ANIMALI: Gogo (al guinzaglio, in corsa, con la borsa) e il gattino  */
 /* ======================================================================== */
 export class Animale extends Attore {
   constructor(gioco, def) {

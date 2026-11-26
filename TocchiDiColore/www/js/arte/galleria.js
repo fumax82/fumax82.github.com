@@ -14,6 +14,9 @@
  * ========================================================================== */
 import * as THREE from 'three';
 import { nuovaTela, respira } from './pennello.js';
+import { finitura, liberaFinitura } from './finitura.js';
+import { atlantiAMano } from './dipinti_a_mano.js';
+import { CONFIG } from '../config.js';
 
 export const Galleria = {
   atlanti: {},
@@ -35,31 +38,42 @@ export const Galleria = {
 Galleria.carica = async function (progresso, anisotropia) {
   this.anisotropia = anisotropia || 4;
   const passi = [
-    ['Disegno Lia e Biscotto...', async () => {
+    ['Disegno Lia e Gogo...', async () => {
       const m = await importa('./personaggi.js');
-      if (m && m.creaPersonaggi) this._aggiungiAtlanti(await m.creaPersonaggi());
+      if (m && m.creaPersonaggi) await this._aggiungiAtlanti(await m.creaPersonaggi());
       if (m && m.creaIllustrazioneTitolo) this.illustrazioni.titolo = await m.creaIllustrazioneTitolo();
       if (m && m.creaIllustrazioneFinale) this.illustrazioni.finale = await m.creaIllustrazioneFinale();
     }],
     ['Disegno gli abitanti...', async () => {
       const m = await importa('./comparse.js');
-      if (m && m.creaComparse) this._aggiungiAtlanti(await m.creaComparse());
+      if (m && m.creaComparse) await this._aggiungiAtlanti(await m.creaComparse());
     }],
     ['Disegno i personaggi delle fiabe...', async () => {
       const m = await importa('./fiabe.js');
-      if (m && m.creaFiabe) this._aggiungiAtlanti(await m.creaFiabe());
+      if (m && m.creaFiabe) await this._aggiungiAtlanti(await m.creaFiabe());
     }],
     ['Disegno la pioggia e le auto-pesce...', async () => {
       const m = await importa('./pioggia.js');
-      if (m && m.creaPioggia) this._aggiungiAtlanti(await m.creaPioggia());
+      if (m && m.creaPioggia) await this._aggiungiAtlanti(await m.creaPioggia());
     }],
     ['Disegno gli oggetti...', async () => {
       const m = await importa('./oggetti.js');
-      if (m && m.creaOggetti) this._aggiungiAtlanti(await m.creaOggetti());
+      if (m && m.creaOggetti) {
+        const oggetti = await m.creaOggetti();
+        // gli oggetti di scena fanno parte del fondale dipinto: stessa mano di acquerello
+        if (CONFIG.grafica.finitura) {
+          await atlantiAMano(oggetti);
+          for (const at of Object.values(oggetti)) {
+            if (at && at.tela && at.cella && !at.aMano) finitura(at.tela, { forza: 0.8 * CONFIG.grafica.finitura, pxm: at.cella.a / (at.altezzaMondo || 1) });
+          }
+          liberaFinitura();
+        }
+        await this._aggiungiAtlanti(oggetti);
+      }
     }],
     ['Dipingo il cielo...', async () => {
       const m = await importa('./cielo.js');
-      if (m && m.creaCielo) this._aggiungiAtlanti(await m.creaCielo());
+      if (m && m.creaCielo) await this._aggiungiAtlanti(await m.creaCielo());
     }],
   ];
   for (let k = 0; k < passi.length; k++) {
@@ -132,7 +146,9 @@ Galleria._superficie = function (t, ripeti) {
 };
 
 /** Atlanti di sprite: diventano CanvasTexture con i loro fotogrammi. */
-Galleria._aggiungiAtlanti = function (insieme) {
+Galleria._aggiungiAtlanti = async function (insieme) {
+  // i disegni fatti a mano (se ci sono: vedi dipinti_a_mano.js) prendono il posto di quelli del codice
+  await atlantiAMano(insieme);
   for (const [nome, at] of Object.entries(insieme || {})) {
     if (!at || !at.tela) continue;
     const tex = new THREE.CanvasTexture(at.tela);

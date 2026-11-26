@@ -187,6 +187,12 @@ export class Regia {
       this._p.set(lia.x + pos[0] + gx, ly + pos[1], lia.z + pos[2] + gz);
       this._g.set(lia.x + gu[0] + gx, ly + gu[1], lia.z + gu[2] + gz);
     }
+    // VICINANZA (come nel film i personaggi riempiono l'inquadratura): la
+    // camera scivola lungo la sua linea di vista verso il punto che guarda
+    const vic = q.vicinanza !== undefined ? q.vicinanza : CONFIG.camera.vicinanza;
+    if (vic !== undefined && vic !== 1) {
+      this._p.sub(this._g).multiplyScalar(vic).add(this._g);
+    }
     // limiti: negli interni la camera non deve uscire dalla stanza
     if (q.limitiX) {
       const dx = Math.min(q.limitiX[1], Math.max(q.limitiX[0], this._p.x)) - this._p.x;

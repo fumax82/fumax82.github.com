@@ -12,6 +12,10 @@
  * ========================================================================== */
 import * as THREE from 'three';
 import { Galleria } from '../arte/galleria.js';
+import { finitura, liberaFinitura } from '../arte/finitura.js';
+import { stratiAMano } from '../arte/dipinti_a_mano.js';
+import { respira } from '../arte/pennello.js';
+import { CONFIG } from '../config.js';
 import { geometriaStrato, textureDaTela } from './strati.js';
 import { materialeStrato, materialeCielo, materialeAnello, UNIFORMI } from './materiali.js';
 import { Sagoma } from './sagoma.js';
@@ -37,6 +41,19 @@ async function dipingi(arte) {
     const m = await MODULI[arte.modulo]();
     const r = await m.dipingiScena(arte.nome);
     strati = (r && r.strati) || [];
+    // i fondali dipinti a mano (se ci sono) prendono il posto di quelli del codice
+    await stratiAMano(arte.nome, strati);
+    // l'ultima mano di acquerello, uguale per tutti i fondali (vedi arte/finitura.js)
+    if (CONFIG.grafica.finitura) {
+      let k = 0;
+      for (const d of strati) {
+        if (!d || !d.tela || d.finitura === false) continue;
+        const pxm = d.tela.width / (d.larghezza || 1);
+        finitura(d.tela, { forza: (d.finitura || 1) * CONFIG.grafica.finitura, pxm, seme: k++ });
+        if (k % 4 === 0) await respira();     // lascia respirare la pagina (la barra di caricamento)
+      }
+      liberaFinitura();
+    }
   } catch (errore) {
     console.error('Non riesco a dipingere la scena', chiave, errore);
   }
@@ -272,6 +289,8 @@ export class Scena {
     const s = new Sagoma(o.arte, {
       scala: o.scala || 1, ombra: o.ombra, oscilla: o.oscilla, ancora: o.appeso ? 1 : (o.ancora || 0),
       luce: o.luce, piatto: o.piatto, cielo: o.cielo,
+      // gli oggetti fanno parte del fondale dipinto: un filo d'inchiostro più leggero dei personaggi
+      contorno: o.contorno !== undefined ? o.contorno : 0.5,
     });
     if (o.fotogramma) s.mostra(o.fotogramma, !!o.specchio);
     else if (o.specchio) s.mostra(s.atlante.nomi[0], true);

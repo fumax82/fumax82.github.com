@@ -1,7 +1,7 @@
 /* ==========================================================================
  *  magia.js — LO SPETTACOLO DELLA RIVELAZIONE
  *  --------------------------------------------------------------------------
- *  Quando la bacchetta bussa, quando Biscotto abbaia o arriva un profumo,
+ *  Quando la bacchetta bussa, quando Gogo abbaia o arriva un profumo,
  *  il mondo si colora (vedi percezione.js e lo shader in materiali.js).
  *  Questo modulo rende quel momento uno spettacolo:
  *    - sul fronte di ogni onda nascono particelle a tema: stelle e

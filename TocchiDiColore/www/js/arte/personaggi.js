@@ -5,7 +5,7 @@
  *  cortometraggio "Out of Sight":
  *
  *    - LIA       la bambina col cappellino a campana (tre "vestiti")
- *    - BISCOTTO  il suo cagnolino color crema dalle orecchie lunghe
+ *    - GOGO  il suo cagnolino color crema dalle orecchie lunghe
  *    - GATTINO   il micetto del vicolo
  *    - LADRO     il signore con la giacca di pelle che ruba la borsetta
  *
@@ -890,7 +890,7 @@ function scarpaFronte(ctx, A, pd, retro) {
   ctx.restore();
 }
 
-/* ======================= BISCOTTO ======================= */
+/* ======================= GOGO ======================= */
 
 /** Piedino tondo con le dita (di lato). */
 
@@ -967,7 +967,7 @@ function colloCane(L, tb) {
   return c;
 }
 
-/** Biscotto di lato (guarda a destra). */
+/** Gogo di lato (guarda a destra). */
 
 function guancia(ctx, x, y, r) {
   ctx.save();
@@ -1090,7 +1090,7 @@ function ciuffi(ctx, lista, colore) {
   }
 }
 
-/** Biscotto di lato (guarda a destra). */
+/** Gogo di lato (guarda a destra). */
 
 function sistemaCappello(ctx, P) {
   ctx.translate(0, -62);
@@ -1561,7 +1561,7 @@ function disegnaLia(ctx, abito, vista, posa, fase, manoVicina) {
 }
 
 /* ------------------------------------------------------------------------ */
-/*  BISCOTTO, IL CAGNOLINO                                                   */
+/*  GOGO, IL CAGNOLINO                                                   */
 /* ------------------------------------------------------------------------ */
 /*  Un cagnolino elegante dal pelo crema: muso lungo e gentile, nasone
  *  scuro, occhio ovale "dentro" la testa, orecchie grandi color caramello,
@@ -1801,9 +1801,9 @@ function collareCane(P) {
 
 /** Il corpo a "fagiolo": dorso continuo, groppa tonda, pancia che rientra, petto profondo. */
 
-/** Biscotto di lato (guarda a destra). */
+/** Gogo di lato (guarda a destra). */
 
-/** Biscotto di lato (guarda a destra). */
+/** Gogo di lato (guarda a destra). */
 
 function caneLato(ctx, P) {
   const T = new DOMMatrix().translate(P.corpo[0], P.corpo[1]).rotate(P.rot * GRADI);
@@ -1851,7 +1851,7 @@ function caneLato(ctx, P) {
 
 /** Testa di profilo: cranio tondo, muso lungo e gentile, nasone, occhio ovale, orecchio. */
 
-/** Biscotto di fronte, seduto. */
+/** Gogo di fronte, seduto. */
 
 function testaCaneLato(ctx, P) {
   const apri = P.bocca, cer = [12, 15];            // cerniera della mandibola
@@ -1936,7 +1936,7 @@ function caneFronte(ctx, posa, t, extra) {
   ctx.restore();
 }
 
-/** Biscotto visto da dietro mentre cammina via. */
+/** Gogo visto da dietro mentre cammina via. */
 
 function testaCaneFronte(ctx, E) {
   pezzo(ctx, Forme.ellisse(0, 0, 31, 28), C.cane, 0.7);
@@ -2330,10 +2330,10 @@ function disegnaLadro(ctx, vista, posa, fase) {
 }
 
 /* ------------------------------------------------------------------------ */
-/*  L'ABBRACCIO (Lia streghetta in ginocchio stringe Biscotto)              */
+/*  L'ABBRACCIO (Lia streghetta in ginocchio stringe Gogo)              */
 /* ------------------------------------------------------------------------ */
 /**
- * L'abbraccio: Lia streghetta in ginocchio stringe Biscotto seduto.
+ * L'abbraccio: Lia streghetta in ginocchio stringe Gogo seduto.
  * La testa del cane sta sotto il mento di Lia, un braccio gli cinge il
  * collo e l'altra manina gli accarezza la testa (come nel film).
  */
@@ -2370,20 +2370,20 @@ function disegnaAbbraccio(ctx, t) {
   ctx.transform(T.a, T.b, T.c, T.d, T.e, T.f);
   mantellinaFronte(ctx, false);
   ctx.restore();
-  // la testa inclinata verso Biscotto
+  // la testa inclinata verso Gogo
   const H = T.translate(2, COLLO[1] - 0.6 * resp).rotate((felice ? -0.2 : -0.15) * GRADI);
   ctx.save();
   ctx.transform(H.a, H.b, H.c, H.d, H.e, H.f);
   testaFronte(ctx, A, { capelli: [0, resp], sguardo: [-0.7, 0.45], occhi: felice ? 'felici' : 'aperti', bocca: felice ? 'sorriso' : 'chiusa', cappello: -0.04 }, false);
   ctx.restore();
-  // Biscotto seduto che alza il muso verso Lia
+  // Gogo seduto che alza il muso verso Lia
   ctx.save();
   ctx.translate(-36, 0);
   inScala(ctx, 0.9, () => caneFronte(ctx, 'seduto', t, {
     testa: [20, -124], rotTesta: 0.3, sguardo: [0.6, -0.8], coda: 0.6 * onda(t), codaLato: -1, occhi: felice ? 'felici' : 'aperti',
   }));
   ctx.restore();
-  // il braccio che stringe il collo e la manina sulla testa di Biscotto
+  // il braccio che stringe il collo e la manina sulla testa di Gogo
   const spD = inMondo([21, -85]), spS = inMondo([-21, -85]);
   const manoD = [-6, -98], manoS = [-24, -142];
   tubo(ctx, arco(spD, [X + 6, -92], manoD), 6.6, C.pelle);
@@ -2455,7 +2455,7 @@ function atlante(nomi, l, a, altezzaMondo, disegna, alias = {}) {
   return { tela, fotogrammi: tutti, cella: { l, a }, altezzaMondo };
 }
 
-/* ======================= BISCOTTO ======================= */
+/* ======================= GOGO ======================= */
 
 /** Piedino tondo con le dita (di lato). */
 
@@ -2466,7 +2466,7 @@ export async function creaPersonaggi() {
     r[nome] = atlante(NOMI_LIA, 256, 384, 1.25, (ctx, v, p, f) => disegnaLia(ctx, abito, v, p, f), ALIAS_LIA);
     await respira();
   }
-  r.biscotto = atlante(NOMI_CANE, 320, 224, 0.7, disegnaCane);
+  r.gogo = atlante(NOMI_CANE, 320, 224, 0.7, disegnaCane);
   await respira();
   r.gattino = atlante(NOMI_GATTO, 192, 160, 0.42, disegnaGatto);
   r.ladro = atlante(NOMI_LADRO, 224, 448, 2.0, disegnaLadro);
@@ -2590,7 +2590,7 @@ function edera(ctx, x, y, lung, seme) {
     if (rng() < 0.6) fiorellini(ctx, x0 - 8, y + L * 0.3, 16, L * 0.6, ['#e8665d', '#f08a7a'], 3, seme + t, 3);
   }
 }
-/** Illustrazione del titolo: una via pastello e Lia a passeggio con Biscotto. */
+/** Illustrazione del titolo: una via pastello e Lia a passeggio con Gogo. */
 export async function creaIllustrazioneTitolo() {
   const tela = nuovaTela(1280, 720), ctx = tela.getContext('2d');
   const rng = casuale(1910);
@@ -2615,7 +2615,7 @@ export async function creaIllustrazioneTitolo() {
   linea(ctx, (p) => { p.moveTo(0, 670); p.lineTo(1280, 670); p.moveTo(0, 682); p.lineTo(1280, 682); }, { spessore: 1.4, alfa: 0.7 });
   acquerello(ctx, Forme.rettangolo(0, 682, 1280, 40, 0), '#aaa3ba', { area: [0, 682, 1280, 40], seme: 52, variazione: 0.25, bordo: 0 });
   for (let x2 = 40; x2 < 1280; x2 += 200) tinta(ctx, Forme.rettangolo(x2, 706, 110, 6, 3), '#f6f2ea', 0.85);
-  // Lia con la borsetta porta a spasso Biscotto al guinzaglio
+  // Lia con la borsetta porta a spasso Gogo al guinzaglio
   const yP = 650, sc = 0.95, scCane = sc * (307 / 320);
   const xL = 560, xC = 790;
   ombraTerra(ctx, xL, yP, 58, 9); ombraTerra(ctx, xC, yP, 96, 11);
@@ -2629,7 +2629,7 @@ export async function creaIllustrazioneTitolo() {
   return tela;
 }
 
-/** Illustrazione finale: al parco Biscotto abbaia al ladro che scappa. */
+/** Illustrazione finale: al parco Gogo abbaia al ladro che scappa. */
 export async function creaIllustrazioneFinale() {
   const tela = nuovaTela(1280, 720), ctx = tela.getContext('2d');
   const rng = casuale(77);
@@ -2667,7 +2667,7 @@ export async function creaIllustrazioneFinale() {
   // la borsetta caduta sull'erba
   ombraTerra(ctx, 712, 652, 40, 8);
   inScena(ctx, 712, 636, 1.6, (c) => { tubo(c, [[-6, -6], [-40, 4], [-30, 14], [10, 10]], 2.4, C.salmoneScuro, 1.5); borsetta(c, 0, 0, 12); });
-  // Biscotto abbaia, il ladro scappa spaventato
+  // Gogo abbaia, il ladro scappa spaventato
   ombraTerra(ctx, 470, 642, 100, 13); ombraTerra(ctx, 990, 600, 70, 11);
   inScena(ctx, 470, 642, 0.96, (c) => disegnaCane(c, 'lato', 'abbaia', 0.5));
   for (const a of [-0.5, -0.15, 0.2]) tratto(ctx, [[600 + Math.cos(a) * 14, 500 + Math.sin(a) * 14], [600 + Math.cos(a) * 34, 500 + Math.sin(a) * 34]], 2.2);

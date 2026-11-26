@@ -3,8 +3,8 @@
  *  --------------------------------------------------------------------------
  *  Ispirata al cortometraggio «Out of Sight» (敲敲, 2010), e ampliata:
  *
- *    PROLOGO    La passeggiata — Lia e Biscotto nella Via del Caffè; il
- *               ladro, la borsa rubata, Biscotto che sparisce nel buco
+ *    PROLOGO    La passeggiata — Lia e Gogo nella Via del Caffè; il
+ *               ladro, la borsa rubata, Gogo che sparisce nel buco
  *               della staccionata. Il mondo diventa bianco.
  *    CAPITOLO 1 Toc toc — il bastoncino nel buco, il mondo che si disegna,
  *               l'albero contro cui si sbatte, la bacchetta magica.
@@ -13,7 +13,7 @@
  *    CAPITOLO 4 La città sull'acqua — le auto che galleggiano, gli
  *               abitanti-animali sul ponte, la libreria della Tigre.
  *    CAPITOLO 5 La balena del cielo — la terrazza e il volo sulla città.
- *    FINALE     Ritrovati — Biscotto torna con la borsa.
+ *    FINALE     Ritrovati — Gogo torna con la borsa.
  *
  *  Ogni capitolo ha:
  *    prepara(g): rimette le cose a posto se si riprende da un salvataggio
@@ -37,6 +37,18 @@ function streghetta(g) {
   g.ui.mostraToc(true, true);
 }
 
+/**
+ * Lia chiama il suo cane: la voce si vede, come in un fumetto ("GOGO!"),
+ * con gli archi sonori che partono da lei.
+ */
+function chiamaGogo(g, testo) {
+  const L = g.lia;
+  if (!L.posaSpeciale) L.posa('sorpresa', 0.8);
+  g.effetti.onomatopea(testo, L.x, L.y + 1.45, L.z, '#f08a6a', testo.length > 6 ? 1.15 : 1.0);
+  g.effetti.archi(L.x, L.y + 1.0, L.z, '#ffd2b0', 2);
+  if (Audio.chiama) Audio.chiama(L.x, L.z, testo.length > 6);
+}
+
 /** Atmosfera del mondo immaginato: bianco ai bordi, colori dove Lia percepisce. */
 function mondoImmaginato(g) {
   g.coloraMondo(0);
@@ -54,18 +66,18 @@ const PROLOGO = {
     L.puoToccare = false;
     L.magica = false;
     g.ui.mostraToc(false);
-    g.coloraMondo(1);          // Biscotto guida Lia: il mondo è tutto colorato
+    g.coloraMondo(1);          // Gogo guida Lia: il mondo è tutto colorato
     g.cieloColore(1);
     g.bordoBianco(0);
-    const b = g.attore('biscotto');
+    const b = g.attore('gogo');
     b.visibile = true;
     b.guinzaglio = L;
     g.guinzaglio(true);
     L.limiti = [0, 30];
     g.bianco(0, 2);
     await g.capitolo('Prologo', 'La passeggiata');
-    g.obiettivo('Passeggia con Biscotto lungo la via');
-    g.pensa('Che bella giornata! Senti, Biscotto? Profumo di caffè.', 4.5);
+    g.obiettivo('Passeggia con Gogo lungo la via');
+    g.pensa('Che bella giornata! Senti, Gogo? Profumo di caffè.', 4.5);
     g.pensa(Input.eTouch
       ? 'Tieni premute le frecce ◀ ▶ per camminare. Tenendole a lungo, Lia corre.'
       : 'Cammina con A / D o le frecce ← →. Tieni premuto Shift per correre.', 6);
@@ -103,13 +115,24 @@ const PROLOGO = {
     g.libera(true);
     ladro.percorri([[54, L.z + 0.6]], 3.8).then(() => { ladro.visibile = false; });
     await g.attendi(0.5);
+    // Gogo parte all'inseguimento del ladro abbaiando... e Lia lo chiama!
     b.faVerso();
     b.percorri([[46.0, 0.1], [46.9, 0.0]], 4.2).then(() => { b.visibile = false; });
-    g.pensa('«Biscotto! Aspetta!»', 2.5);
+    await g.attendi(0.35);
+    chiamaGogo(g, 'GOGO!');
+    g.pensa('«Gogo! Gogo, aspetta!»', 2.5);
+    // mentre corre via abbaia ancora, sempre più lontano, e lei lo chiama di nuovo
+    let chiamate = 0;
+    const inseguimento = g.ogni(1.4, () => {
+      if (!b.visibile || chiamate >= 3) { inseguimento.ferma(); return; }
+      b.faVerso();
+      g.attendi(0.45).then(() => chiamaGogo(g, chiamate === 2 ? 'GOGOOO!' : 'GOGO!'));
+      chiamate++;
+    });
     await g.attendi(0.8);
     L.limiti = null;
     g.controllo(true);
-    g.obiettivo('Corri dietro a Biscotto!');
+    g.obiettivo('Corri dietro a Gogo!');
 
     // --- la staccionata --------------------------------------------------
     await g.quando(() => L.s > 44.2);
@@ -120,7 +143,7 @@ const PROLOGO = {
     g.concentra([46.3, 0.7, 0], 1.1, '#3e2a20', 0.7);
     L.posa('urto', 1.2);
     await g.bianco(1, 0.3);
-    // il mondo diventa bianco: senza Biscotto, Lia non sa più dove si trova
+    // il mondo diventa bianco: senza Gogo, Lia non sa più dove si trova
     g.coloraMondo(0);
     g.cieloColore(0.15);
     g.bordoBianco(1);
@@ -132,9 +155,11 @@ const PROLOGO = {
     Audio.abbaio(46.9, 0);
     g.onda(46.9, 0, 'abbaio');
     g.pensa('Bau... bau... È dall\'altra parte!', 3, true);
+    await g.attendi(1.0);
+    chiamaGogo(g, 'Gogo...?');
     await g.attendi(2);
     await g.dialogo('lia', [
-      'Biscotto... dove sei? Senza di te è tutto bianco... non so più dove sono.',
+      'Gogo... dove sei? Senza di te è tutto bianco... non so più dove sono.',
       'Però posso ascoltare. E posso toccare.',
     ]);
     L.posa(null, 0);
@@ -148,14 +173,14 @@ const CAPITOLO_1 = {
   async prepara(g) {
     await g.vai('via', 'staccionata', { subito: true });
     g.lia.vestiti('lia');
-    g.attore('biscotto').visibile = false;
+    g.attore('gogo').visibile = false;
     g.coloraMondo(0); g.cieloColore(0.15); g.bordoBianco(1);
     g.musica('bianco');
     g.bianco(0, 1.5);
   },
   async gioca(g) {
     const L = g.lia;
-    g.attore('biscotto').visibile = false;
+    g.attore('gogo').visibile = false;
     await g.capitolo('Capitolo 1', 'Toc toc');
     g.obiettivo('Tocca la staccionata, in basso');
     g.interazione('buco', true);
@@ -165,7 +190,7 @@ const CAPITOLO_1 = {
     L.posa('china', Infinity);
     g.inquadra([45.0, 0.45, 1.35], [46.4, 0.3, 0], 1.0, 44);
     await g.dialogo('lia', [
-      'C\'è un buco, qui in basso... Biscotto è passato di qui!',
+      'C\'è un buco, qui in basso... Gogo è passato di qui!',
       'È troppo piccolo per me. Ma dentro c\'è... qualcosa di liscio.',
       'Un bastoncino!',
     ]);
@@ -234,7 +259,7 @@ const CAPITOLO_1 = {
     await g.dialogo('lia', [
       'Una bacchetta con la stella... e un vestito da streghetta!',
       'Con questa posso immaginare tutto quello che sento.',
-      'Arrivo, Biscotto!',
+      'Arrivo, Gogo!',
     ]);
     L.posa(null, 0);
     L.limiti = null;
@@ -366,7 +391,7 @@ const CAPITOLO_2 = {
       'Dimmi, cosa ti porta da queste parti?',
     ]);
     await g.dialogo('lia', [
-      'Cerco il mio cane, Biscotto. È piccolo, giallo, con le orecchie lunghe...',
+      'Cerco il mio cane, Gogo. È piccolo, giallo, con le orecchie lunghe...',
       'Un uomo mi ha rubato la borsa e lui l\'ha inseguito.',
     ]);
     await g.dialogo('fornaia_dentro', [
@@ -459,7 +484,7 @@ const CAPITOLO_4 = {
     g.musica('citta');
     await g.capitolo('Capitolo 4', 'La città sull\'acqua');
     g.pensa('La strada... è diventata un canale! E le auto galleggiano come barchette!', 4.5, true);
-    g.obiettivo('Chiedi agli abitanti del ponte se hanno visto Biscotto');
+    g.obiettivo('Chiedi agli abitanti del ponte se hanno visto Gogo');
     L.limiti = [0, 36.2];
     const parlati = new Set();
     g.dialoghiSpeciali.lepre = async () => {
@@ -574,7 +599,7 @@ const CAPITOLO_5 = {
     });
     Audio.balena();
     g.suonoVisibile('balena', L.x + 8, 9, -14);
-    await g.dialogo('lia', ['Balena del cielo! Mi porti a cercare Biscotto?']);
+    await g.dialogo('lia', ['Balena del cielo! Mi porti a cercare Gogo?']);
     await g.quando(() => t >= 1);
     Audio.balena();
     await g.attendi(1.2);
@@ -604,7 +629,7 @@ const FINALE = {
     g.obiettivo('Ascolta...');
     g.pensa('La balena mi ha lasciata in una piazzetta gialla...', 3.5);
     await g.attendi(2.5);
-    const b = g.attore('biscotto');
+    const b = g.attore('gogo');
     b.visibile = true;
     b.conBorsa = true;
     b.teletrasporta(14.5, L.z + 0.35, -1);
@@ -635,14 +660,14 @@ const FINALE = {
     await g.bianco(0, 0.8);
     g.inquadra([L.x + 0.45, 0.8, L.z + 2.2], [L.x + 0.45, 0.6, L.z + 0.1], 6, 36);
     const cuori = g.ogni(0.25, () => g.particelle.emetti(L.x + 0.45, 0.9, L.z, 3, { forma: [FORME.cuore, FORME.stella], colori: ['#f7a8c8', '#ffd36b', '#ffffff'], su: 0.9, velocita: 0.5, vita: 1.8, dim: 0.14 }));
-    await g.dialogo('lia', ['Biscotto! Mi hai ritrovata!', 'E... questa è la mia borsa! L\'hai ripresa tu?']);
-    await g.dialogo('biscotto', ['Bau! Bau!']);
+    await g.dialogo('lia', ['Gogo! Mi hai ritrovata!', 'E... questa è la mia borsa! L\'hai ripresa tu?']);
+    await g.dialogo('gogo', ['Bau! Bau!']);
     g.ricordo('borsa', 'La borsa ritrovata');
     await g.attendi(2.5);
     cuori.ferma();
     await g.bianco(1, 2.5);
     abbraccio.visibile = false;
-    g.fine('Il ladro? Biscotto lo aveva sorpreso vicino a un grande albero: l\'uomo era scappato così in fretta da lasciar cadere la borsa. ' +
+    g.fine('Il ladro? Gogo lo aveva sorpreso vicino a un grande albero: l\'uomo era scappato così in fretta da lasciar cadere la borsa. ' +
       'Da quel giorno, quando Lia batte il suo bastoncino — toc toc — il mondo intorno a lei si riempie di colori.');
   },
 };

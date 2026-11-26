@@ -3,8 +3,8 @@
 Un **cartone animato da giocare** per **Android**, ad acquerello, ispirato al cortometraggio animato *«Out of Sight»* (敲敲, 2010) di Ya-Ting Yu, Ya-Hsuan Yeh e
 Ling Chung (National Taiwan University of Arts).
 
-Lia è una bambina che non vede. Mentre passeggia con il suo cane Biscotto, un ladro le strappa la
-borsa: Biscotto lo insegue e sparisce in un buco della staccionata. Senza di lui il mondo diventa
+Lia è una bambina che non vede. Mentre passeggia con il suo cane Gogo, un ladro le strappa la
+borsa: Gogo lo insegue e sparisce in un buco della staccionata. Senza di lui il mondo diventa
 **bianco**. Lia trova un bastoncino: ogni volta che bussa per terra (*toc toc*) il mondo si
 **dipinge** intorno a lei. Il bastoncino diventa una bacchetta magica, Lia una piccola streghetta,
 e oltre la staccionata comincia la città immaginata: il forno, il gattino del vicolo, la strada
@@ -61,7 +61,7 @@ poi apri `http://localhost:8000` (serve un piccolo server perché il gioco usa i
 |---|---|---|
 | Camminare | frecce **◀ ▶** in basso a sinistra | `A D` / frecce `← →` |
 | Correre | tieni premuta la freccia per un po' | `Shift` |
-| Toc toc (bastone) | pulsante **Toc!** o tocco breve sullo schermo | `Spazio` o clic |
+| Toc toc (bastone / bacchetta) | **tocca lo schermo nel punto che vuoi «vedere»** | clic nel punto (o `Spazio` davanti ai piedi) |
 | Parlare, entrare, toccare | pulsante che compare (es. **Parla**) | `E` o freccia `↑` |
 | Pausa | pulsante ‖ o tasto Indietro di Android | `Esc` |
 
@@ -87,7 +87,7 @@ TocchiDiColore/
 │       ├── arte/            🎨 i "pittori": disegnano tutto con il codice
 │       │   ├── pennello.js    pennelli comuni (acquerello, inchiostro seppia, foglie)
 │       │   ├── scene_*.js     i fondali dipinti di ogni scena, a piani separati
-│       │   ├── personaggi.js  Lia, Biscotto, il gattino, il ladro
+│       │   ├── personaggi.js  Lia, Gogo, il gattino, il ladro
 │       │   ├── comparse.js    fornaia, passanti, abitanti-animali
 │       │   ├── fiabe.js       rana, lampione vivo, pesci volanti, pecore-nuvola...
 │       │   ├── pioggia.js     auto-pesce, autobus-pesce, balena con le pinne, ombrelli
@@ -112,7 +112,7 @@ TocchiDiColore/
 │           ├── magia.js       lo spettacolo della rivelazione, i colori dei materiali
 │           ├── meraviglie.js  le meraviglie nascoste e i personaggi che si svegliano
 │           ├── meteo.js       la pioggia, la strada-fiume, la balena e la sua ombra
-│           ├── attori.js      Biscotto, abitanti, auto, piccioni
+│           ├── attori.js      Gogo, abitanti, auto, piccioni
 │           ├── audio.js       effetti sonori (generati) e suono "3D"
 │           ├── musica.js      colonna sonora (composta dal codice)
 │           ├── input.js       touch, tastiera, tasto Indietro
@@ -140,7 +140,7 @@ TocchiDiColore/
   scuri, colori che sbavano, bagliori e il leggero "tremolio" dei disegni animati a mano.
 
 ### La magia della rivelazione
-Quando la bacchetta bussa (o Biscotto abbaia, o arriva un profumo) il mondo si scopre in tre tempi:
+Quando la bacchetta bussa (o Gogo abbaia, o arriva un profumo) il mondo si scopre in tre tempi:
 prima i **contorni a matita**, poi il **colore che si spande come acquerello bagnato** con un bordo
 di pigmento e una velatura d'oro (rosa per i profumi, arancio per l'abbaio, azzurro per i suoni);
 le zone appena scoperte **brillano di stelline** per un paio di secondi. Sul fronte dell'onda nascono
@@ -148,8 +148,17 @@ stelle e fiorellini (bacchetta), note (suoni), petali (profumi); il colpo incres
 una nota di carillon: bussando nasce una melodia. Il codice è in `gioco/magia.js` (spettacolo e
 particelle) e in `motore/materiali.js` (la funzione `rivelazione` dello shader).
 
+**Tocca lo schermo, e il mondo si rivela da lì**: non c'è più il pulsante «Toc!». Il dito sullo
+schermo diventa il bastone: il gioco lancia un raggio dalla telecamera attraverso il punto toccato
+(`_toccoSchermo` in `main.js`, `colpisci` in `motore/scena.js`), trova il muro o il pavimento dipinto
+che c'è sotto (scartando le parti trasparenti del disegno) e Lia batte proprio lì
+(`toccaPunto` in `gioco/lia.js`). Con il bastoncino arriva solo vicino a sé (2,4 m); con la
+bacchetta magica una cometa di stelline vola fino al punto, anche lontano, e la camera la segue con
+lo sguardo. Le distanze sono in `config.js`, sotto `bacchetta`. Toccando una persona vicina, Lia ci
+parla.
+
 **Il bastone che tocca il mondo**: Lia cammina rasente ai muri (come nel film) e il bastone batte
-alternando il pavimento e la parete. Ogni materiale ha il suo suono e il suo colore: il vetro
+sul materiale toccato (con la tastiera, `Spazio`, alterna il pavimento e la parete). Ogni materiale ha il suo suono e il suo colore: il vetro
 tintinna e si colora d'azzurro, il legno fa "tok" ed è caldo come il miele, il metallo risuona
 "dong", le foglie frusciano... La prima volta che tocca un materiale, Lia dice che cosa immagina.
 I materiali di ogni tratto sono scritti in `materiali` nei file di `dati/scene/`, la distanza dal
@@ -169,9 +178,25 @@ gli animali che aspettano l'autobus-pesce sotto gli ombrelli e una balena con ta
 nel cielo stendendo la sua ombra sulla via.
 
 **Stile manga/anime**: contorno d'inchiostro e luce di bordo su tutti i personaggi; il mondo non
-ancora scoperto è una pagina manga in bianco e nero con il retino; linee di concentrazione nei
+ancora scoperto è un disegno a matita su carta bianca (il retino manga si riaccende con `uRetino` in
+`motore/materiali.js`); linee di concentrazione nei
 momenti forti e linee di velocità quando Lia corre; simboli sopra la testa ("!", gocce, note,
 stelline); ombre lilla e ombre delle nuvole che passano; il sole con il bagliore a raggi.
+
+**L'ultima mano di acquerello** (`arte/finitura.js`): tutti i fondali e gli oggetti di scena,
+appena dipinti dal codice, ricevono una "finitura" come gli acquerelli veri del film: il pigmento
+si accumula sui bordi delle macchie, il colore si spande appena, le velature sono irregolari e la
+grana della carta trattiene il colore. Si regola con `finitura` in `config.js` (0 = spenta).
+
+**Disegni fatti a mano** (`arte/dipinti_a_mano.js`): qualunque fondale, personaggio o oggetto può
+essere sostituito da un'immagine dipinta a mano, per arrivare alla qualità di un cartone vero.
+1. Apri il gioco nel browser del computer, entra in una scena e nella console (F12) scrivi
+   `esportaDisegni()` (fondali della scena) oppure `esportaDisegni('atlanti')` (personaggi e
+   oggetti): scarichi i PNG con misure e disposizione giuste, da usare come traccia.
+2. Ridipingili (stesse misure, trasparenza dove non c'è niente) e mettili in `www/img/dipinti/`.
+3. Scrivi i nomi in `www/img/dipinti/elenco.json`, per esempio
+   `{ "strati": { "via/facciate_1": "via_facciate_1.png" }, "atlanti": { "gogo": "gogo.png" } }`.
+Usa solo disegni tuoi o di cui hai il permesso: i fotogrammi del film appartengono ai loro autori.
 
 **Meraviglie nascoste ✦**: in ogni scena (`meraviglie` nei file di `dati/scene/`) ci sono cose che
 prendono vita quando un'onda le raggiunge — farfalle, uccellini in volo, palloncini, pagine che
@@ -184,6 +209,10 @@ volano, bolle nel canale — e il contatore in alto sale. Il codice è in `gioco
   numeri di `pos` (dove sta la telecamera rispetto a Lia: destra, alto, verso di noi) e `guarda`
   (dove guarda). Con `taglio: true` il passaggio è uno stacco netto, senza è una carrellata.
 - **Mondo più o meno visibile senza bastone**: in `config.js` cambia `schizzo` (0 = tutto bianco).
+- **Grafica più nitida o più leggera**: in `config.js`, sotto `preimpostazioni`, `pixelRatio` è la
+  risoluzione con cui si disegna il mondo, `uscita` quella dell'immagine finale, `campioni`
+  l'antialiasing. In automatico il gioco scende di livello se il telefono fatica e risale se è fluido.
+- **Bacchetta che arriva più lontano**: in `config.js`, sotto `bacchetta`, cambia `portataMagica`.
 - **Nuovo dialogo con un abitante**: aggiungi frasi in `chiacchiere` del personaggio nella sua scena.
 - **Nuova meraviglia**: in un file di `dati/scene/`, sotto `meraviglie`, aggiungi una riga come
   `{ id: 'gatto', x: 20, y: 1, z: -1.5, effetto: 'farfalle', testo: 'Un gatto sul davanzale!' }`

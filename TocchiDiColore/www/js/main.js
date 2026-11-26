@@ -558,8 +558,8 @@ class Gioco {
     const cam = this.regia.camera;
     for (const a of S.attori) a.disegna(cam);
     this.lia.disegna(cam);
-    // guinzaglio tra la mano di Lia e il collare di Biscotto
-    const b = this.attore('biscotto');
+    // guinzaglio tra la mano di Lia e il collare di Gogo
+    const b = this.attore('gogo');
     const g = this.guinzaglioLinea;
     g.linea.visible = !!(this.mostraGuinzaglio && b && b.visibile && !this.lia.nascosta);
     if (g.linea.visible) {
@@ -628,7 +628,7 @@ class Gioco {
     await this.bianco(0, 1.6);
     this.pensa('Si vola! La città è piena di colori... e laggiù il fiume è una strada!', 5, true);
     await this.regista.quando(() => this.voloT > 0.45);
-    this.pensa('Eccolo! Un puntino giallo che corre nella piazzetta... Biscotto!', 4.5, true);
+    this.pensa('Eccolo! Un puntino giallo che corre nella piazzetta... Gogo!', 4.5, true);
     await this.regista.quando(() => this.voloT >= 1);
     await this.bianco(1, 1.4);
     canti.ferma();
@@ -802,7 +802,7 @@ class Gioco {
   /** Mostra o nasconde il guinzaglio. */
   guinzaglio(si) { this.mostraGuinzaglio = si; }
 
-  /** La sagoma dell'abbraccio finale (Lia e Biscotto insieme) in (x, z). */
+  /** La sagoma dell'abbraccio finale (Lia e Gogo insieme) in (x, z). */
   sagomaAbbraccio(x, z) {
     const s = new Sagoma('abbraccio', { ombra: 0.45, luce: 1 });
     s.aggiungiA(this.corrente.gruppo);
@@ -824,6 +824,29 @@ class Gioco {
 const gioco = new Gioco();
 window.Gioco = gioco; // per curiosare dalla console del browser
 window.__input = Input; // per i collaudi automatici
+
+/**
+ * Scarica i disegni come PNG, da usare come "traccia" per ridipingerli a mano
+ * (vedi arte/dipinti_a_mano.js). Dalla console del browser:
+ *   esportaDisegni()           i fondali della scena in cui si trova Lia
+ *   esportaDisegni('atlanti')  tutti i personaggi e gli oggetti
+ */
+window.esportaDisegni = async (cosa) => {
+  const { esporta } = await import('./arte/dipinti_a_mano.js');
+  if (cosa === 'atlanti') {
+    for (const [nome, at] of Object.entries(Galleria.atlanti)) esporta(at.tela, nome);
+    return Object.keys(Galleria.atlanti);
+  }
+  const S = gioco.corrente;
+  if (!S) return 'Entra prima in una scena';
+  const nomi = [];
+  for (const m of S.gruppo.children) {
+    if (!m.userData || !m.userData.tela || !m.name) continue;
+    esporta(m.userData.tela, S.def.arte.nome + '_' + m.name);
+    nomi.push(S.def.arte.nome + '/' + m.name);
+  }
+  return nomi;
+};
 gioco.avvia().catch((errore) => {
   console.error(errore);
   const el = document.getElementById('testoCaricamento');
