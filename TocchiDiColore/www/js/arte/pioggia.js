@@ -562,13 +562,13 @@ Object.assign(TONI, { [BALENA.dorso]: '#84afdc', [BALENA.pinna]: '#8fb8e3', [BAL
 
 /** La sagoma della balena per la fase w: contorno, bordo alto e basso. */
 function formaBalena(w) {
-  const X0 = -380, X1 = 452, H = 128;
+  const X0 = -372, X1 = 452, H = 142;
   // la "spina dorsale" ondeggia appena (più verso la coda che verso la testa)
-  const spina = (x) => -50 + 8 * Math.sin((TAU * (x - X1)) / 820 + w) * (1 - (0.7 * (x - X0)) / (X1 - X0));
+  const spina = (x) => -60 + 8 * Math.sin((TAU * (x - X1)) / 820 + w) * (1 - (0.7 * (x - X0)) / (X1 - X0));
   // spessore (0..1) lungo il corpo: sottile alla coda, massimo verso la testa,
   // poi la testa grande e tonda (un quarto di "super-ellisse", quasi squadrata)
   const campioni = [];
-  for (let s = 0; s < 0.64; s += 0.025) campioni.push([X0 + s * (X1 - X0), 0.1 + 0.9 * Math.pow(Math.sin((Math.PI / 2) * (s / 0.64)), 1.05)]);
+  for (let s = 0; s < 0.64; s += 0.025) campioni.push([X0 + s * (X1 - X0), 0.14 + 0.86 * Math.pow(Math.sin((Math.PI / 2) * (s / 0.64)), 1.1)]);
   for (let i = 0; i <= 16; i++) {
     const th = (i / 16) * (Math.PI / 2);
     campioni.push([X0 + (0.64 + 0.36 * Math.pow(Math.sin(th), 0.7)) * (X1 - X0), Math.pow(Math.cos(th), 0.7)]);
@@ -619,18 +619,18 @@ function disegnaBalena(ctx, nome) {
   const PINNE = 9;
   const pinne = [];
   for (let i = 0; i < PINNE; i++) {
-    const x = lerp(272, -236, i / (PINNE - 1));
-    const fase = w - i * 0.7;
+    const x = lerp(280, -236, i / (PINNE - 1));
+    const fase = w - i * 0.62;
     pinne.push({
-      radice: B.punto(x, 0.58),
+      radice: B.punto(x, 0.6),
       ang: 1.95 + 0.36 * Math.sin(fase),
-      L: (168 - i * 5) * (0.93 + 0.07 * Math.cos(fase)),
-      W: 48 - i * 1.2,
+      L: (188 - i * 6) * (0.93 + 0.07 * Math.cos(fase)),
+      W: 44 - i * 1.1,
     });
   }
-  // due nuvolette soffici tra le pinne (respirano con il battito)
-  nuvoletta(ctx, -150, 176, 1.45 + 0.04 * Math.sin(w), 3);
-  nuvoletta(ctx, 196, 196, 1.2 + 0.04 * Math.cos(w), 4);
+  // la balena nuota tra le nuvole: due nuvolette dietro la coda e sotto il muso
+  nuvoletta(ctx, -330, 92, 1.5 + 0.04 * Math.sin(w), 3);
+  nuvoletta(ctx, 396, 120, 1.25 + 0.04 * Math.cos(w), 4);
   // le pinne dell'altro fianco (più scure) spuntano da dietro la pancia
   for (const p of pinne) pinnaRemo(ctx, piu(p.radice, [18, -12]), p.ang - 0.3, p.L * 0.9, p.W * 0.88, BALENA.lontana);
   // il corpo: bianco con l'ombra lilla, poi la fascia azzurra del dorso
@@ -647,7 +647,7 @@ function disegnaBalena(ctx, nome) {
   }
   ctx.restore();
   // la coda (dopo il corpo, così copre l'attaccatura): due lobi che oscillano
-  pinna(ctx, [B.X0 + 8, B.spina(B.X0)], [Math.PI - 0.45, Math.PI, Math.PI + 0.45], [100, 24, 100], 46, 0.1 * Math.sin(w + 1.5), BALENA.dorso, 0.6);
+  pinna(ctx, [B.X0 + 8, B.spina(B.X0)], [Math.PI - 0.46, Math.PI, Math.PI + 0.46], [118, 26, 118], 54, 0.1 * Math.sin(w + 1.5), BALENA.dorso, 0.6);
   // la faccia: la bocca lunga che sorride, l'occhietto, la guancia
   const bocca = [];
   for (let x = B.X1 - 2; x >= 296; x -= 16) bocca.push(B.punto(x, 0.56 - (B.X1 - x) * 0.0003));
@@ -656,7 +656,6 @@ function disegnaBalena(ctx, nome) {
   tratto(ctx, bocca, LW);
   const [ex, ey] = B.punto(340, 0.41);
   occhio(ctx, ex, ey, 10, 12, [0.45, 0.15]);
-  tratto(ctx, [[ex - 9, ey - 17], [ex + 1, ey - 20], [ex + 11, ey - 16]], LW * 0.8);   // il sopracciglio gentile
   tratto(ctx, [[ex - 11, ey + 15], [ex, ey + 18.5], [ex + 11, ey + 15]], LW * 0.7);   // l'occhio che sorride
   guancia(ctx, ex - 6, ey + 32, 13, 0.45);
   // le pinne vicine: dalla coda verso la testa (quelle davanti coprono le altre)
