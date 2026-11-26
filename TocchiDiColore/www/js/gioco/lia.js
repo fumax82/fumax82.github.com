@@ -65,6 +65,9 @@ export class Lia {
     this.posaSpeciale = nome;
     this.tempoPosa = durata === undefined ? 1 : durata;
     this.tPosa = 0;
+    // i simboli manga sopra la testa, a seconda dell'emozione
+    const simbolo = { sorpresa: '!', urto: 'goccia', ascolta: 'puntini', saluta: 'stelline', china: 'cuore' }[nome];
+    if (simbolo && this.gioco.effetti) this.gioco.effetti.simbolo(simbolo, this, nome === 'ascolta' ? 2.5 : 1.6);
   }
 
   /** Mette Lia in una nuova scena, al punto s, rivolta in avanti (+1) o indietro (-1). */

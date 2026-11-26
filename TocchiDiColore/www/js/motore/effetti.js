@@ -62,6 +62,60 @@ function telaScritta(testo, colore) {
   return tex;
 }
 
+/**
+ * Simboli manga che compaiono sopra la testa dei personaggi:
+ *   '!' sorpresa, 'goccia' imbarazzo/urto, 'puntini' ascolto/pensiero,
+ *   'stelline' gioia, 'note' allegria, 'cuore' affetto
+ */
+function telaSimbolo(tipo) {
+  const chiave = 'S:' + tipo;
+  if (cache.has(chiave)) return cache.get(chiave);
+  const t = document.createElement('canvas');
+  t.width = t.height = 256;
+  const c = t.getContext('2d');
+  const ink = '#3e2a20';
+  c.lineJoin = 'round'; c.lineCap = 'round';
+  const stella = (x, y, r, col) => {
+    c.beginPath();
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2 - Math.PI / 2, rr = k % 2 ? r * 0.28 : r;
+      c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+    }
+    c.closePath(); c.fillStyle = col; c.fill(); c.lineWidth = 5; c.strokeStyle = ink; c.stroke();
+  };
+  if (tipo === '!') {
+    // raggi di sorpresa intorno
+    c.strokeStyle = ink; c.lineWidth = 7;
+    for (const [a, l] of [[-2.4, 40], [-2.0, 30], [-1.1, 30], [-0.7, 40]]) {
+      c.beginPath(); c.moveTo(128 + Math.cos(a) * 70, 120 + Math.sin(a) * 70); c.lineTo(128 + Math.cos(a) * (70 + l), 120 + Math.sin(a) * (70 + l)); c.stroke();
+    }
+    c.beginPath(); c.moveTo(112, 40); c.lineTo(144, 40); c.lineTo(136, 150); c.lineTo(120, 150); c.closePath();
+    c.fillStyle = '#ffdf6b'; c.fill(); c.lineWidth = 9; c.strokeStyle = ink; c.stroke();
+    c.beginPath(); c.arc(128, 190, 16, 0, Math.PI * 2); c.fill(); c.stroke();
+  } else if (tipo === 'goccia') {
+    c.beginPath(); c.moveTo(128, 50); c.bezierCurveTo(150, 100, 175, 140, 160, 175); c.bezierCurveTo(145, 210, 110, 210, 96, 175); c.bezierCurveTo(82, 140, 106, 100, 128, 50);
+    c.fillStyle = '#a8d8ff'; c.fill(); c.lineWidth = 8; c.strokeStyle = ink; c.stroke();
+    c.fillStyle = '#ffffff'; c.beginPath(); c.ellipse(112, 160, 8, 14, -0.3, 0, Math.PI * 2); c.fill();
+  } else if (tipo === 'puntini') {
+    for (let k = 0; k < 3; k++) { c.beginPath(); c.arc(70 + k * 58, 140, 17, 0, Math.PI * 2); c.fillStyle = '#ffffff'; c.fill(); c.lineWidth = 7; c.strokeStyle = ink; c.stroke(); }
+  } else if (tipo === 'stelline') {
+    stella(90, 120, 52, '#fff0a0'); stella(170, 80, 34, '#f7b6d8'); stella(175, 170, 26, '#a8d8ff');
+  } else if (tipo === 'note') {
+    c.fillStyle = '#f7a8c8'; c.strokeStyle = ink; c.lineWidth = 7;
+    for (const [x, y, s2] of [[85, 170, 1], [165, 120, 0.8]]) {
+      c.beginPath(); c.ellipse(x, y, 26 * s2, 19 * s2, -0.4, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.beginPath(); c.moveTo(x + 24 * s2, y - 4); c.lineTo(x + 24 * s2, y - 105 * s2); c.lineTo(x + 60 * s2, y - 80 * s2); c.stroke();
+    }
+  } else { // cuore
+    c.beginPath(); c.moveTo(128, 200); c.bezierCurveTo(40, 140, 50, 60, 100, 60); c.bezierCurveTo(118, 60, 128, 75, 128, 88);
+    c.bezierCurveTo(128, 75, 138, 60, 156, 60); c.bezierCurveTo(206, 60, 216, 140, 128, 200);
+    c.fillStyle = '#f7a8c8'; c.fill(); c.lineWidth = 8; c.strokeStyle = ink; c.stroke();
+  }
+  const tex = new THREE.CanvasTexture(t);
+  cache.set(chiave, tex);
+  return tex;
+}
+
 /** Archi sonori: tre archi a pennello per lato, come nei fumetti. */
 function telaArchi() {
   if (cache.has('archi')) return cache.get('archi');
@@ -233,6 +287,29 @@ export class Effetti {
         mat.rotation = ruota + Math.sin(t * 6) * 0.05;
         mat.opacity = 1 - Math.max(0, (t - 1.0) / 0.5);
         return t < 1.5;
+      },
+      rimuovi: () => { s.removeFromParent(); mat.dispose(); },
+    });
+  }
+
+  /** Un simbolo manga sopra la testa di un personaggio (lo segue per un po'). */
+  simbolo(tipo, attore, durata) {
+    const mat = new THREE.SpriteMaterial({ map: telaSimbolo(tipo), transparent: true, depthWrite: false, depthTest: false });
+    const s = new THREE.Sprite(mat);
+    s.renderOrder = 21;
+    this.scena.add(s);
+    const D = durata || 1.5;
+    const altezza = (attore.sagoma ? attore.sagoma.altezza : 1) * 0.95;
+    let t = 0;
+    this.vivi.push({
+      aggiorna: (dt) => {
+        t += dt;
+        const pop = t < 0.15 ? (t / 0.15) * 1.25 : t < 0.28 ? 1.25 - ((t - 0.15) / 0.13) * 0.25 : 1;
+        const g = 0.42 * pop;
+        s.scale.set(g, g, 1);
+        s.position.set(attore.x + 0.32, attore.y + altezza + Math.sin(t * 7) * 0.02, attore.z + 0.05);
+        mat.opacity = 1 - Math.max(0, (t - D + 0.35) / 0.35);
+        return t < D;
       },
       rimuovi: () => { s.removeFromParent(); mat.dispose(); },
     });

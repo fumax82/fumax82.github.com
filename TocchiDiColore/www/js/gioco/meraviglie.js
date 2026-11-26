@@ -57,6 +57,7 @@ export class Meraviglie {
     const y = m.y !== undefined ? m.y : this.scena.quota(m.x, m.z) + 0.5;
     // un momento di scoperta: la camera si allarga e guarda la meraviglia, luce e spirali
     g.regia.momento([m.x, y, m.z], 3.0);
+    g.concentra([m.x, y, m.z], 1.6, '#fffaf0', 0.65);
     g.effetti.colonnaLuce(m.x, y - 0.5, m.z, '#fff3b8', 6);
     g.effetti.spirale(m.x, y - 0.4, m.z, '#ffd36b', { raggio: 0.6, altezza: 2, durata: 2 });
     g.effetti.spirale(m.x, y - 0.4, m.z, '#f7b6d8', { raggio: 0.8, altezza: 2.2, fase: 3, durata: 2.2 });

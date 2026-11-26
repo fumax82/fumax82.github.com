@@ -35,6 +35,10 @@ const FRAG = /* glsl */ `
   uniform float uIntensita;       // 0 = filtro spento, 1 = acquerello pieno
   uniform vec4 uOndaSchermo;      // increspatura del colpo di bacchetta: (x, y, avanzamento 0..1, forza)
   uniform vec3 uColoreOnda;
+  uniform vec4 uFocus;            // linee di concentrazione manga: (x, y, forza, seme)
+  uniform vec3 uColoreFocus;
+  uniform float uVelocita;        // linee di velocità (quando Lia corre): 0..1
+  uniform float uVersoVelocita;   // +1 corre verso destra, -1 verso sinistra
   varying vec2 vUv;
 
   float lum(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
@@ -105,6 +109,26 @@ const FRAG = /* glsl */ `
     col = mix(col, uCarta, vign * uBordoBianco);
     col *= 1.0 - smoothstep(0.55, 1.2, rr) * 0.10 * (1.0 - uBordoBianco);
 
+    // LINEE DI CONCENTRAZIONE (come nei manga): raggi sottili che convergono sul
+    // punto importante, nei momenti di sorpresa e di meraviglia
+    if (uFocus.z > 0.001) {
+      vec2 asp = vec2(uRis.x / uRis.y, 1.0);
+      vec2 d = (uv - uFocus.xy) * asp;
+      float ang = atan(d.y, d.x);
+      float raggi = texture2D(tRumore, vec2(ang * 1.7 + uFocus.w, 0.31)).b * 0.6 + texture2D(tRumore, vec2(ang * 0.9 - uFocus.w, 0.77)).g * 0.4;
+      float linea = smoothstep(0.6, 0.7, raggi);
+      float lontano = smoothstep(0.3, 0.95, length(d));
+      col = mix(col, uColoreFocus, linea * lontano * uFocus.z);
+    }
+    // LINEE DI VELOCITÀ: strisce orizzontali che scorrono in alto e in basso
+    if (uVelocita > 0.001) {
+      float riga = texture2D(tRumore, vec2(0.37, uv.y * 2.3)).b;
+      float scorre = texture2D(tRumore, vec2(uv.x * 0.5 + uTempo * 1.6 * uVersoVelocita, uv.y * 2.3 + 0.5)).r;
+      float l = smoothstep(0.72, 0.8, riga) * smoothstep(0.42, 0.7, scorre);
+      float margini = smoothstep(0.18, 0.45, abs(uv.y - 0.52));
+      col = mix(col, vec3(1.0, 0.99, 0.95), l * margini * uVelocita * 0.55);
+    }
+
     col = mix(col, uCarta, uBianco);
     gl_FragColor = vec4(col, 1.0);
   }
@@ -128,6 +152,10 @@ export class Acquerello {
         uSaturazione: { value: 1.08 },
         uIntensita: { value: 1 },
         uOndaSchermo: { value: new THREE.Vector4(0.5, 0.5, 1, 0) },
+        uFocus: { value: new THREE.Vector4(0.5, 0.5, 0, 0) },
+        uColoreFocus: { value: new THREE.Color('#fffaf0') },
+        uVelocita: { value: 0 },
+        uVersoVelocita: { value: 1 },
         uColoreOnda: { value: new THREE.Color('#ffe7a0') },
       },
       vertexShader: VERT,

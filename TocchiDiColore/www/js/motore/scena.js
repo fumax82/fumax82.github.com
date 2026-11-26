@@ -13,7 +13,7 @@
 import * as THREE from 'three';
 import { Galleria } from '../arte/galleria.js';
 import { geometriaStrato, textureDaTela } from './strati.js';
-import { materialeStrato, materialeCielo, materialeAnello } from './materiali.js';
+import { materialeStrato, materialeCielo, materialeAnello, UNIFORMI } from './materiali.js';
 import { Sagoma } from './sagoma.js';
 import { Percorso } from '../gioco/percorso.js';
 import { Percezione } from '../gioco/percezione.js';
@@ -138,6 +138,29 @@ export class Scena {
     this.cupola.frustumCulled = false;
     this.gruppo.add(this.cupola);
     this.daSmontare.push(this.cupola.geometry, this.cupola.material);
+
+    // il sole, con il bagliore a raggi degli anime
+    const tSole = document.createElement('canvas');
+    tSole.width = tSole.height = 256;
+    const cs = tSole.getContext('2d');
+    const gr = cs.createRadialGradient(128, 128, 0, 128, 128, 128);
+    gr.addColorStop(0, 'rgba(255,255,245,1)'); gr.addColorStop(0.12, 'rgba(255,246,210,0.9)');
+    gr.addColorStop(0.35, 'rgba(255,230,170,0.25)'); gr.addColorStop(1, 'rgba(255,220,160,0)');
+    cs.fillStyle = gr; cs.fillRect(0, 0, 256, 256);
+    cs.globalCompositeOperation = 'lighter';
+    for (let k = 0; k < 12; k++) {
+      const a = (k / 12) * Math.PI * 2 + 0.2, l = k % 2 ? 90 : 125;
+      const g2 = cs.createLinearGradient(128, 128, 128 + Math.cos(a) * l, 128 + Math.sin(a) * l);
+      g2.addColorStop(0, 'rgba(255,245,215,0.5)'); g2.addColorStop(1, 'rgba(255,245,215,0)');
+      cs.strokeStyle = g2; cs.lineWidth = k % 2 ? 3 : 5;
+      cs.beginPath(); cs.moveTo(128, 128); cs.lineTo(128 + Math.cos(a) * l, 128 + Math.sin(a) * l); cs.stroke();
+    }
+    const texSole = new THREE.CanvasTexture(tSole);
+    this.sole = new THREE.Sprite(new THREE.SpriteMaterial({ map: texSole, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.85 }));
+    this.sole.scale.set(150, 150, 1);
+    this.sole.renderOrder = -96;
+    this.gruppo.add(this.sole);
+    this.daSmontare.push(texSole, this.sole.material);
 
     const P = this.percorso.punti;
     const centro = new THREE.Vector3((P[0].x + P[P.length - 1].x) / 2, 0, (P[0].z + P[P.length - 1].z) / 2);
@@ -300,6 +323,10 @@ export class Scena {
   /** A ogni fotogramma: cielo che segue la camera, nuvole, uccelli... */
   aggiorna(dt, t, camera) {
     if (this.cupola) this.cupola.position.copy(camera.position);
+    if (this.sole) {
+      this.sole.position.copy(camera.position).addScaledVector(UNIFORMI.uSole.value, 360);
+      this.sole.material.opacity = 0.85 * UNIFORMI.uColoreCielo.value;
+    }
     for (const f of this.animati) f(dt, t, camera);
   }
 

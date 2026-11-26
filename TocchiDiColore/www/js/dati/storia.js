@@ -89,6 +89,7 @@ const PROLOGO = {
     g.inquadra([L.x + 0.6, 1.05, L.z + 2.9], [L.x + 0.55, 0.95, L.z + 0.2], 0, 40);
     ladro.posa('scippo', 0.9);
     Audio.scippo(ladro.x, ladro.z);
+    g.concentra([L.x + 0.4, 1.0, L.z], 1.6, '#3e2a20', 0.85);
     L.vestiti('lia');
     L.posa('sorpresa', 2.5);
     g.regia.scuoti(0.7);
@@ -116,6 +117,7 @@ const PROLOGO = {
     await L.vaiA(45.75, 2.4);
     Audio.botta();
     g.regia.scuoti(1.2);
+    g.concentra([46.3, 0.7, 0], 1.1, '#3e2a20', 0.7);
     L.posa('urto', 1.2);
     await g.bianco(1, 0.3);
     // il mondo diventa bianco: senza Biscotto, Lia non sa più dove si trova
@@ -202,6 +204,7 @@ const CAPITOLO_1 = {
     await g.attendi(1.2);
     Audio.trasformazione();
     g.onda(L.x, L.z, 'magia');
+    g.concentra([L.x, L.y + 0.8, L.z], 2.6, '#fffaf0', 0.9);
     // la camera gira intorno a Lia salendo, mentre la magia la avvolge
     g.inquadra([p[0] - 1.9, p[1] + 1.7, p[2] + 2.1], [p[0], p[1] + 0.8, p[2]], 2.6, 48);
     g.regia.pulsa(1);
@@ -288,6 +291,7 @@ const CAPITOLO_1 = {
     g.pensa('E in cielo... una balena con mille pinne che nuota nell\'aria!', 5, true);
     await g.quando(() => balena.x > L.x - 6);
     Audio.balena();
+    g.concentra([balena.x, balena.y, balena.z], 2.0, '#fffaf0', 0.75);
     g.suonoVisibile('balena', balena.x, balena.y, balena.z);
     await g.attendi(4.5);
     g.libera();
@@ -609,6 +613,7 @@ const FINALE = {
     await b.percorri([[L.x + 0.95, L.z + 0.22]], 3.2);
     b.guarda(L.x, L.z);
     L.posa('sorpresa', 2);
+    g.concentra([L.x + 0.5, 0.7, L.z], 1.8, '#fffaf0', 0.85);
     g.scintille(L.x, L.y + 1.2, L.z, 20, { forma: [FORME.stella] });
     // i fiori della piazzetta cantano di gioia
     const fiori = g.attore('fiori');

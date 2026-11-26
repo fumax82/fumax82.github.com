@@ -31,7 +31,8 @@ export const UNIFORMI = {
   uOndeColori: { value: Array.from({ length: MAX_ONDE }, () => new THREE.Color('#ffffff')) },
   uNumOnde: { value: 0 },
   uColoreCielo: { value: 1 },
-  uSole: { value: new THREE.Vector3(0.4, 0.75, 0.5).normalize() },
+  // il sole: basso, davanti e a sinistra (si vede nelle inquadrature verso il fondo)
+  uSole: { value: new THREE.Vector3(-0.4, 0.32, -0.86).normalize() },
   uFoschia: { value: new THREE.Vector2(14, 70) },  // distanza a cui inizia/finisce la foschia
   uLuceScena: { value: new THREE.Color(1, 1, 1) },  // tinta generale (es. luce calda del tramonto)
   uColoreMagia: { value: new THREE.Color('#ffd77a') },  // colore della luce sul fronte (quello dell'ultima onda)
@@ -39,6 +40,7 @@ export const UNIFORMI = {
   uOmbreNuvole: { value: 0 },    // ombre delle nuvole che scorrono (0 = nessuna)
   uOmbraBalena: { value: new THREE.Vector4(0, 0, 1, 0) },  // ombra della balena: (x, z, raggio, forza)
   uPioggia: { value: 0 },        // quanto piove (0..1): bagnato, pozzanghere, cerchi delle gocce
+  uRetino: { value: 1 },         // retino manga nel mondo non ancora scoperto (0 = spento)
   uFuoco: { value: 5 },          // distanza messa a fuoco (quella di Lia dalla camera)
   uSfocatura: { value: 1.6 },    // quanto si sfocano i piani fuori fuoco (profondità di campo)
 };
@@ -151,6 +153,7 @@ const GLSL_COMUNE = /* glsl */ `
   uniform float uOmbreNuvole;
   uniform vec4 uOmbraBalena;
   uniform float uPioggia;
+  uniform float uRetino;
 
   /*
    * LA RIVELAZIONE, in tre tempi (come nel film, il mondo "si disegna"):
@@ -351,6 +354,14 @@ const FRAG_STRATO = /* glsl */ `
       float ay = texture2D(uMappa, uv + vec2(0.0, uTexel.y)).a - texture2D(uMappa, uv - vec2(0.0, uTexel.y)).a;
       float bordo = smoothstep(0.08, 0.32, length(vec2(lx, ly)) + length(vec2(ax, ay)) * 0.6);
       vec3 schizzo = mix(uCarta, uInk, bordo * uSchizzo * uSchizzoStrato * (0.3 + 0.7 * matita));
+      // RETINO MANGA: dove il dipinto è scuro, puntini d'inchiostro come nelle pagine dei fumetti
+      // (il mondo non ancora scoperto è una pagina manga in bianco e nero)
+      float scuro = 1.0 - lum(t.rgb);
+      vec2 qq = mat2(0.7071, -0.7071, 0.7071, 0.7071) * qr(vMondo) * 11.0;
+      float rr = sqrt(clamp(scuro * 1.3 - 0.18, 0.0, 1.0)) * 0.5;
+      float punto = 1.0 - smoothstep(rr - 0.08, rr + 0.08, length(fract(qq) - 0.5));
+      float vicino = 1.0 - smoothstep(9.0, 22.0, dist);
+      schizzo = mix(schizzo, uInk, punto * 0.38 * uRetino * uSchizzoStrato * (0.35 + 0.65 * matita) * vicino);
       // il colore arriva come acquerello bagnato: sul bordo il pigmento si accumula
       vec3 colore = t.rgb * uLuceScena;
       colore = mix(colore, colore * vec3(0.78, 0.72, 0.84), bagnato * 0.5);
@@ -462,6 +473,8 @@ const FRAG_SPRITE = /* glsl */ `
   uniform float uOpacita;
   uniform vec4 uRiquadroLimiti;
   uniform float uColoreCielo;
+  uniform float uContorno;
+  uniform float uSpecchio;
   varying vec2 vUv;
   varying vec3 vMondo;
   varying vec3 vBase;
@@ -471,11 +484,28 @@ const FRAG_SPRITE = /* glsl */ `
   }
   void main() {
     vec4 t = texture2D(uMappa, vUv);
-    float a = t.a * uOpacita;
+    float aBase = t.a;
+    // CONTORNO MANGA: appena fuori dalla sagoma, un filo d'inchiostro uguale per tutti
+    float contorno = 0.0;
+    if (aBase < 0.6 && uContorno > 0.0 && uCielo < 0.5) {
+      float m = 0.0;
+      for (int k = 0; k < 8; k++) {
+        float ang = float(k) * 0.7853982;
+        m = max(m, alfa(vUv + vec2(cos(ang), sin(ang)) * uTexel * uContorno));
+      }
+      contorno = smoothstep(0.3, 0.75, m) * (1.0 - aBase);
+    }
+    float a = max(aBase, contorno) * uOpacita;
     if (a < 0.03) discard;
     vec3 col = t.rgb * uTinta;
     if (uCielo > 0.5) { gl_FragColor = vec4(mix(uCarta, col, 0.35 + 0.65 * uColoreCielo), a); return; }
     col *= uLuceScena;
+    // LUCE DI BORDO (come negli anime): un filo chiaro sul lato della sagoma verso la luce (in alto a sinistra)
+    if (aBase > 0.5 && uContorno > 0.0) {
+      vec2 versoLuce = vec2(uSpecchio > 0.5 ? 1.0 : -1.0, 1.0) * uTexel * 1.6;
+      float fuori = 1.0 - alfa(vUv + versoLuce);
+      col += vec3(1.0, 0.95, 0.82) * fuori * 0.3;
+    }
     vec3 pb = vec3(vBase.x, vMondo.y, vBase.z);
     vec3 R = rivelazione(pb);
     float v = max(R.x, uLuce);
@@ -491,6 +521,8 @@ const FRAG_SPRITE = /* glsl */ `
     c = conBrillio(c, pb, freschezza(pb) * 0.7);
     c = conOmbre(c, pb);
     c = conOnde(c, pb);
+    // il contorno: inchiostro seppia scuro (più chiaro dove Lia non percepisce, come una matita)
+    c = mix(c, mix(uInk * 0.85, uInk * 0.62, v), contorno);
     gl_FragColor = vec4(c, a);
   }
 `;
@@ -521,6 +553,8 @@ export function materialeSprite(texture, opz) {
       uCielo: { value: o.cielo ? 1 : 0 },
       uOpacita: { value: 1 },
       uColoreCielo: UNIFORMI.uColoreCielo,
+      // spessore del contorno manga (in "texel" dell'atlante; 0 = niente contorno)
+      uContorno: { value: o.contorno !== undefined ? o.contorno : (o.cielo ? 0 : 1.7) },
     },
     vertexShader: VERT_SPRITE,
     fragmentShader: FRAG_SPRITE,

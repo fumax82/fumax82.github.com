@@ -132,6 +132,7 @@ class Gioco {
       this.onda(p.x, z, 'urto', { colore: o.colore || '#9fd08a' });
       this.particelle.emetti(p.x, p.y + 1.2, z, 18, { forma: [FORME.foglia], colori: ['#8fc27f', '#6faa5e', '#b4dea1'], velocita: 1.2, su: 0.7, gravita: 0.8, vita: 1.8, dim: 0.18 });
       this.regia.scuoti(0.6);
+      this.concentra([p.x, p.y + 0.7, z], 0.9, '#3e2a20', 0.6);
       Audio.botta();
       this.pensa(o.testo || 'Ahi! C\'era qualcosa qui davanti!', 2.5, true);
     });
@@ -438,6 +439,18 @@ class Gioco {
     this.magia.aggiorna(dt);
     this.meraviglie.aggiorna(dt);
     this.meteo.aggiorna(dt, this.regia.camera);
+    // linee manga: concentrazione che si spegne, velocità quando Lia corre
+    const ua = this.acquerello.uniformi;
+    if (this.focus) {
+      this.focus.t += dt;
+      const k = this.focus.t / this.focus.durata;
+      ua.uFocus.value.z = this.focus.forza * Math.max(0, 1 - k * k);
+      if (k >= 1) { this.focus = null; ua.uFocus.value.z = 0; }
+    }
+    const corsa = this.lia.corre && Math.abs(this.lia.vel) > 1.6 ? 0.8 : 0;
+    ua.uVelocita.value += (corsa - ua.uVelocita.value) * Math.min(1, dt * 4);
+    const ec = this.regia.camera.matrixWorld.elements;
+    ua.uVersoVelocita.value = (this.lia.tangente.x * this.lia.verso * ec[0] + this.lia.tangente.z * this.lia.verso * ec[2]) >= 0 ? 1 : -1;
     UNIFORMI.uNumOnde.value = S.percezione.scriviOnde(UNIFORMI.uOnde.value, UNIFORMI.uOndeColori.value);
     UNIFORMI.uRivelaTutto.value = S.percezione.rivelaTutto;
     this.regia.aggiorna(dt, this.lia);
@@ -633,6 +646,18 @@ class Gioco {
     if (!S) return;
     this.effetti.onomatopea(S[0], x, y + 0.35, z, S[1], tipo === 'balena' ? 3.2 : 1.25);
     this.effetti.archi(x, y, z, S[2], tipo === 'balena' ? 3 : 2);
+  }
+
+  /**
+   * LINEE DI CONCENTRAZIONE (manga) verso il punto [x, y, z] del mondo, per
+   * "durata" secondi. colore: '#fffaf0' (meraviglia) o '#3e2a20' (sorpresa).
+   */
+  concentra(punto, durata, colore, forza) {
+    const v = new THREE.Vector3(...punto).project(this.regia.camera);
+    const u = this.acquerello.uniformi;
+    u.uFocus.value.set((v.x + 1) / 2, (v.y + 1) / 2, forza || 0.85, Math.random() * 10);
+    u.uColoreFocus.value.set(colore || '#fffaf0');
+    this.focus = { t: 0, durata: durata || 1.2, forza: forza || 0.85 };
   }
 
   /** Il campanello della porta di un negozio: si sente e si vede. */

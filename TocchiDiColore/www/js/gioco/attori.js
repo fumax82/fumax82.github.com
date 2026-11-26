@@ -142,6 +142,8 @@ export class Attore {
     this.posaSpeciale = nome;
     this.tempoPosa = durata === undefined ? 0.8 : durata;
     this.tPosa = 0;
+    const simbolo = { ringhia: '!', scippo: '!', suona: 'note', strofina: 'cuore' }[nome];
+    if (simbolo && this.gioco.effetti && this.visibile) this.gioco.effetti.simbolo(simbolo, this, 1.6);
   }
 
   teletrasporta(x, z, dir) {
