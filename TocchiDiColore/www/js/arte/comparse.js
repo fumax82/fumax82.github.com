@@ -269,7 +269,7 @@ export function sagomaManga(ctxCella, l, a, disegna, opz = {}) {
   }
   const A = telaDiLavoro(1, l, a), B = telaDiLavoro(2, l, a), C = telaDiLavoro(3, l, a);
   const ca = A.getContext('2d');
-  for (let k = 0; k < 3; k++) ca.drawImage(T, 0, 0);       // l'alfa leggero diventa pieno
+  for (let k = 0; k < 2; k++) ca.drawImage(T, 0, 0);       // l'alfa leggero diventa pieno
   restringi(B, A, apertura);                               // "apertura": spariscono i fili sottili...
   allarga(C, B, apertura);                                 // ...e resta la sagoma piena
   telaDiLavoro(1, l, a);
@@ -1662,7 +1662,7 @@ function atlante(nomi, l, a, altezzaMondo, disegna) {
     sagomaManga(ctx, l, a, (c) => {
       c.translate(l / 2, a);        // origine tra i piedi
       disegna(c, leggiPosa(nome));
-    }, { fuori: LW * 1.05, dentro: LW * 1.25 });
+    }, { fuori: LW * 0.95, dentro: LW * 1.05 });
   });
   return { tela, fotogrammi, cella: { l, a }, altezzaMondo };
 }
