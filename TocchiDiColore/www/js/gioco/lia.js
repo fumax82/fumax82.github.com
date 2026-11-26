@@ -202,7 +202,7 @@ export class Lia {
       foglie: 'FRUSH', ceramica: 'TINK', libri: 'FLAP', acqua: 'PLIP' };
     const colori = { pietra: '#f6c95a', mattoni: '#f08a6a', legno: '#d9984f', intonaco: '#f4b98a', vetro: '#7fc6f0',
       metallo: '#9fb4e0', foglie: '#7fbf6a', ceramica: '#8fb4ea', libri: '#d9b98a', acqua: '#7fc6f0' };
-    this.gioco.effetti.onomatopea(TESTI[materiale] || 'TOC', ox, oy + 0.55, oz, colori[materiale] || '#f6c95a', 0.62);
+    this.gioco.effetti.onomatopea(TESTI[materiale] || 'TOC', ox, oy + 0.6, oz, colori[materiale] || '#f6c95a', 0.85);
     if (this.magica) this.gioco.effetti.spirale(ox, oy, oz, colori[materiale] || '#ffd36b', { raggio: 0.35, altezza: 1.3, giri: 2, larghezza: 0.07, durata: 1.4 });
     // l'onda (e lo spettacolo di particelle) prendono il colore del materiale: vedi gioco/magia.js
     this.gioco.onda(ox, oz, 'bastone', { materiale, y: oy });

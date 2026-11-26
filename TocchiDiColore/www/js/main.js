@@ -102,6 +102,8 @@ class Gioco {
     this.scena.add(this.luci.punti);
     this.magia = new Magia(this);
     this.effetti = new Effetti(this.scena);   // onomatopee, archi sonori, nastri di profumo, luce
+    this.effetti.particelle = this.particelle;
+    this.effetti.luci = this.luci;
     this.meteo = new Meteo(this);              // pioggia, fiume, balena con le pinne
     this.regista = new Regista();
     this.lia = new Lia(this);
@@ -629,7 +631,7 @@ class Gioco {
       balena: ['UUUUH...', '#a8c8f0', '#e6f0ff'],
     }[tipo];
     if (!S) return;
-    this.effetti.onomatopea(S[0], x, y + 0.35, z, S[1], tipo === 'balena' ? 2.6 : 0.85);
+    this.effetti.onomatopea(S[0], x, y + 0.35, z, S[1], tipo === 'balena' ? 3.2 : 1.25);
     this.effetti.archi(x, y, z, S[2], tipo === 'balena' ? 3 : 2);
   }
 

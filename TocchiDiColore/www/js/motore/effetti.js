@@ -130,7 +130,7 @@ const FRAG_NASTRO = /* glsl */ `
     float bordo = 1.0 - abs(vV * 2.0 - 1.0);
     float coda = smoothstep(0.0, 0.15, vU) * (1.0 - smoothstep(uTesta - 0.15, uTesta, vU));
     float fili = texture2D(uRumore, vec2(vU * 3.0 - uTempo * uScorri, vV * 0.7 + vU)).r;
-    float a = smoothstep(0.0, 0.6, bordo) * coda * (0.45 + fili * 0.9) * uAlfa;
+    float a = smoothstep(0.0, 0.55, bordo) * coda * (0.6 + fili * 0.9) * uAlfa;
     vec3 c = mix(uColore, vec3(1.0), smoothstep(0.75, 1.0, bordo) * 0.35);
     gl_FragColor = vec4(c, clamp(a, 0.0, 1.0));
   }
@@ -275,8 +275,24 @@ export class Effetti {
       out.x += onda;
       out.z += Math.cos(u * 8 + t * 2 + f) * 0.22 * Math.sin(Math.PI * u);
       return out;
-    }, { colore, larghezza: 0.32, durata: 3.4, crescita: 0.4, scorri: 0.8 });
-    this.vivi.push({ aggiorna: (dt, cam) => n.aggiorna(dt, cam), rimuovi: () => n.rimuovi() });
+    }, { colore, larghezza: 0.5, durata: 3.6, crescita: 0.35, scorri: 0.8 });
+    // lungo il nastro brillano briciole di luce e volano petali
+    const p = new THREE.Vector3();
+    this.vivi.push({
+      aggiorna: (dt, cam) => {
+        if (this.particelle && Math.random() < dt * 14) {
+          const u = Math.random() * Math.min(1, n.mat.uniforms.uTesta.value);
+          n.curva(u, n.t, p);
+          const sistema = Math.random() < 0.6 ? this.luci : this.particelle;
+          sistema.emetti(p.x, p.y, p.z, 1, {
+            forma: sistema === this.luci ? [2, 0] : [3, 13], colori: [colore, '#ffffff', '#fff3c0'],
+            velocita: 0.15, su: 0.15, gravita: 0, vita: 1.2, dim: sistema === this.luci ? 0.08 : 0.12, vortice: 0.5,
+          });
+        }
+        return n.aggiorna(dt, cam);
+      },
+      rimuovi: () => n.rimuovi(),
+    });
   }
 
   /** Una spirale di luce che sale girando intorno a un punto (scoperte, trasformazioni). */
