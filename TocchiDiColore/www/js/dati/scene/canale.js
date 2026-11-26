@@ -42,6 +42,14 @@ export default {
     palloncini: 2,
     balena: { raggio: 120, altezza: 46, fase: 1.2 },
   },
+  meraviglie: [
+    { id: 'pesci', x: 17.0, y: -1.2, z: -4.0, effetto: 'bolle', testo: 'Bollicine nel canale... ci sono dei pesciolini!' },
+    { id: 'vasi_ponte', x: 9.9, y: 0.8, z: 3.9, effetto: 'farfalle', testo: 'Le farfalle abitano nei vasi vicino al ponte.' },
+    { id: 'ponte', x: 17.0, y: 2.2, z: 0.0, effetto: 'stelle', testo: 'Il ponte brilla come un arcobaleno di pietra.' },
+    { id: 'barchette', x: 15.0, y: -1.0, z: -12.0, effetto: 'note', testo: 'Le auto-barchette suonano il clacson: pa-pà!' },
+    { id: 'libri', x: 29.5, y: 2.4, z: -2.3, effetto: 'pagine', testo: 'Le pagine dei libri volano come uccelli!' },
+    { id: 'scalinata', x: 39.0, y: 1.8, z: 0.4, effetto: 'fiori', testo: 'La scalinata è tutta fiorita.' },
+  ],
   inquadrature: [
     // 1. di fianco lungo la riva (lampioni e fronde in primo piano scorrono davanti)
     { da: 0, a: 10.5, tipo: 'segui', taglio: true, chiavi: [

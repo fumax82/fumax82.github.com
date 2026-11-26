@@ -33,6 +33,8 @@ const FRAG = /* glsl */ `
   uniform float uBordoBianco;     // 0..1 quanto i bordi dello schermo svaniscono nel bianco
   uniform float uSaturazione;
   uniform float uIntensita;       // 0 = filtro spento, 1 = acquerello pieno
+  uniform vec4 uOndaSchermo;      // increspatura del colpo di bacchetta: (x, y, avanzamento 0..1, forza)
+  uniform vec3 uColoreOnda;
   varying vec2 vUv;
 
   float lum(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
@@ -43,6 +45,18 @@ const FRAG = /* glsl */ `
     float scatto = floor(uTempo * 6.0);
     vec2 n = texture2D(tRumore, uv * 2.3 + vec2(scatto * 0.137, scatto * 0.071)).rg - 0.5;
     vec2 uvT = uv + n * 0.0011 * uIntensita;
+
+    // il colpo di bacchetta increspa l'immagine come un sasso nell'acqua
+    float luceOnda = 0.0;
+    if (uOndaSchermo.w > 0.0) {
+      vec2 asp = vec2(uRis.x / uRis.y, 1.0);
+      vec2 dc = (uv - uOndaSchermo.xy) * asp;
+      float dist = length(dc);
+      float raggio = uOndaSchermo.z * 0.75;
+      float anello = exp(-pow((dist - raggio) / 0.035, 2.0)) * (1.0 - uOndaSchermo.z);
+      uvT -= normalize(dc + 0.0001) / asp * anello * 0.012 * uOndaSchermo.w;
+      luceOnda = anello * uOndaSchermo.w;
+    }
 
     vec3 col = texture2D(tScena, uvT).rgb;
 
@@ -79,10 +93,15 @@ const FRAG = /* glsl */ `
     float macchie = texture2D(tRumore, ruota * uv * 1.1 + 0.37).r;
     col *= mix(1.0, (0.962 + grana * 0.06) * (0.955 + macchie * 0.075), uIntensita);
 
-    // bordi: nel mondo immaginato svaniscono nella carta bianca
+    // la luce dell'increspatura
+    col += uColoreOnda * luceOnda * 0.18;
+
+    // bordi: nel mondo immaginato svaniscono nella carta bianca, e "respirano"
+    // piano come acquerello ancora bagnato
     vec2 c = (uv - 0.5) * vec2(uRis.x / uRis.y, 1.0);
     float rr = length(c);
-    float vign = smoothstep(0.42, 0.98, rr + (macchie - 0.5) * 0.12);
+    float respiro = texture2D(tRumore, ruota * uv * 0.7 + vec2(uTempo * 0.012, uTempo * 0.008)).r;
+    float vign = smoothstep(0.42, 0.98, rr + (macchie - 0.5) * 0.12 + (respiro - 0.5) * 0.14);
     col = mix(col, uCarta, vign * uBordoBianco);
     col *= 1.0 - smoothstep(0.55, 1.2, rr) * 0.10 * (1.0 - uBordoBianco);
 
@@ -108,6 +127,8 @@ export class Acquerello {
         uBordoBianco: { value: 0 },
         uSaturazione: { value: 1.08 },
         uIntensita: { value: 1 },
+        uOndaSchermo: { value: new THREE.Vector4(0.5, 0.5, 1, 0) },
+        uColoreOnda: { value: new THREE.Color('#ffe7a0') },
       },
       vertexShader: VERT,
       fragmentShader: FRAG,

@@ -307,6 +307,56 @@ Audio.magia = function (volume) {
   });
 };
 
+/*
+ * Le note della bacchetta: ogni colpo suona la nota successiva di una
+ * scala pentatonica (do re mi sol la), come un carillon. Bussando nasce
+ * una piccola melodia.
+ */
+const SCALA_CARILLON = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 880, 783.99, 659.25, 587.33];
+
+/** Una nota di campanello (indice nella scala del carillon). */
+Audio.nota = function (indice, volume) {
+  if (!this.ctx) return;
+  const out = this._uscita(undefined, undefined, volume || 0.35, 0.9);
+  const t = this._ora();
+  const fr = SCALA_CARILLON[((indice % SCALA_CARILLON.length) + SCALA_CARILLON.length) % SCALA_CARILLON.length];
+  // fondamentale + armonico alto: suono di campanella di vetro
+  [[fr, 0.22, 1.4], [fr * 2.01, 0.07, 0.7], [fr * 3.02, 0.03, 0.35]].forEach(([f, picco, dur]) => {
+    const o = this._osc('sine', f);
+    const e = this._inv(t, picco, 0.004, dur);
+    o.connect(e); e.connect(out); o.start(t); o.stop(t + dur + 0.05);
+  });
+};
+
+/** Un tintinnio leggero quando l'onda scopre posti nuovi (più forte = più posti). */
+Audio.scoperta = function (forza) {
+  if (!this.ctx) return;
+  const f = Math.min(1, forza || 0.5);
+  const out = this._uscita(undefined, undefined, 0.12 + f * 0.18, 1.0);
+  const t = this._ora();
+  const note = [1568, 1760, 2093, 2349.3, 2637];
+  const quante = 2 + Math.round(f * 3);
+  for (let k = 0; k < quante; k++) {
+    const fr = note[(k * 2 + Math.floor(Math.random() * 2)) % note.length];
+    const t0 = t + k * 0.07 + Math.random() * 0.03;
+    const o = this._osc('sine', fr);
+    const e = this._inv(t0, 0.12, 0.003, 0.6);
+    o.connect(e); e.connect(out); o.start(t0); o.stop(t0 + 0.65);
+  }
+};
+
+/** Una meraviglia scoperta: arpeggio che sale e un "glissando" di arpa. */
+Audio.meraviglia = function () {
+  if (!this.ctx) return;
+  const out = this._uscita(undefined, undefined, 0.5, 1.0);
+  const t = this._ora();
+  [523.25, 659.25, 783.99, 987.77, 1046.5, 1318.5, 1567.98, 2093].forEach((fr, k) => {
+    const o = this._osc(k % 2 ? 'triangle' : 'sine', fr);
+    const e = this._inv(t + k * 0.055, 0.15, 0.004, 1.0);
+    o.connect(e); e.connect(out); o.start(t + k * 0.055); o.stop(t + k * 0.055 + 1.05);
+  });
+};
+
 /** La grande trasformazione in streghetta. */
 Audio.trasformazione = function () {
   if (!this.ctx) return;

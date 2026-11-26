@@ -10,7 +10,9 @@
  *  Le ONDE sono anelli che si allargano e colorano le caselle che toccano.
  *  Poi, piano piano, i colori sbiadiscono fino al "ricordo" (un po' di
  *  colore resta nei posti già scoperti).
- *  La mappa diventa una texture (uRiv) letta dagli shader in materiali.js.
+ *  La mappa diventa una texture (uRiv) letta dagli shader in materiali.js:
+ *    canale R = quanto si vede, canale G = quanto è "fresco" (appena scoperto:
+ *    brilla e scintilla per un paio di secondi).
  * ========================================================================== */
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
@@ -31,6 +33,8 @@ export class Percezione {
     this.obiettivo = new Float32Array(n);    // verso quale valore sta andando
     this.visitato = new Uint8Array(n);       // già scoperto almeno una volta?
     this.ultimoTocco = new Float32Array(n);  // quando è stato percepito l'ultima volta
+    this.fresco = new Float32Array(n);       // 1 = appena scoperto (brilla), poi si spegne
+    this.nuove = 0;                          // caselle scoperte per la prima volta in questo fotogramma
     this.livelloRicordo = CONFIG.percezione.livelloRicordo;
     this.rivelaTutto = 0;                    // 1 = tutto a colori
     this.tempo = 0;
@@ -72,6 +76,7 @@ export class Percezione {
 
   _rivela(i, livello) {
     if (this.obiettivo[i] < livello) this.obiettivo[i] = livello;
+    if (!this.visitato[i]) this.nuove++;
     this.visitato[i] = 1;
     this.ultimoTocco[i] = this.tempo;
   }
@@ -101,7 +106,9 @@ export class Percezione {
 
   /**
    * Una nuova onda in (x, z).
-   * opz: { velocita, raggio, forza, colore, livello }
+   * opz: { velocita, raggio, forza, colore, livello, tipo, magica }
+   *   tipo: 'bastone' | 'abbaio' | 'profumo' | 'suono' | 'magia' | 'passo'
+   *   (serve per scegliere le particelle che accompagnano l'onda)
    * Le caselle vengono ordinate per distanza: man mano che l'anello si
    * allarga, le coloriamo una dopo l'altra.
    */
@@ -109,6 +116,7 @@ export class Percezione {
     const onda = {
       x, z, r: 0, raggio: opz.raggio, velocita: opz.velocita, forza: opz.forza,
       colore: new THREE.Color(opz.colore), livello: opz.livello || 0, celle: [], prossima: 0,
+      tipo: opz.tipo || 'suono', magica: !!opz.magica, y: opz.y || 0, accumulo: 0,
     };
     if (onda.livello > 0) {
       const R = onda.raggio;
@@ -147,6 +155,7 @@ export class Percezione {
 
     const su = P.velocitaComparsa * dt, giu = P.velocitaScomparsa * dt;
     const calo = dt / 20;
+    const spegni = dt / 2.4;   // quanto dura il "brillio" di una zona appena scoperta
     for (let i = 0; i < this.rivelazione.length; i++) {
       const minimo = this.visitato[i] ? this.livelloRicordo : 0;
       if (this.tempo - this.ultimoTocco[i] > P.durataRicordo && this.obiettivo[i] > minimo) {
@@ -155,7 +164,11 @@ export class Percezione {
       if (this.obiettivo[i] < minimo) this.obiettivo[i] = minimo;
       const diff = this.obiettivo[i] - this.rivelazione[i];
       this.rivelazione[i] += diff > 0 ? Math.min(diff, su) : Math.max(diff, -giu);
+      // una zona che si sta colorando adesso "brilla" (vedi lo shader in materiali.js)
+      if (diff > 0.04) this.fresco[i] = 1;
+      else if (this.fresco[i] > 0) this.fresco[i] = Math.max(0, this.fresco[i] - spegni);
       this.dati[i * 4] = Math.round(Math.max(this.rivelazione[i], this.rivelaTutto) * 255);
+      this.dati[i * 4 + 1] = Math.round(this.fresco[i] * 255);
     }
     this.texture.needsUpdate = true;
   }

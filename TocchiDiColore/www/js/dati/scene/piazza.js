@@ -25,6 +25,14 @@ export default {
     uccelli: 1,
     balena: { raggio: 110, altezza: 42, fase: 2.2 },
   },
+  meraviglie: [
+    { id: 'staccionata', x: 0.2, y: 0.8, z: -1.0, effetto: 'fiori', testo: 'Anche da questa parte la staccionata è piena di fiori.' },
+    { id: 'vetrina', x: 12.5, y: 1.3, z: -1.9, effetto: 'stelle', testo: 'Una vetrina piena di pane, ciambelle e brioche!' },
+    { id: 'giardino', x: 18.2, y: 1.5, z: -2.6, effetto: 'farfalle', testo: 'Un giardino segreto dietro il cancello!' },
+    { id: 'casa_gialla', x: 23.0, y: 3.6, z: -1.9, effetto: 'uccelli', testo: 'Dal tetto della casa gialla volano via i passerotti.' },
+    { id: 'bidone', x: 27.3, y: 0.6, z: -9.5, effetto: 'note', testo: 'Il bidone suona come un tamburo: bum bum!' },
+    { id: 'fondo_vicolo', x: 28.0, y: 1.5, z: -16.3, effetto: 'palloncino', testo: 'Un palloncino si alza dal fondo del vicolo!' },
+  ],
   inquadrature: [
     // 1. Lia sbuca dalla staccionata: camera ferma davanti a lei
     { da: 0, a: 4.5, tipo: 'fisso', taglio: true, chiavi: [

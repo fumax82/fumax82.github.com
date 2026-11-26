@@ -30,6 +30,8 @@ import { Musica } from './gioco/musica.js';
 import { Input } from './gioco/input.js';
 import { Interfaccia } from './gioco/interfaccia.js';
 import { Regista } from './gioco/regista.js';
+import { Magia } from './gioco/magia.js';
+import { Meraviglie } from './gioco/meraviglie.js';
 import via from './dati/scene/via.js';
 import piazza from './dati/scene/piazza.js';
 import forno from './dati/scene/forno.js';
@@ -63,6 +65,9 @@ class Gioco {
     this.mediaLavoro = 12;
     this.tempoLento = 0;
     this.direzioneSchermo = 0;     // freccia premuta (-1, 0, +1)
+    this.meraviglieTrovate = new Set();
+    // quante meraviglie nascoste ci sono in tutto il gioco
+    this.totaleMeraviglie = Object.values(SCENE).reduce((n, d) => n + (d.meraviglie || []).length, 0);
     this.mappaDirezione = 1;       // come la freccia si traduce in avanti/indietro sul percorso
     this.ui = Interfaccia;
   }
@@ -88,8 +93,11 @@ class Gioco {
     this.scena.background = new THREE.Color(CARTA);
     this.regia = new Regia();
     this.acquerello = new Acquerello(this.renderer);
-    this.particelle = new Particelle();
+    this.particelle = new Particelle();            // petali, note, foglie (dipinti)
     this.scena.add(this.particelle.punti);
+    this.luci = new Particelle({ additivo: true });  // scintille, stelle, lucciole (di luce)
+    this.scena.add(this.luci.punti);
+    this.magia = new Magia(this);
     this.regista = new Regista();
     this.lia = new Lia(this);
     this.lia.aggiungiA(this.scena);
@@ -114,8 +122,8 @@ class Gioco {
       if (!o || !this.corrente) return;
       const p = this.corrente.percorso.punto(o.s);
       const z = p.z + (o.dz || 0);
-      this.onda(p.x, z, 'bastone', { raggio: 3.2, velocita: 4, colore: o.colore || '#9fd08a' });
-      this.particelle.emetti(p.x, p.y + 1.2, z, 14, { forma: [FORME.foglia], colori: ['#8fc27f', '#6faa5e', '#b4dea1'], velocita: 1.2, su: 0.7, gravita: 0.8, vita: 1.8, dim: 0.18 });
+      this.onda(p.x, z, 'urto', { colore: o.colore || '#9fd08a' });
+      this.particelle.emetti(p.x, p.y + 1.2, z, 18, { forma: [FORME.foglia], colori: ['#8fc27f', '#6faa5e', '#b4dea1'], velocita: 1.2, su: 0.7, gravita: 0.8, vita: 1.8, dim: 0.18 });
       this.regia.scuoti(0.6);
       Audio.botta();
       this.pensa('Ahi! C\'era qualcosa... un albero!', 2.5, true);
@@ -131,6 +139,12 @@ class Gioco {
 
   /** Comincia (o riprende) la storia. */
   async inizia(capitolo) {
+    // riprendendo una partita, ritroviamo le meraviglie già scoperte
+    const salvato = capitolo ? this.leggiSalvataggio() : null;
+    if (salvato && salvato.meraviglie) {
+      salvato.meraviglie.forEach((k) => this.meraviglieTrovate.add(k));
+      if (this.meraviglieTrovate.size) Interfaccia.meraviglie(this.meraviglieTrovate.size, this.totaleMeraviglie);
+    }
     Audio.avvia();
     Interfaccia.nascondiMenu();
     UNIFORMI.uRivelaTutto.value = 0;
@@ -186,6 +200,7 @@ class Gioco {
     this.regia.ridimensiona(L, A);
     if (this.volo) this.volo.ridimensiona(L, A);
     this.particelle.ridimensiona(A * dpr * p.scala);
+    this.luci.ridimensiona(A * dpr * p.scala);
   }
 
   /** Se il dispositivo fatica, abbassa la qualità da solo. */
@@ -223,6 +238,7 @@ class Gioco {
     const S = await new Scena(def, this).monta();
     this._indicatore(false);
     this.corrente = S;
+    this.meraviglie = new Meraviglie(this, S);
     this.scena.add(S.gruppo);
     S.percezione.collega(UNIFORMI);
     const atm = def.atmosfera || {};
@@ -262,6 +278,8 @@ class Gioco {
     Audio.fermaContinui();
     for (const a of S.attori) if (a.emettitore) a.emettitore.attivo = false;
     this.particelle.emettitori = this.particelle.emettitori.filter((e) => !e.delLuogo);
+    this.luci.emettitori = this.luci.emettitori.filter((e) => !e.delLuogo);
+    if (this.meraviglie) this.meraviglie.smonta();
     S.smonta();
     this.corrente = null;
     this.mostraGuinzaglio = false;
@@ -339,6 +357,7 @@ class Gioco {
       else if (this.corrente && !this.caricaScena) this._aggiornaGioco(dt);
       this.regista.aggiorna(dt);
       this.particelle.aggiorna(dt, this.tempo);
+      this.luci.aggiorna(dt, this.tempo);
       this._aggiornaAnimazioni(dt);
     }
     Musica.aggiorna();
@@ -376,6 +395,8 @@ class Gioco {
     this.lia.aggiorna(dt, dir, Input.corsa());
     for (const a of S.attori) a.aggiorna(dt, S);
     S.percezione.aggiorna(dt, { x: this.lia.x, z: this.lia.z });
+    this.magia.aggiorna(dt);
+    this.meraviglie.aggiorna(dt);
     UNIFORMI.uNumOnde.value = S.percezione.scriviOnde(UNIFORMI.uOnde.value, UNIFORMI.uOndeColori.value);
     UNIFORMI.uRivelaTutto.value = S.percezione.rivelaTutto;
     this.regia.aggiorna(dt, this.lia);
@@ -477,6 +498,7 @@ class Gioco {
     canti.ferma();
     vento.ferma();
     this.particelle.punti.visible = true;
+    this.luci.punti.visible = true;
     this.fase = 'gioco';
   }
 
@@ -484,6 +506,7 @@ class Gioco {
     this.voloT = Math.min(1, this.voloT + dt / 30);
     this.volo.aggiorna(dt, this.voloT);
     this.particelle.punti.visible = false;
+    this.luci.punti.visible = false;
   }
 
   /* ====================================================================== */
@@ -541,7 +564,10 @@ class Gioco {
 
   /** Onda di percezione in (x, z): tipo = 'bastone' | 'abbaio' | 'profumo' | 'suono' | 'magia' | 'passo' */
   onda(x, z, tipo, extra) {
-    if (this.corrente) this.corrente.percezione.creaOnda(x, z, { ...CONFIG.onde[tipo], ...(extra || {}) });
+    if (!this.corrente) return null;
+    const onda = this.corrente.percezione.creaOnda(x, z, { ...CONFIG.onde[tipo], tipo, ...(extra || {}) });
+    this.magia.nuovaOnda(onda, tipo);   // particelle, increspatura, nota (vedi gioco/magia.js)
+    return onda;
   }
 
   scintille(x, y, z, quante, opz) {
@@ -586,7 +612,9 @@ class Gioco {
   }
 
   salva(capitolo) {
-    try { localStorage.setItem(CHIAVE, JSON.stringify({ capitolo, ricordi: this.ricordiPresi })); } catch (e) { /* niente spazio */ }
+    try {
+      localStorage.setItem(CHIAVE, JSON.stringify({ capitolo, ricordi: this.ricordiPresi, meraviglie: [...this.meraviglieTrovate] }));
+    } catch (e) { /* niente spazio */ }
   }
 
   leggiSalvataggio() {

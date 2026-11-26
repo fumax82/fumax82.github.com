@@ -53,6 +53,7 @@ export const CONFIG = {
     profumo:   { velocita: 3.0, raggio: 5.0, forza: 0.55, colore: '#f7a8c8', livello: 0.95 },
     suono:     { velocita: 5.0, raggio: 5.5, forza: 0.5, colore: '#a8d8ff', livello: 0.9 },
     magia:     { velocita: 9.0, raggio: 60, forza: 0.9, colore: '#fff0a8', livello: 1.0 },
+    urto:      { velocita: 4.0, raggio: 3.2, forza: 0.8, colore: '#9fd08a', livello: 1.0 },
   },
   ricaricaBastone: 0.4,
 

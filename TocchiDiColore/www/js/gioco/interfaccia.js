@@ -225,6 +225,17 @@ Interfaccia.ricordo = function (nomeArte, titolo) {
   $('ricordi').classList.remove('nascosto');
 };
 
+/** Il contatore delle meraviglie scoperte (compare alla prima). */
+Interfaccia.meraviglie = function (trovate, totale) {
+  const el = $('meraviglieHud');
+  if (!el) return;
+  el.textContent = '✦ ' + trovate + ' / ' + totale;
+  el.classList.remove('nascosto');
+  el.classList.remove('nuova');
+  void el.offsetWidth;   // fa ripartire l'animazione
+  el.classList.add('nuova');
+};
+
 Interfaccia.azione = function (etichetta) {
   const b = $('btnAzione');
   if (etichetta) { b.textContent = etichetta; b.classList.remove('nascosto'); }

@@ -28,6 +28,15 @@ export default {
   },
 
   /* --- Le inquadrature (vedi motore/regia.js) --------------------------- */
+  // meraviglie nascoste nel mondo bianco (vedi gioco/meraviglie.js)
+  meraviglie: [
+    { id: 'vasi', x: 42.5, y: 0.6, z: -1.5, effetto: 'farfalle', testo: 'Bonsai, lavanda... e due farfalle che si svegliano!' },
+    { id: 'fiori_azzurri', x: 35.5, y: 2.6, z: -1.7, effetto: 'fiori', testo: 'Fiori arancioni che si arrampicano sul muro azzurro!' },
+    { id: 'lampione', x: 33.6, y: 2.8, z: 0.95, effetto: 'stelle', testo: 'Il lampione si accende... di stelle!' },
+    { id: 'bicicletta', x: 31.0, y: 0.7, z: -1.2, effetto: 'note', testo: 'Drin drin! Una bicicletta con il cestino.' },
+    { id: 'albero', x: 27.0, y: 3.0, z: 0.9, effetto: 'uccelli', testo: 'Nell\'albero dormivano degli uccellini!' },
+    { id: 'caffe', x: 15.5, y: 1.4, z: -1.6, effetto: 'note', testo: 'Dal caffè arriva una musica... e profumo di brioche.' },
+  ],
   inquadrature: [
     // 1. apertura: bassa, da dietro, lungo la strada (la prospettiva del film)
     { da: 0, a: 9, tipo: 'segui', taglio: true, chiavi: [

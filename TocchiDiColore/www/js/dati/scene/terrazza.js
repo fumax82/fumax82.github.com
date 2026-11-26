@@ -19,6 +19,12 @@ export default {
     uccelli: 3,
     palloncini: 3,
   },
+  meraviglie: [
+    { id: 'comignolo', x: 0.0, y: 3.2, z: -2.2, effetto: 'uccelli', testo: 'Rondini sul comignolo!' },
+    { id: 'bucato', x: 7.5, y: 2.0, z: -1.6, effetto: 'farfalle', testo: 'Il bucato steso balla con il vento.' },
+    { id: 'tetti', x: 8.0, y: 0.5, z: -9.0, effetto: 'palloncino', testo: 'Un palloncino scappa da un tetto!' },
+    { id: 'vasi', x: 11.0, y: 0.4, z: -2.0, effetto: 'fiori', testo: 'Gerani e margherite lungo il parapetto.' },
+  ],
   inquadrature: [
     { da: 0, a: 8, tipo: 'segui', taglio: true, chiavi: [
       { s: 0, pos: [0.5, 1.5, 5.2], guarda: [0.8, 1.2, -1] },

@@ -184,8 +184,9 @@ const CAPITOLO_1 = {
     }
 
     // --- l'esplorazione nel mondo bianco (e l'albero!) --------------------
-    g.obiettivo('Torna indietro lungo la via, battendo il bastone');
+    g.obiettivo('Torna indietro lungo la via e scopri le meraviglie nascoste ✦');
     g.pensa('E se torno indietro? Attenta... non so che cosa c\'è davanti a me.', 4.5);
+    g.pensa('Nel bianco sono nascoste delle meraviglie: bussa vicino alle cose e scoprile! ✦', 5);
     L.limiti = [18, 46.2];
     await Promise.race([g.evento('urto'), g.quando(() => L.s < 24)]);
     await g.attendi(1.2);

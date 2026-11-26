@@ -133,6 +133,19 @@ TocchiDiColore/
 - Alla fine un **filtro acquerello** ridipinge l'immagine: grana della carta, bordi di pigmento più
   scuri, colori che sbavano, bagliori e il leggero "tremolio" dei disegni animati a mano.
 
+### La magia della rivelazione
+Quando la bacchetta bussa (o Biscotto abbaia, o arriva un profumo) il mondo si scopre in tre tempi:
+prima i **contorni a matita**, poi il **colore che si spande come acquerello bagnato** con un bordo
+di pigmento e una velatura d'oro (rosa per i profumi, arancio per l'abbaio, azzurro per i suoni);
+le zone appena scoperte **brillano di stelline** per un paio di secondi. Sul fronte dell'onda nascono
+stelle e fiorellini (bacchetta), note (suoni), petali (profumi); il colpo increspa lo schermo e suona
+una nota di carillon: bussando nasce una melodia. Il codice è in `gioco/magia.js` (spettacolo e
+particelle) e in `motore/materiali.js` (la funzione `rivelazione` dello shader).
+
+**Meraviglie nascoste ✦**: in ogni scena (`meraviglie` nei file di `dati/scene/`) ci sono cose che
+prendono vita quando un'onda le raggiunge — farfalle, uccellini in volo, palloncini, pagine che
+volano, bolle nel canale — e il contatore in alto sale. Il codice è in `gioco/meraviglie.js`.
+
 ### Piccole modifiche da provare
 - **Cambiare un dialogo**: apri `www/js/dati/storia.js` e modifica le frasi tra apici.
 - **Lia più veloce**: in `www/js/config.js` cambia `velocita: 0.95` (metri al secondo).
@@ -141,6 +154,11 @@ TocchiDiColore/
   (dove guarda). Con `taglio: true` il passaggio è uno stacco netto, senza è una carrellata.
 - **Mondo più o meno visibile senza bastone**: in `config.js` cambia `schizzo` (0 = tutto bianco).
 - **Nuovo dialogo con un abitante**: aggiungi frasi in `chiacchiere` del personaggio nella sua scena.
+- **Nuova meraviglia**: in un file di `dati/scene/`, sotto `meraviglie`, aggiungi una riga come
+  `{ id: 'gatto', x: 20, y: 1, z: -1.5, effetto: 'farfalle', testo: 'Un gatto sul davanzale!' }`
+  (effetti: farfalle, uccelli, fiori, note, stelle, palloncino, pagine, bolle).
+- **Magia più o meno forte**: in `gioco/magia.js` cambia `densita` (quante particelle) nella
+  tabella `SPETTACOLO`.
 
 Dopo ogni modifica: per il computer basta ricaricare la pagina; per Android rifai
 `npx cap sync android` (o lascia che GitHub ricostruisca l'APK).

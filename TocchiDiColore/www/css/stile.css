@@ -53,6 +53,19 @@ button { font-family: var(--scrittura); color: var(--inchiostro); cursor: pointe
   background: rgba(251, 246, 234, 0.75); border: 2px solid rgba(107, 75, 55, 0.6); border-radius: 16px;
 }
 #ricordi .icona { width: 34px; height: 34px; }
+/* contatore delle meraviglie scoperte (sotto i ricordi) */
+#meraviglieHud {
+  position: absolute; top: calc(max(10px, env(safe-area-inset-top)) + 104px); right: max(14px, env(safe-area-inset-right));
+  padding: 4px 12px; font-family: var(--scrittura); font-size: 17px; color: #8a6a2e;
+  background: rgba(255, 248, 222, 0.85); border: 2px solid rgba(201, 160, 72, 0.8); border-radius: 16px;
+  box-shadow: 0 0 10px rgba(255, 214, 120, 0.45);
+}
+#meraviglieHud.nuova { animation: nuovaMeraviglia 1.6s ease-out; }
+@keyframes nuovaMeraviglia {
+  0% { transform: scale(1.8); box-shadow: 0 0 30px 10px rgba(255, 220, 130, 0.95); }
+  60% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
 #ricordi .icona.nuova { animation: nuovoRicordo 1.4s ease-out; }
 @keyframes nuovoRicordo { 0% { transform: scale(2.4) rotate(-20deg); } 60% { transform: scale(0.9); } 100% { transform: scale(1); } }
 

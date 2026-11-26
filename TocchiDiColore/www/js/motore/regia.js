@@ -68,6 +68,9 @@ export class Regia {
   /** Scuote la telecamera (un urto, uno spavento). */
   scuoti(forza) { this.scossa = Math.max(this.scossa, forza); }
 
+  /** Un piccolo "respiro" dell'inquadratura (stringe e torna), per i colpi di bacchetta. */
+  pulsa(forza) { this.pulsazione = Math.max(this.pulsazione || 0, forza); }
+
   /**
    * La storia prende la regia: pos e guarda sono punti del mondo.
    * durata = secondi della carrellata (0 = stacco netto).
@@ -195,7 +198,14 @@ export class Regia {
       c.position.y += (Math.random() - 0.5) * f;
     }
     c.lookAt(this.guarda);
-    if (Math.abs(c.fov - this.fov) > 0.01) { c.fov = this.fov; c.updateProjectionMatrix(); }
+    let fovVero = this.fov;
+    if (this.pulsazione > 0) {
+      // stringe in fretta e torna piano (curva "a campana" sul tempo che resta)
+      this.pulsazione = Math.max(0, this.pulsazione - dt * 1.6);
+      const k = this.pulsazione;
+      fovVero -= Math.sin(k * Math.PI) * 1.6 * Math.min(1, k * 3);
+    }
+    if (Math.abs(c.fov - fovVero) > 0.01) { c.fov = fovVero; c.updateProjectionMatrix(); }
     c.updateMatrixWorld();
   }
 }

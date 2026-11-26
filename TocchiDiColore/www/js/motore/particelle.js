@@ -63,7 +63,12 @@ const FRAG = /* glsl */ `
 `;
 
 export class Particelle {
-  constructor() {
+  /**
+   * opz: { additivo: true } = particelle "di luce": si sommano all'immagine
+   * e brillano (scintille, stelle, lucciole); senza, sono dipinte (petali, note).
+   */
+  constructor(opz) {
+    const o = opz || {};
     this.posizioni = new Float32Array(MAX * 3);
     this.dim = new Float32Array(MAX);
     this.alfa = new Float32Array(MAX);
@@ -96,10 +101,11 @@ export class Particelle {
       fragmentShader: FRAG,
       transparent: true,
       depthWrite: false,
+      blending: o.additivo ? THREE.AdditiveBlending : THREE.NormalBlending,
     });
     this.punti = new THREE.Points(geo, this.materiale);
     this.punti.frustumCulled = false;
-    this.punti.renderOrder = 10;
+    this.punti.renderOrder = o.additivo ? 11 : 10;
   }
 
   /** Adatta la grandezza delle particelle all'altezza dello schermo. */

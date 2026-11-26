@@ -33,6 +33,8 @@ export const UNIFORMI = {
   uSole: { value: new THREE.Vector3(0.4, 0.75, 0.5).normalize() },
   uFoschia: { value: new THREE.Vector2(14, 70) },  // distanza a cui inizia/finisce la foschia
   uLuceScena: { value: new THREE.Color(1, 1, 1) },  // tinta generale (es. luce calda del tramonto)
+  uColoreMagia: { value: new THREE.Color('#ffd77a') },  // colore della luce sul fronte (quello dell'ultima onda)
+  uMagia: { value: 0.6 },        // quanto è "magica" la rivelazione (1 = Lia streghetta)
   uFuoco: { value: 5 },          // distanza messa a fuoco (quella di Lia dalla camera)
   uSfocatura: { value: 1.6 },    // quanto si sfocano i piani fuori fuoco (profondità di campo)
 };
@@ -96,23 +98,97 @@ const GLSL_COMUNE = /* glsl */ `
   uniform float uFuoco;
   uniform float uSfocatura;
 
-  // quanto Lia percepisce il punto p: 0 = carta bianca, 1 = colori pieni
-  float percezione(vec3 p) {
-    float r = texture2D(uRiv, (p.xz - uRivMin) / uRivDim).r;
-    r = max(r, uRivelaTutto);
-    float n = texture2D(uRumore, p.xz * 0.17 + vec2(p.y * 0.21, p.y * 0.07)).r;
-    return clamp(r * 1.45 - 0.22 + (n - 0.5) * 0.85, 0.0, 1.0);
+  uniform vec3 uColoreMagia;
+  uniform float uMagia;
+
+  /*
+   * LA RIVELAZIONE, in tre tempi (come nel film, il mondo "si disegna"):
+   *   1. la MATITA: i contorni compaiono per primi, un po' prima del colore
+   *   2. il COLORE: arriva come acquerello bagnato che si allarga
+   *   3. il BORDO BAGNATO: dove il colore sta arrivando, il pigmento si
+   *      accumula (più scuro) e brilla di luce magica
+   * Restituisce vec3(colore, matita, bordo bagnato), ognuno da 0 a 1.
+   */
+  // coordinate per leggere il rumore che vanno bene sia sui pavimenti sia sui muri
+  // (senza, sui muri il rumore si "stira" e fa delle strisce)
+  vec2 qr(vec3 p) { return vec2(p.x + p.z * 0.65, p.y * 1.1 + p.z * 0.75); }
+
+  // rumore morbido senza "griglia": tre letture ruotate di 60 gradi, mescolate
+  float rumoreMorbido(vec2 q) {
+    float a = texture2D(uRumore, q).r;
+    float b = texture2D(uRumore, mat2(0.5, -0.866, 0.866, 0.5) * q * 1.31 + 0.37).r;
+    float c = texture2D(uRumore, mat2(-0.5, -0.866, 0.866, -0.5) * q * 0.77 + 0.71).r;
+    return ((a + b + c) / 3.0 - 0.5) * 1.7 + 0.5;
   }
 
-  // anelli delle onde (il "toc toc" che si allarga)
+  vec3 rivelazione(vec3 p) {
+    vec2 q = (p.xz - uRivMin) / uRivDim;
+    float r = max(texture2D(uRiv, q).r, uRivelaTutto);
+    // due rumori: uno fermo (forma delle macchie), uno che scorre (il colore "vivo")
+    vec2 c = qr(p);
+    float n1 = rumoreMorbido(c * 0.15);
+    float n2 = rumoreMorbido(c * 0.33 + vec2(uTempo * 0.02, -uTempo * 0.015));
+    float n = n1 * 0.7 + n2 * 0.3;
+    float colore = smoothstep(0.32, 0.7, r * 1.3 - 0.12 + (n - 0.5) * 0.75);
+    float matita = smoothstep(0.02, 0.3, r * 1.4 + (n - 0.5) * 0.4);
+    float b = colore * (1.0 - colore) * 4.0;
+    float bagnato = b * b * b;   // un bordo sottile, come il segno lasciato dall'acqua
+    return vec3(colore, matita, bagnato);
+  }
+
+  // velatura d'oro (o del colore dell'onda): tinge la carta invece di sbiancarla
+  vec3 velatura(vec3 col, float quanto) {
+    vec3 tinta = col * mix(vec3(1.0), uColoreMagia, 0.85) * 1.06;
+    return mix(col, tinta, clamp(quanto, 0.0, 1.0));
+  }
+
+  // quanto Lia percepisce il punto p: 0 = carta bianca, 1 = colori pieni
+  float percezione(vec3 p) { return rivelazione(p).x; }
+
+  // quanto il punto è "appena scoperto" (brilla per un paio di secondi)
+  float freschezza(vec3 p) {
+    return texture2D(uRiv, (p.xz - uRivMin) / uRivDim).g * (1.0 - uRivelaTutto);
+  }
+
+  // stelline rotonde che si accendono e si spengono: in ogni "cella" di 1/scala
+  // metri c'è (forse) un puntino in un posto a caso, che brilla a ritmo suo
+  float stelline(vec2 q, float t) {
+    vec2 cella = floor(q);
+    vec2 f = fract(q) - 0.5;
+    float h = fract(sin(dot(cella, vec2(127.1, 311.7))) * 43758.5453);
+    vec2 spost = vec2(fract(h * 13.7), fract(h * 71.3)) - 0.5;
+    float d = length(f - spost * 0.6);
+    float ritmo = 0.5 + 0.5 * sin(t * (2.0 + h * 3.0) + h * 6.28);
+    return smoothstep(0.13, 0.0, d) * step(0.5, h) * ritmo * ritmo;
+  }
+
+  // scintillii dorati che brillano e si spengono sulle cose appena scoperte
+  vec3 conBrillio(vec3 col, vec3 p, float fr) {
+    if (fr < 0.01) return col;
+    float g = dot(col, vec3(0.3, 0.59, 0.11));
+    col = mix(vec3(g), col, 1.0 + fr * 0.35);                 // colori più vivi
+    col = velatura(col, fr * 0.22 * uMagia);                   // un velo caldo
+    vec2 c = qr(p);
+    float scintilla = stelline(c * 4.0, uTempo * 1.3) + stelline(c * 7.0 + 3.1, uTempo * 1.7) * 0.7;
+    col += (uColoreMagia * 0.8 + 0.2) * scintilla * fr * 0.8 * uMagia;
+    return col;
+  }
+
+  // anelli delle onde: un anello di luce, un'eco più debole dentro e scintille lungo il bordo
   vec3 conOnde(vec3 col, vec3 p) {
     for (int i = 0; i < ${MAX_ONDE}; i++) {
       if (i >= uNumOnde) break;
       vec4 o = uOnde[i];
-      float d = abs(length(p.xz - o.xy) - o.z);
-      float anello = 1.0 - smoothstep(0.0, 0.5, d);
-      float alone = 1.0 - smoothstep(0.0, 2.0, d);
-      col = mix(col, uOndeColori[i], clamp(anello * anello * 0.9 + alone * 0.14, 0.0, 1.0) * o.w);
+      float dd = length(p.xz - o.xy);
+      float d = dd - o.z;
+      float anello = exp(-d * d * 9.0);
+      float eco = exp(-(dd - o.z * 0.7) * (dd - o.z * 0.7) * 14.0) * 0.4;
+      float dentro = (1.0 - smoothstep(0.0, max(o.z, 0.01), dd)) * 0.08;
+      float brilli = stelline(qr(p) * 5.0, uTempo * 2.0) * anello;
+      vec3 c = uOndeColori[i];
+      // l'anello tinge (velatura) e brilla appena: niente lampi bianchi
+      col = mix(col, col * mix(vec3(1.0), c, 0.9) * 1.05, clamp((anello * 0.75 + eco * 0.4 + dentro) * o.w, 0.0, 1.0));
+      col += c * (anello * 0.18 + brilli * 0.55) * o.w;
     }
     return col;
   }
@@ -164,19 +240,27 @@ const FRAG_STRATO = /* glsl */ `
     vec4 t = texture2D(uMappa, uv, sfoca);
     if (t.a < 0.03) discard;
     // i fondali lontani non vengono raggiunti dalle onde: seguono il cielo
-    float v = mix(percezione(vMondo), uColoreCielo, uLontano);
-    v = max(v, uLuce);
+    vec3 R = rivelazione(vMondo);
+    float v = max(mix(R.x, uColoreCielo, uLontano), uLuce);
+    float matita = max(R.y, max(uLontano, uLuce));
+    float bagnato = R.z * (1.0 - uLontano) * (1.0 - uLuce);
     vec3 c = t.rgb * uLuceScena;
     if (v < 0.999) {
-      // schizzo a matita ricavato dai contorni del dipinto
+      // schizzo a matita ricavato dai contorni del dipinto: appena accennato
+      // dove Lia non percepisce nulla, deciso quando l'onda lo "disegna"
       float lx = lum(texture2D(uMappa, uv + vec2(uTexel.x, 0.0)).rgb) - lum(texture2D(uMappa, uv - vec2(uTexel.x, 0.0)).rgb);
       float ly = lum(texture2D(uMappa, uv + vec2(0.0, uTexel.y)).rgb) - lum(texture2D(uMappa, uv - vec2(0.0, uTexel.y)).rgb);
       float ax = texture2D(uMappa, uv + vec2(uTexel.x, 0.0)).a - texture2D(uMappa, uv - vec2(uTexel.x, 0.0)).a;
       float ay = texture2D(uMappa, uv + vec2(0.0, uTexel.y)).a - texture2D(uMappa, uv - vec2(0.0, uTexel.y)).a;
       float bordo = smoothstep(0.08, 0.32, length(vec2(lx, ly)) + length(vec2(ax, ay)) * 0.6);
-      vec3 schizzo = mix(uCarta, uInk, bordo * uSchizzo * uSchizzoStrato);
-      c = mix(schizzo, t.rgb * uLuceScena, v);
+      vec3 schizzo = mix(uCarta, uInk, bordo * uSchizzo * uSchizzoStrato * (0.3 + 0.7 * matita));
+      // il colore arriva come acquerello bagnato: sul bordo il pigmento si accumula
+      vec3 colore = t.rgb * uLuceScena;
+      colore = mix(colore, colore * vec3(0.78, 0.72, 0.84), bagnato * 0.5);
+      c = mix(schizzo, colore, v);
+      c = velatura(c, bagnato * 0.55 * uMagia);
     }
+    c = conBrillio(c, vMondo, freschezza(vMondo) * (1.0 - uLontano));
     if (uAcqua > 0.5) {
       float s = texture2D(uRumore, vMondo.xz * 0.5 + vec2(uTempo * 0.04, -uTempo * 0.03)).b;
       c += vec3(1.0, 0.98, 0.92) * smoothstep(0.74, 0.9, s) * 0.35 * v;
@@ -282,15 +366,20 @@ const FRAG_SPRITE = /* glsl */ `
     vec3 col = t.rgb * uTinta;
     if (uCielo > 0.5) { gl_FragColor = vec4(mix(uCarta, col, 0.35 + 0.65 * uColoreCielo), a); return; }
     col *= uLuceScena;
-    float v = max(percezione(vec3(vBase.x, vMondo.y, vBase.z)), uLuce);
+    vec3 pb = vec3(vBase.x, vMondo.y, vBase.z);
+    vec3 R = rivelazione(pb);
+    float v = max(R.x, uLuce);
     vec3 c = col;
     if (v < 0.999) {
       float e = 4.0 - alfa(vUv + vec2(uTexel.x, 0.0)) - alfa(vUv - vec2(uTexel.x, 0.0))
                     - alfa(vUv + vec2(0.0, uTexel.y)) - alfa(vUv - vec2(0.0, uTexel.y));
       e = clamp(e, 0.0, 1.0);
-      c = mix(mix(uCarta, uInk, e * uSchizzo * 1.3), col, v);
+      vec3 colore = mix(col, col * vec3(0.8, 0.75, 0.85), R.z * 0.45);
+      c = mix(mix(uCarta, uInk, e * uSchizzo * 1.3 * (0.35 + 0.65 * max(R.y, uLuce))), colore, v);
+      c = velatura(c, R.z * 0.45 * uMagia * (1.0 - uLuce));
     }
-    c = conOnde(c, vec3(vBase.x, vMondo.y, vBase.z));
+    c = conBrillio(c, pb, freschezza(pb) * 0.7);
+    c = conOnde(c, pb);
     gl_FragColor = vec4(c, a);
   }
 `;
