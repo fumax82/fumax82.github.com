@@ -230,18 +230,25 @@ const VERT_SPRITE = /* glsl */ `
   uniform float uFase;
   uniform float uAncora;
   uniform float uPiatto;
+  uniform float uSferico;
   varying vec2 vUv;
   varying vec3 vMondo;
   varying vec3 vBase;
   void main() {
     vec3 centro = (modelMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
     vec3 destra = normalize(vec3(viewMatrix[0][0], 0.0, viewMatrix[2][0]) + vec3(0.00001, 0.0, 0.0));
+    vec3 su = vec3(0.0, 1.0, 0.0);
     if (uPiatto > 0.5) destra = normalize((modelMatrix * vec4(1.0, 0.0, 0.0, 0.0)).xyz);
+    // "sferico": la sagoma guarda la camera anche dall'alto (nuvole viste dalla balena)
+    if (uSferico > 0.5) {
+      destra = normalize(vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]));
+      su = normalize(vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]));
+    }
     float x = position.x * uDim.x;
     float y = (position.y - uAncora) * uDim.y;
     float cima = uAncora > 0.9 ? (1.0 - position.y) : position.y;
     x += sin(uTempo * 1.6 + uFase) * uOscilla * cima * cima * uDim.y;
-    vec3 p = centro + destra * x + vec3(0.0, y, 0.0);
+    vec3 p = centro + destra * x + su * y;
     vMondo = p;
     vBase = centro;
     vec2 q = vec2(position.x + 0.5, position.y);
@@ -308,6 +315,7 @@ export function materialeSprite(texture, opz) {
       uFase: { value: Math.random() * 6.28 },
       uAncora: { value: o.ancora || 0 },
       uPiatto: { value: o.piatto ? 1 : 0 },
+      uSferico: { value: o.sferico ? 1 : 0 },
       uLuce: { value: o.luce || 0 },
       uTinta: { value: new THREE.Color(1, 1, 1) },
       uCielo: { value: o.cielo ? 1 : 0 },

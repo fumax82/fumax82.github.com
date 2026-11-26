@@ -479,6 +479,7 @@ const CAPITOLO_5 = {
     }
     // la balena arriva da lontano, nuotando nel cielo
     const balena = new Sagoma('balena', { cielo: true, ancora: 0.5, scala: 0.9 });
+    balena.mesh.renderOrder = -2.5;   // davanti alle casette lontane, dietro ai tetti vicini
     balena.aggiungiA(g.corrente.gruppo);
     const da = [L.x + 60, 26, -70], a = [L.x + 6, 7.5, -16];
     let t = 0;
@@ -516,6 +517,7 @@ const FINALE = {
     g.musica('finale');
     await g.bianco(0, 1.6);
     await g.capitolo('Finale', 'Ritrovati');
+    g.obiettivo('Ascolta...');
     g.pensa('La balena mi ha lasciata in una piazzetta gialla...', 3.5);
     await g.attendi(2.5);
     const b = g.attore('biscotto');

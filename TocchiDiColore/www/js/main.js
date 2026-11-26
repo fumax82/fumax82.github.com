@@ -459,6 +459,7 @@ class Gioco {
   async voloSullaBalena() {
     if (!this.volo) { this.volo = new Volo(); this.ridimensiona(); }
     await this.bianco(1, 1.4);
+    await this.volo.prepara();   // dipinge la città vista dall'alto
     this.fase = 'volo';
     this.voloT = 0;
     Interfaccia.azione(null);
