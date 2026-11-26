@@ -1,16 +1,16 @@
 /* ==========================================================================
  *  input.js — COMANDI: TOUCH (ANDROID), TASTIERA E MOUSE
  *  --------------------------------------------------------------------------
+ *  Il gioco è per i più piccoli: Lia cammina da sola, basta TOCCARE.
  *  TELEFONO:
- *    frecce ◀ ▶ in basso a sinistra   camminare (tenendo premuto a lungo si corre)
- *    tocco breve sullo schermo         batte il bastone (o la bacchetta) PROPRIO
- *                                      DOVE si è toccato: il mondo si rivela da lì
- *    pulsante azione                   Parla / Entra / Tocca... (compare quando serve)
+ *    tocco breve sullo schermo         nel punto toccato nasce una sorpresa e
+ *                                      Lia batte il bastone (o la bacchetta):
+ *                                      il mondo si colora da lì
  *    tasto Indietro di Android         pausa
  *  PC (per provare il gioco):
- *    A/D o frecce ← → camminare, Shift correre, clic = bastone nel punto
- *    cliccato, Spazio = bastone davanti ai piedi,
- *    E (o freccia ↑) azione, Esc pausa
+ *    clic = come il tocco, Spazio = bastone davanti ai piedi,
+ *    A/D o frecce ← → camminare (quando la storia lo lascia fare), Esc pausa
+ *  (le frecce sullo schermo esistono ancora nel codice, ma sono nascoste)
  *
  *  Gli altri moduli chiedono "da che parte si vuole andare?" (direzione:
  *  -1 sinistra, 0 fermi, +1 destra) oppure ascoltano eventi:
@@ -46,7 +46,6 @@ Input.inizializza = function (tela) {
     if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
     if (e.repeat) return;
     if (e.code === 'Space' || e.code === 'Enter') this.emetti('tocco');
-    if (e.code === 'KeyE' || e.code === 'ArrowUp' || e.code === 'KeyW') this.emetti('azione');
     if (e.code === 'Escape' || e.code === 'KeyP') this.emetti('pausa');
   });
   window.addEventListener('keyup', (e) => { this.tasti[e.code] = false; });

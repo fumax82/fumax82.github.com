@@ -4,15 +4,15 @@
  *  In ogni scena ci sono piccole cose speciali che il mondo bianco
  *  nasconde: i gerani alle finestre, i piccioni, un palloncino, le pagine
  *  di un libro... Quando un'onda (bastone, abbaio, profumo) le raggiunge
- *  per la prima volta, "prendono vita" con un effetto tutto loro, si sente
- *  un arpeggio e il contatore delle meraviglie in alto sale.
+ *  per la prima volta, "prendono vita" con un effetto tutto loro e si
+ *  sente un arpeggio (niente scritte: il gioco è per i più piccoli).
  *
  *  Ogni meraviglia è scritta nella scena (js/dati/scene/*.js):
- *    { id, x, y, z, effetto, testo }
+ *    { id, x, y, z, effetto, testo }   (il testo è solo un promemoria per chi legge il codice)
  *  effetto: 'farfalle' | 'uccelli' | 'fiori' | 'note' | 'stelle' |
  *           'palloncino' | 'pagine' | 'bolle'
  *  Le meraviglie-personaggio hanno anche "attore" (l'id nella scena):
- *    'sveglia' (il lampione si sveglia e parla: "dialogo"), 'suona' (la rana
+ *    'sveglia' (il lampione si sveglia e sbadiglia), 'suona' (la rana
  *    suona il violino), 'canta' (i fiori cantano), 'appare' (compare di colpo)
  * ========================================================================== */
 import { Sagoma } from '../motore/sagoma.js';
@@ -52,8 +52,6 @@ export class Meraviglie {
     g.meraviglieTrovate.add(m.chiave);
     Audio.meraviglia();
     g.onda(m.x, m.z, 'magia', { raggio: 3.5, velocita: 5, forza: 0.7, livello: 1 });
-    g.pensa('✦ ' + m.testo, 3.5, true);
-    g.ui.meraviglie(g.meraviglieTrovate.size, g.totaleMeraviglie);
     const y = m.y !== undefined ? m.y : this.scena.quota(m.x, m.z) + 0.5;
     // un momento di scoperta: la camera si allarga e guarda la meraviglia, luce e spirali
     g.regia.momento([m.x, y, m.z], 3.0);
@@ -103,7 +101,6 @@ export class Meraviglie {
         g.luci.emetti(a.x, a.y + 2.6, a.z, 30, { forma: [FORME.stella, FORME.punto], colori: ['#fff3b0', '#ffe28a', '#ffffff'], velocita: 0.8, su: 0.3, gravita: 0.1, vita: 2.4, dim: 0.14, sparpaglia: 0.3 });
         // da ora in poi illumina la via intorno a sé
         this._ripeti(3.5, () => g.onda(a.x, a.z, 'suono', { colore: '#ffe9a8', raggio: 4, forza: 0.35 }));
-        if (m.dialogo) await g.dialogo(a.id, m.dialogo);
       };
       effetti.suona = () => {
         a.visibile = true;

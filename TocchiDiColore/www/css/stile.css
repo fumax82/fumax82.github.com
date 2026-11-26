@@ -34,41 +34,6 @@ button { font-family: var(--scrittura); color: var(--inchiostro); cursor: pointe
 /* ------------------------------- HUD -------------------------------------- */
 #hud { position: fixed; inset: 0; pointer-events: none; }
 
-#angoloAlto {
-  position: absolute; top: max(10px, env(safe-area-inset-top)); left: max(14px, env(safe-area-inset-left));
-  max-width: 46vw;
-}
-#capitoloHud { font-family: var(--scrittura); font-size: 14px; opacity: 0.8; text-shadow: 0 0 6px var(--carta); }
-#obiettivo {
-  margin-top: 6px; padding: 7px 12px; font-size: 15px;
-  background: rgba(251, 246, 234, 0.88); border: 2px solid var(--inchiostro);
-  border-radius: 14px 18px 12px 16px; box-shadow: 2px 3px 0 rgba(107, 75, 55, 0.18);
-}
-#obiettivo.nuovo { animation: nuovoObiettivo 1.2s ease-out; }
-@keyframes nuovoObiettivo { 0% { transform: scale(1.12); background: #fff3c0; } 100% { transform: scale(1); } }
-
-#ricordi {
-  position: absolute; top: calc(max(10px, env(safe-area-inset-top)) + 56px); right: max(14px, env(safe-area-inset-right));
-  display: flex; gap: 6px; padding: 4px 10px;
-  background: rgba(251, 246, 234, 0.75); border: 2px solid rgba(107, 75, 55, 0.6); border-radius: 16px;
-}
-#ricordi .icona { width: 34px; height: 34px; }
-/* contatore delle meraviglie scoperte (sotto i ricordi) */
-#meraviglieHud {
-  position: absolute; top: calc(max(10px, env(safe-area-inset-top)) + 104px); right: max(14px, env(safe-area-inset-right));
-  padding: 4px 12px; font-family: var(--scrittura); font-size: 17px; color: #8a6a2e;
-  background: rgba(255, 248, 222, 0.85); border: 2px solid rgba(201, 160, 72, 0.8); border-radius: 16px;
-  box-shadow: 0 0 10px rgba(255, 214, 120, 0.45);
-}
-#meraviglieHud.nuova { animation: nuovaMeraviglia 1.6s ease-out; }
-@keyframes nuovaMeraviglia {
-  0% { transform: scale(1.8); box-shadow: 0 0 30px 10px rgba(255, 220, 130, 0.95); }
-  60% { transform: scale(0.95); }
-  100% { transform: scale(1); }
-}
-#ricordi .icona.nuova { animation: nuovoRicordo 1.4s ease-out; }
-@keyframes nuovoRicordo { 0% { transform: scale(2.4) rotate(-20deg); } 60% { transform: scale(0.9); } 100% { transform: scale(1); } }
-
 #pulsantiAlto {
   position: absolute; top: max(10px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right));
   display: flex; gap: 10px; pointer-events: auto;
@@ -93,17 +58,8 @@ button.freccia.premuto { transform: scale(0.92); background: rgba(255, 236, 170,
 body:not(.touch) #frecce { opacity: 0.55; }
 body:not(.touch) button.freccia { width: 58px; height: 58px; padding: 13px; }
 
-#btnAzione {
-  position: absolute; right: max(26px, env(safe-area-inset-right)); bottom: max(34px, env(safe-area-inset-bottom));
-  min-width: 110px; height: 56px; padding: 0 18px; font-size: 19px; pointer-events: auto; touch-action: none;
-  background: #fffaf0; border: 3px solid var(--inchiostro); border-radius: 22px 16px 24px 18px;
-  box-shadow: 3px 4px 0 rgba(107, 75, 55, 0.25); animation: invito 1.4s infinite;
-}
-@keyframes invito { 50% { transform: translateY(-4px); } }
-body:not(.touch) #btnAzione::after { content: '  (E)'; font-size: 13px; opacity: 0.6; }
-
 /* il segno del dito: dove si tocca lo schermo, il bastone (o la magia) arriva lì */
-body.bacchetta #schermo { cursor: crosshair; }
+#schermo { cursor: crosshair; }
 .segnoTocco {
   position: fixed; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%;
   pointer-events: none; z-index: 30; border: 3px solid rgba(255, 214, 120, 0.95);
@@ -111,44 +67,6 @@ body.bacchetta #schermo { cursor: crosshair; }
 }
 .segnoTocco.magico { border-color: rgba(255, 246, 200, 0.98); box-shadow: 0 0 16px 5px rgba(201, 182, 234, 0.75), inset 0 0 8px rgba(255, 240, 168, 0.8); }
 @keyframes segnoTocco { from { transform: scale(0.4); opacity: 1; } to { transform: scale(3.4); opacity: 0; } }
-
-/* ---------------------------- pensieri ----------------------------------- */
-#messaggio {
-  /* in alto: in basso coprirebbe Lia, che le inquadrature tengono nella parte bassa dello schermo */
-  position: fixed; left: 50%; top: max(66px, calc(env(safe-area-inset-top) + 56px));
-  transform: translate(-50%, -10px); max-width: min(640px, 62vw);
-  padding: 10px 20px; font-family: var(--scrittura); font-size: clamp(15px, 2.3vw, 21px); font-style: italic; text-align: center;
-  background: rgba(251, 246, 234, 0.9); border: 2px solid var(--inchiostro); border-radius: 20px 14px 22px 12px;
-  box-shadow: 3px 4px 0 rgba(107, 75, 55, 0.18);
-  opacity: 0; pointer-events: none; transition: opacity 0.5s, transform 0.5s;
-}
-#messaggio.visibile { opacity: 1; transform: translate(-50%, 0); }
-
-/* ---------------------------- dialoghi ----------------------------------- */
-#dialogo {
-  position: fixed; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%);
-  width: min(860px, 92vw); min-height: 120px; display: flex; gap: 16px; align-items: center;
-  padding: 14px 20px 14px 14px;
-  background: rgba(251, 246, 234, 0.96); border: 3px solid var(--inchiostro); border-radius: 26px 18px 28px 20px;
-  box-shadow: 4px 5px 0 rgba(107, 75, 55, 0.22);
-}
-#ritratto { width: 96px; height: 96px; flex: none; border-radius: 50%; border: 2px solid var(--inchiostro); background: #fff8ea; }
-#dialogo .testi { flex: 1; }
-#nomeDialogo { font-family: var(--scrittura); font-size: 17px; color: var(--viola); margin-bottom: 4px; }
-#testoDialogo { font-size: clamp(16px, 2.2vw, 20px); line-height: 1.4; min-height: 2.8em; }
-#avantiDialogo { position: absolute; right: 18px; bottom: 8px; font-size: 16px; animation: invito 0.9s infinite; }
-
-/* --------------------------- cartello capitoli --------------------------- */
-#cartello {
-  position: fixed; left: 50%; top: 34%; transform: translate(-50%, -50%) rotate(-1.5deg);
-  padding: 18px 46px; text-align: center; pointer-events: none;
-  background: rgba(251, 246, 234, 0.95); border: 3px solid var(--inchiostro); border-radius: 30px 18px 34px 22px;
-  box-shadow: 5px 6px 0 rgba(107, 75, 55, 0.2);
-  opacity: 0; transition: opacity 0.8s;
-}
-#cartello.visibile { opacity: 1; }
-#cartelloNumero { font-family: var(--scrittura); font-size: 18px; color: var(--viola); }
-#cartelloTitolo { font-family: var(--scrittura); font-size: clamp(26px, 5vw, 46px); }
 
 /* ---------------------------- schermate ---------------------------------- */
 .schermata { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; }
@@ -192,10 +110,22 @@ button.grande:active, button.medio:active { transform: translate(2px, 3px); box-
 
 #fine { z-index: 12; flex-direction: column; justify-content: flex-end; }
 #illustrazioneFine { position: absolute; inset: 0; background: var(--carta) center / cover no-repeat; }
-/* il testo finale compare dopo qualche secondo: prima si guarda l'illustrazione */
-.foglio.basso { position: relative; margin-bottom: 3vh; max-width: 760px; padding: 12px 24px; gap: 8px; animation: compari 1.2s 3.5s both; }
+/* il pulsante "ancora" compare dopo qualche secondo: prima si guarda l'illustrazione */
+#btnFineMenu { position: relative; margin-bottom: 6vh; animation: compari 1.2s 3s both; }
 @keyframes compari { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: none; } }
-#testoFine { font-size: 16px; line-height: 1.45; margin: 0; }
+
+/* il grande pulsante tondo "gioca" (▶) e "ancora" (↺): facile da toccare anche per i più piccoli */
+button.gioca {
+  width: 112px; height: 112px; padding: 26px; border-radius: 50% 47% 52% 49%;
+  background: radial-gradient(circle at 40% 35%, #fff6c8, #f7c86b); border: 4px solid var(--inchiostro);
+  box-shadow: 4px 5px 0 rgba(107, 75, 55, 0.25), 0 0 26px 6px rgba(255, 214, 120, 0.55);
+  animation: respiraGioca 2.2s ease-in-out infinite;
+}
+button.gioca svg { width: 100%; height: 100%; fill: var(--inchiostro); stroke: var(--inchiostro); stroke-width: 1.5; stroke-linejoin: round; }
+button.gioca.ancora svg { fill: none; stroke-width: 2.6; stroke-linecap: round; }
+button.gioca:active { transform: scale(0.92); }
+@keyframes respiraGioca { 50% { transform: scale(1.07); box-shadow: 4px 5px 0 rgba(107, 75, 55, 0.25), 0 0 40px 12px rgba(255, 214, 120, 0.75); } }
+#btnFineMenu.gioca { animation: compari 1.2s 3s both, respiraGioca 2.2s 4.2s ease-in-out infinite; }
 
 #avvisoRotazione {
   display: none; position: fixed; left: 50%; top: 40%; transform: translateX(-50%);
@@ -211,7 +141,5 @@ button.grande:active, button.medio:active { transform: translate(2px, 3px); box-
   .pannelloMenu { padding: 12px 24px; gap: 7px; }
   button.grande { font-size: 19px; padding: 7px 22px; }
   button.medio { font-size: 16px; padding: 5px 18px; }
-  #dialogo { min-height: 96px; padding: 10px 16px 10px 10px; }
-  #ritratto { width: 72px; height: 72px; }
-  #obiettivo { font-size: 13px; }
+  button.gioca { width: 92px; height: 92px; padding: 21px; }
 }

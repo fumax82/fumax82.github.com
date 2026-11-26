@@ -21,7 +21,7 @@ import { materialeStrato, materialeCielo, materialeAnello, UNIFORMI } from './ma
 import { Sagoma } from './sagoma.js';
 import { Percorso } from '../gioco/percorso.js';
 import { Percezione } from '../gioco/percezione.js';
-import { creaAttore, Persona } from '../gioco/attori.js';
+import { creaAttore } from '../gioco/attori.js';
 
 /* I moduli di arte che dipingono le scene (si caricano solo quando servono). */
 const MODULI = {
@@ -101,7 +101,6 @@ export class Scena {
     this.percorso = new Percorso(def.percorso, def.vicinoAlMuro);
     this.animati = [];
     this.attori = [];
-    this.interazioni = [];
     this.ostacoli = (def.ostacoli || []).map((o) => ({ ...o, scoperto: false }));
     this.daSmontare = [];
     this.cliccabili = [];       // gli strati che il dito può "toccare"
@@ -151,18 +150,13 @@ export class Scena {
     if (def.cielo) this._cielo(def.cielo);
     // --- 3. oggetti decorativi (sagome) -----------------------------------
     this.oggetti = (def.oggetti || []).map((o) => this._oggetto(o));
-    // --- 4. attori e interazioni -------------------------------------------
+    // --- 4. attori (niente pulsanti "Parla" o "Entra": la storia scorre da sola) --
     for (const a of def.attori || []) {
       const att = creaAttore(this.gioco, a);
       att.aggiungiA(this.gruppo);
       if (a.visibile === false) att.visibile = false;
       this.attori.push(att);
-      if (att instanceof Persona && a.parla !== false) {
-        this.interazioni.push({ id: att.id, tipo: 'persona', attore: att, raggio: 1.3, etichetta: 'Parla', attiva: true });
-      }
     }
-    for (const p of def.porte || []) this.interazioni.push({ raggio: 0.9, etichetta: 'Entra', ...p, tipo: 'porta', attiva: p.attiva !== false });
-    for (const i of def.interazioni || []) this.interazioni.push({ raggio: 0.9, ...i, tipo: 'evento', attiva: !!i.attiva });
     return this;
   }
 

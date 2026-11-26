@@ -35,20 +35,16 @@
   <canvas id="schermo"></canvas>
 
   <!-- ====================== HUD ====================== -->
+  <!-- Durante il gioco non c'è niente da leggere né pulsanti da cercare:
+       si tocca lo schermo e basta. Resta solo la pausa, piccola, per i grandi. -->
   <div id="hud" class="nascosto">
-    <div id="angoloAlto">
-      <div id="capitoloHud"></div>
-      <div id="obiettivo" class="nascosto"></div>
-    </div>
-    <div id="ricordi" class="nascosto"></div>
-    <div id="meraviglieHud" class="nascosto" title="Meraviglie scoperte"></div>
     <div id="pulsantiAlto">
       <button id="btnPausa" class="tondo" aria-label="Pausa">
         <svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg>
       </button>
     </div>
-    <!-- comandi touch: frecce per camminare (tenere premuto a lungo = correre) -->
-    <div id="frecce">
+    <!-- frecce per camminare: nascoste (Lia cammina da sola); restano per chi vuole provarle -->
+    <div id="frecce" class="nascosto">
       <button id="btnSinistra" class="freccia" aria-label="Cammina a sinistra">
         <svg viewBox="0 0 24 24"><path d="M15 4 L7 12 L15 20"/></svg>
       </button>
@@ -56,26 +52,6 @@
         <svg viewBox="0 0 24 24"><path d="M9 4 L17 12 L9 20"/></svg>
       </button>
     </div>
-    <button id="btnAzione" class="nascosto">Parla</button>
-  </div>
-
-  <!-- pensieri di Lia -->
-  <div id="messaggio"></div>
-
-  <!-- dialoghi -->
-  <div id="dialogo" class="nascosto">
-    <canvas id="ritratto" width="160" height="160"></canvas>
-    <div class="testi">
-      <div id="nomeDialogo"></div>
-      <div id="testoDialogo"></div>
-    </div>
-    <div id="avantiDialogo" class="nascosto">▼</div>
-  </div>
-
-  <!-- cartello dei capitoli -->
-  <div id="cartello" class="nascosto">
-    <div id="cartelloNumero"></div>
-    <div id="cartelloTitolo"></div>
   </div>
 
   <!-- ====================== SCHERMATE ====================== -->
@@ -89,12 +65,14 @@
     <div id="sfondoMenu"></div>
     <div class="pannelloMenu">
       <h1>Tocchi di Colore</h1>
-      <p class="sottotitolo">un'avventura da ascoltare, toccare e immaginare</p>
-      <button id="btnNuova" class="grande">Nuova storia</button>
+      <p class="sottotitolo">tocca lo schermo e il mondo si colora</p>
+      <button id="btnNuova" class="gioca" aria-label="Gioca">
+        <svg viewBox="0 0 24 24"><path d="M8 5 L19 12 L8 19 Z"/></svg>
+      </button>
       <button id="btnContinua" class="grande nascosto">Continua</button>
       <button id="btnOpzioni" class="medio">Opzioni</button>
       <button id="btnCrediti" class="medio">Crediti</button>
-      <p class="nota">Gioca in orizzontale, meglio con le cuffie.</p>
+      <p class="nota">Per i più piccoli: non c'è niente da leggere, basta toccare. Telefono in orizzontale.</p>
     </div>
   </div>
 
@@ -137,11 +115,10 @@
 
   <div id="fine" class="schermata nascosto">
     <div id="illustrazioneFine"></div>
-    <div class="foglio basso">
-      <h2>Fine</h2>
-      <p id="testoFine"></p>
-      <button id="btnFineMenu" class="medio">Torna al menu</button>
-    </div>
+    <!-- niente parole: un grande pulsante per ricominciare -->
+    <button id="btnFineMenu" class="gioca ancora" aria-label="Ancora">
+      <svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-2.05-4.95M19 4v4h-4"/></svg>
+    </button>
   </div>
 
   <div id="avvisoRotazione">Ruota il telefono in orizzontale</div>

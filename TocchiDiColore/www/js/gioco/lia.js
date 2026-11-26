@@ -149,8 +149,13 @@ export class Lia {
       if (Math.abs(this.vel) > 0.3 && !this.meta) this.gioco.regista.emetti('bordo', this.vel > 0 ? 1 : -1);
       this.vel = 0;
     }
-    const ostacolo = this.meta ? null : this.scena.ostacoloTra(this.s, nuova);
-    if (ostacolo) {
+    const ostacolo = this.scena.ostacoloTra(this.s, nuova);
+    if (ostacolo && this.meta) {
+      // camminando da sola non si fa male: la cosa "spunta" davanti a lei,
+      // con un sobbalzo di sorpresa, e Lia prosegue
+      this.posa('sorpresa', 0.8);
+      this.gioco.regista.emetti('urto', ostacolo);
+    } else if (ostacolo) {
       nuova = ostacolo.s - Math.sign(this.vel) * 0.42;
       this.vel = -Math.sign(this.vel) * 0.6;   // un piccolo rimbalzo all'indietro
       this.urtato = 0.7;

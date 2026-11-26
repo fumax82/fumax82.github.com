@@ -89,8 +89,20 @@ export class Sagoma {
 
   /** Posiziona la sagoma nel mondo: x destra, y alto (i piedi), z verso lo spettatore. */
   posiziona(x, y, z) {
-    this.mesh.position.set(x, y, z);
+    // durante un saltello la sagoma sale e scende (l'ombra resta a terra)
+    let su = 0;
+    if (this.salto) {
+      const k = (performance.now() - this.salto.t0) / this.salto.durata;
+      if (k >= 1) this.salto = null;
+      else su = this.salto.altezza * Math.abs(Math.sin(k * Math.PI * this.salto.volte)) * (1 - 0.4 * k);
+    }
+    this.mesh.position.set(x, y + su, z);
     if (this.ombra) this.ombra.position.set(x + this.larghezza * 0.22, this._quotaOmbra === undefined ? y + 0.012 : this._quotaOmbra, z - 0.08);
+  }
+
+  /** Un saltello di gioia: altezza in metri, durata in secondi, quanti rimbalzi. */
+  salta(altezza, durata, volte) {
+    this.salto = { t0: performance.now(), altezza: altezza || 0.3, durata: (durata || 0.55) * 1000, volte: volte || 1 };
   }
 
   /** Quota del terreno sotto l'oggetto (per l'ombra degli oggetti sospesi). */

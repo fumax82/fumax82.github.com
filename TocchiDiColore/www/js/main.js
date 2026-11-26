@@ -7,9 +7,11 @@
  *      dipinti appesi nello spazio, come in un teatrino di carta
  *    - circa 60 volte al secondo muove Lia lungo il suo percorso, aggiorna
  *      il mondo che si colora, la regia delle telecamere, e disegna
+ *    - a ogni tocco del ditino fa succedere qualcosa (gioco/sorprese.js):
+ *      il gioco è per i più piccoli, non c'è niente da leggere
  *    - offre alla STORIA (dati/storia.js) dei comandi semplici:
- *        g.vai('forno'), g.dialogo('fornaia', [...]), g.pensa('...'),
- *        g.obiettivo('...'), g.attendi(2), g.evento('...'), g.musica('...')
+ *        g.vai('piazza'), g.attendi(2), g.quando(...), g.musica('...'),
+ *        g.inquadra(...), g.onda(...), g.scintille(...)
  *
  *  Fasi: 'caricamento' → 'menu' → 'gioco' (o 'volo' sulla balena) → 'fine'
  * ========================================================================== */
@@ -34,6 +36,7 @@ import { Magia } from './gioco/magia.js';
 import { Meteo } from './gioco/meteo.js';
 import { Effetti } from './motore/effetti.js';
 import { Meraviglie } from './gioco/meraviglie.js';
+import { Sorprese } from './gioco/sorprese.js';
 import via from './dati/scene/via.js';
 import piazza from './dati/scene/piazza.js';
 import forno from './dati/scene/forno.js';
@@ -55,14 +58,10 @@ class Gioco {
     this.inScena = false;          // true durante le scene della storia
     this.corrente = null;          // la Scena montata adesso
     this.onde = CONFIG.onde;
-    this.dialoghiSpeciali = {};    // id del personaggio → dialogo della storia
-    this.porteAperte = {};
-    this.ricordiPresi = [];
     this.animazioni = [];          // dissolvenze e altre transizioni
     this.ripetizioni = [];         // azioni da ripetere ogni tot secondi
     this.suoniLuogo = [];
-    this.occupato = false;
-    this.interazioneAttuale = null;
+    this.senzaTocchi = 0;          // da quanto la bimba non tocca lo schermo (secondi)
     this.qualita = 'media';
     this.mediaLavoro = 12;
     this.tempoLento = 0;
@@ -102,6 +101,7 @@ class Gioco {
     this.scena.add(this.luci.punti);
     this.magia = new Magia(this);
     this.effetti = new Effetti(this.scena);   // onomatopee, archi sonori, nastri di profumo, luce
+    this.sorprese = new Sorprese(this);       // a ogni tocco del ditino, una sorpresa
     this.effetti.particelle = this.particelle;
     this.effetti.luci = this.luci;
     this.meteo = new Meteo(this);              // pioggia, fiume, balena con le pinne
@@ -134,28 +134,6 @@ class Gioco {
       this.regia.scuoti(0.6);
       this.concentra([p.x, p.y + 0.7, z], 0.9, '#3e2a20', 0.6);
       Audio.botta();
-      this.pensa(o.testo || 'Ahi! C\'era qualcosa qui davanti!', 2.5, true);
-    });
-
-    // La prima volta che il bastone tocca un materiale, Lia dice che cosa immagina
-    const IMMAGINA = {
-      vetro: 'Tin! È vetro... una vetrina piena di luce!',
-      legno: 'Tok tok... legno. Una porta, calda come il pane.',
-      mattoni: 'Mattoni ruvidi, uno sopra l\'altro.',
-      intonaco: 'Un muro liscio, tiepido di sole.',
-      metallo: 'Dong! Ferro che canta... un cancello!',
-      foglie: 'Frrr... foglie! Un giardino dietro il muro.',
-      ceramica: 'Piastrelle lisce e fresche, tutte in fila.',
-      libri: 'Libri! Profumano di carta e di storie.',
-      acqua: 'Plip! Acqua che si muove.',
-      pietra: 'Toc... pietra. Il marciapiede è fatto di lastre grandi.',
-    };
-    this.materialiSentiti = new Set();
-    this.regista.su('tocco', (d) => {
-      if (!d || !d.materiale || this.materialiSentiti.has(d.materiale) || !this.lia.magica && !this.lia.puoToccare) return;
-      if (this.corrente && this.corrente.percezione.rivelaTutto > 0.5) return;
-      this.materialiSentiti.add(d.materiale);
-      if (IMMAGINA[d.materiale]) this.pensa(IMMAGINA[d.materiale], 3);
     });
 
     Interfaccia.caricamento(1, 'Pronto!');
@@ -170,10 +148,8 @@ class Gioco {
   async inizia(capitolo) {
     // riprendendo una partita, ritroviamo le meraviglie già scoperte
     const salvato = capitolo ? this.leggiSalvataggio() : null;
-    if (salvato && salvato.meraviglie) {
-      salvato.meraviglie.forEach((k) => this.meraviglieTrovate.add(k));
-      if (this.meraviglieTrovate.size) Interfaccia.meraviglie(this.meraviglieTrovate.size, this.totaleMeraviglie);
-    }
+    this.meraviglieTrovate.clear();          // ogni nuova storia: tutte le meraviglie da riscoprire
+    if (salvato && salvato.meraviglie) salvato.meraviglie.forEach((k) => this.meraviglieTrovate.add(k));
     Audio.avvia();
     Interfaccia.nascondiMenu();
     UNIFORMI.uRivelaTutto.value = 0;
@@ -188,39 +164,25 @@ class Gioco {
 
   _collegaComandi() {
     Input.su('tocco', (dove) => {
-      if (Interfaccia.dialogoAperto) { Interfaccia.avanzaDialogo(); return; }
       if (this.fase !== 'gioco' || this.inPausa) return;
+      this.senzaTocchi = 0;
       if (dove) {                                      // dito o mouse: nel punto toccato
-        if (this.lia.puoToccare && this.lia.controllo) Interfaccia.segnoTocco(dove.x, dove.y);
+        Interfaccia.segnoTocco(dove.x, dove.y);
         this._toccoSchermo(dove.x, dove.y);
       }
       else this.lia.tocca();                          // tastiera: davanti ai piedi
-    });
-    Input.su('azione', () => {
-      if (Interfaccia.dialogoAperto) { Interfaccia.avanzaDialogo(); return; }
-      this._azione();
     });
     Input.su('pausa', () => { if (this.fase === 'gioco' || this.fase === 'volo') this.pausa(!this.inPausa); });
     Input.su('perdiFuoco', () => { if ((this.fase === 'gioco' || this.fase === 'volo') && !this.inPausa) this.pausa(true); });
   }
 
-  /** Esegue l'azione proposta (Parla, Entra...), se ce n'è una. */
-  _azione() {
-    const it = this.interazioneAttuale;
-    if (it && !this.occupato && this.fase === 'gioco' && !this.inPausa) {
-      this.occupato = true;
-      Interfaccia.azione(null);
-      this._interagisci(it).catch((e) => console.error(e)).finally(() => { this.occupato = false; this.interazioneAttuale = null; });
-      return true;
-    }
-    return false;
-  }
-
   /**
    * IL DITO SULLO SCHERMO (cx, cy in pixel): dove cade nel mondo?
-   * Un raggio parte dalla telecamera e attraversa il punto toccato; il primo
-   * strato dipinto (non trasparente) che incontra è il punto in cui Lia batte
-   * il bastone o fa arrivare la magia della bacchetta.
+   *  1. se il dito tocca un PERSONAGGIO (o Lia), quel personaggio fa festa
+   *  2. altrimenti un raggio parte dalla telecamera e attraversa il punto
+   *     toccato: il primo strato dipinto (non trasparente) che incontra è il
+   *     punto in cui nasce una sorpresa e in cui Lia batte il bastone (o fa
+   *     arrivare la magia della bacchetta) e il mondo si colora
    */
   _toccoSchermo(cx, cy) {
     const S = this.corrente;
@@ -229,14 +191,10 @@ class Gioco {
     const r = this.renderer.domElement.getBoundingClientRect();
     const ndc = this._ndc || (this._ndc = new THREE.Vector2());
     ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
-    // toccando una persona con cui si può parlare, si parla
-    const it = this.interazioneAttuale;
-    if (it && it.attore) {
-      const a = it.attore;
-      const v = new THREE.Vector3(a.x, a.y + (a.sagoma ? a.sagoma.altezza * 0.5 : 0.6), a.z).project(cam);
-      const dx = (v.x - ndc.x) * r.width / 2, dy = (v.y - ndc.y) * r.height / 2;
-      if (Math.hypot(dx, dy) < Math.max(60, r.height * 0.09) && this._azione()) return;
-    }
+    // --- 1. un personaggio sotto il dito? -----------------------------------
+    const chi = this._personaggioSotto(ndc, r);
+    if (chi) { this.sorprese.festa(chi); return; }
+    // --- 2. il punto del mondo sotto il dito ---------------------------------
     const raggio = this._raggio || (this._raggio = new THREE.Raycaster());
     raggio.setFromCamera(ndc, cam);
     raggio.far = 60;
@@ -255,7 +213,33 @@ class Gioco {
         colpo = { punto: p, muro: p.y > S.quota(p.x, p.z) + 0.4, materiale: null };
       }
     }
-    this.lia.toccaPunto(colpo.punto, colpo);
+    const p = colpo.punto;
+    this.sorprese.nelPunto(p.x, p.y + (colpo.muro ? 0 : 0.15), p.z);
+    this.lia.toccaPunto(p, colpo);
+  }
+
+  /** Il personaggio (o Lia) che sta sotto il punto toccato, se c'è. */
+  _personaggioSotto(ndc, r) {
+    const cam = this.regia.camera;
+    const v = this._v1 || (this._v1 = new THREE.Vector3());
+    const w = this._v2 || (this._v2 = new THREE.Vector3());
+    let migliore = null, dMin = Infinity;
+    const candidati = [this.lia, ...this.corrente.attori];
+    for (const a of candidati) {
+      if (!a || !a.sagoma || (a.visibile === false) || (a === this.lia && a.nascosta)) continue;
+      const alto = a.sagoma.altezza || 1;
+      // i piedi e la testa sullo schermo: così sappiamo quanto è grande
+      v.set(a.x, a.y, a.z).project(cam);
+      w.set(a.x, a.y + alto, a.z).project(cam);
+      if (v.z > 1 || w.z > 1) continue;                     // dietro la camera
+      const altezzaSchermo = Math.abs(w.y - v.y);
+      const cx = v.x, cy = (v.y + w.y) / 2;
+      const larg = Math.max(altezzaSchermo * 0.45 * (r.height / r.width), 0.05);
+      const dx = (ndc.x - cx) / larg, dy = (ndc.y - cy) / Math.max(altezzaSchermo * 0.6, 0.06);
+      const d = dx * dx + dy * dy;
+      if (d < 1 && d < dMin) { dMin = d; migliore = a; }
+    }
+    return migliore;
   }
 
   pausa(si) {
@@ -404,57 +388,6 @@ class Gioco {
   attore(id) { return this.corrente ? this.corrente.attore(id) : null; }
 
   /* ====================================================================== */
-  /*  INTERAZIONI (porte, persone, punti speciali)                          */
-  /* ====================================================================== */
-  _cercaInterazione() {
-    const S = this.corrente;
-    if (!S || !this.lia.controllo || this.inScena || Interfaccia.dialogoAperto) return null;
-    let migliore = null, dMin = Infinity;
-    for (const it of S.interazioni) {
-      if (!it.attiva) continue;
-      let d;
-      if (it.attore) {
-        if (!it.attore.visibile) continue;
-        const v = S.percorso.piuVicino(it.attore.x, it.attore.z);
-        if (v.distanza > 3.2) continue;
-        d = Math.abs(v.s - this.lia.s);
-      } else d = Math.abs(it.s - this.lia.s);
-      if (d > it.raggio) continue;
-      if (d < dMin) { dMin = d; migliore = it; }
-    }
-    return migliore;
-  }
-
-  async _interagisci(it) {
-    if (it.tipo === 'porta') {
-      if (it.bloccata && !this.porteAperte[it.id]) { Interfaccia.messaggio(it.bloccata, 3.5, true); return; }
-      if (it.campanello) this.campanello(this.lia.x, this.lia.y + 1.9, this.lia.z - 0.5);
-      await this.vai(it.verso, it.arrivo);
-    } else if (it.tipo === 'persona') {
-      const a = it.attore;
-      this.lia.controllo = false;
-      a.parlando = true;
-      a.guarda(this.lia.x, this.lia.z);
-      // Lia si gira verso chi le parla
-      const v = this.corrente.percorso.piuVicino(a.x, a.z);
-      if (Math.abs(v.s - this.lia.s) > 0.05) this.lia.verso = Math.sign(v.s - this.lia.s);
-      const speciale = this.dialoghiSpeciali[a.id];
-      if (speciale) await speciale(this, a);
-      else {
-        const righe = a.chiacchiere || ['...'];
-        a._indice = a._indice || 0;
-        await this.dialogo(a.id, [righe[a._indice % righe.length]]);
-        a._indice++;
-      }
-      a.parlando = false;
-      this.lia.controllo = !this.inScena;
-      this.regista.emetti('parlato:' + a.id);
-    } else {
-      this.regista.emetti('interagisci:' + it.id);
-    }
-  }
-
-  /* ====================================================================== */
   /*  CICLO PRINCIPALE                                                      */
   /* ====================================================================== */
   ciclo(t) {
@@ -484,7 +417,6 @@ class Gioco {
     }
     Musica.aggiorna();
     this._disegna(dt);
-    Interfaccia.aggiorna(dt);
     this._qualitaAutomatica(grezzo);
   }
 
@@ -511,7 +443,7 @@ class Gioco {
 
   _aggiornaGioco(dt) {
     const S = this.corrente;
-    const libero = this.lia.controllo && !this.inScena && !Interfaccia.dialogoAperto;
+    const libero = this.lia.controllo && !this.inScena;
     const dir = libero ? this._direzioneSulPercorso() : 0;
     if (!libero) this.direzioneSchermo = 0;
     this.lia.aggiorna(dt, dir, Input.corsa());
@@ -541,10 +473,13 @@ class Gioco {
     UNIFORMI.uFuoco.value += (fuoco - UNIFORMI.uFuoco.value) * Math.min(1, dt * 4);
     const e = this.regia.camera.matrixWorld.elements;
     Audio.aggiorna(this.lia.x, this.lia.z, Math.atan2(-e[10], -e[8]));
-    const it = this._cercaInterazione();
-    if (it !== this.interazioneAttuale && !this.occupato) {
-      this.interazioneAttuale = it;
-      Interfaccia.azione(it ? it.etichetta : null);
+    this.sorprese.aggiorna(dt);
+    // se la bimba non tocca per un po', Lia batte il bastone da sola: il
+    // mondo continua a colorarsi e non ci si annoia mai
+    this.senzaTocchi += dt;
+    if (this.senzaTocchi > CONFIG.bimbi.toccoDaSola && this.lia.puoToccare && this.lia.controllo && S.percezione.rivelaTutto < 0.5) {
+      this.senzaTocchi = 0;
+      this.lia.tocca();
     }
   }
 
@@ -619,16 +554,12 @@ class Gioco {
     await this.volo.prepara();   // dipinge la città vista dall'alto
     this.fase = 'volo';
     this.voloT = 0;
-    Interfaccia.azione(null);
     Musica.suona('volo');
     const vento = Audio.continuo('vento', undefined, undefined, 0.22);
     Audio.balena();
     const canti = this.ogni(9, () => Audio.balena());
     this.acquerello.uniformi.uBordoBianco.value = 0.35;
     await this.bianco(0, 1.6);
-    this.pensa('Si vola! La città è piena di colori... e laggiù il fiume è una strada!', 5, true);
-    await this.regista.quando(() => this.voloT > 0.45);
-    this.pensa('Eccolo! Un puntino giallo che corre nella piazzetta... Gogo!', 4.5, true);
     await this.regista.quando(() => this.voloT >= 1);
     await this.bianco(1, 1.4);
     canti.ferma();
@@ -656,37 +587,9 @@ class Gioco {
   controllo(si) {
     this.inScena = !si;
     this.lia.controllo = si;
-    if (!si) Interfaccia.azione(null);
   }
 
-  pensa(testo, durata, urgente) { Interfaccia.messaggio(testo, durata || 4, urgente); }
-  obiettivo(testo) { Interfaccia.obiettivo(testo); }
-  capitolo(numero, titolo) { return Interfaccia.capitolo(numero, titolo); }
   musica(nome) { Musica.suona(nome); }
-
-  /** Dialogo: chi = 'lia', l'id di un personaggio, oppure null (narratore). */
-  async dialogo(chi, righe) {
-    let info = null, attore = null;
-    if (chi === 'lia') info = { nome: 'Lia', arte: this.lia.costume };
-    else if (chi) {
-      attore = this.attore(chi);
-      info = attore ? { nome: attore.nome, arte: attore.def.arte } : { nome: chi, arte: chi };
-    }
-    const primaControllo = this.lia.controllo;
-    this.lia.controllo = false;
-    if (attore) attore.parlando = true;
-    await Interfaccia.dialogo(info, righe);
-    if (attore) attore.parlando = false;
-    this.lia.controllo = primaControllo && !this.inScena;
-  }
-
-  /** Abilita o disabilita un punto di interazione della scena attuale. */
-  interazione(id, attiva) {
-    const it = this.corrente && this.corrente.interazioni.find((i) => i.id === id);
-    if (it) it.attiva = attiva;
-  }
-
-  apriPorta(id) { this.porteAperte[id] = true; }
 
   /** Inquadratura scelta dalla storia: pos e guarda sono punti del mondo [x, y, z]. */
   inquadra(pos, guarda, durata, fov) { this.regia.inquadra(pos, guarda, durata, fov); }
@@ -780,18 +683,15 @@ class Gioco {
     return p;
   }
 
-  /** Un nuovo ricordo raccolto: icona, suono e scintille. */
-  ricordo(arte, titolo) {
-    this.ricordiPresi.push({ arte, titolo });
-    Interfaccia.ricordo(arte, titolo);
+  /** Un dono per Lia (il bastoncino, il pane...): suono e una pioggia di stelle e cuori. */
+  dono(x, y, z) {
     Audio.ricordo();
-    this.scintille(this.lia.x, this.lia.y + 0.9, this.lia.z, 30, { forma: [FORME.stella, FORME.cuore, FORME.scintilla] });
-    this.pensa('Nuovo ricordo: ' + titolo, 3, true);
+    this.scintille(x, y, z, 30, { forma: [FORME.stella, FORME.cuore, FORME.scintilla] });
   }
 
   salva(capitolo) {
     try {
-      localStorage.setItem(CHIAVE, JSON.stringify({ capitolo, ricordi: this.ricordiPresi, meraviglie: [...this.meraviglieTrovate] }));
+      localStorage.setItem(CHIAVE, JSON.stringify({ capitolo, meraviglie: [...this.meraviglieTrovate] }));
     } catch (e) { /* niente spazio */ }
   }
 
@@ -813,9 +713,10 @@ class Gioco {
     return s;
   }
 
-  fine(testo) {
+  /** La fine: un'illustrazione senza parole e un grande pulsante per ricominciare. */
+  fine() {
     this.fase = 'fine';
-    Interfaccia.fine(testo);
+    Interfaccia.fine();
     try { localStorage.removeItem(CHIAVE); } catch (e) { /* niente */ }
   }
 }

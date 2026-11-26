@@ -14,10 +14,13 @@ Tigre e la **balena del cielo**.
 Tutti i disegni, la musica e i suoni sono **generati dal codice**: non ci sono immagini o file
 audio esterni. Il motore grafico è [Three.js](https://threejs.org) (licenza MIT, nella cartella `www/lib`).
 
-**Come si gioca:** Lia cammina avanti e indietro come in un gioco a piattaforme (frecce ◀ ▶), ma
-la telecamera la riprende come in un film: di tre quarti, dal basso, di spalle nel vicolo, dal
-canale mentre attraversa il ponte, con stacchi di montaggio e carrellate che cambiano direzione
-mentre cammina.
+**Per i più piccoli (2 anni):** non c'è niente da leggere e niente da sbagliare. Niente dialoghi,
+niente pulsanti da cercare, niente fermate: Lia cammina da sola e la storia scorre come un cartone
+animato, mentre la telecamera la riprende come in un film. La bimba **tocca lo schermo**: nel punto
+toccato nascono fiori, farfalle, bolle, note, stelle, uccellini o un palloncino, e una nota del
+carillon (tocco dopo tocco nasce una melodia); dopo il bastoncino, il mondo bianco si colora proprio
+da lì. Toccando un personaggio, quello fa festa (salta, fa il suo verso, lancia cuori). Se nessuno
+tocca per qualche secondo, Lia batte il bastone da sola. Il codice è in `gioco/sorprese.js`.
 
 ---
 
@@ -59,13 +62,13 @@ poi apri `http://localhost:8000` (serve un piccolo server perché il gioco usa i
 
 | | Telefono / tablet | Computer |
 |---|---|---|
-| Camminare | frecce **◀ ▶** in basso a sinistra | `A D` / frecce `← →` |
-| Correre | tieni premuta la freccia per un po' | `Shift` |
-| Toc toc (bastone / bacchetta) | **tocca lo schermo nel punto che vuoi «vedere»** | clic nel punto (o `Spazio` davanti ai piedi) |
-| Parlare, entrare, toccare | pulsante che compare (es. **Parla**) | `E` o freccia `↑` |
-| Pausa | pulsante ‖ o tasto Indietro di Android | `Esc` |
+| Cominciare | il grande pulsante **▶** | clic |
+| Sorprese, colori, bastone / bacchetta | **tocca lo schermo dove vuoi** | clic (o `Spazio` davanti ai piedi) |
+| Far fare festa a un personaggio | toccalo | clic |
+| Pausa (per i grandi) | pulsante ‖ piccolo, o tasto Indietro di Android | `Esc` |
 
-La partita si salva da sola all'inizio di ogni capitolo (pulsante **Continua** nel menu).
+Lia cammina da sola. La partita si salva all'inizio di ogni capitolo (pulsante **Continua** nel
+menu). Alla fine, il grande pulsante **↺** ricomincia la storia.
 
 ---
 
@@ -81,7 +84,7 @@ TocchiDiColore/
 │       ├── main.js          il cuore: avvio, ciclo di gioco, comandi per la storia
 │       ├── config.js        ⚙️ parametri regolabili (velocità, qualità, volumi...)
 │       ├── dati/
-│       │   ├── storia.js    📖 LA STORIA, capitolo per capitolo (dialoghi compresi)
+│       │   ├── storia.js    📖 LA STORIA, capitolo per capitolo (senza parole: scorre da sola)
 │       │   └── scene/       🎬 le scene: percorso di Lia, INQUADRATURE, attori, porte
 │       │       (via, piazza, forno, canale, libreria, terrazza, piazzetta)
 │       ├── arte/            🎨 i "pittori": disegnano tutto con il codice
@@ -111,12 +114,13 @@ TocchiDiColore/
 │           ├── percezione.js  il mondo bianco che si colora con le onde
 │           ├── magia.js       lo spettacolo della rivelazione, i colori dei materiali
 │           ├── meraviglie.js  le meraviglie nascoste e i personaggi che si svegliano
+│           ├── sorprese.js    a ogni tocco una sorpresa; i personaggi toccati fanno festa
 │           ├── meteo.js       la pioggia, la strada-fiume, la balena e la sua ombra
 │           ├── attori.js      Gogo, abitanti, auto, piccioni
 │           ├── audio.js       strumenti, effetti sonori e ambienti (generati) e suono "3D"
 │           ├── musica.js      colonna sonora (composta dal codice)
 │           ├── input.js       touch, tastiera, tasto Indietro
-│           ├── interfaccia.js dialoghi, obiettivi, menu
+│           ├── interfaccia.js menu, pausa, opzioni, segno del dito, finale
 │           └── regista.js     attese ed eventi della storia
 ├── android/                 progetto Android Studio (creato con Capacitor)
 ├── capacitor.config.json    nome e identificativo dell'app
@@ -210,7 +214,9 @@ prendono vita quando un'onda le raggiunge — farfalle, uccellini in volo, pallo
 volano, bolle nel canale — e il contatore in alto sale. Il codice è in `gioco/meraviglie.js`.
 
 ### Piccole modifiche da provare
-- **Cambiare un dialogo**: apri `www/js/dati/storia.js` e modifica le frasi tra apici.
+- **Lia più lenta o più veloce quando cammina da sola**: in `www/js/config.js`, sotto `bimbi`,
+  cambia `passo` (metri al secondo); `toccoDaSola` sono i secondi dopo cui bussa da sola.
+- **Cambiare l'ordine delle sorprese**: in `www/js/gioco/sorprese.js` modifica la lista `GIRO`.
 - **Lia più veloce**: in `www/js/config.js` cambia `velocita: 0.95` (metri al secondo).
 - **Cambiare un'inquadratura**: in `www/js/dati/scene/via.js`, sotto `inquadrature`, cambia i
   numeri di `pos` (dove sta la telecamera rispetto a Lia: destra, alto, verso di noi) e `guarda`
@@ -220,7 +226,6 @@ volano, bolle nel canale — e il contatore in alto sale. Il codice è in `gioco
   risoluzione con cui si disegna il mondo, `uscita` quella dell'immagine finale, `campioni`
   l'antialiasing. In automatico il gioco scende di livello se il telefono fatica e risale se è fluido.
 - **Bacchetta che arriva più lontano**: in `config.js`, sotto `bacchetta`, cambia `portataMagica`.
-- **Nuovo dialogo con un abitante**: aggiungi frasi in `chiacchiere` del personaggio nella sua scena.
 - **Nuova meraviglia**: in un file di `dati/scene/`, sotto `meraviglie`, aggiungi una riga come
   `{ id: 'gatto', x: 20, y: 1, z: -1.5, effetto: 'farfalle', testo: 'Un gatto sul davanzale!' }`
   (effetti: farfalle, uccelli, fiori, note, stelle, palloncino, pagine, bolle).

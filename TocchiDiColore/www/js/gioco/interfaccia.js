@@ -1,9 +1,11 @@
 /* ==========================================================================
  *  interfaccia.js — TUTTO CIÒ CHE STA SOPRA IL GIOCO (HTML)
  *  --------------------------------------------------------------------------
- *  Caricamento, menu, opzioni, dialoghi con ritratto, pensieri di Lia,
- *  cartelli dei capitoli, obiettivo, ricordi raccolti, pulsanti touch,
- *  pausa e finale.
+ *  Il gioco è per una bimba di 2 anni: durante il gioco non c'è NIENTE da
+ *  leggere (niente dialoghi, obiettivi o cartelli). Qui restano solo le
+ *  cose per i grandi: caricamento, menu, opzioni, pausa, crediti; e il
+ *  cerchietto che compare sotto il ditino a ogni tocco. Il finale è
+ *  un'illustrazione con un grande pulsante "ancora!".
  * ========================================================================== */
 import { Galleria } from '../arte/galleria.js';
 import { Audio } from './audio.js';
@@ -11,15 +13,9 @@ import { Input } from './input.js';
 import { CONFIG } from '../config.js';
 
 const $ = (id) => document.getElementById(id);
-const pausaBreve = (ms) => new Promise((ok) => setTimeout(ok, ms));
 
 export const Interfaccia = {
-  coda: [],
-  messaggioAttivo: false,
-  tempoMessaggio: 0,
-  dialogoAperto: false,
-  _avanzaDialogo: null,
-  ricordiPresi: [],
+  tocco: 'bastone',      // che segno compare sotto il dito ('bastone' o 'magico')
 };
 
 Interfaccia.inizializza = function (azioni) {
@@ -34,15 +30,9 @@ Interfaccia.inizializza = function (azioni) {
   $('btnRiprendi').onclick = () => { Audio.clic(); azioni.pausa(false); };
   $('btnOpzioniPausa').onclick = () => { Audio.clic(); this.mostraOpzioni(true); };
   $('btnMenuPrincipale').onclick = () => { Audio.clic(); window.location.reload(); };
-  $('btnFineMenu').onclick = () => window.location.reload();
-  // pulsanti di gioco
-  const premi = (id, evento) => {
-    $(id).addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); Input.emetti(evento); });
-  };
-  premi('btnAzione', 'azione');
-  premi('btnPausa', 'pausa');
-  // il dialogo avanza toccando ovunque
-  $('dialogo').addEventListener('pointerdown', (e) => { e.preventDefault(); this.avanzaDialogo(); });
+  $('btnFineMenu').onclick = () => { Audio.clic(); azioni.nuovaPartita(); $('fine').classList.add('nascosto'); };
+  // il pulsante della pausa (piccolo, in alto: è per i grandi)
+  $('btnPausa').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); Input.emetti('pausa'); });
 
   // opzioni
   const qualita = $('optQualita');
@@ -93,168 +83,18 @@ Interfaccia.pausa = function (si) {
   if (!si) this.mostraOpzioni(false);
 };
 
-/* ------------------------------------------------------------------------ */
-/*  Pensieri di Lia (messaggi in basso)                                     */
-/* ------------------------------------------------------------------------ */
-Interfaccia.messaggio = function (testo, durata, urgente) {
-  const m = { testo, durata: durata || 4 };
-  if (urgente) { this.coda.unshift(m); this.tempoMessaggio = 0; } else this.coda.push(m);
-};
-
-Interfaccia.svuotaMessaggi = function () {
-  this.coda.length = 0;
-  this.tempoMessaggio = 0;
-};
-
-/* ------------------------------------------------------------------------ */
-/*  Dialoghi                                                                */
-/* ------------------------------------------------------------------------ */
-
-/** Disegna il ritratto di un personaggio ritagliando la testa dal suo disegno. */
-Interfaccia._ritratto = function (nomeAtlante) {
-  const tela = $('ritratto');
-  const c = tela.getContext('2d');
-  c.clearRect(0, 0, tela.width, tela.height);
-  if (!nomeAtlante) { tela.classList.add('nascosto'); return; }
-  tela.classList.remove('nascosto');
-  const at = Galleria.atlante(nomeAtlante);
-  const f = at.fotogrammi.fronte_fermo_0 || at.fotogrammi[at.nomi[0]];
-  const alt = f.a * 0.42;
-  const lato = Math.min(f.l, alt);
-  c.drawImage(at.tela, f.x + (f.l - lato) / 2, f.y + (alt - lato) * 0.5, lato, lato, 0, 0, tela.width, tela.height);
-};
-
-/**
- * Mostra un dialogo e aspetta che il giocatore lo legga tutto.
- *   chi: { nome, arte } oppure null (narratore)
- *   righe: elenco di frasi
- */
-Interfaccia.dialogo = async function (chi, righe) {
-  this.dialogoAperto = true;
-  Input.azzera();
-  // un pensiero ancora visibile si nasconde per non coprire il dialogo
-  if (this.messaggioAttivo) {
-    $('messaggio').classList.remove('visibile');
-    this.messaggioAttivo = false;
-    this.tempoMessaggio = 0.4;
-  }
-  $('dialogo').classList.remove('nascosto');
-  $('nomeDialogo').textContent = chi ? chi.nome : '';
-  $('nomeDialogo').classList.toggle('nascosto', !chi);
-  this._ritratto(chi && chi.arte);
-  for (const riga of righe) {
-    await this._scrivi(riga);
-  }
-  $('dialogo').classList.add('nascosto');
-  await pausaBreve(120);
-  this.dialogoAperto = false;
-};
-
-/** Scrive una frase lettera per lettera; un tocco la completa, un altro va avanti. */
-Interfaccia._scrivi = function (testo) {
-  const el = $('testoDialogo');
-  return new Promise((ok) => {
-    let n = 0, finito = false;
-    el.textContent = '';
-    $('avantiDialogo').classList.add('nascosto');
-    const passo = () => {
-      if (finito) return;
-      n += 1;
-      el.textContent = testo.slice(0, n);
-      if (n >= testo.length) { finito = true; $('avantiDialogo').classList.remove('nascosto'); return; }
-      this._timerScrivi = setTimeout(passo, 22);
-    };
-    passo();
-    this._avanzaDialogo = () => {
-      if (!finito) {
-        clearTimeout(this._timerScrivi);
-        finito = true;
-        el.textContent = testo;
-        $('avantiDialogo').classList.remove('nascosto');
-      } else {
-        this._avanzaDialogo = null;
-        Audio.clic();
-        ok();
-      }
-    };
-  });
-};
-
-Interfaccia.avanzaDialogo = function () {
-  if (this._avanzaDialogo) this._avanzaDialogo();
-};
-
-/* ------------------------------------------------------------------------ */
-/*  Capitoli, obiettivi, ricordi, pulsante azione                           */
-/* ------------------------------------------------------------------------ */
-Interfaccia.capitolo = async function (numero, titolo) {
-  $('cartelloNumero').textContent = numero;
-  $('cartelloTitolo').textContent = titolo;
-  $('capitoloHud').textContent = numero + ' · ' + titolo;
-  const c = $('cartello');
-  c.classList.remove('nascosto');
-  c.classList.add('visibile');
-  await pausaBreve(3200);
-  c.classList.remove('visibile');
-  await pausaBreve(800);
-  c.classList.add('nascosto');
-};
-
-Interfaccia.obiettivo = function (testo) {
-  const el = $('obiettivo');
-  el.textContent = testo || '';
-  el.classList.toggle('nascosto', !testo);
-  el.classList.remove('nuovo');
-  void el.offsetWidth; // fa ripartire l'animazione
-  if (testo) el.classList.add('nuovo');
-};
-
-/** Aggiunge l'icona di un ricordo (disegnata dall'immagine dell'oggetto). */
-Interfaccia.ricordo = function (nomeArte, titolo) {
-  this.ricordiPresi.push({ nomeArte, titolo });
-  const at = Galleria.atlante(nomeArte);
-  const f = at.fotogrammi[at.nomi[0]];
-  const t = document.createElement('canvas');
-  t.width = 64; t.height = 64;
-  const s = Math.min(64 / f.l, 64 / f.a);
-  t.getContext('2d').drawImage(at.tela, f.x, f.y, f.l, f.a, (64 - f.l * s) / 2, (64 - f.a * s) / 2, f.l * s, f.a * s);
-  t.className = 'icona nuova';
-  t.title = titolo;
-  $('ricordi').appendChild(t);
-  $('ricordi').classList.remove('nascosto');
-};
-
-/** Il contatore delle meraviglie scoperte (compare alla prima). */
-Interfaccia.meraviglie = function (trovate, totale) {
-  const el = $('meraviglieHud');
-  if (!el) return;
-  el.textContent = '✦ ' + trovate + ' / ' + totale;
-  el.classList.remove('nascosto');
-  el.classList.remove('nuova');
-  void el.offsetWidth;   // fa ripartire l'animazione
-  el.classList.add('nuova');
-};
-
-Interfaccia.azione = function (etichetta) {
-  const b = $('btnAzione');
-  if (etichetta) { b.textContent = etichetta; b.classList.remove('nascosto'); }
-  else b.classList.add('nascosto');
-};
-
 /**
  * Il bastone (o la bacchetta) si usa toccando lo schermo dove si vuole
  * "vedere": qui ricordiamo solo se si può usare e se è magico (cambia il
  * segno che compare sotto il dito e il puntatore del mouse).
  */
 Interfaccia.mostraToc = function (si, magico) {
-  this.tocco = si ? (magico ? 'magico' : 'bastone') : null;
-  document.body.classList.toggle('bacchetta', !!si);
+  this.tocco = magico ? 'magico' : 'bastone';
   document.body.classList.toggle('magica', !!si && !!magico);
 };
 
 /** Un cerchietto che si allarga sotto il dito: "ho sentito il tuo tocco". */
 Interfaccia.segnoTocco = function (x, y) {
-  if (!this.tocco) return;
   const d = document.createElement('div');
   d.className = 'segnoTocco ' + this.tocco;
   d.style.left = x + 'px';
@@ -264,36 +104,11 @@ Interfaccia.segnoTocco = function (x, y) {
 };
 
 /* ------------------------------------------------------------------------ */
-/*  Aggiornamento continuo                                                  */
-/* ------------------------------------------------------------------------ */
-Interfaccia.aggiorna = function (dt) {
-  const el = $('messaggio');
-  if (this.messaggioAttivo) {
-    this.tempoMessaggio -= dt;
-    if (this.tempoMessaggio <= 0) {
-      el.classList.remove('visibile');
-      this.messaggioAttivo = false;
-      this.tempoMessaggio = 0.5;
-    }
-  } else {
-    this.tempoMessaggio -= dt;
-    if (this.tempoMessaggio <= 0 && this.coda.length && !this.dialogoAperto) {
-      const m = this.coda.shift();
-      el.textContent = m.testo;
-      el.classList.add('visibile');
-      this.messaggioAttivo = true;
-      this.tempoMessaggio = m.durata;
-    }
-  }
-};
-
-/* ------------------------------------------------------------------------ */
 /*  Finale                                                                  */
 /* ------------------------------------------------------------------------ */
-Interfaccia.fine = function (testo) {
+Interfaccia.fine = function () {
   $('hud').classList.add('nascosto');
   const tela = Galleria.illustrazioni.finale;
   if (tela) $('illustrazioneFine').style.backgroundImage = 'url(' + tela.toDataURL('image/jpeg', 0.9) + ')';
-  $('testoFine').textContent = testo;
   $('fine').classList.remove('nascosto');
 };

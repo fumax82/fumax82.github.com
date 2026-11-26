@@ -28,6 +28,14 @@ export const CONFIG = {
   },
 
   /* ---------------------------------------------------------------------
+   * PER I PIÙ PICCOLI (il gioco è pensato per una bimba di 2 anni)
+   * ------------------------------------------------------------------- */
+  bimbi: {
+    toccoDaSola: 3.5,        // secondi senza tocchi dopo i quali Lia batte il bastone da sola
+    passo: 0.75,             // velocità con cui Lia cammina da sola (metri al secondo)
+  },
+
+  /* ---------------------------------------------------------------------
    * GIOCATRICE (Lia)
    * ------------------------------------------------------------------- */
   giocatore: {
