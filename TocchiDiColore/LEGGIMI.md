@@ -89,6 +89,7 @@ TocchiDiColore/
 │       │   ├── scene_*.js     i fondali dipinti di ogni scena, a piani separati
 │       │   ├── personaggi.js  Lia, Biscotto, il gattino, il ladro
 │       │   ├── comparse.js    fornaia, passanti, abitanti-animali
+│       │   ├── fiabe.js       rana, lampione vivo, pesci volanti, pecore-nuvola...
 │       │   ├── texture.js     facciate e pavimenti usati dai pittori delle scene
 │       │   ├── oggetti.js     alberi, lampioni, pane, auto...
 │       │   ├── cielo.js       nuvole, balena, panorami, particelle
@@ -106,6 +107,8 @@ TocchiDiColore/
 │           ├── percorso.js    la strada (anche curva, in salita) su cui cammina Lia
 │           ├── lia.js         Lia: camminare, correre, toc toc, urti, pose
 │           ├── percezione.js  il mondo bianco che si colora con le onde
+│           ├── magia.js       lo spettacolo della rivelazione, i colori dei materiali
+│           ├── meraviglie.js  le meraviglie nascoste e i personaggi che si svegliano
 │           ├── attori.js      Biscotto, abitanti, auto, piccioni
 │           ├── audio.js       effetti sonori (generati) e suono "3D"
 │           ├── musica.js      colonna sonora (composta dal codice)
@@ -141,6 +144,17 @@ le zone appena scoperte **brillano di stelline** per un paio di secondi. Sul fro
 stelle e fiorellini (bacchetta), note (suoni), petali (profumi); il colpo increspa lo schermo e suona
 una nota di carillon: bussando nasce una melodia. Il codice è in `gioco/magia.js` (spettacolo e
 particelle) e in `motore/materiali.js` (la funzione `rivelazione` dello shader).
+
+**Il bastone che tocca il mondo**: Lia cammina rasente ai muri (come nel film) e il bastone batte
+alternando il pavimento e la parete. Ogni materiale ha il suo suono e il suo colore: il vetro
+tintinna e si colora d'azzurro, il legno fa "tok" ed è caldo come il miele, il metallo risuona
+"dong", le foglie frusciano... La prima volta che tocca un materiale, Lia dice che cosa immagina.
+I materiali di ogni tratto sono scritti in `materiali` nei file di `dati/scene/`, la distanza dal
+muro in `vicinoAlMuro`.
+
+**Personaggi delle fiabe** (`arte/fiabe.js`): il lampione che si sveglia, la chiocciola postina,
+la rana violinista, il topolino sulla barchetta di carta, i pesci volanti, le pecore-nuvola,
+l'orsetto in mongolfiera, il gufo bibliotecario e i fiori che cantano.
 
 **Meraviglie nascoste ✦**: in ogni scena (`meraviglie` nei file di `dati/scene/`) ci sono cose che
 prendono vita quando un'onda le raggiunge — farfalle, uccellini in volo, palloncini, pagine che

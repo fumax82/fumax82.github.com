@@ -45,11 +45,11 @@ export default {
   ],
   attori: [
     // pecore fatte di nuvola che brucano il cielo sopra i tetti
-    { id: 'pecora1', tipo: 'attore', arte: 'pecora_nuvola', x: 2, y: 5.2, z: -11, ombra: 0, ronda: [[-6, -11], [15, -11]], velocita: 0.35, lunghezzaPasso: 0.6 },
-    { id: 'pecora2', tipo: 'attore', arte: 'pecora_nuvola', x: 9, y: 6.3, z: -13, ombra: 0, scala: 0.8, ronda: [[16, -13], [-4, -13]], velocita: 0.3, lunghezzaPasso: 0.6 },
+    { id: 'pecora1', tipo: 'attore', arte: 'pecora_nuvola', x: 3, y: 3.9, z: -8.2, ombra: 0, scala: 1.6, ronda: [[-4, -8.2], [14, -8.2]], velocita: 0.35, lunghezzaPasso: 0.9 },
+    { id: 'pecora2', tipo: 'attore', arte: 'pecora_nuvola', x: 10, y: 5.0, z: -10, ombra: 0, scala: 1.3, ronda: [[16, -10], [-2, -10]], velocita: 0.3, lunghezzaPasso: 0.9 },
     // un orsetto in mongolfiera che attraversa il cielo
-    { id: 'orso', tipo: 'animato', arte: 'orso_mongolfiera', x: -35, y: 11, z: -34, fps: 1.2, dondola: 0.4, velocita: 0.9, ricomincia: true,
-      giro: [[-35, 11, -34], [55, 14, -34]] },
+    { id: 'orso', tipo: 'animato', arte: 'orso_mongolfiera', x: -6, y: 9, z: -26, fps: 1.2, dondola: 0.4, velocita: 0.8, ricomincia: true,
+      giro: [[30, 11, -26], [-30, 9, -26]] },
   ],
   porte: [
     { id: 'scala_giu', s: 0.4, raggio: 0.6, etichetta: 'Scendi', verso: 'canale', arrivo: 'dalla_terrazza' },

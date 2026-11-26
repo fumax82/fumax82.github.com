@@ -66,10 +66,11 @@ export default {
       { s: 0, pos: [0.4, 1.5, 8.2], guarda: [0.5, 0.75, 0], fov: 24 },
       { s: 10.5, pos: [-0.6, 1.7, 8.4], guarda: [0.7, 0.8, 0], fov: 25 },
     ] },
-    // 2. il ponte visto dall'acqua: dietro di lui il canale si perde lontano
+    // 2. il ponte visto dall'alto del canale: Lia cammina sopra il parapetto,
+    //    dietro di lei il canale si perde lontano
     { da: 10.5, a: 23.5, tipo: 'fisso', taglio: true, seguiAltezza: 1, chiavi: [
-      { s: 10.5, pos: [16.2, 0.55, 7.6], guarda: [0, 0.65, 0], fov: 28 },
-      { s: 23.5, pos: [18.0, 0.75, 7.3], guarda: [0, 0.65, 0], fov: 27 },
+      { s: 10.5, pos: [15.8, 3.9, 8.6], guarda: [0, 0.75, 0], fov: 30 },
+      { s: 23.5, pos: [18.4, 4.1, 8.4], guarda: [0, 0.75, 0], fov: 29 },
     ] },
     // 3. la via della libreria: la camera gira piano da tre quarti a di fianco
     { da: 23.5, a: 36.5, tipo: 'segui', taglio: true, chiavi: [
