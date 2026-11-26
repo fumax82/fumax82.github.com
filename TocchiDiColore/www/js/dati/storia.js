@@ -562,8 +562,9 @@ const CAPITOLO_5 = {
     balena.aggiungiA(g.corrente.gruppo);
     const da = [L.x + 60, 26, -70], a = [L.x + 6, 7.5, -16];
     let t = 0;
+    const inizio = g.tempo;
     const nuota = g.ogni(0.016, () => {
-      t = Math.min(1, t + 0.016 / 6);
+      t = Math.min(1, (g.tempo - inizio) / 6);   // 6 secondi di viaggio, qualunque sia la velocità del telefono
       const e = t * t * (3 - 2 * t);
       balena.posiziona(da[0] + (a[0] - da[0]) * e, da[1] + (a[1] - da[1]) * e + Math.sin(g.tempo * 0.8) * 0.4, da[2] + (a[2] - da[2]) * e);
       balena.mostra('f' + (Math.floor(g.tempo * 0.8) % 2), true);
