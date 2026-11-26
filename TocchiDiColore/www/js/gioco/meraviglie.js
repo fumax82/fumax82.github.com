@@ -11,6 +11,9 @@
  *    { id, x, y, z, effetto, testo }
  *  effetto: 'farfalle' | 'uccelli' | 'fiori' | 'note' | 'stelle' |
  *           'palloncino' | 'pagine' | 'bolle'
+ *  Le meraviglie-personaggio hanno anche "attore" (l'id nella scena):
+ *    'sveglia' (il lampione si sveglia e parla: "dialogo"), 'suona' (la rana
+ *    suona il violino), 'canta' (i fiori cantano), 'appare' (compare di colpo)
  * ========================================================================== */
 import { Sagoma } from '../motore/sagoma.js';
 import { FORME } from '../motore/particelle.js';
@@ -82,7 +85,52 @@ export class Meraviglie {
         velocita: 0.4, su: 0.7, gravita: -0.05, vita: 3.2, dim: 0.16, sparpaglia: 0.8, vortice: 0.6,
       }),
     };
+    // le meraviglie che sono PERSONAGGI: si svegliano, suonano, compaiono
+    const a = m.attore ? this.scena.attore(m.attore) : null;
+    if (a) {
+      effetti.sveglia = async () => {
+        a.visibile = true;
+        const vecchio = m.nascondi ? this.scena.oggetto(m.nascondi) : null;   // il lampione "normale"
+        if (vecchio) vecchio.visibile = false;
+        Audio.sbadiglio(a.x, a.z);
+        if (a.sveglia) await a.sveglia();
+        g.luci.emetti(a.x, a.y + 2.6, a.z, 30, { forma: [FORME.stella, FORME.punto], colori: ['#fff3b0', '#ffe28a', '#ffffff'], velocita: 0.8, su: 0.3, gravita: 0.1, vita: 2.4, dim: 0.14, sparpaglia: 0.3 });
+        // da ora in poi illumina la via intorno a sé
+        this._ripeti(3.5, () => g.onda(a.x, a.z, 'suono', { colore: '#ffe9a8', raggio: 4, forza: 0.35 }));
+        if (m.dialogo) await g.dialogo(a.id, m.dialogo);
+      };
+      effetti.suona = () => {
+        a.visibile = true;
+        a.posa('suona', Infinity);
+        const durata = Audio.violino(a.x, a.z) || 4;
+        const note = g.emettitore(a.x, a.y + 0.9, a.z, 4, { forma: FORME.nota, colori: ['#7fb6d8', '#e9875a', '#9fa8e8', '#f2a541'], velocita: 0.4, su: 0.8, vita: 2.4, dim: 0.2, rotazione: 0.4 });
+        // ogni tanto riprende a suonare (finché Lia è nella scena)
+        this._ripeti(durata + 5, () => Audio.violino(a.x, a.z));
+        a.emettitoreNote = note;
+      };
+      effetti.canta = () => {
+        a.visibile = true;
+        Audio.coro(a.x, a.z);
+        this._ripeti(8, () => Audio.coro(a.x, a.z));
+        g.emettitore(a.x, a.y + 0.8, a.z, 2.5, { forma: FORME.nota, colori: ['#f7a8c8', '#fff3a8', '#c9b6ea'], velocita: 0.3, su: 0.7, vita: 2.2, dim: 0.18 });
+      };
+      effetti.appare = () => {
+        a.visibile = true;
+        g.luci.emetti(a.x, a.y + 0.5, a.z, 30, { forma: [FORME.stella, FORME.scintilla], colori: ['#fff0a0', '#ffffff', '#f7b6d8'], velocita: 1.2, su: 0.8, gravita: 0.3, vita: 1.6, dim: 0.16, sparpaglia: 0.5 });
+      };
+    }
     (effetti[m.effetto] || effetti.stelle)();
+  }
+
+  /** Ripete "funzione" ogni tot secondi, finché Lia resta in questa scena. */
+  _ripeti(secondi, funzione) {
+    const g = this.gioco;
+    const r = g.ogni(secondi, () => {
+      if (g.corrente !== this.scena) { r.ferma(); return; }
+      funzione();
+    });
+    r.conto = secondi;   // la prima volta dopo "secondi", non subito
+    return r;
   }
 
   /** Una creatura (o un palloncino) che si alza in volo dal punto della meraviglia. */

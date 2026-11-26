@@ -116,7 +116,7 @@ export class Percezione {
     const onda = {
       x, z, r: 0, raggio: opz.raggio, velocita: opz.velocita, forza: opz.forza,
       colore: new THREE.Color(opz.colore), livello: opz.livello || 0, celle: [], prossima: 0,
-      tipo: opz.tipo || 'suono', magica: !!opz.magica, y: opz.y || 0, accumulo: 0,
+      tipo: opz.tipo || 'suono', magica: !!opz.magica, y: opz.y || 0, accumulo: 0, materiale: opz.materiale || null,
     };
     if (onda.livello > 0) {
       const R = onda.raggio;

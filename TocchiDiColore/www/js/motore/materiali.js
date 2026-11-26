@@ -22,6 +22,7 @@ export const UNIFORMI = {
   uRivMin: { value: new THREE.Vector2(0, 0) },   // angolo (x, z) della mappa nel mondo
   uRivDim: { value: new THREE.Vector2(1, 1) },   // dimensioni (x, z) coperte dalla mappa
   uRumore: { value: null },
+  uPennellate: { value: null },  // colpi di pennello (vedi creaPennellate)
   uCarta: { value: new THREE.Color('#fbf6ea') },
   uInk: { value: new THREE.Color('#6b4b37') },
   uSchizzo: { value: 0.75 },
@@ -77,6 +78,49 @@ export function creaRumore() {
   return t;
 }
 
+/**
+ * PENNELLATE: una texture in bianco e nero piena di colpi di pennello
+ * (lunghi, morbidi, quasi orizzontali). Lo shader la usa come "maschera":
+ * il colore arriva prima dove la pennellata è chiara, poi dove è scura,
+ * così il mondo sembra dipinto a pennellate mentre Lia lo immagina.
+ */
+export function creaPennellate() {
+  const L = 512;
+  const tela = document.createElement('canvas');
+  tela.width = tela.height = L;
+  const c = tela.getContext('2d');
+  c.fillStyle = 'rgb(128,128,128)';
+  c.fillRect(0, 0, L, L);
+  let seme = 2010;
+  const caso = () => ((seme = (seme * 16807) % 2147483647) / 2147483647);
+  c.lineCap = 'round';
+  for (let k = 0; k < 520; k++) {
+    const x = caso() * L, y = caso() * L;
+    const ang = (caso() - 0.5) * 0.9 + (caso() < 0.2 ? 0.8 : 0);   // per lo più orizzontali
+    const lung = 50 + caso() * 130, larg = 10 + caso() * 26;
+    const v = Math.round(caso() * 255);
+    c.strokeStyle = 'rgba(' + v + ',' + v + ',' + v + ',' + (0.45 + caso() * 0.45) + ')';
+    c.lineWidth = larg;
+    const curva = (caso() - 0.5) * lung * 0.4;
+    // disegnata anche "dall'altra parte" dei bordi: la texture si ripete senza cuciture
+    for (const dx of [-L, 0, L]) {
+      for (const dy of [-L, 0, L]) {
+        const ax = x + dx, ay = y + dy;
+        c.beginPath();
+        c.moveTo(ax - Math.cos(ang) * lung / 2, ay - Math.sin(ang) * lung / 2);
+        c.quadraticCurveTo(ax + Math.sin(ang) * curva, ay - Math.cos(ang) * curva, ax + Math.cos(ang) * lung / 2, ay + Math.sin(ang) * lung / 2);
+        c.stroke();
+      }
+    }
+  }
+  const t = new THREE.CanvasTexture(tela);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.minFilter = THREE.LinearMipmapLinearFilter;
+  t.magFilter = THREE.LinearFilter;
+  t.generateMipmaps = true;
+  return t;
+}
+
 /* ------------------------------------------------------------------------ */
 /*  Codice GLSL comune                                                      */
 /* ------------------------------------------------------------------------ */
@@ -86,6 +130,7 @@ const GLSL_COMUNE = /* glsl */ `
   uniform vec2 uRivMin;
   uniform vec2 uRivDim;
   uniform sampler2D uRumore;
+  uniform sampler2D uPennellate;
   uniform vec3 uCarta;
   uniform vec3 uInk;
   uniform float uSchizzo;
@@ -124,11 +169,15 @@ const GLSL_COMUNE = /* glsl */ `
   vec3 rivelazione(vec3 p) {
     vec2 q = (p.xz - uRivMin) / uRivDim;
     float r = max(texture2D(uRiv, q).r, uRivelaTutto);
+    // già tutto a colori (prologo, interni): niente calcoli in più (più veloce sui telefoni)
+    if (r > 0.995) return vec3(1.0, 1.0, 0.0);
     // due rumori: uno fermo (forma delle macchie), uno che scorre (il colore "vivo")
     vec2 c = qr(p);
     float n1 = rumoreMorbido(c * 0.15);
     float n2 = rumoreMorbido(c * 0.33 + vec2(uTempo * 0.02, -uTempo * 0.015));
-    float n = n1 * 0.7 + n2 * 0.3;
+    // il colore arriva a pennellate (strisce morbide quasi orizzontali)
+    float pen = texture2D(uPennellate, c * vec2(0.42, 0.55)).r;
+    float n = (n1 * 0.7 + n2 * 0.3) * 0.45 + pen * 0.55;
     float colore = smoothstep(0.32, 0.7, r * 1.3 - 0.12 + (n - 0.5) * 0.75);
     float matita = smoothstep(0.02, 0.3, r * 1.4 + (n - 0.5) * 0.4);
     float b = colore * (1.0 - colore) * 4.0;

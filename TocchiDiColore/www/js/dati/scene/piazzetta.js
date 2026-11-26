@@ -9,6 +9,12 @@ export default {
   arte: { modulo: 'scene_varie', nome: 'piazzetta' },
   musica: 'finale',
   percorso: [[0, 0, 0], [13, 0, 0]],
+  // Lia cammina vicino al muro (come nel film) per poterlo toccare col bastone
+  vicinoAlMuro: [{ da: 0, a: 20, d: 0.95 }],
+  materiali: [
+    { da: -2, a: 9, muro: 'pietra' },
+    { da: 9, a: 20, muro: 'intonaco' },
+  ],
   arrivi: { arrivo: { s: 3.5, verso: 1 } },
   atmosfera: { foschia: [24, 120], bordoBianco: 0.55 },
   cielo: {
@@ -28,6 +34,8 @@ export default {
   ],
   attori: [
     { id: 'biscotto', tipo: 'animale', arte: 'biscotto', nome: 'Biscotto', x: 15, z: 0.25, visibile: false },
+    // i fiori che cantano, vicino al muro
+    { id: 'fiori', tipo: 'animato', arte: 'fiori_cantanti', x: 1.9, y: 0, z: -1.35, fps: 3, fisso: true },
   ],
   oggetti: [
     { arte: 'vaso_foglie', x: 1.2, z: -1.4, scala: 1.3 },

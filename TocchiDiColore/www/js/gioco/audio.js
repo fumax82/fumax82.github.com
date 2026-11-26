@@ -176,6 +176,73 @@ Audio.toc = function (magico) {
   if (magico) this.magia(0.35);
 };
 
+/*
+ * IL BASTONE CHE TOCCA I MATERIALI
+ * Ogni materiale ha il suo suono: Lia "vede" il mondo ascoltandolo.
+ *   pietra   clic secco          mattoni  colpo più sordo
+ *   legno    "tok" cavo          intonaco "tuc" morbido
+ *   vetro    "tin" cristallino   metallo  "dong" che risuona a lungo
+ *   foglie   fruscio             ceramica "tink"
+ *   libri    tonfo di carta      acqua    "plip"
+ */
+Audio.tocco = function (materiale, x, y) {
+  if (!this.ctx) return;
+  const out = this._uscita(x, y, 0.9, 0.4);
+  const t = this._ora();
+  // piccoli attrezzi: un tono che scende, un rumore filtrato, una serie di parziali
+  const tono = (tipo, f0, f1, picco, durata, ritardo) => {
+    const t0 = t + (ritardo || 0);
+    const o = this._osc(tipo, f0);
+    if (f1) o.frequency.exponentialRampToValueAtTime(f1, t0 + Math.min(0.08, durata * 0.6));
+    const e = this._inv(t0, picco, 0.002, durata);
+    o.connect(e); e.connect(out); o.start(t0); o.stop(t0 + durata + 0.05);
+  };
+  const soffio = (filtro, f, q, picco, durata, ritardo) => {
+    const t0 = t + (ritardo || 0);
+    const r = this._noise();
+    const fl = this._filtro(filtro, f, q);
+    const e = this._inv(t0, picco, 0.002, durata);
+    r.connect(fl); fl.connect(e); e.connect(out); r.start(t0, Math.random()); r.stop(t0 + durata + 0.05);
+  };
+  const campana = (parziali, durata) => parziali.forEach(([f, a], k) => tono('sine', f, 0, a, durata * (1 - k * 0.18)));
+  switch (materiale) {
+    case 'legno':
+      tono('triangle', 420, 170, 0.4, 0.16); soffio('bandpass', 700, 4, 0.25, 0.06); tono('sine', 240, 0, 0.12, 0.22);
+      break;
+    case 'mattoni':
+      tono('sine', 900, 300, 0.3, 0.09); soffio('bandpass', 1500, 1.5, 0.28, 0.06);
+      break;
+    case 'intonaco':
+      tono('sine', 210, 140, 0.3, 0.1); soffio('lowpass', 700, 0.7, 0.3, 0.08);
+      break;
+    case 'vetro':
+      soffio('highpass', 5000, 0.7, 0.12, 0.02);
+      campana([[2637, 0.16], [3951, 0.08], [5274, 0.05]], 0.9);
+      break;
+    case 'metallo':
+      soffio('bandpass', 3000, 2, 0.15, 0.03);
+      campana([[523, 0.14], [1371, 0.1], [2210, 0.06], [3020, 0.04]], 1.6);
+      break;
+    case 'foglie':
+      for (let k = 0; k < 4; k++) soffio('highpass', 2600 + Math.random() * 1500, 0.8, 0.12, 0.07, k * 0.05);
+      break;
+    case 'ceramica':
+      soffio('bandpass', 4000, 2, 0.12, 0.02);
+      campana([[1760, 0.16], [2489, 0.07]], 0.45);
+      break;
+    case 'libri':
+      tono('sine', 150, 90, 0.3, 0.12); soffio('lowpass', 420, 0.7, 0.3, 0.1); soffio('highpass', 3200, 0.7, 0.08, 0.15, 0.05);
+      break;
+    case 'acqua':
+      tono('sine', 480, 1300, 0.25, 0.12);
+      tono('sine', 700, 1600, 0.1, 0.08, 0.12);
+      tono('sine', 600, 1500, 0.08, 0.07, 0.22);
+      break;
+    default: // pietra
+      tono('sine', 1300, 420, 0.35, 0.11); soffio('bandpass', 2600, 3, 0.3, 0.05);
+  }
+};
+
 /** Passo: suono diverso per superficie ('pietra', 'erba', 'legno', 'mattoni'). */
 Audio.passo = function (superficie, lato) {
   if (!this.ctx) return;
@@ -355,6 +422,66 @@ Audio.meraviglia = function () {
     const e = this._inv(t + k * 0.055, 0.15, 0.004, 1.0);
     o.connect(e); e.connect(out); o.start(t + k * 0.055); o.stop(t + k * 0.055 + 1.05);
   });
+};
+
+/**
+ * Il violino della rana: un piccolo valzer (note in Hz, durate in battiti).
+ * Un'onda "a dente di sega" filtrata, con il vibrato, somiglia a un violino.
+ */
+Audio.violino = function (x, y) {
+  if (!this.ctx) return;
+  const out = this._uscita(x, y, 0.35, 0.8);
+  const t = this._ora();
+  const melodia = [[659, 1], [784, 1], [880, 1], [784, 2], [659, 1], [587, 1], [659, 1], [523, 3],
+    [587, 1], [659, 1], [698, 1], [659, 2], [587, 1], [523, 1], [494, 1], [523, 3]];
+  const battito = 0.24;
+  let tt = t;
+  for (const [f, d] of melodia) {
+    const dur = d * battito;
+    const o = this._osc('sawtooth', f);
+    const vib = this._osc('sine', 5.5);
+    const vg = this.ctx.createGain(); vg.gain.value = f * 0.008;
+    vib.connect(vg); vg.connect(o.frequency);
+    const fl = this._filtro('lowpass', 1900, 0.8);
+    const e = this.ctx.createGain();
+    e.gain.setValueAtTime(0.0001, tt);
+    e.gain.linearRampToValueAtTime(0.09, tt + 0.05);
+    e.gain.setValueAtTime(0.08, tt + dur * 0.75);
+    e.gain.linearRampToValueAtTime(0.0001, tt + dur);
+    o.connect(fl); fl.connect(e); e.connect(out);
+    o.start(tt); vib.start(tt); o.stop(tt + dur + 0.02); vib.stop(tt + dur + 0.02);
+    tt += dur;
+  }
+  return tt - t;
+};
+
+/** I fiori che cantano: un coro di "aaah" a tre voci. */
+Audio.coro = function (x, y) {
+  if (!this.ctx) return;
+  const out = this._uscita(x, y, 0.3, 1.0);
+  const t = this._ora();
+  const accordi = [[523, 659, 784], [587, 698, 880], [523, 659, 784]];
+  accordi.forEach((accordo, k) => accordo.forEach((f) => {
+    const t0 = t + k * 0.9;
+    const o = this._osc('triangle', f);
+    const vib = this._osc('sine', 5); const vg = this.ctx.createGain(); vg.gain.value = f * 0.006;
+    vib.connect(vg); vg.connect(o.frequency);
+    const e = this._inv(t0, 0.05, 0.15, 0.95);
+    o.connect(e); e.connect(out); o.start(t0); vib.start(t0); o.stop(t0 + 1.1); vib.stop(t0 + 1.1);
+  }));
+};
+
+/** Il lampione che sbadiglia e si accende. */
+Audio.sbadiglio = function (x, y) {
+  if (!this.ctx) return;
+  const out = this._uscita(x, y, 0.4, 0.6);
+  const t = this._ora();
+  const o = this._osc('triangle', 220);
+  o.frequency.linearRampToValueAtTime(330, t + 0.5);
+  o.frequency.linearRampToValueAtTime(160, t + 1.2);
+  const e = this._inv(t, 0.12, 0.2, 1.2);
+  o.connect(e); e.connect(out); o.start(t); o.stop(t + 1.3);
+  this.magia(0.3);
 };
 
 /** La grande trasformazione in streghetta. */

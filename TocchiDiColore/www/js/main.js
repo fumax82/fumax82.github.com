@@ -16,7 +16,7 @@
 import * as THREE from 'three';
 import { CONFIG } from './config.js';
 import { Galleria } from './arte/galleria.js';
-import { UNIFORMI, creaRumore } from './motore/materiali.js';
+import { UNIFORMI, creaRumore, creaPennellate } from './motore/materiali.js';
 import { Scena, dimenticaDipinti } from './motore/scena.js';
 import { Regia } from './motore/regia.js';
 import { Acquerello } from './motore/acquerello.js';
@@ -83,6 +83,7 @@ class Gioco {
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
     this.renderer.setClearColor(new THREE.Color(CARTA), 1);
     UNIFORMI.uRumore.value = creaRumore();
+    UNIFORMI.uPennellate.value = creaPennellate();
     UNIFORMI.uSchizzo.value = CONFIG.grafica.schizzo;
 
     Interfaccia.caricamento(0.02, 'Preparo i pennelli...');
@@ -120,13 +121,13 @@ class Gioco {
     // "appare" (come nel cortometraggio, dove dopo l'urto spunta un albero)
     this.regista.su('urto', (o) => {
       if (!o || !this.corrente) return;
-      const p = this.corrente.percorso.punto(o.s);
-      const z = p.z + (o.dz || 0);
+      const p = this.corrente.percorso.puntoLaterale(o.s);
+      const z = p.z;
       this.onda(p.x, z, 'urto', { colore: o.colore || '#9fd08a' });
       this.particelle.emetti(p.x, p.y + 1.2, z, 18, { forma: [FORME.foglia], colori: ['#8fc27f', '#6faa5e', '#b4dea1'], velocita: 1.2, su: 0.7, gravita: 0.8, vita: 1.8, dim: 0.18 });
       this.regia.scuoti(0.6);
       Audio.botta();
-      this.pensa('Ahi! C\'era qualcosa... un albero!', 2.5, true);
+      this.pensa(o.testo || 'Ahi! C\'era qualcosa qui davanti!', 2.5, true);
     });
 
     Interfaccia.caricamento(1, 'Pronto!');
@@ -300,7 +301,7 @@ class Gioco {
       if (it.attore) {
         if (!it.attore.visibile) continue;
         const v = S.percorso.piuVicino(it.attore.x, it.attore.z);
-        if (v.distanza > 2.2) continue;
+        if (v.distanza > 3.2) continue;
         d = Math.abs(v.s - this.lia.s);
       } else d = Math.abs(it.s - this.lia.s);
       if (d > it.raggio) continue;
@@ -556,9 +557,9 @@ class Gioco {
   inquadra(pos, guarda, durata, fov) { this.regia.inquadra(pos, guarda, durata, fov); }
   libera(stacco) { this.regia.libera(stacco); }
 
-  /** Punto del percorso dopo s metri, come [x, y, z] (comodo per le inquadrature). */
+  /** Dove cammina Lia dopo s metri, come [x, y, z] (comodo per le inquadrature). */
   punto(s, dx, dy, dz) {
-    const p = this.corrente.percorso.punto(s);
+    const p = this.corrente.percorso.puntoLaterale(s);
     return [p.x + (dx || 0), p.y + (dy || 0), p.z + (dz || 0)];
   }
 

@@ -10,8 +10,14 @@ export default {
   arte: { modulo: 'scene_piazza', nome: 'forno' },
   musica: 'interno',
   percorso: [[0, 0, 0.2], [9, 0, 0.2]],
+  // Lia cammina vicino al muro (come nel film) per poterlo toccare col bastone
+  vicinoAlMuro: [{ da: 0, a: 20, d: 0.75 }],
+  materiali: [
+    { da: -2, a: 20, terra: 'ceramica' },
+    { da: 2.5, a: 6.5, muro: 'legno', terra: 'ceramica' },
+  ],
   arrivi: { ingresso: { s: 0.8, verso: 1 } },
-  superficie: 'legno',
+  superficie: 'pietra',
   atmosfera: { tuttoVisibile: true, foschia: [30, 90], luce: '#fff4e6', bordoBianco: 0.3 },
   inquadrature: [
     // la camera accompagna Lia dentro la stanza, senza uscire dalle pareti

@@ -14,8 +14,14 @@
  * ========================================================================== */
 
 export class Percorso {
-  /** punti: [[x, y, z], ...] (almeno due) */
-  constructor(punti) {
+  /**
+   * punti: [[x, y, z], ...] (almeno due)
+   * vicinoAlMuro: [{ da, a, d }, ...] — tra s = da e s = a Lia cammina spostata
+   *   di "d" metri verso il MURO (il lato sinistro del cammino), come nel film
+   *   dove sfiora le pareti per poterle toccare con il bastone.
+   */
+  constructor(punti, vicinoAlMuro) {
+    this.vicinoAlMuro = vicinoAlMuro || [];
     this.punti = punti.map((p) => ({ x: p[0], y: p[1], z: p[2] }));
     // lunghezza progressiva di ogni punto (contando solo il piano x-z,
     // così salendo una scala non si "allunga" la strada)
@@ -51,6 +57,27 @@ export class Percorso {
     const a = this.punto(Math.max(0, s - d)), b = this.punto(Math.min(this.lunghezza, s + d));
     const l = Math.hypot(b.x - a.x, b.z - a.z) || 1;
     return { x: (b.x - a.x) / l, z: (b.z - a.z) / l };
+  }
+
+  /** Direzione "verso il muro" in s: il lato sinistro della strada. */
+  normale(s) {
+    const t = this.tangente(s);
+    return { x: t.z, z: -t.x };
+  }
+
+  /** Di quanto Lia è spostata verso il muro in s (con passaggi morbidi). */
+  scostamento(s) {
+    const morbido = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+    let d = 0;
+    for (const v of this.vicinoAlMuro) d += v.d * morbido(v.da - 1, v.da, s) * (1 - morbido(v.a, v.a + 1, s));
+    return d;
+  }
+
+  /** Il punto dove cammina Lia (o chi le sta accanto: "extra" metri in più verso il muro). */
+  puntoLaterale(s, extra) {
+    const p = this.punto(s), n = this.normale(s);
+    const d = this.scostamento(s) + (extra || 0);
+    return { x: p.x + n.x * d, y: p.y, z: p.z + n.z * d };
   }
 
   /** Pendenza in s (quanto sale per ogni metro): serve per inclinare il passo. */

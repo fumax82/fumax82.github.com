@@ -17,7 +17,6 @@ import { CONFIG } from '../config.js';
 import { Sagoma } from '../motore/sagoma.js';
 import { vistaDa, scegliFotogramma, conta } from './attori.js';
 import { Audio } from './audio.js';
-import { FORME } from '../motore/particelle.js';
 
 const DURATA_TOCCO = 0.42;
 
@@ -81,7 +80,7 @@ export class Lia {
 
   _calcolaPosizione() {
     const P = this.scena.percorso;
-    const p = P.punto(this.s);
+    const p = P.puntoLaterale(this.s);   // vicino al muro, dove serve
     this.x = p.x; this.y = p.y; this.z = p.z;
     this.tangente = P.tangente(this.s);
   }
@@ -172,15 +171,30 @@ export class Lia {
     this.ricarica = CONFIG.ricaricaBastone;
     this.tempoTocco = DURATA_TOCCO;
     this.colpi++;
-    const ox = this.x + this.tangente.x * this.verso * 0.5, oz = this.z + this.tangente.z * this.verso * 0.5;
-    this.gioco.onda(ox, oz, 'bastone');
-    Audio.toc(this.magica);
-    this.gioco.particelle.emetti(ox, this.y + 0.06, oz, this.magica ? 26 : 10, {
-      forma: this.magica ? [FORME.stella, FORME.scintilla, FORME.punto] : [FORME.punto, FORME.scintilla],
-      colori: this.magica ? ['#fff0a0', '#ffd36b', '#ffffff', '#f7b6d8'] : ['#fff6d8', '#ffe39a'],
-      velocita: 1.6, su: 1.3, gravita: 1.6, vita: 1.1, dim: this.magica ? 0.2 : 0.14,
-    });
-    this.gioco.regista.emetti('tocco', { x: ox, z: oz });
+    // Che cosa tocca il bastone? Se c'è un muro a portata, un colpo sul muro e
+    // uno per terra, alternati (come chi cammina con il bastone lungo una parete)
+    const S = this.scena;
+    const mat = S.materiale(this.s);
+    const muroVicino = mat.muro && (mat.vicino || S.percorso.scostamento(this.s) > 0.35);
+    this.colpoMuro = !!muroVicino && this.colpi % 2 === 0;
+    let ox, oy, oz, materiale;
+    if (this.colpoMuro) {
+      const n = S.percorso.normale(this.s);
+      ox = this.x + n.x * 0.6 + this.tangente.x * this.verso * 0.15;
+      oz = this.z + n.z * 0.6 + this.tangente.z * this.verso * 0.15;
+      oy = this.y + 0.55;
+      materiale = mat.muro;
+    } else {
+      ox = this.x + this.tangente.x * this.verso * 0.5;
+      oz = this.z + this.tangente.z * this.verso * 0.5;
+      oy = this.y + 0.06;
+      materiale = mat.terra;
+    }
+    Audio.tocco(materiale, ox, oz);
+    // l'onda (e lo spettacolo di particelle) prendono il colore del materiale: vedi gioco/magia.js
+    this.gioco.onda(ox, oz, 'bastone', { materiale, y: oy });
+    this.gioco.magia.colpo(materiale, ox, oy, oz);
+    this.gioco.regista.emetti('tocco', { x: ox, z: oz, materiale, muro: this.colpoMuro });
     return true;
   }
 

@@ -39,7 +39,7 @@ import {
 /* ------------------------------------------------------------------------ */
 /*  COLORI, SPESSORI E UN PO' DI MATEMATICA                                 */
 /* ------------------------------------------------------------------------ */
-const INK = '#5a3f30';                     // la linea dei personaggi
+const INK = '#5c3f2e';                     // la linea dei personaggi
 const INK2 = '#a3846c';                    // linee di dettaglio (pieghe, ciocche)
 const LW = 1.9;                            // spessore della linea ≈ altezza / 160
 const GRADI = 180 / Math.PI;
@@ -202,6 +202,13 @@ function tratto(ctx, punti, w = 1.7, colore = INK, alfa = 1) {
   linea(ctx, Forme.curva(punti), { spessore: px(w), colore, alfa });
 }
 
+/**
+ * Occhio come nel cartone: ovale alto (circa 1,5 volte più alto che largo),
+ * linea sottile, puntino scuro piccolo spostato verso dove guarda: con
+ * |gx| = 1 il puntino tocca il bordo dell'occhio (lo sguardo di profilo).
+ * stato: 'aperti', 'chiusi' (sbatte), 'felici' (ad arco), 'socchiusi'
+ * (ascolta), 'strizzati' (> <). dir = verso della punta per gli strizzati.
+ */
 function occhio(ctx, x, y, rx, ry, g, stato = 'aperti', dir = 1) {
   if (stato === 'chiusi') return tratto(ctx, [[x - rx * 0.95, y + ry * 0.1], [x, y + ry * 0.4], [x + rx * 0.95, y + ry * 0.1]], 1.9);
   if (stato === 'felici') return tratto(ctx, [[x - rx * 0.95, y + ry * 0.3], [x, y - ry * 0.35], [x + rx * 0.95, y + ry * 0.3]], 1.9);
@@ -210,19 +217,22 @@ function occhio(ctx, x, y, rx, ry, g, stato = 'aperti', dir = 1) {
   }
   const p = Forme.ellisse(x, y, rx, ry);
   tinta(ctx, p, C.bianco);
-  const r = Math.max(1.4, rx * 0.3);
-  let gy = g[1];
+  const r = Math.max(1.3, rx * 0.27);
+  const gx = Math.max(-1, Math.min(1, g[0]));
+  let gy = Math.max(-1, Math.min(1, g[1]));
   if (stato === 'socchiusi') gy = Math.max(gy, 0.5);
-  tinta(ctx, Forme.ellisse(x + g[0] * (rx - r - 1.4), y + gy * (ry - r * 1.15 - 1.6), r, r * 1.15), C.pupilla);
-  if (stato === 'socchiusi') {              // palpebra calata a metà
-    ctx.save();
-    ctx.clip(p);
+  ctx.save();
+  ctx.clip(p);                                     // il puntino può toccare il bordo
+  tinta(ctx, Forme.ellisse(x + gx * (rx - r - (Math.abs(g[0]) >= 1 ? 0 : 1.2)), y + gy * (ry - r * 1.1 - 1.8), r, r * 1.1), C.pupilla);
+  if (stato === 'socchiusi') {                     // palpebra calata a metà
     tinta(ctx, Forme.rettangolo(x - rx - 2, y - ry - 2, rx * 2 + 4, ry * 1.0 + 2), C.pelle);
-    ctx.restore();
-    tratto(ctx, [[x - rx, y + ry * 0.02], [x, y - ry * 0.08], [x + rx, y + ry * 0.02]], 1.8);
   }
-  linea(ctx, p, { spessore: px(1.4) });
+  ctx.restore();
+  if (stato === 'socchiusi') tratto(ctx, [[x - rx, y + ry * 0.02], [x, y - ry * 0.08], [x + rx, y + ry * 0.02]], 1.8);
+  linea(ctx, p, { spessore: px(1.35) });
 }
+
+/** Un velo di rosa sulle guance, morbido e sfumato. */
 
 /**
  * Testa di profilo: testone tondo con la guancia piena davanti, occhio
@@ -393,7 +403,7 @@ function posaLato(A, posa, t) {
     piedi: [{ x: -7, y: -15, rot: 0 }, { x: 6, y: -15, rot: 0 }],
     braccia: [braccioA(SPALLE_LATO[0], 0.06, 0.24), braccioA(SPALLE_LATO[1], 0.1, 0.34)],
     capelli: [0, 0], orlo: [0, 0, 0, 0], borsa: [0, 0], orloMondo: null, accucciata: false, manoTesta: null,
-    occhi: 'aperti', sguardo: [0.55, -0.6], bocca: 'chiusa', oggetto: null, effetto: null,
+    occhi: 'aperti', sguardo: [1, -0.5], bocca: 'chiusa', oggetto: null, effetto: null,
   };
   // l'oggetto (bastone o bacchetta) di solito sta nella mano vicina
   if (og === 'bastone') { P.braccia[1] = braccioA(SPALLE_LATO[1], 0.3, 0.75); P.oggetto = { tipo: og, mano: 1, ang: 1.2 }; }
@@ -408,7 +418,8 @@ function posaLato(A, posa, t) {
     P.braccia[0] = braccioA(SPALLE_LATO[0], 0.06 + 0.03 * b, 0.24 + 0.04 * b);
     if (!og) P.braccia[1] = braccioA(SPALLE_LATO[1], 0.1 + 0.03 * b, 0.34 + 0.04 * b);
     if (Math.abs(t - 0.5) < 0.01) P.occhi = 'chiusi';   // un battito di ciglia
-    P.sguardo = [0.55, -0.55 - 0.2 * b];
+    if (Math.abs(t - 0.25) < 0.01) P.bocca = 'sorriso';
+    P.sguardo = [1, -0.45 - 0.35 * b];
   }
 
   if (posa === 'cammina') {
@@ -451,7 +462,7 @@ function posaLato(A, posa, t) {
     P.borsa = [-10 + 2 * onda(2 * (t - 0.3)), -8 + 3 * ondaC(2 * (t - 0.3))];
     P.cappello = -0.07;
     P.bocca = 'o';
-    P.sguardo = [0.8, -0.4];
+    P.sguardo = [1, -0.35];
   }
 
   if (posa === 'tocca') {
@@ -464,7 +475,7 @@ function posaLato(A, posa, t) {
       P.oggetto.ang = [0.92, 1.065, 1.0][k];
       P.effetto = k === 1 ? 'tac' : null;
       P.bocca = k === 1 ? 'o' : 'chiusa';
-      P.sguardo = [0.7, -0.75];
+      P.sguardo = [1, -0.75];
       P.capelli = [[0, -1.5], [-1, 2], [0, 0.5]][k];
     } else if (og === 'bacchetta') {
       P.incl = [0.0, 0.26, 0.18][k];
@@ -474,7 +485,7 @@ function posaLato(A, posa, t) {
       P.oggetto = { tipo: og, mano: 1, ang: [-1.75, 1.2, 0.8][k] };
       P.effetto = ['scia', 'magia', 'magiaPiccola'][k];
       P.bocca = k === 1 ? 'sorriso' : 'chiusa';
-      P.sguardo = [0.8, k ? 0.5 : -0.9];
+      P.sguardo = [1, k ? 0.5 : -0.9];
       P.capelli = [[0, -2], [-2, 2.5], [-1, 1]][k];
       P.braccia[0] = braccioA(SPALLE_LATO[0], [-0.3, 0.2, 0.1][k], [-0.1, 0.5, 0.35][k]);
     } else {                                      // borsa: le mani avanti "tastano" l'aria
@@ -483,7 +494,7 @@ function posaLato(A, posa, t) {
         { m: [[36, -120], [52, -132], [50, -124]][k], mondo: true, aperta: true, dita: [-0.2, 0.0, 0.15][k] },
       ];
       P.incl = [0.05, 0.09, 0.08][k];
-      P.sguardo = [0.4, -0.9];
+      P.sguardo = [0.8, -1];
       P.bocca = 'o';
       P.testa = -0.06;
       P.piedi[1] = { x: 13, y: -15, rot: 0 };
@@ -521,7 +532,7 @@ function posaLato(A, posa, t) {
     P.braccia[0] = { m: [22, -48], mondo: false, aperta: false };
     if (og) P.oggetto = { tipo: og, mano: 0, ang: og === 'bastone' ? 2.75 : -1.1 };
     P.accucciata = true;
-    P.sguardo = [0.6, 0.7];
+    P.sguardo = [1, 0.6];
     P.bocca = k ? 'sorriso' : 'chiusa';
     P.capelli = [1, 1.5];
   }
@@ -538,8 +549,8 @@ function posaLato(A, posa, t) {
       { m: [36, -176], mondo: true, aperta: true, dita: -0.9 },
     ];
     if (og) P.oggetto = { tipo: og, mano: 1, ang: og === 'bastone' ? -1.2 : -1.35 };
-    P.sguardo = [0.1, -0.1];
-    P.bocca = 'aperta';
+    P.sguardo = [0.4, -0.2];
+    P.bocca = 'O';
     P.capelli = [0, -3.5];
     P.cappello = -0.05;
     P.orlo = [0, -2, 0, -2];
@@ -578,7 +589,7 @@ function posaFronte(A, posa, t, retro) {
     piedi: [{ x: -13, y: -15, s: 1, alza: 0 }, { x: 13, y: -15, s: 1, alza: 0 }],
     braccia: [{ m: [-30, -32] }, { m: [30, -32] }],
     capelli: [0, 0], orlo: 0, borsa: [0, 0],
-    occhi: 'aperti', sguardo: [0.3, -0.6], bocca: 'chiusa', oggetto: null,
+    occhi: 'aperti', sguardo: [0.35, -0.75], bocca: 'chiusa', oggetto: null,
   };
   const sgn = io ? 1 : -1;
   if (og === 'bastone') { P.braccia[io] = { m: [sgn * 33, -36] }; P.oggetto = { tipo: og, mano: io, ang: io ? 1.22 : 1.92 }; }
@@ -590,7 +601,8 @@ function posaFronte(A, posa, t, retro) {
     P.testaDy = -0.7 * b;
     P.capelli = [0, 1.2 * b];
     P.braccia[1 - io].m = [(io ? -1 : 1) * (30 + b), -32 - b];
-    P.sguardo = [0.3, -0.6 - 0.2 * b];
+    P.sguardo = [0.4 + 0.3 * b, -0.75 - 0.2 * b];
+    if (b) P.bocca = 'sorriso';
   }
   if (posa === 'sorpresa') {
     P.bob = -2;
@@ -598,8 +610,8 @@ function posaFronte(A, posa, t, retro) {
     P.piedi = [{ x: -17, y: -15, s: 1, alza: 0 }, { x: 17, y: -15, s: 1, alza: 0 }];
     P.braccia = [{ m: [-46, -118], aperta: true, dita: -2.2 }, { m: [46, -118], aperta: true, dita: -0.95 }];
     if (og) P.oggetto.ang = io ? -1.1 : -2.05;
-    P.bocca = 'aperta';
-    P.sguardo = [0, -0.1];
+    P.bocca = 'O';
+    P.sguardo = [0, -0.35];
     P.capelli = [0, -3];
   }
   if (posa === 'saluta') {
@@ -608,7 +620,7 @@ function posaFronte(A, posa, t, retro) {
     P.braccia[lib] = { m: [(lib ? 1 : -1) * (40 + 8 * k), -122 + 6 * k], aperta: true, dita: lib ? -1.25 + 0.45 * k : -1.9 - 0.45 * k };
     P.bocca = 'sorriso';
     P.occhi = k ? 'felici' : 'aperti';
-    P.sguardo = [0.2, -0.45];
+    P.sguardo = [0.45, -0.8];
     P.testa = k ? 0.05 : -0.03;
   }
   if (posa === 'cammina') {
@@ -862,16 +874,22 @@ function visoFronte() {
 
 function corpoCane(L) {
   const b = new Path2D();
-  b.moveTo(30 * L, -26);                                          // garrese
-  b.bezierCurveTo(6 * L, -31, -30 * L, -30, -50 * L, -24);        // dorso dritto e continuo
-  b.bezierCurveTo(-65 * L, -20, -69 * L, 8, -56 * L, 21);         // groppa tonda
-  b.bezierCurveTo(-48 * L, 28, -32 * L, 26, -24 * L, 18);         // sotto la coscia
-  b.bezierCurveTo(-12 * L, 12, 4 * L, 14, 14 * L, 22);            // la pancia rientra
-  b.bezierCurveTo(24 * L, 35, 46 * L, 36, 55 * L, 17);            // petto profondo
-  b.bezierCurveTo(60 * L, 2, 58 * L, -12, 50 * L, -18);           // petto davanti
+  b.moveTo(30 * L, -27);                                          // garrese
+  b.bezierCurveTo(6 * L, -31, -30 * L, -30, -50 * L, -25);        // dorso dritto e continuo
+  b.bezierCurveTo(-68 * L, -20, -74 * L, 10, -58 * L, 23);        // groppa bella tonda
+  b.bezierCurveTo(-48 * L, 30, -32 * L, 27, -24 * L, 19);         // sotto la coscia
+  b.bezierCurveTo(-12 * L, 13, 4 * L, 15, 14 * L, 23);            // la pancia rientra
+  b.bezierCurveTo(24 * L, 37, 52 * L, 40, 60 * L, 18);            // petto tondo e profondo
+  b.bezierCurveTo(66 * L, 2, 62 * L, -14, 50 * L, -20);           // petto davanti
   b.closePath();
   return b;
 }
+
+/**
+ * Testa di profilo: cranio grande a cupola, muso lungo e morbido con uno
+ * "stop" appena accennato, nasino scuro ovale in punta, occhio ovale dentro
+ * la testa vicino alla fronte, sopracciglio, orecchio lungo a foglia.
+ */
 
 /** Il collo: dalla schiena e dal petto sale fino alla nuca e alla gola. */
 
@@ -887,6 +905,62 @@ function colloCane(L, tb) {
 
 /** Biscotto di lato (guarda a destra). */
 
+function guancia(ctx, x, y, r) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, 'rgba(246, 184, 168, 0.6)');
+  g.addColorStop(1, 'rgba(246, 184, 168, 0)');
+  ctx.save();
+  ctx.fillStyle = g;
+  ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  ctx.restore();
+}
+
+/**
+ * Testa di profilo: davanti il viso tondo (guancia piena, nasino appena
+ * accennato, occhio ovale al bordo, boccuccia) occupa circa metà della
+ * testa; dietro l'orecchio il caschetto tagliato dritto con le punte,
+ * davanti all'orecchio una ciocca sottile. La tesa sporge davanti al viso.
+ */
+
+/**
+ * Contorno esterno più pieno (come la linea di contorno dei cel del film):
+ * una copia color inchiostro della figura viene stesa DIETRO alla figura,
+ * spostata di poco in otto direzioni. Solo la sagoma esterna si ingrossa
+ * (≈1,3 volte), le linee interne restano sottili. "appoggio" è una tela
+ * di lavoro grande come la figura.
+ */
+function contornoEsterno(tela, appoggio, spessore = 0.65) {
+  const c = appoggio.getContext('2d');
+  c.globalCompositeOperation = 'copy';
+  c.drawImage(tela, 0, 0);
+  c.globalCompositeOperation = 'source-in';
+  c.fillStyle = INK;
+  c.fillRect(0, 0, appoggio.width, appoggio.height);
+  c.globalCompositeOperation = 'source-over';
+  const x = tela.getContext('2d');
+  x.save();
+  x.globalCompositeOperation = 'destination-over';
+  for (let k = 0; k < 8; k++) {
+    const a = (k * Math.PI) / 4;
+    x.drawImage(appoggio, Math.cos(a) * spessore, Math.sin(a) * spessore);
+  }
+  x.restore();
+}
+
+/**
+ * Costruisce un atlante: ogni cella ha l'origine a terra, al centro in basso.
+ * disegna(ctx, vista, posa, fase) riceve la fase 0..1 del ciclo della posa.
+ * alias: { nomeFotogramma: nomeDelDisegnoDaRiusare }.
+ * Ogni fotogramma si dipinge prima su una tela grande come la cella (così il
+ * contorno esterno non sconfina nelle celle vicine) e poi si copia nell'atlante.
+ */
+
+/**
+ * Costruisce un atlante: ogni cella ha l'origine a terra, al centro in basso.
+ * disegna(ctx, vista, posa, fase) riceve la fase 0..1 del ciclo della posa.
+ * alias: { nomeFotogramma: nomeDelDisegnoDaRiusare }.
+ */
+
 function sistemaCappello(ctx, P) {
   ctx.translate(0, -62);
   ctx.rotate(P.cappello);
@@ -899,46 +973,42 @@ function testaLato(ctx, A, P) {
   const [hx, hy] = P.capelli;
   ctx.save();
   if (A.strega) sottoLaTesa(ctx, P);
-  // caschetto dietro (sta dietro alla testa)
+  pezzo(ctx, [Forme.cerchio(-6, -62, 54), Forme.ellisse(24, -34, 46, 37), Forme.ellisse(71, -44, 4.6, 4.3)], C.pelle, 0);
+  guancia(ctx, 40, -26, 12);
+  // caschetto dietro l'orecchio
   const dietro = new Path2D();
-  dietro.moveTo(8, -96);
-  dietro.quadraticCurveTo(4, -66, -6, -58);       // sopra l'orecchio i capelli arrivano alla ciocca
-  dietro.quadraticCurveTo(-20, -52, -18, -40);    // dietro l'orecchio
-  dietro.quadraticCurveTo(-14, -30, 4, -30);       // sotto l'orecchio torna fino alla ciocca
-  dietro.quadraticCurveTo(6, -18, 4 + hx * 0.5, -8 + hy);
-  dietro.lineTo(-6 + hx * 0.7, -3 + hy);
-  dietro.lineTo(-14 + hx * 0.8, -8 + hy);
-  dietro.lineTo(-24 + hx, -2 + hy);
-  dietro.lineTo(-32 + hx, -7 + hy);
-  dietro.lineTo(-44 + hx, -1 + hy);
-  dietro.lineTo(-54 + hx, -6 + hy);
-  dietro.lineTo(-66 + hx, 1 + hy);
-  dietro.lineTo(-86 + hx, 5 + hy);               // la punta che scatta all'indietro
-  dietro.lineTo(-76 + hx, -10 + hy);
-  dietro.quadraticCurveTo(-76, -50, -66, -96);   // la nuca, gonfia
-  dietro.quadraticCurveTo(-30, -112, 8, -96);
+  dietro.moveTo(-4, -98);
+  dietro.quadraticCurveTo(-10, -70, -18, -58);      // sopra l'orecchio
+  dietro.quadraticCurveTo(-28, -50, -27, -38);      // dietro l'orecchio
+  dietro.quadraticCurveTo(-24, -22, -22 + hx * 0.5, -8 + hy);
+  dietro.lineTo(-30 + hx, -2 + hy);
+  dietro.lineTo(-38 + hx, -7 + hy);
+  dietro.lineTo(-48 + hx, -1 + hy);
+  dietro.lineTo(-56 + hx, -6 + hy);
+  dietro.lineTo(-76 + hx, 4 + hy);                  // la punta che scatta all'indietro
+  dietro.lineTo(-66 + hx, -12 + hy);
+  dietro.quadraticCurveTo(-70, -54, -60, -96);      // la nuca, gonfia
+  dietro.quadraticCurveTo(-34, -110, -4, -98);
   dietro.closePath();
-  // la testa: cranio tondo + guancia piena + nasino
-  pezzo(ctx, [Forme.cerchio(-6, -62, 56), Forme.ellisse(24, -36, 45, 38), Forme.ellisse(69, -44, 4.6, 4.3)], C.pelle, 0);
   pezzo(ctx, dietro, C.capelli, 1.4);
-  tratto(ctx, [[-42, -84], [-48, -44], [-52 + hx * 0.6, -18 + hy]], 1.1, INK2);
+  tratto(ctx, [[-44, -86], [-50, -46], [-52 + hx * 0.6, -18 + hy]], 1.1, INK2);
   // l'orecchio
-  pezzo(ctx, Forme.ellisse(-8, -46, 7.5, 10.5), C.pelle, 0, 1.6);
-  tratto(ctx, [[-5, -51], [-10, -46], [-5, -41]], 1.2, INK2);
-  // la ciocca davanti all'orecchio
+  pezzo(ctx, Forme.ellisse(-16, -46, 7, 10), C.pelle, 0, 1.6);
+  tratto(ctx, [[-13, -51], [-18, -46], [-13, -41]], 1.2, INK2);
+  // la ciocca sottile davanti all'orecchio
   const ciocca = new Path2D();
-  ciocca.moveTo(2, -90);
-  ciocca.lineTo(17, -90);
-  ciocca.quadraticCurveTo(20, -52, 17 + hx * 0.4, -12 + hy * 0.7);
-  ciocca.lineTo(22 + hx * 0.4, -4 + hy * 0.7);
-  ciocca.lineTo(12 + hx * 0.4, -8 + hy * 0.7);
-  ciocca.lineTo(7 + hx * 0.4, -3 + hy * 0.7);
-  ciocca.lineTo(2 + hx * 0.4, -8 + hy * 0.7);
-  ciocca.quadraticCurveTo(-1, -52, 2, -90);
+  ciocca.moveTo(-8, -92);
+  ciocca.lineTo(4, -92);
+  ciocca.quadraticCurveTo(7, -52, 5 + hx * 0.4, -14 + hy * 0.7);
+  ciocca.lineTo(9 + hx * 0.4, -5 + hy * 0.7);
+  ciocca.lineTo(0 + hx * 0.4, -10 + hy * 0.7);
+  ciocca.lineTo(-5 + hx * 0.4, -4 + hy * 0.7);
+  ciocca.lineTo(-9 + hx * 0.4, -11 + hy * 0.7);
+  ciocca.quadraticCurveTo(-11, -52, -8, -92);
   ciocca.closePath();
   pezzo(ctx, ciocca, C.capelli, 0.8);
-  // occhio ovale alto, a metà del viso
-  occhio(ctx, 47, -54, 9, 16, P.sguardo, P.occhi, 1);
+  // l'occhio ovale al bordo del viso, e la bocca
+  occhio(ctx, 54, -56, 9.5, 14, P.sguardo, P.occhi, 1);
   boccaLato(ctx, P.bocca);
   ctx.restore();
   ctx.save();
@@ -947,6 +1017,8 @@ function testaLato(ctx, A, P) {
   ctx.restore();
 }
 
+/** La bocca di profilo: piccola, in basso sul viso. 'O' = stupita. */
+
 /** La bocca di profilo: piccola, in basso sul viso. */
 
 /** Vestitino ad A di lato (azzurro, o viola per la streghetta), con l'orlo mobile. */
@@ -954,27 +1026,29 @@ function testaLato(ctx, A, P) {
 /** Col cappello da strega nasconde la parte di testa che starebbe sopra la tesa. */
 
 function boccaLato(ctx, tipo) {
-  if (tipo === 'chiusa') tratto(ctx, [[59, -21], [62.5, -22.5], [65, -21.5]], 1.6);
-  else if (tipo === 'sorriso') tratto(ctx, [[56, -25], [61, -19.5], [66, -24]], 1.7);
-  else if (tipo === 'o') {
-    const p = Forme.ellisse(64, -22, 3.4, 4.2);
+  if (tipo === 'chiusa') tratto(ctx, [[61, -19], [64.5, -20.5], [67, -19.5]], 1.6);
+  else if (tipo === 'sorriso') tratto(ctx, [[58, -23], [63, -17.5], [68, -22]], 1.7);
+  else if (tipo === 'o' || tipo === 'O') {
+    const p = tipo === 'O' ? Forme.ellisse(63.5, -20, 5, 6.5) : Forme.ellisse(65, -20, 3.4, 4.2);
     tinta(ctx, p, C.bocca);
     linea(ctx, p, { spessore: px(1.5) });
   } else {
     const p = new Path2D();
-    p.moveTo(56, -29);
-    p.quadraticCurveTo(63, -31, 69, -27);
-    p.quadraticCurveTo(69, -14, 62, -13);
-    p.quadraticCurveTo(56, -15, 56, -29);
+    p.moveTo(58, -27);
+    p.quadraticCurveTo(65, -29, 71, -25);
+    p.quadraticCurveTo(71, -12, 64, -11);
+    p.quadraticCurveTo(58, -13, 58, -27);
     p.closePath();
     tinta(ctx, p, C.boccaDentro);
     ctx.save();
     ctx.clip(p);
-    tinta(ctx, Forme.ellisse(63, -13, 6.5, 4.2), C.lingua);
+    tinta(ctx, Forme.ellisse(65, -11, 6.5, 4.2), C.lingua);
     ctx.restore();
     linea(ctx, p, { spessore: px(1.6) });
   }
 }
+
+/** Testa di fronte (o la nuca, se retro). */
 
 /**
  * Il caschetto visto di fronte (dietro al viso) o da dietro: scende fino
@@ -1024,6 +1098,7 @@ function testaFronte(ctx, A, P, retro) {
   } else {
     for (const s of [-1, 1]) tratto(ctx, [[s * 74, -54], [s * 82 + hx * 0.6, -16 + hy]], 1.1, INK2);
     pezzo(ctx, visoFronte(), C.pelle, 0);
+    for (const s of [-1, 1]) guancia(ctx, s * 42, -28, 12);
     // frangetta dritta: solo una striscia sotto la tesa
     if (!A.strega) {
       const fr = Forme.poligono([[-48, -104], [48, -104], [48, -74], [-48, -74]]);
@@ -1031,8 +1106,8 @@ function testaFronte(ctx, A, P, retro) {
       for (const x of [-30, -15, 0, 15, 30]) tratto(ctx, [[x, -74], [x, -79]], 1.1, INK2);
     }
     // occhi ovali alti, a metà del viso; nessun naso di fronte
-    occhio(ctx, -24, -54, 12, 16.5, P.sguardo, P.occhi, 1);
-    occhio(ctx, 24, -54, 12, 16.5, P.sguardo, P.occhi, -1);
+    occhio(ctx, -23, -54, 10.5, 16, P.sguardo, P.occhi, 1);
+    occhio(ctx, 23, -54, 10.5, 16, P.sguardo, P.occhi, -1);
     boccaFronte(ctx, P.bocca);
   }
   ctx.restore();
@@ -1042,6 +1117,8 @@ function testaFronte(ctx, A, P, retro) {
   ctx.restore();
 }
 
+/** La bocca di fronte: piccola e bassa (a circa 3/4 del viso). 'O' = stupita. */
+
 /** La bocca di fronte: piccola e bassa (a circa 3/4 del viso). */
 
 /** Cappellino a campana di lato: cupola alta, fascia larga, tesa che scende. */
@@ -1049,9 +1126,9 @@ function testaFronte(ctx, A, P, retro) {
 function boccaFronte(ctx, tipo) {
   const y = -22;
   if (tipo === 'chiusa') tratto(ctx, [[-4.5, y + 0.8], [0, y - 0.9], [4.5, y + 0.8]], 1.6);
-  else if (tipo === 'sorriso') tratto(ctx, [[-9, y - 3], [0, y + 3.5], [9, y - 3]], 1.7);
-  else if (tipo === 'o') {
-    const p = Forme.ellisse(0, y, 4, 4.8);
+  else if (tipo === 'sorriso') tratto(ctx, [[-8, y - 2.5], [0, y + 3], [8, y - 2.5]], 1.7);
+  else if (tipo === 'o' || tipo === 'O') {
+    const p = tipo === 'O' ? Forme.ellisse(0, y, 5.5, 7) : Forme.ellisse(0, y, 4, 4.8);
     tinta(ctx, p, C.bocca);
     linea(ctx, p, { spessore: px(1.5) });
   } else {
@@ -1064,6 +1141,14 @@ function boccaFronte(ctx, tipo) {
     linea(ctx, p, { spessore: px(1.6) });
   }
 }
+
+/**
+ * Contorno esterno più pieno (come la linea di contorno dei cel del film):
+ * una copia color inchiostro della figura viene stesa DIETRO alla figura,
+ * spostata di poco in otto direzioni. Solo la sagoma esterna si ingrossa
+ * (≈1,3 volte), le linee interne restano sottili.
+ */
+// prima di: atlante
 
 /** Cappellino a campana di lato: cupola alta, fascia larga, tesa che scende davanti e dietro. */
 
@@ -1322,23 +1407,52 @@ function zampaCiclo(u, A, S, alza) {
 }
 
 function zampetta(ctx, x, y, r, colore) {
-  pezzo(ctx, Forme.ellisse(x + r * 0.45, y - r * 0.6, r, r * 0.62), colore, 0, 1.7);
-  for (const d of [0.6, 1.0]) tratto(ctx, [[x + r * d, y - r * 0.55], [x + r * d, y - 1.5]], 1.1);
+  const p = new Path2D();
+  p.moveTo(x - r * 0.55, y);
+  p.bezierCurveTo(x - r * 0.75, y - r * 1.15, x + r * 1.0, y - r * 1.2, x + r * 1.45, y - r * 0.25);
+  p.quadraticCurveTo(x + r * 1.55, y, x + r * 1.2, y);
+  p.closePath();
+  pezzo(ctx, p, colore, 0, 1.7);
+  for (const d of [0.55, 0.95]) tratto(ctx, [[x + r * d, y - r * 0.45], [x + r * d + 0.5, y - 1.5]], 1.1);
 }
+
+/**
+ * Zampa morbida a "S": dall'anca al piedino segue una curva dolce (in avanti
+ * al ginocchio, indietro al garretto/polso), affusolata, col piedino tondo.
+ */
 
 /** Zampa del cane: anca → giuntura → caviglia, affusolata, col piedino. */
 
-/** Zampa anteriore: dritta e snella, col piedino tondo. */
 function zampaCane(ctx, anca, piede, posteriore, colore) {
   const cav = [piede[0] + 2, piede[1] - 7];
-  if (posteriore) {                                  // posteriore: grassella avanti, garretto indietro
-    const garretto = [cav[0] - 9, cav[1] - 17];
-    const g = ginocchio(anca, garretto, 21, 1);
-    arto(ctx, anca, g, garretto, 25, 13, 10.5, colore);
-    arto(ctx, garretto, lerp2(garretto, cav, 0.5), cav, 10.5, 10, 10, colore, 0.4);
-  } else arto(ctx, anca, lerp2(anca, cav, 0.5), cav, 17, 12, 10.5, colore);
-  zampetta(ctx, piede[0], piede[1], 11, colore);
+  const dx = cav[0] - anca[0], dy = cav[1] - anca[1], d = Math.hypot(dx, dy) || 1;
+  const n = [-dy / d, dx / d];                       // perpendicolare (punta indietro)
+  const k = posteriore ? 13 : 7;
+  const c1 = [anca[0] + dx * 0.33 - n[0] * k, anca[1] + dy * 0.33 - n[1] * k];
+  const c2 = [anca[0] + dx * 0.72 + n[0] * k, anca[1] + dy * 0.72 + n[1] * k];
+  const [w0, w1] = posteriore ? [24, 10.5] : [17, 10.5];
+  const sx = [], dxs = [];
+  const N = 8;
+  for (let i = 0; i <= N; i++) {
+    const t = i / N, u = 1 - t;
+    const q = [u * u * u * anca[0] + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0] + t * t * t * cav[0],
+      u * u * u * anca[1] + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1] + t * t * t * cav[1]];
+    const tg = [3 * u * u * (c1[0] - anca[0]) + 6 * u * t * (c2[0] - c1[0]) + 3 * t * t * (cav[0] - c2[0]),
+      3 * u * u * (c1[1] - anca[1]) + 6 * u * t * (c2[1] - c1[1]) + 3 * t * t * (cav[1] - c2[1])];
+    const lt = Math.hypot(...tg) || 1, nn = [-tg[1] / lt, tg[0] / lt];
+    const w = lerp(w0, w1, Math.pow(t, 0.7)) / 2;
+    sx.push([q[0] + nn[0] * w, q[1] + nn[1] * w]);
+    dxs.push([q[0] - nn[0] * w, q[1] - nn[1] * w]);
+  }
+  pezzo(ctx, Forme.poligono(sx.concat(dxs.reverse()), true), colore, 0.6);
+  zampetta(ctx, piede[0], piede[1], 11.5, colore);
 }
+
+/**
+ * Coda a pennacchio: uno stelo sottile sopra e, sotto, otto ciuffi lunghi e
+ * appuntiti che seguono la curva (ognuno con la sua ciocca disegnata).
+ * ang = direzione iniziale, curva = quanto gira in tutto.
+ */
 
 /**
  * Coda a pennacchio: uno stelo sottile sopra e, sotto, sei ciuffi lunghi e
@@ -1356,11 +1470,11 @@ function zampaCane(ctx, anca, piede, posteriore, colore) {
  */
 
 function codaPiumosa(ctx, x, y, ang, lung, curva, colore) {
-  const N = 6, S = [];
+  const N = 8, S = [];
   let cx = x, cy = y, a = ang;
   for (let i = 0; i <= N; i++) {
     const t = i / N;
-    S.push({ x: cx, y: cy, nx: -Math.sin(a), ny: Math.cos(a), dx: Math.cos(a), dy: Math.sin(a), w: 5 + 19 * Math.pow(Math.sin(Math.PI * Math.min(1, t * 1.05 + 0.08)), 0.7), t });
+    S.push({ x: cx, y: cy, nx: -Math.sin(a), ny: Math.cos(a), dx: Math.cos(a), dy: Math.sin(a), w: 6 + 21 * Math.pow(Math.sin(Math.PI * Math.min(1, t * 1.05 + 0.08)), 0.65), t });
     cx += (Math.cos(a) * lung) / N;
     cy += (Math.sin(a) * lung) / N;
     a += curva / N;
@@ -1368,26 +1482,28 @@ function codaPiumosa(ctx, x, y, ang, lung, curva, colore) {
   const su = (s, k) => [s.x + s.nx * k, s.y + s.ny * k];
   const giu = (s, k, avanti) => [s.x - s.nx * k + s.dx * avanti, s.y - s.ny * k + s.dy * avanti];
   const p = new Path2D();
-  p.moveTo(...su(S[0], 4));
+  p.moveTo(...su(S[0], 5));
   for (let i = 1; i <= N; i++) {
-    const r = su(S[i - 1], 4 + 4 * Math.sin(Math.PI * S[i - 1].t)), q = su(S[i], 4 + 4 * Math.sin(Math.PI * S[i].t));
+    const r = su(S[i - 1], 5 + 6 * Math.sin(Math.PI * S[i - 1].t)), q = su(S[i], 5 + 6 * Math.sin(Math.PI * S[i].t));
     p.quadraticCurveTo(r[0], r[1], (q[0] + r[0]) / 2, (q[1] + r[1]) / 2);
   }
   const fine = S[N];
   p.quadraticCurveTo(...su(fine, 3), fine.x + fine.dx * 14, fine.y + fine.dy * 14);   // la punta
   const ciuffi = [];
   for (let i = N; i >= 1; i--) {                     // i ciuffi, dalla punta verso la base
-    const ciuffo = giu(S[i], S[i].w * 1.25, 12);
-    const rientro = giu(S[i - 1], S[i - 1].w * 0.62, 2);
-    p.quadraticCurveTo(...giu(S[i], S[i].w * 0.9, 2), ...ciuffo);
-    p.quadraticCurveTo(...giu(S[i - 1], S[i - 1].w * 0.95, 6), ...rientro);
-    ciuffi.push([giu(S[i - 1], S[i - 1].w * 0.4, 2), giu(S[i], S[i].w * 0.85, 9)]);
+    const ciuffo = giu(S[i], S[i].w * 1.25, 11);
+    const rientro = giu(S[i - 1], S[i - 1].w * 0.66, 2);
+    p.quadraticCurveTo(...giu(S[i], S[i].w * 0.92, 2), ...ciuffo);
+    p.quadraticCurveTo(...giu(S[i - 1], S[i - 1].w * 0.98, 6), ...rientro);
+    ciuffi.push([giu(S[i - 1], S[i - 1].w * 0.35, 2), giu(S[i], S[i].w * 0.88, 8)]);
   }
-  p.lineTo(...giu(S[0], 4, 0));
+  p.lineTo(...giu(S[0], 5, 0));
   p.closePath();
   pezzo(ctx, p, colore, 0.6);
-  for (const [a0, a1] of ciuffi) tratto(ctx, [a0, a1], 1.1, INK2);
+  for (const [a0, a1] of ciuffi) tratto(ctx, [a0, a1], 1.05, INK2);
 }
+
+/** Orecchio lungo a foglia, dal bordo un po' mosso: pende oltre la mascella. */
 
 /** Orecchio a foglia lunga, attaccato in alto dietro al cranio: pende oltre la mascella. */
 
@@ -1397,11 +1513,13 @@ function orecchioCane(ctx, x, y, ang, lato = 1) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(ang);
-  const pp = [[-7, -7], [9, -8], [16, 8], [15, 34], [8, 56], [-1, 64], [-10, 54], [-14, 28], [-13, 6]];
+  const pp = [[-7, -7], [10, -8], [16, 8], [13, 22], [18, 38], [12, 54], [6, 68], [-3, 74], [-11, 64], [-13, 48], [-17, 32], [-12, 16], [-14, 4]];
   pezzo(ctx, Forme.poligono(pp.map(([a, b]) => [a * lato, b]), true), C.orecchie, 1.1);
-  tratto(ctx, [[1 * lato, 2], [3 * lato, 28], [0, 50]], 1.1, INK2);
+  tratto(ctx, [[1 * lato, 2], [3 * lato, 30], [-1 * lato, 58]], 1.1, INK2);
   ctx.restore();
 }
+
+/** Il corpo a "fagiolo": dorso continuo, groppa tonda, pancia che rientra, petto tondo e profondo. */
 
 // anche delle quattro zampe nel sistema del corpo (p = posteriore, a = anteriore,
 // l = lontana, v = vicina) e piedi a riposo nel mondo (col corpo in x = -8)
@@ -1420,7 +1538,7 @@ const PIEDI_CANE = { pl: [-56, 0], al: [24, 0], pv: [-46, 0], av: [34, 0] };
 
 function posaCaneLato(posa, t) {
   const P = {
-    corpo: [-8, -66], rot: 0, lungo: 1, testa: [80, -60], rotTesta: 0,
+    corpo: [-8, -62], rot: 0, lungo: 1, testa: [82, -62], rotTesta: 0,
     coda: -2.35, curva: 0.55, lungCoda: 78, orecchio: 0.08, bocca: 0, ringhia: false,
     borsa: false, oscBorsa: 0, sguardo: [0.45, -0.6], occhi: 'aperti', piedi: { ...PIEDI_CANE },
   };
@@ -1439,14 +1557,14 @@ function posaCaneLato(posa, t) {
     if (Math.abs(t - 0.5) < 0.01) P.occhi = 'chiusi';
   }
   if (posa === 'cammina') {                       // passo laterale a quattro tempi
-    passi({ pl: 0, al: 0.25, pv: 0.5, av: 0.75 }, 13, 0.62, 10);
-    P.corpo[1] += 1.5 * ondaC(2 * t);
-    P.rot = 0.015 * onda(2 * t);
-    P.testa[1] += 1.6 * ondaC(2 * (t - 0.12));
-    P.rotTesta = 0.04 * onda(2 * (t - 0.12));
-    P.orecchio = 0.1 + 0.12 * onda(2 * (t - 0.22));
-    P.coda = -2.35 + 0.3 * onda(t);
-    P.curva = 0.55 + 0.3 * onda(t - 0.15);
+    passi({ pl: 0, al: 0.25, pv: 0.5, av: 0.75 }, 13, 0.62, 11);
+    P.corpo[1] += 2.6 * ondaC(2 * t);                 // il molleggio del passo
+    P.rot = 0.02 * onda(2 * t);
+    P.testa[1] += 2.4 * ondaC(2 * (t - 0.1));         // la testa arriva un attimo dopo
+    P.rotTesta = 0.05 * onda(2 * (t - 0.12));
+    P.orecchio = 0.12 + 0.2 * onda(2 * (t - 0.25));   // le orecchie ancora dopo
+    P.coda = -2.35 + 0.34 * onda(t - 0.1);
+    P.curva = 0.55 + 0.35 * onda(t - 0.25);
   }
   if (posa === 'borsa' || posa === 'borsa_fermo') {   // con la borsetta in bocca, testa alta
     P.borsa = true;
@@ -1455,9 +1573,9 @@ function posaCaneLato(posa, t) {
     P.rotTesta = -0.14;
     if (posa === 'borsa') {                       // trotto: zampe in diagonale
       passi({ pl: 0, av: 0, al: 0.5, pv: 0.5 }, 15, 0.5, 13);
-      P.corpo[1] += -2 + 2.2 * ondaC(2 * (t - 0.08));
-      P.testa[1] += 1.8 * ondaC(2 * (t - 0.18));
-      P.orecchio = 0.2 + 0.16 * onda(2 * (t - 0.25));
+      P.corpo[1] += -2 + 2.8 * ondaC(2 * (t - 0.08));
+      P.testa[1] += 2.4 * ondaC(2 * (t - 0.18));
+      P.orecchio = 0.2 + 0.22 * onda(2 * (t - 0.28));
       P.coda = -2.3 + 0.3 * onda(t);
       P.oscBorsa = 0.22 * onda(2 * (t - 0.2));
     } else {
@@ -1476,7 +1594,7 @@ function posaCaneLato(posa, t) {
     P.orecchio = 1.25 + 0.3 * onda(t - 0.3);
     P.coda = -2.85 + 0.1 * onda(t);
     P.curva = -0.1;
-    P.lungCoda = 74;
+    P.lungCoda = 64;
     P.bocca = 0.3;
     P.sguardo = [0.85, -0.1];
   }
@@ -1565,55 +1683,57 @@ function caneLato(ctx, P) {
 /** Biscotto di fronte, seduto. */
 
 function testaCaneLato(ctx, P) {
-  const apri = P.bocca, cer = [12, 13];            // cerniera della mandibola
+  const apri = P.bocca, cer = [12, 15];            // cerniera della mandibola
   const ruotaM = (x, y) => {
     const a = apri * 0.5, ddx = x - cer[0], ddy = y - cer[1];
     return [cer[0] + ddx * Math.cos(a) - ddy * Math.sin(a), cer[1] + ddx * Math.sin(a) + ddy * Math.cos(a)];
   };
   if (apri > 0) {                                   // bocca aperta: interno, lingua, mandibola
-    pezzo(ctx, Forme.poligono([[10, 9], [58, 6], ruotaM(52, 18), ruotaM(16, 22)]), C.boccaDentro, 0, 1.7);
+    pezzo(ctx, Forme.poligono([[10, 11], [60, 8], ruotaM(54, 20), ruotaM(16, 24)]), C.boccaDentro, 0, 1.7);
     ctx.save();
     ctx.translate(...cer);
     ctx.rotate(apri * 0.5);
     ctx.translate(-cer[0], -cer[1]);
-    if (!P.ringhia) tinta(ctx, Forme.ellisse(36, 15, 11, 4), C.lingua);
-    pezzo(ctx, Forme.ellisse(32, 18, 22, 5.5, -0.04), C.cane, 0);
+    if (!P.ringhia) tinta(ctx, Forme.ellisse(38, 17, 11, 4), C.lingua);
+    pezzo(ctx, Forme.ellisse(34, 20, 23, 6, -0.04), C.cane, 0);
     ctx.restore();
   }
   const muso = new Path2D();
-  muso.moveTo(6, -17);
-  muso.quadraticCurveTo(17, -13, 27, -13);          // lo "stop" appena accennato
-  muso.quadraticCurveTo(48, -12, 59, -7);           // il dorso del muso, lungo
-  muso.quadraticCurveTo(71, -1, 64, 10);            // la punta tonda
-  muso.quadraticCurveTo(44, 18, 22, 19);            // la mandibola
-  muso.lineTo(4, 14);
+  muso.moveTo(8, -18);
+  muso.quadraticCurveTo(19, -14, 29, -14);          // lo "stop" appena accennato
+  muso.quadraticCurveTo(50, -13, 61, -7);           // il dorso del muso
+  muso.quadraticCurveTo(73, 0, 66, 11);             // la punta tonda
+  muso.quadraticCurveTo(46, 20, 22, 21);            // la mandibola
+  muso.lineTo(4, 16);
   muso.closePath();
-  pezzo(ctx, [Forme.ellisse(0, 0, 27, 25), muso], C.cane, 0.6);
-  pezzo(ctx, Forme.ellisse(64, -2, 7, 5.5, 0.15), C.naso, 0, 1.5);
-  tinta(ctx, Forme.ellisse(62.5, -4, 2.3, 1.3), '#ffffff', 0.7);
-  if (!apri) tratto(ctx, [[62, 10], [46, 14.5], [31, 16], [25, 12.5]], 1.5);
+  pezzo(ctx, [Forme.ellisse(0, 0, 30, 28), muso], C.cane, 0.6);
+  pezzo(ctx, Forme.ellisse(66, -2, 7.5, 5.8, 0.15), C.naso, 0, 1.5);
+  tinta(ctx, Forme.ellisse(64.5, -4, 2.4, 1.3), '#ffffff', 0.7);
+  if (!apri) tratto(ctx, [[64, 11], [48, 16], [33, 17.5], [27, 14]], 1.5);
   if (P.ringhia) {                                  // denti digrignati e muso arricciato
-    pezzo(ctx, Forme.poligono([[22, 12], [54, 9], [54, 15], [23, 19]]), C.bianco, 0, 1.6);
+    pezzo(ctx, Forme.poligono([[22, 14], [56, 11], [56, 17], [23, 21]]), C.bianco, 0, 1.6);
     const zz = [];
-    for (let k = 0; k <= 8; k++) zz.push([23 + k * 3.8, k % 2 ? 18 : 11]);
+    for (let k = 0; k <= 8; k++) zz.push([23 + k * 4, k % 2 ? 20 : 13]);
     linea(ctx, spezzata(zz), { spessore: px(1.2) });
-    tratto(ctx, [[28, -8], [32, -12], [36, -8]], 1.4);
-    tratto(ctx, [[37, -7], [41, -11], [45, -7]], 1.4);
+    tratto(ctx, [[30, -10], [34, -14], [38, -10]], 1.4);
+    tratto(ctx, [[39, -9], [43, -13], [47, -9]], 1.4);
   }
-  for (const k of [0, 1, 2]) tratto(ctx, [[-10 + k * 5, -24], [-12 + k * 5, -31]], 1.4);   // ciuffetto
-  orecchioCane(ctx, -11, -14, P.orecchio);
-  occhio(ctx, 9, -5, 7.5, 10, P.sguardo, P.occhi);
-  tratto(ctx, P.ringhia ? [[0, -14], [9, -12], [18, -7]] : [[1, -18], [9, -20.5], [16, -17]], P.ringhia ? 2.3 : 1.3, P.ringhia ? INK : INK2);   // sopracciglio
+  for (const k of [0, 1, 2]) tratto(ctx, [[-10 + k * 5, -27], [-12 + k * 5, -34]], 1.4);   // ciuffetto
+  orecchioCane(ctx, -12, -16, P.orecchio);
+  occhio(ctx, 10, -6, 8.5, 11.5, P.sguardo, P.occhi);
+  tratto(ctx, P.ringhia ? [[0, -16], [10, -14], [20, -8]] : [[1, -21], [10, -23.5], [18, -20]], P.ringhia ? 2.3 : 1.3, P.ringhia ? INK : INK2);   // sopracciglio
   if (P.borsa) {                                    // la borsetta tenuta in bocca (dondola)
     ctx.save();
-    ctx.translate(42, 16);
+    ctx.translate(44, 18);
     ctx.rotate(P.oscBorsa);
-    ctx.translate(-42, -16);
-    tubo(ctx, [[38, 18], [20, 64], [52, 60], [52, 20]], 2.4, C.salmoneScuro, 1.5);
-    borsetta(ctx, 46, 29, 15);
+    ctx.translate(-44, -18);
+    tubo(ctx, [[40, 20], [22, 66], [54, 62], [54, 22]], 2.4, C.salmoneScuro, 1.5);
+    borsetta(ctx, 48, 31, 15);
     ctx.restore();
   }
 }
+
+/** Testa di fronte: cranio tondo e grande, muso che viene verso di noi, nasino, occhi con le sopracciglia. */
 
 /** Testa di fronte: cranio tondo, muso che viene verso di noi, nasino, occhi con le sopracciglia. */
 
@@ -1647,19 +1767,19 @@ function caneFronte(ctx, posa, t, extra) {
 /** Biscotto visto da dietro mentre cammina via. */
 
 function testaCaneFronte(ctx, E) {
-  pezzo(ctx, Forme.ellisse(0, 0, 28, 26), C.cane, 0.7);
-  for (const k of [-1, 0, 1]) tratto(ctx, [[k * 5, -24], [k * 6.5, -31]], 1.4);
-  for (const s of [-1, 1]) orecchioCane(ctx, s * 22, -14, s * -0.08, s);
-  pezzo(ctx, Forme.ellisse(0, 15, 14.5, 15), C.muso, 0, 1.7);
+  pezzo(ctx, Forme.ellisse(0, 0, 31, 28), C.cane, 0.7);
+  for (const k of [-1, 0, 1]) tratto(ctx, [[k * 5, -26], [k * 6.5, -33]], 1.4);
+  for (const s of [-1, 1]) orecchioCane(ctx, s * 24, -14, s * -0.08, s);
+  pezzo(ctx, Forme.ellisse(0, 15, 15, 15), C.muso, 0, 1.7);
   if (E.bocca) {
     pezzo(ctx, Forme.ellisse(0, 22, 8, 8), C.boccaDentro, 0, 1.7);
     tinta(ctx, Forme.ellisse(0, 26.5, 5, 3), C.lingua);
   } else tratto(ctx, [[-6, 20], [0, 23], [6, 20]], 1.5);
-  pezzo(ctx, Forme.ellisse(0, 9, 7, 5), C.naso, 0, 1.5);
-  tinta(ctx, Forme.ellisse(-1.6, 7.6, 2, 1.2), '#ffffff', 0.7);
+  pezzo(ctx, Forme.ellisse(0, 9, 7.5, 5.4), C.naso, 0, 1.5);
+  tinta(ctx, Forme.ellisse(-1.8, 7.5, 2.2, 1.2), '#ffffff', 0.7);
   for (const s of [-1, 1]) {
-    occhio(ctx, s * 11.5, -6, 7.5, 10, E.sguardo, E.occhi);
-    tratto(ctx, [[s * 5, -19], [s * 11.5, -21], [s * 18, -18]], 1.3, INK2);
+    occhio(ctx, s * 12.5, -6, 8.5, 11.5, E.sguardo, E.occhi);
+    tratto(ctx, [[s * 5.5, -20.5], [s * 12.5, -22.5], [s * 19.5, -19.5]], 1.3, INK2);
   }
 }
 
@@ -2142,25 +2262,30 @@ function leggiNome(nome) {
   return [parti[0], parti.slice(1).join('_') || 'fermo', k];
 }
 
-/**
- * Costruisce un atlante: ogni cella ha l'origine a terra, al centro in basso.
- * disegna(ctx, vista, posa, fase) riceve la fase 0..1 del ciclo della posa.
- * alias: { nomeFotogramma: nomeDelDisegnoDaRiusare }.
- */
 function atlante(nomi, l, a, altezzaMondo, disegna, alias = {}) {
   const quanti = {};
   for (const n of nomi) { const [v, p] = leggiNome(n); quanti[v + '_' + p] = (quanti[v + '_' + p] || 0) + 1; }
   const unici = nomi.filter((n) => !alias[n]);
+  const cella = nuovaTela(l, a), appoggio = nuovaTela(l, a), cc = cella.getContext('2d');
   const { tela, fotogrammi } = creaAtlante(unici, { l, a }, (ctx, nome, cl, ca) => {
-    ctx.translate(cl / 2, ca - 1.5);
+    cc.setTransform(1, 0, 0, 1, 0, 0);
+    cc.clearRect(0, 0, l, a);
+    cc.translate(cl / 2, ca - 1.5);
     const [v, p, k] = leggiNome(nome);
     SC = 1;
-    disegna(ctx, v, p, k / quanti[v + '_' + p]);
+    disegna(cc, v, p, k / quanti[v + '_' + p]);
+    cc.setTransform(1, 0, 0, 1, 0, 0);
+    contornoEsterno(cella, appoggio);
+    ctx.drawImage(cella, 0, 0);
   });
   const tutti = {};
   for (const n of nomi) tutti[n] = Object.assign({}, fotogrammi[alias[n] || n]);
   return { tela, fotogrammi: tutti, cella: { l, a }, altezzaMondo };
 }
+
+/* ======================= BISCOTTO ======================= */
+
+/** Piedino tondo con le dita (di lato). */
 
 /** Dipinge tutti i personaggi e li restituisce come atlanti per il motore. */
 export async function creaPersonaggi() {

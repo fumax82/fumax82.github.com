@@ -62,6 +62,28 @@ const SPETTACOLO = {
   },
 };
 
+/*
+ * OGNI MATERIALE SI IMMAGINA A MODO SUO
+ * Quando il bastone tocca qualcosa, Lia lo "vede" attraverso il suono:
+ * il vetro tintinna e si colora di azzurro cristallino, il legno è caldo
+ * come il miele, le foglie frusciano e fanno volare foglioline...
+ *   colore: il colore dell'onda e della velatura
+ *   forma/colori: le particelle sul fronte e nello schizzo del colpo
+ *   dipinte: true = particelle dipinte (foglie, pagine), false = di luce
+ */
+export const MATERIALI = {
+  pietra:   { colore: '#ffd36b', forma: [FORME.scintilla, FORME.punto, FORME.stella], colori: ['#fff3c0', '#ffe08a', '#ffffff'] },
+  mattoni:  { colore: '#f4a37e', forma: [FORME.scintilla, FORME.punto, FORME.stella], colori: ['#ffd2b8', '#f7a07a', '#fff0d8'] },
+  legno:    { colore: '#e9b872', forma: [FORME.foglia, FORME.punto], colori: ['#e9b872', '#c98d4a', '#f6d79a'], dipinte: true },
+  intonaco: { colore: '#ffd9b0', forma: [FORME.petalo, FORME.fiore], colori: ['#ffe2b8', '#f7c6d8', '#fff6e8'], dipinte: true },
+  vetro:    { colore: '#a9dcff', forma: [FORME.scintilla, FORME.stella, FORME.anello], colori: ['#dff3ff', '#bfe6ff', '#ffffff'] },
+  metallo:  { colore: '#c4d2f2', forma: [FORME.anello, FORME.scintilla, FORME.nota], colori: ['#e0e8ff', '#c9d6f0', '#ffffff'] },
+  foglie:   { colore: '#9fd08a', forma: [FORME.foglia], colori: ['#8fc27f', '#b4dea1', '#6faa5e'], dipinte: true },
+  ceramica: { colore: '#9fc4f0', forma: [FORME.fiore, FORME.scintilla], colori: ['#a8c8f0', '#f7b6d8', '#ffffff'] },
+  libri:    { colore: '#f1dcae', forma: [FORME.pagina, FORME.piuma], colori: ['#fffaf0', '#f3ead6'], dipinte: true },
+  acqua:    { colore: '#9fd4ff', forma: [FORME.bolla, FORME.goccia], colori: ['#dff3ff', '#ffffff', '#bfe6ff'], dipinte: true },
+};
+
 export class Magia {
   constructor(gioco) {
     this.gioco = gioco;
@@ -75,6 +97,9 @@ export class Magia {
 
   /** Una nuova onda: luce del colore giusto, e per la bacchetta increspatura e nota. */
   nuovaOnda(onda, tipo) {
+    // il colpo di bastone prende il colore del materiale toccato
+    const m = onda.materiale && MATERIALI[onda.materiale];
+    if (m) onda.colore.set(m.colore);
     this.coloreVoluto.copy(onda.colore);
     const g = this.gioco;
     if (tipo === 'bastone' || tipo === 'magia') {
@@ -85,7 +110,24 @@ export class Magia {
       this.ondaSchermo = { x: (this._v.x + 1) / 2, y: (this._v.y + 1) / 2, t: 0, forza, durata: tipo === 'magia' ? 1.4 : 0.9 };
       g.acquerello.uniformi.uColoreOnda.value.copy(onda.colore);
       g.regia.pulsa(tipo === 'magia' ? 0.9 : 0.55);
-      if (tipo === 'bastone') Audio.nota(g.lia.colpi, g.lia.magica ? 0.4 : 0.25);
+      if (tipo === 'bastone' && g.lia.magica) Audio.nota(g.lia.colpi, 0.32);
+    }
+  }
+
+  /** Lo "schizzo" del colpo: particelle del materiale proprio dove il bastone tocca. */
+  colpo(materiale, x, y, z) {
+    const g = this.gioco;
+    const m = MATERIALI[materiale] || MATERIALI.pietra;
+    const magica = g.lia.magica;
+    (m.dipinte ? g.particelle : g.luci).emetti(x, y, z, magica ? 16 : 9, {
+      forma: m.forma, colori: m.colori, velocita: 1.3, su: 1.0, gravita: m.dipinte ? 0.9 : 1.4,
+      vita: 1.2, dim: m.dipinte ? 0.15 : 0.12, rotazione: 1,
+    });
+    if (magica) {
+      g.luci.emetti(x, y, z, 12, {
+        forma: [FORME.stella, FORME.scintilla], colori: ['#fff0a0', '#ffd36b', '#ffffff', m.colore],
+        velocita: 1.6, su: 1.2, gravita: 1.2, vita: 1.2, dim: 0.16,
+      });
     }
   }
 
@@ -107,7 +149,12 @@ export class Magia {
       for (const o of P.onde) {
         let nome = o.tipo;
         if (nome === 'bastone' && magica) nome = 'bastoneMagico';
-        const sp = SPETTACOLO[nome];
+        let sp = SPETTACOLO[nome];
+        // il fronte del bastone porta con sé le particelle del materiale toccato
+        const m = o.materiale && MATERIALI[o.materiale];
+        if (sp && m && o.tipo === 'bastone') {
+          sp = { ...sp, luce: !m.dipinte, forma: magica ? m.forma.concat([FORME.stella]) : m.forma, colori: m.colori };
+        }
         if (!sp || o.r > o.raggio) continue;
         o.accumulo += 2 * Math.PI * Math.max(o.r, 0.5) * dt * sp.densita * Math.max(0.3, 1 - o.r / o.raggio);
         let n = Math.min(10, Math.floor(o.accumulo));

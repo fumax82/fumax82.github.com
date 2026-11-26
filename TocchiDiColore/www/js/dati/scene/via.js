@@ -12,6 +12,21 @@ export default {
   arte: { modulo: 'scene_via', nome: 'via' },
   musica: 'passeggiata',
   percorso: [[0, 0.08, 0], [46.15, 0.08, 0]],
+  // Lia cammina vicino al muro (come nel film) per poterlo toccare col bastone
+  vicinoAlMuro: [{ da: 0, a: 42.3, d: 1.15 }],
+  // di che cosa sono fatti muro e pavimento, tratto per tratto (vale l'ultimo che corrisponde):
+  // ogni materiale ha il suo suono e il suo modo di "colorarsi" quando lo tocca il bastone
+  materiali: [
+    { da: -5, a: 4, muro: 'mattoni' },
+    { da: 4, a: 10, muro: 'intonaco' },
+    { da: 6.3, a: 7.8, muro: 'legno' },
+    { da: 10, a: 12.5, muro: 'foglie' },
+    { da: 12.5, a: 18, muro: 'vetro' },
+    { da: 18, a: 33, muro: 'intonaco' },
+    { da: 33, a: 38, muro: 'ceramica' },
+    { da: 38, a: 44, muro: 'mattoni' },
+    { da: 44, a: 47, muro: 'legno' },
+  ],
   arrivi: {
     inizio: { s: 2.2, verso: 1 },
     staccionata: { s: 45.7, verso: 1 },
@@ -32,7 +47,9 @@ export default {
   meraviglie: [
     { id: 'vasi', x: 42.5, y: 0.6, z: -1.5, effetto: 'farfalle', testo: 'Bonsai, lavanda... e due farfalle che si svegliano!' },
     { id: 'fiori_azzurri', x: 35.5, y: 2.6, z: -1.7, effetto: 'fiori', testo: 'Fiori arancioni che si arrampicano sul muro azzurro!' },
-    { id: 'lampione', x: 33.6, y: 2.8, z: 0.95, effetto: 'stelle', testo: 'Il lampione si accende... di stelle!' },
+    { id: 'lampione', x: 33.6, y: 2.8, z: 0.95, effetto: 'sveglia', attore: 'lampione_vivo', nascondi: 'lampione2', testo: 'Il lampione si sveglia!',
+      dialogo: ['Ahhh... che sonno. Oh! Una bambina con il bastone!', 'Toc toc, mi hai svegliato. Aspetta... ecco: ti faccio un po\' di luce.'] },
+    { id: 'chiocciola', x: 25.0, y: 0.3, z: -1.6, effetto: 'appare', attore: 'chiocciola', testo: 'Una chiocciola postina, con il berretto!' },
     { id: 'bicicletta', x: 31.0, y: 0.7, z: -1.2, effetto: 'note', testo: 'Drin drin! Una bicicletta con il cestino.' },
     { id: 'albero', x: 27.0, y: 3.0, z: 0.9, effetto: 'uccelli', testo: 'Nell\'albero dormivano degli uccellini!' },
     { id: 'caffe', x: 15.5, y: 1.4, z: -1.6, effetto: 'note', testo: 'Dal caffè arriva una musica... e profumo di brioche.' },
@@ -71,17 +88,23 @@ export default {
     { id: 'biscotto', tipo: 'animale', arte: 'biscotto', nome: 'Biscotto', x: 3.2, z: 0.32 },
     { id: 'ladro', tipo: 'attore', arte: 'ladro', nome: 'L\'uomo col berretto', x: 60, z: 0.5, visibile: false, velocita: 1.3, lunghezzaPasso: 1.5 },
     // una signora passeggia lungo le vetrine, dietro a Lia
-    { id: 'signora', tipo: 'persona', arte: 'signora', nome: 'Signora', x: 16, z: -1.2, y: 0.08, ronda: [[3, -1.2], [21, -1.2]], velocita: 0.8, parla: false },
+    { id: 'signora', tipo: 'persona', arte: 'signora', nome: 'Signora', x: 16, z: -0.35, y: 0.08, ronda: [[3, -0.35], [21, -0.35]], velocita: 0.8, parla: false },
     { id: 'auto1', tipo: 'veicolo', arte: 'auto_rossa', da: [-14, 3.0], a: [60, 3.0], velocita: 3.2, parti: 0.2 },
     { id: 'auto2', tipo: 'veicolo', arte: 'autobus', da: [60, 5.7], a: [-14, 5.7], velocita: 2.6, parti: 0.55 },
     { id: 'auto3', tipo: 'veicolo', arte: 'auto_gialla', da: [-14, 3.0], a: [60, 3.0], velocita: 3.0, parti: 0.75 },
     { id: 'piccioni', tipo: 'piccioni', x: 18.5, z: 0.75, quanti: 5 },
+    // personaggi delle fiabe: compaiono solo quando Lia li "scopre" nel mondo bianco
+    { id: 'lampione_vivo', tipo: 'lampione', arte: 'lampione_vivo', nome: 'Il Lampione', x: 33.6, z: 0.95, y: 0.08, visibile: false,
+      chiacchiere: ['Di notte faccio luce alle lucciole, di giorno ai pensieri.', 'Il tuo cane? Ha la coda più veloce del vento!'] },
+    { id: 'chiocciola', tipo: 'persona', arte: 'chiocciola', nome: 'La chiocciola postina', x: 25, z: -1.6, y: 0.08, visibile: false,
+      ronda: [[22.5, -1.6], [27.5, -1.6]], velocita: 0.12, lunghezzaPasso: 0.3,
+      chiacchiere: ['Posta! Posta! Vado pianissimo... ma arrivo sempre.', 'Un cane giallo? È passato così veloce che mi ha fatto girare il guscio!'] },
   ],
   oggetti: [
     { arte: 'lampione', x: 12.4, z: 0.95, y: 0.08, scala: 1.25 },
-    { arte: 'lampione', x: 33.6, z: 0.95, y: 0.08, scala: 1.25 },
-    { arte: 'panchina', x: 20.5, z: -1.2, y: 0.08, scala: 1.2 },
-    { arte: 'bicicletta', x: 31.0, z: -1.3, y: 0.08, scala: 1.2 },
+    { id: 'lampione2', arte: 'lampione', x: 33.6, z: 0.95, y: 0.08, scala: 1.25 },
+    { arte: 'panchina', x: 20.5, z: -1.55, y: 0.08, scala: 1.2 },
+    { arte: 'bicicletta', x: 31.0, z: -1.6, y: 0.08, scala: 1.2 },
   ],
 
   /* --- Cose da fare ------------------------------------------------------- */
@@ -89,11 +112,11 @@ export default {
     { id: 'buco', s: 45.7, raggio: 0.8, etichetta: 'Tocca' },
     { id: 'passaggio', s: 45.7, raggio: 0.8, etichetta: 'Attraversa' },
   ],
-  // nel mondo bianco Lia sbatte contro gli alberi che non ha ancora "visto"
+  // nel mondo bianco Lia sbatte contro le cose appoggiate al muro che non ha ancora "visto"
   ostacoli: [
-    { id: 'albero1', s: 7.0, dz: 0.9, colore: '#9fd08a' },
-    { id: 'albero2', s: 27.0, dz: 0.9, colore: '#9fd08a' },
-    { id: 'lampione2', s: 33.6, dz: 0.95, colore: '#cfc7e8' },
+    { id: 'panchina', s: 20.5, colore: '#d9b48a', testo: 'Ahi! Una panchina... di legno, dura dura.' },
+    { id: 'bicicletta', s: 31.0, colore: '#8fc6e8', testo: 'Oh! Una bicicletta appoggiata al muro.' },
+    { id: 'vasi', s: 41.4, colore: '#c9b6ea', testo: 'Piano... qui ci sono dei vasi di fiori!' },
   ],
   effetti: [
     // profumo di caffè dalla porta del caffè

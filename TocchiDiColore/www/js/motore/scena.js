@@ -65,7 +65,7 @@ export class Scena {
     this.id = def.id;
     this.gioco = gioco;
     this.gruppo = new THREE.Group();
-    this.percorso = new Percorso(def.percorso);
+    this.percorso = new Percorso(def.percorso, def.vicinoAlMuro);
     this.animati = [];
     this.attori = [];
     this.interazioni = [];
@@ -252,6 +252,21 @@ export class Scena {
     return this.percorso.punto(v.s).y;
   }
 
+  /**
+   * Di che cosa sono fatti muro e pavimento in s?
+   * → { muro: 'mattoni' | ... | null, terra: 'pietra' | ..., vicino: true se il muro è a portata
+   *     di bastone anche senza scostarsi (per esempio il parapetto del ponte) }
+   */
+  materiale(s) {
+    const r = { muro: null, terra: this.def.superficie || 'pietra', vicino: false };
+    for (const m of this.def.materiali || []) {
+      if (s < m.da || s > m.a) continue;
+      if (m.muro !== undefined) { r.muro = m.muro; r.vicino = !!m.vicino; }
+      if (m.terra) r.terra = m.terra;
+    }
+    return r;
+  }
+
   /** Che cosa c'è sotto i piedi in s? ('pietra', 'legno', 'erba') */
   superficie(s) {
     for (const t of this.def.superfici || []) if (s >= t.da && s <= t.a) return t.tipo;
@@ -268,8 +283,8 @@ export class Scena {
       if (o.scoperto || o.attivo === false) continue;
       const attraversa = (s0 < o.s && s1 >= o.s) || (s0 > o.s && s1 <= o.s);
       if (!attraversa) continue;
-      const p = this.percorso.punto(o.s);
-      if (this.percezione.valore(p.x, p.z + (o.dz || 0)) > 0.45) { o.scoperto = true; continue; }
+      const p = this.percorso.puntoLaterale(o.s);
+      if (this.percezione.valore(p.x, p.z) > 0.45) { o.scoperto = true; continue; }
       o.scoperto = true;   // dopo l'urto lo conosce: la prossima volta passa
       return o;
     }

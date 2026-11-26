@@ -74,11 +74,11 @@ const PROLOGO = {
     // --- il ladro --------------------------------------------------------
     await g.quando(() => L.s > 22);
     const ladro = g.attore('ladro');
-    ladro.teletrasporta(L.x + 13, 0.72, -1);
+    ladro.teletrasporta(L.x + 13, L.z + 0.6, -1);
     ladro.visibile = true;
     g.pensa('Passi pesanti... qualcuno ci viene incontro.', 3);
     while (ladro.x - L.x > 1.0) {
-      ladro.vaiA(L.x + 0.9, 0.72, 1.35);
+      ladro.vaiA(L.x + 0.9, L.z + 0.6, 1.35);
       await g.attendi(0.2);
     }
     abbai.ferma();
@@ -86,7 +86,7 @@ const PROLOGO = {
     ladro.ferma();
     ladro.guarda(L.x, L.z);
     // primo piano: lo scippo
-    g.inquadra([L.x + 0.6, 1.05, 2.9], [L.x + 0.55, 0.95, 0.2], 0, 40);
+    g.inquadra([L.x + 0.6, 1.05, L.z + 2.9], [L.x + 0.55, 0.95, L.z + 0.2], 0, 40);
     ladro.posa('scippo', 0.9);
     Audio.scippo(ladro.x, ladro.z);
     L.vestiti('lia');
@@ -100,7 +100,7 @@ const PROLOGO = {
     Audio.ringhio(b.x, b.z);
     await g.attendi(0.9);
     g.libera(true);
-    ladro.percorri([[54, 0.72]], 3.8).then(() => { ladro.visibile = false; });
+    ladro.percorri([[54, L.z + 0.6]], 3.8).then(() => { ladro.visibile = false; });
     await g.attendi(0.5);
     b.faVerso();
     b.percorri([[46.0, 0.1], [46.9, 0.0]], 4.2).then(() => { b.visibile = false; });
@@ -258,18 +258,18 @@ const CAPITOLO_2 = {
     g.onda(7.6, -1.6, 'profumo', { raggio: 9 });
     const f = g.attore('fornaia');
     f.visibile = true;
-    f.teletrasporta(7.6, -1.75);
+    f.teletrasporta(7.6, -1.85);
     Audio.campanello();
-    f.vaiA(8.1, -0.85, 0.8);
+    f.vaiA(L.x + 1.0, -1.55, 0.8);
     // campo e controcampo davanti alla vetrina
-    g.inquadra([L.x - 0.9, 1.25, 3.5], [L.x + 0.5, 1.05, -0.6], 1.2, 40);
+    g.inquadra([L.x - 0.9, 1.25, L.z + 3.3], [L.x + 0.5, 1.05, L.z - 0.1], 1.2, 40);
     await g.attendi(1.2);
     await g.dialogo('fornaia', [
       'Oh! Una piccola streghetta davanti alla mia vetrina!',
       'Hai sentito il profumo, vero? È appena uscito dal forno.',
       'Vieni dentro, ti faccio assaggiare qualcosa.',
     ]);
-    f.vaiA(7.6, -1.9, 0.9).then(() => { f.visibile = false; });
+    f.vaiA(7.6, -1.95, 0.9).then(() => { f.visibile = false; });
     g.apriPorta('porta_forno');
     g.libera();
     g.controllo(true);
@@ -315,7 +315,7 @@ const CAPITOLO_3 = {
     await g.capitolo('Capitolo 3', 'Il gattino del vicolo');
     const gatto = g.attore('gattino');
     gatto.visibile = true;
-    gatto.teletrasporta(21.5, 0.3, -1);
+    gatto.teletrasporta(21.5, -0.85, -1);
     gatto.versiAutomatici = true;
     g.obiettivo('Cammina verso la casa gialla');
     await g.quando(() => distanza(L, gatto) < 3.4);
@@ -324,7 +324,7 @@ const CAPITOLO_3 = {
     // Lia non può superare il gattino: è lui che fa strada
     const percorso = g.corrente.percorso;
     const trattieni = g.ogni(0.1, () => { L.limiti = [0, Math.max(L.s, percorso.piuVicino(gatto.x, gatto.z).s - 0.7)]; });
-    const tappe = [[26.3, 0.3], [27.9, -1.7], [28.3, -6.4], [28.3, -10.4], [28.3, -13.4]];
+    const tappe = [[26.3, -0.9], [27.6, -2.0], [27.85, -6.4], [27.85, -10.4], [27.85, -13.4]];
     for (let k = 0; k < tappe.length; k++) {
       await gatto.percorri([tappe[k]], 1.7);
       gatto.guarda(L.x, L.z);
@@ -524,26 +524,32 @@ const FINALE = {
     const b = g.attore('biscotto');
     b.visibile = true;
     b.conBorsa = true;
-    b.teletrasporta(14.5, 0.25, -1);
+    b.teletrasporta(14.5, L.z + 0.35, -1);
     Audio.abbaio(b.x, b.z);
-    g.onda(11, 0.2, 'abbaio');
+    g.onda(11, L.z + 0.2, 'abbaio');
     g.pensa('Questo abbaio... lo riconoscerei tra mille!', 3, true);
     g.controllo(false);
     L.verso = 1;
-    g.inquadra([L.x + 1.7, 0.95, 3.4], [L.x + 1.3, 0.6, 0], 1.5, 40);
-    await b.percorri([[L.x + 0.95, 0.22]], 3.2);
+    g.inquadra([L.x + 1.7, 0.95, L.z + 3.4], [L.x + 1.3, 0.6, L.z], 1.5, 40);
+    await b.percorri([[L.x + 0.95, L.z + 0.22]], 3.2);
     b.guarda(L.x, L.z);
     L.posa('sorpresa', 2);
     g.scintille(L.x, L.y + 1.2, L.z, 20, { forma: [FORME.stella] });
+    // i fiori della piazzetta cantano di gioia
+    const fiori = g.attore('fiori');
+    if (fiori) {
+      Audio.coro(fiori.x, fiori.z);
+      g.emettitore(fiori.x, 0.9, fiori.z, 3, { forma: FORME.nota, colori: ['#f7a8c8', '#fff3a8', '#c9b6ea'], velocita: 0.3, su: 0.7, vita: 2.2, dim: 0.18 });
+    }
     await g.attendi(1.4);
     // l'abbraccio
     await g.bianco(0.7, 0.25);
     L.nascosta = true;
     b.visibile = false;
-    const abbraccio = g.sagomaAbbraccio(L.x + 0.45, 0.1);
-    g.inquadra([L.x + 0.45, 0.85, 2.7], [L.x + 0.45, 0.62, 0.1], 0, 38);
+    const abbraccio = g.sagomaAbbraccio(L.x + 0.45, L.z + 0.1);
+    g.inquadra([L.x + 0.45, 0.85, L.z + 2.7], [L.x + 0.45, 0.62, L.z + 0.1], 0, 38);
     await g.bianco(0, 0.8);
-    g.inquadra([L.x + 0.45, 0.8, 2.2], [L.x + 0.45, 0.6, 0.1], 6, 36);
+    g.inquadra([L.x + 0.45, 0.8, L.z + 2.2], [L.x + 0.45, 0.6, L.z + 0.1], 6, 36);
     const cuori = g.ogni(0.25, () => g.particelle.emetti(L.x + 0.45, 0.9, L.z, 3, { forma: [FORME.cuore, FORME.stella], colori: ['#f7a8c8', '#ffd36b', '#ffffff'], su: 0.9, velocita: 0.5, vita: 1.8, dim: 0.14 }));
     await g.dialogo('lia', ['Biscotto! Mi hai ritrovata!', 'E... questa è la mia borsa! L\'hai ripresa tu?']);
     await g.dialogo('biscotto', ['Bau! Bau!']);

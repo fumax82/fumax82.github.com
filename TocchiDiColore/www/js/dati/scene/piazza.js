@@ -11,6 +11,20 @@ export default {
   arte: { modulo: 'scene_piazza', nome: 'piazza' },
   musica: 'magia',
   percorso: [[0, 0, 0], [26.6, 0, 0], [27.5, 0, -0.4], [28, 0, -1.3], [28, 0, -15.6]],
+  // Lia cammina vicino al muro (come nel film) per poterlo toccare col bastone
+  vicinoAlMuro: [{ da: 1.6, a: 26.0, d: 1.35 }, { da: 27.6, a: 60, d: 0.55 }],
+  materiali: [
+    { da: -2, a: 1.6, muro: 'legno' },
+    { da: 1.6, a: 5, muro: 'intonaco' },
+    { da: 5, a: 17, muro: 'mattoni' },
+    { da: 7.0, a: 8.1, muro: 'legno' },
+    { da: 9.5, a: 15.5, muro: 'vetro' },
+    { da: 17, a: 19.5, muro: 'metallo' },
+    { da: 19.5, a: 27, muro: 'intonaco' },
+    { da: 27.6, a: 50, muro: 'intonaco' },
+    { da: 31, a: 33.5, muro: 'foglie' },
+    { da: 36, a: 38, muro: 'foglie' },
+  ],
   arrivi: {
     staccionata: { s: 0.7, verso: 1 },
     dal_forno: { s: 7.5, verso: 1 },
@@ -29,6 +43,7 @@ export default {
     { id: 'staccionata', x: 0.2, y: 0.8, z: -1.0, effetto: 'fiori', testo: 'Anche da questa parte la staccionata è piena di fiori.' },
     { id: 'vetrina', x: 12.5, y: 1.3, z: -1.9, effetto: 'stelle', testo: 'Una vetrina piena di pane, ciambelle e brioche!' },
     { id: 'giardino', x: 18.2, y: 1.5, z: -2.6, effetto: 'farfalle', testo: 'Un giardino segreto dietro il cancello!' },
+    { id: 'rana', x: 18.4, y: 0.6, z: -1.85, effetto: 'suona', attore: 'rana', testo: 'Una rana che suona il violino!' },
     { id: 'casa_gialla', x: 23.0, y: 3.6, z: -1.9, effetto: 'uccelli', testo: 'Dal tetto della casa gialla volano via i passerotti.' },
     { id: 'bidone', x: 27.3, y: 0.6, z: -9.5, effetto: 'note', testo: 'Il bidone suona come un tamburo: bum bum!' },
     { id: 'fondo_vicolo', x: 28.0, y: 1.5, z: -16.3, effetto: 'palloncino', testo: 'Un palloncino si alza dal fondo del vicolo!' },
@@ -59,18 +74,21 @@ export default {
     ] },
     // 6. in fondo al vicolo: controcampo, Lia ci viene incontro
     { da: 39.5, a: 44.5, tipo: 'fisso', taglio: true, chiavi: [
-      { s: 39.5, pos: [28.6, 0.95, -16.9], guarda: [0, 0.75, 0], fov: 42 },
+      { s: 39.5, pos: [28.3, 0.95, -16.9], guarda: [0, 0.75, 0], fov: 42 },
     ] },
   ],
   attori: [
-    { id: 'fornaia', tipo: 'persona', arte: 'fornaia', nome: 'La fornaia', x: 7.6, z: -1.25, visibile: false, parla: false,
+    { id: 'fornaia', tipo: 'persona', arte: 'fornaia', nome: 'La fornaia', x: 7.6, z: -1.8, visibile: false, parla: false,
       chiacchiere: ['Il pane è caldo, il forno scoppietta... che bella giornata!'] },
     { id: 'gattino', tipo: 'animale', arte: 'gattino', nome: 'Gattino', verso: 'miagolio', x: 21, z: 0.3, visibile: false, velocita: 1.6, lunghezzaPasso: 0.5 },
     { id: 'piccioni', tipo: 'piccioni', x: 14, z: 1.2, quanti: 4 },
+    // la rana musicista davanti al cancello del giardino
+    { id: 'rana', tipo: 'persona', arte: 'rana', nome: 'La rana musicista', x: 18.4, z: -1.85, visibile: false,
+      chiacchiere: ['Una canzone per la streghetta! Uno, due, tre...', 'Un cane giallo? Correva verso il vicolo dei gatti... a tempo di valzer!'] },
   ],
   oggetti: [
     { arte: 'cesto_baguette', x: 10.2, z: -1.55, scala: 1.3 },
-    { arte: 'panchina', x: 21.5, z: -1.4, scala: 1.2 },
+    { arte: 'panchina', x: 21.5, z: -1.75, scala: 1.2 },
     { arte: 'vaso_lavanda', x: 18.0, z: -1.7, scala: 1.4 },
     { arte: 'vaso_foglie', x: 25.6, z: -1.7, scala: 1.4 },
     { arte: 'bidone', x: 27.2, z: -9.5, scala: 1.2 },
@@ -83,7 +101,7 @@ export default {
     { id: 'uscita_vicolo', s: 42.5, raggio: 0.6, etichetta: 'Avanti' },
   ],
   ostacoli: [
-    { id: 'panchina', s: 21.5, dz: -1.4 },
+    { id: 'panchina', s: 21.5, colore: '#d9b48a', testo: 'Ahi! Una panchina!' },
   ],
   effetti: [
     // profumo di pane che esce dalla porta del forno

@@ -21,10 +21,20 @@ export default {
     [37, 0, 0],
     [41, 3.0, 0],
   ],
-  larghezzaPercorso: 1.6,
+  larghezzaPercorso: 2.5,
   // la mappa della percezione copre anche il canale che si allontana verso il fondo
   percezione: { x: -14, z: -42, larghezza: 70, profondita: 56 },
   suolo: -1.3,
+  // Lia cammina vicino al muro (come nel film) per poterlo toccare col bastone
+  vicinoAlMuro: [{ da: 0, a: 10.4, d: 1.85 }, { da: 23.6, a: 35.8, d: 1.85 }],
+  materiali: [
+    { da: -2, a: 11, muro: 'intonaco', terra: 'pietra' },
+    { da: 11, a: 22.5, muro: 'pietra', terra: 'mattoni', vicino: true },   // il parapetto del ponte
+    { da: 22.5, a: 27, muro: 'intonaco', terra: 'pietra' },
+    { da: 27, a: 32, muro: 'legno', terra: 'pietra' },
+    { da: 32, a: 36.4, muro: 'intonaco', terra: 'pietra' },
+    { da: 36.4, a: 45, terra: 'pietra' },
+  ],
   arrivi: {
     vicolo: { s: 0.8, verso: 1 },
     dalla_libreria: { s: 29.5, verso: 1 },
@@ -53,8 +63,8 @@ export default {
   inquadrature: [
     // 1. di fianco lungo la riva (lampioni e fronde in primo piano scorrono davanti)
     { da: 0, a: 10.5, tipo: 'segui', taglio: true, chiavi: [
-      { s: 0, pos: [0.4, 1.5, 6.4], guarda: [0.5, 0.75, 0], fov: 26 },
-      { s: 10.5, pos: [-0.6, 1.7, 6.8], guarda: [0.7, 0.8, 0], fov: 27 },
+      { s: 0, pos: [0.4, 1.5, 8.2], guarda: [0.5, 0.75, 0], fov: 24 },
+      { s: 10.5, pos: [-0.6, 1.7, 8.4], guarda: [0.7, 0.8, 0], fov: 25 },
     ] },
     // 2. il ponte visto dall'acqua: dietro di lui il canale si perde lontano
     { da: 10.5, a: 23.5, tipo: 'fisso', taglio: true, seguiAltezza: 1, chiavi: [
@@ -63,8 +73,8 @@ export default {
     ] },
     // 3. la via della libreria: la camera gira piano da tre quarti a di fianco
     { da: 23.5, a: 36.5, tipo: 'segui', taglio: true, chiavi: [
-      { s: 23.5, pos: [-3.2, 1.55, 6.2], guarda: [1.2, 0.8, -0.6], fov: 28 },
-      { s: 36.5, pos: [1.8, 1.55, 6.4], guarda: [0.3, 0.8, 0], fov: 28 },
+      { s: 23.5, pos: [-3.2, 1.55, 8.0], guarda: [1.2, 0.8, -0.6], fov: 26 },
+      { s: 36.5, pos: [1.8, 1.55, 8.2], guarda: [0.3, 0.8, 0], fov: 26 },
     ] },
     // 4. la scala vista dal basso
     { da: 36.5, a: 42, tipo: 'segui', taglio: true, seguiAltezza: 1, chiavi: [
@@ -76,11 +86,21 @@ export default {
       chiacchiere: ['Che profumo di lavanda, oggi!'], scia: { ritmo: 2, forma: 13, colori: ['#c7b2e6', '#e3d4f3'], su: 0.3, velocita: 0.2, vita: 2, dim: 0.12, altezza: 1.3 } },
     { id: 'uccello', tipo: 'persona', arte: 'uccello', nome: 'Il signor Pennuto', x: 16.4, z: -0.55, chiacchiere: ['Ehm ehm!'] },
     { id: 'cavallo', tipo: 'persona', arte: 'cavallo', nome: 'Il Cavallo', x: 20.2, z: -0.5, dir: -1, chiacchiere: ['Mmh.'] },
-    { id: 'nonna', tipo: 'persona', arte: 'nonna', nome: 'Nonna Pecora', x: 25.2, z: -0.8, chiacchiere: ['Che bella giornata per una passeggiata.'] },
-    { id: 'tigre', tipo: 'persona', arte: 'tigre', nome: 'La Tigre', x: 31.0, z: -0.9, dir: -1, chiacchiere: ['Shh... sto leggendo.'] },
+    { id: 'nonna', tipo: 'persona', arte: 'nonna', nome: 'Nonna Pecora', x: 25.2, z: -2.3, chiacchiere: ['Che bella giornata per una passeggiata.'] },
+    { id: 'tigre', tipo: 'persona', arte: 'tigre', nome: 'La Tigre', x: 31.3, z: -2.3, dir: -1, chiacchiere: ['Shh... sto leggendo.'] },
     { id: 'barca1', tipo: 'veicolo', arte: 'auto_rossa', da: [14.6, -40], a: [14.6, 7.5], y: -1.3, velocita: 1.1, galleggia: true, parti: 0.3 },
     { id: 'barca2', tipo: 'veicolo', arte: 'auto_gialla', da: [19.2, 7.5], a: [19.2, -40], y: -1.3, velocita: 0.9, galleggia: true, parti: 0.6 },
     { id: 'barca3', tipo: 'veicolo', arte: 'auto_blu', da: [17.0, -40], a: [17.0, 7.5], y: -1.3, velocita: 0.7, galleggia: true, parti: 0.85, scala: 0.8 },
+    // il topolino capitano sulla barchetta di carta
+    { id: 'topo', tipo: 'animato', arte: 'topo_barca', x: 16.0, y: -1.38, z: -20, fps: 3, dondola: 0.05, velocita: 0.7,
+      giro: [[16.0, -1.38, 5.5], [18.0, -1.38, -36], [16.0, -1.38, -36]] },
+    // pesci che nuotano nell'aria sopra il canale
+    { id: 'pesce1', tipo: 'animato', arte: 'pesce_volante', x: 17, y: 1.5, z: -5, fps: 8, ancora: 0.5,
+      orbita: { x: 17, y: 1.6, z: -5, raggio: 4.2, velocita: 0.5, su: 0.9 } },
+    { id: 'pesce2', tipo: 'animato', arte: 'pesce_volante', x: 17, y: 2, z: -5, fps: 9, ancora: 0.5, fase: 2.1, scala: 0.8,
+      orbita: { x: 17, y: 2.3, z: -7, raggio: 3.4, velocita: 0.62, su: 0.7 } },
+    { id: 'pesce3', tipo: 'animato', arte: 'pesce_volante', x: 17, y: 1, z: -5, fps: 7, ancora: 0.5, fase: 4.2, scala: 1.15,
+      orbita: { x: 16.5, y: 1.2, z: -3, raggio: 5.0, velocita: 0.42, su: 1.1 } },
   ],
   oggetti: [
     { arte: 'pila_libri', x: 27.8, z: -1.6, scala: 1.3 },

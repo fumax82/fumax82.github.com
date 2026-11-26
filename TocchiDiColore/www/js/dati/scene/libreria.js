@@ -9,6 +9,9 @@ export default {
   arte: { modulo: 'scene_varie', nome: 'libreria' },
   musica: 'interno',
   percorso: [[0, 0, 0.2], [9, 0, 0.2]],
+  // Lia cammina vicino al muro (come nel film) per poterlo toccare col bastone
+  vicinoAlMuro: [{ da: 0, a: 20, d: 2.3 }],
+  materiali: [{ da: -2, a: 20, muro: 'libri', terra: 'legno' }],
   arrivi: { ingresso: { s: 0.8, verso: 1 } },
   superficie: 'legno',
   atmosfera: { tuttoVisibile: true, foschia: [30, 90], luce: '#fff6ea', bordoBianco: 0.3 },
@@ -19,9 +22,12 @@ export default {
     ] },
   ],
   attori: [
-    { id: 'tigre_dentro', tipo: 'persona', arte: 'tigre', nome: 'La Tigre', x: 6.6, z: -1.3, parla: true,
+    { id: 'tigre_dentro', tipo: 'persona', arte: 'tigre', nome: 'La Tigre', x: 7.4, z: -1.2, parla: true,
       chiacchiere: ['Ogni libro è una finestra.', 'Shh... le pagine stanno dormendo.'] },
+    { id: 'gufo', tipo: 'persona', arte: 'gufo', nome: 'Il gufo bibliotecario', x: 2.4, z: -2.7, y: 1.72, ombra: 0,
+      chiacchiere: ['Uhu! I libri sussurrano: avvicina l\'orecchio e bussa piano.', 'Ho letto tutti i libri di questa stanza. Due volte. Uhu!'] },
   ],
+  // (il gufo bibliotecario veglia da uno scaffale)
   oggetti: [
     { arte: 'poltrona', x: 7.8, z: -2.0, scala: 1.2 },
     { arte: 'libro_volante', x: 3.0, z: -1.2, y: 2.3, animazione: 6, oscilla: 0.04 },

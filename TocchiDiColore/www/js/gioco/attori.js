@@ -280,8 +280,9 @@ export class Animale extends Attore {
     // al guinzaglio: trotterella un metro davanti a Lia, un po' più verso di noi
     if (this.guinzaglio && scena) {
       const L = this.guinzaglio;
-      const p = scena.percorso.punto(Math.max(0, Math.min(scena.percorso.lunghezza, L.s + L.verso * 1.05)));
-      const tx = p.x, tz = p.z + 0.32;
+      // un po' più lontano dal muro di Lia, sul lato verso di noi
+      const p = scena.percorso.puntoLaterale(Math.max(0, Math.min(scena.percorso.lunghezza, L.s + L.verso * 1.05)), -0.4);
+      const tx = p.x, tz = p.z;
       const dx = tx - this.x, dz = tz - this.z, d = Math.hypot(dx, dz);
       if (d > 0.06) {
         const v = Math.min(d * 3.2, 3.4);
@@ -451,6 +452,115 @@ export class Piccioni {
 }
 
 /* ======================================================================== */
+/*  CREATURE ANIMATE: pesci volanti, barchette, mongolfiere, fiori...       */
+/* ======================================================================== */
+/**
+ * Un disegno con fotogrammi f0, f1, f2... che si ripetono (fps) e che si
+ * muove da solo, senza toccare terra:
+ *   giro:   [[x, y, z], ...] punti da percorrere in cerchio (velocita m/s)
+ *   orbita: { x, y, z, raggio, velocita, su } un girotondo nel cielo che sale e scende
+ *   senza giro né orbita sta fermo dov'è (x, y, z) e si anima sul posto.
+ */
+export class Animato extends Attore {
+  constructor(gioco, def) {
+    super(gioco, { ombra: 0, ...def });
+    this.y = def.y || 0;
+    this.quotaFissa = this.y;
+    this.fps = def.fps || 6;
+    this.prossimo = 0;
+    this.angolo = def.fase || 0;
+    this.sagoma.materiale.uniforms.uAncora.value = def.ancora === undefined ? 0 : def.ancora;
+  }
+
+  aggiorna(dt) {
+    const d = this.def;
+    this.tAnim += dt;
+    const px = this.x, pz = this.z;
+    if (d.orbita) {
+      const o = d.orbita;
+      this.angolo += (o.velocita || 0.3) * dt;
+      this.x = o.x + Math.cos(this.angolo) * o.raggio;
+      this.z = o.z + Math.sin(this.angolo) * o.raggio * (o.schiaccia || 0.6);
+      this.y = o.y + Math.sin(this.angolo * 2 + 1) * (o.su || 0.5);
+    } else if (d.giro && d.giro.length) {
+      const meta = d.giro[this.prossimo];
+      const dx = meta[0] - this.x, dy = meta[1] - this.y, dz = meta[2] - this.z, l = Math.hypot(dx, dy, dz);
+      const passo = (d.velocita || 1) * dt;
+      if (l <= passo) {
+        this.x = meta[0]; this.y = meta[1]; this.z = meta[2];
+        this.prossimo = (this.prossimo + 1) % d.giro.length;
+        if (this.prossimo === 0 && d.ricomincia) { const p0 = d.giro[0]; this.x = p0[0]; this.y = p0[1]; this.z = p0[2]; this.prossimo = 1 % d.giro.length; }
+      } else {
+        this.x += (dx / l) * passo; this.y += (dy / l) * passo; this.z += (dz / l) * passo;
+      }
+    }
+    const mx = this.x - px, mz = this.z - pz, ml = Math.hypot(mx, mz);
+    if (ml > 0.0001) this.dir = { x: mx / ml, z: mz / ml };
+    this.inMovimento = ml > 0.0001;
+  }
+
+  disegna(camera) {
+    if (!this.visibile) return;
+    const at = this.sagoma.atlante;
+    // i fotogrammi che cominciano con il prefisso (di solito f0, f1, f2...), uno dopo l'altro
+    const prefisso = this.def.prefisso || 'f';
+    const nomi = at.nomi.filter((k) => k.startsWith(prefisso));
+    const nome = nomi.length ? nomi[Math.floor(this.tAnim * this.fps) % nomi.length] : at.nomi[0];
+    // i disegni guardano a destra: se va verso sinistra sullo schermo, li specchiamo
+    const specchio = this.def.fisso ? !!this.def.specchio : vistaLaterale(this.dir, camera);
+    this.sagoma.mostra(nome, specchio);
+    const ondeggia = this.def.dondola ? Math.sin(this.tAnim * 1.6) * this.def.dondola : 0;
+    this.sagoma.posiziona(this.x, this.y + ondeggia, this.z);
+  }
+}
+
+/* ======================================================================== */
+/*  IL LAMPIONE CHE SI SVEGLIA                                              */
+/* ======================================================================== */
+/**
+ * Un abitante speciale: dorme finché non lo si "scopre"; allora sbadiglia,
+ * si accende e sorride. Poi si può parlare con lui.
+ * Fotogrammi: dorme, sbadiglia, sveglio, sorride, parla_0, parla_1.
+ */
+export class Lampione extends Persona {
+  constructor(gioco, def) {
+    super(gioco, { ombra: 0.25, ...def });
+    this.stato = 'dorme';
+    this.tStato = 0;
+  }
+
+  /** Lo sveglia: una piccola sequenza di fotogrammi. Restituisce una Promise. */
+  sveglia() {
+    this.stato = 'sveglia';
+    this.tStato = 0;
+    return new Promise((ok) => { this._sveglio = ok; });
+  }
+
+  aggiorna(dt, scena) {
+    super.aggiorna(dt, scena);
+    this.tStato += dt;
+    if (this.stato === 'sveglia' && this.tStato > 2.6) {
+      this.stato = 'sveglio';
+      if (this._sveglio) { this._sveglio(); this._sveglio = null; }
+    }
+  }
+
+  disegna(camera) {
+    if (!this.visibile) return;
+    let nome;
+    if (this.parlando) nome = Math.floor(this.tAnim * 6) % 2 ? 'parla_1' : 'parla_0';
+    else if (this.stato === 'dorme') nome = 'dorme';
+    else if (this.stato === 'sveglia') nome = this.tStato < 1.2 ? 'sbadiglia' : this.tStato < 1.9 ? 'sveglio' : 'sorride';
+    else nome = Math.floor(this.tAnim * 0.4) % 3 === 0 ? 'sorride' : 'sveglio';
+    const f = this.sagoma.atlante.fotogrammi;
+    this.sagoma.mostra(f[nome] ? nome : this.sagoma.atlante.nomi[0], false);
+    this.sagoma.luce = this.stato === 'dorme' ? 0 : 1;
+    this.sagoma.quotaTerreno(this.y);
+    this.sagoma.posiziona(this.x, this.y, this.z);
+  }
+}
+
+/* ======================================================================== */
 /*  Fabbrica: crea l'attore giusto dalla definizione della scena            */
 /* ======================================================================== */
 export function creaAttore(gioco, def) {
@@ -459,6 +569,8 @@ export function creaAttore(gioco, def) {
     case 'veicolo': return new Veicolo(gioco, def);
     case 'piccioni': return new Piccioni(gioco, def);
     case 'persona': return new Persona(gioco, def);
+    case 'animato': return new Animato(gioco, def);
+    case 'lampione': return new Lampione(gioco, def);
     default: return new Attore(gioco, def);
   }
 }
