@@ -168,6 +168,22 @@ export class Costruttore {
     return this.aggiungi(tornio(profilo, opz.seg || 16), matrice(x, y, z, opz.rot, opz.scala), colore, opz.tipo || 0);
   }
 
+  /** Segna il punto: le prossime forme aggiunte potranno essere ritoccate insieme. */
+  segna() { return this.n; }
+  /**
+   * "Ammorbidisce" le normali delle forme aggiunte dopo segna(): le fa
+   * guardare verso l'esterno di un'unica grande forma (centro c, grandezza s).
+   * Così tanti batuffoli di foglie si illuminano come UNA chioma morbida.
+   */
+  ammorbidisci(da, c, s, quanto = 0.75) {
+    for (let i = da; i < this.n; i++) {
+      const k = i * 3;
+      _v.set((this.pos[k] - c.x) / s.x, (this.pos[k + 1] - c.y) / s.y, (this.pos[k + 2] - c.z) / s.z).normalize();
+      _w.set(this.nor[k], this.nor[k + 1], this.nor[k + 2]).lerp(_v, quanto).normalize();
+      this.nor[k] = _w.x; this.nor[k + 1] = _w.y; this.nor[k + 2] = _w.z;
+    }
+  }
+
   /**
    * Incolla tutto in una sola BufferGeometry.
    * deforma(p) può spostare ogni punto (per rendere le forme meno "perfette").

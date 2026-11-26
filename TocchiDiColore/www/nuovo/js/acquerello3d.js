@@ -169,9 +169,10 @@ export class Rivelazione {
     for (const o of this.onde) {
       const prima = o.r;
       // l'onda rallenta alla fine, come l'acqua che si allarga sulla carta
-      o.r = Math.min(o.R + this.RAMPA * 0.6, o.r + o.v * dt * (1.15 - 0.75 * Math.min(1, o.r / o.R)));
+      const limite = o.R + Math.min(this.RAMPA * 0.6, o.R);
+      o.r = Math.min(limite, o.r + o.v * dt * (1.15 - 0.75 * Math.min(1, o.r / o.R)));
       if (o.r !== prima) this._dipingi(o);
-      if (o.r >= o.R + this.RAMPA * 0.6 - 1e-3) o.fine = true;
+      if (o.r >= limite - 1e-3) o.fine = true;
     }
     this.onde = this.onde.filter((o) => !o.fine);
     if (this.bagnato) {                       // la carta asciuga piano piano
@@ -198,9 +199,10 @@ export class Rivelazione {
         const irr = lerp(F[k % nF], F[(k + 1) % nF], t * t * (3 - 2 * t));
         d *= 1 + (irr - 0.5) * 0.35;
         if (d > o.R) continue;                       // oltre il raggio massimo non si dipinge
-        const dentro = Math.min(o.r, o.R + (o.r - o.R)) - d;
+        const dentro = o.r - d;
         if (dentro <= 0) continue;
-        const v = Math.min(255, Math.round(Math.min(1, dentro / R) * 255 * Math.min(1, 0.35 + o.R / 6)));
+        // le onde piccole (i colpetti del bastone) colorano solo in basso
+        const v = Math.min(255, Math.round(Math.min(1, dentro / R) * 255 * Math.pow(Math.min(1, o.R / 7), 0.7)));
         const p = (j * nx + i) * 4;
         if (v > dati[p]) { if (dati[p] < 128 && v >= 128) this.dipinti++; dati[p] = v; }
         if (dentro < 1.6 && o.r <= o.R + 0.5) {     // la cresta bagnata
@@ -574,7 +576,7 @@ const FRAG_PUNTI = /* glsl */ `
     float d;                                // d < 0 dentro la forma, > 0 fuori
     if (forma == 1) {                       // stellina a 5 punte (punte tonde)
       float a = atan(q.y, q.x);
-      float bordo = 0.42 + 0.5 * pow(abs(cos(a * 2.5 + 1.5708)), 2.2);
+      float bordo = 0.42 + 0.5 * pow(abs(cos(2.5 * (a - 1.5708))), 2.2);
       d = (length(q) - bordo) / 0.9;
     } else if (forma == 2) {                // cuoricino
       vec2 h = q * 1.25; h.y += 0.25;
