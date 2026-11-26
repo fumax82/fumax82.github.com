@@ -30,11 +30,31 @@ import { CONFIG } from '../config.js';
 
 const morbido = (t) => t * t * (3 - 2 * t);
 
+/**
+ * MOLLA MORBIDA ("smorzamento critico"): porta il vettore "da" verso "a"
+ * partendo e fermandosi con dolcezza, senza scatti né rimbalzi, qualunque
+ * sia la velocità del telefono. "vel" è la velocità (che la funzione
+ * aggiorna), "tempo" più o meno quanti secondi servono per arrivare.
+ */
+function molla(da, a, vel, tempo, dt) {
+  const w = 2 / Math.max(0.05, tempo);
+  const x = w * dt;
+  const e = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x);
+  for (const k of ['x', 'y', 'z']) {
+    const diff = da[k] - a[k];
+    const t = (vel[k] + w * diff) * dt;
+    vel[k] = (vel[k] - w * t) * e;
+    da[k] = a[k] + (diff + t) * e;
+  }
+}
+
 export class Regia {
   constructor() {
     this.camera = new THREE.PerspectiveCamera(CONFIG.camera.campoVisivo, 16 / 9, 0.1, 700);
     this.pos = new THREE.Vector3(0, 1.5, 6);
     this.guarda = new THREE.Vector3(0, 1, 0);
+    this.velPos = new THREE.Vector3();      // velocità della camera (per la molla morbida)
+    this.velGuarda = new THREE.Vector3();
     this.fov = CONFIG.camera.campoVisivo;
     this.inquadrature = [];
     this.attuale = -1;
@@ -79,8 +99,17 @@ export class Regia {
    * Un MOMENTO DI SCOPERTA: per qualche secondo la camera si allarga, si alza
    * e gira lo sguardo verso il punto [x, y, z], poi torna da Lia.
    */
-  momento(punto, durata) {
-    this.mom = { p: new THREE.Vector3(...punto), t: 0, d: durata || 2.8 };
+  momento(punto, durata, forza) {
+    this.mom = { p: new THREE.Vector3(...punto), t: 0, d: durata || 2.8, f: forza === undefined ? 1 : forza };
+  }
+
+  /**
+   * Un'OCCHIATA: lo sguardo della camera va un attimo verso il punto
+   * (dove arriva la magia della bacchetta) e poi torna su Lia.
+   */
+  occhiata(punto, durata, forza) {
+    if (this.mom && this.mom.f >= 1) return;     // non disturba un momento di scoperta
+    this.mom = { p: new THREE.Vector3(...punto), t: 0, d: durata || 1.2, f: forza || 0.25, soloSguardo: true };
   }
 
   /** Nel mondo immaginato l'inquadratura ondeggia appena, come in sogno (0 = ferma). */
@@ -101,6 +130,8 @@ export class Regia {
   /** Restituisce la regia alle inquadrature della scena (con una carrellata morbida). */
   libera(stacco) {
     this.sostituta = null;
+    this.velPos.set(0, 0, 0);       // la carrellata di ritorno parte da ferma
+    this.velGuarda.set(0, 0, 0);
     if (stacco) this.taglia();
   }
 
@@ -191,13 +222,16 @@ export class Regia {
       if (this.saltaAlProssimo) {
         this.pos.copy(this._p);
         this.guarda.copy(this._g);
+        this.velPos.set(0, 0, 0);
+        this.velGuarda.set(0, 0, 0);
         this.fov = fov;
         this.saltaAlProssimo = false;
       } else {
-        const m = 1 - Math.exp(-dt * (q.morbidezza || CONFIG.camera.morbidezza));
-        this.pos.lerp(this._p, m);
-        this.guarda.lerp(this._g, Math.min(1, m * 1.4));
-        this.fov += (fov - this.fov) * m;
+        // la camera insegue con una molla morbida: parte e si ferma con dolcezza
+        const morb = q.morbidezza || CONFIG.camera.morbidezza;
+        molla(this.pos, this._p, this.velPos, 1.15 / morb, dt);
+        molla(this.guarda, this._g, this.velGuarda, 0.8 / morb, dt);
+        this.fov += (fov - this.fov) * (1 - Math.exp(-dt * morb));
       }
     }
 
@@ -221,11 +255,13 @@ export class Regia {
       const k = Math.min(1, M.t / M.d);
       const e = Math.sin(Math.PI * k);
       const e2 = e * e * (3 - 2 * e);
-      const via = this._v || (this._v = new THREE.Vector3());
-      via.subVectors(c.position, this.guarda).normalize();
-      c.position.addScaledVector(via, 1.1 * e2);
-      c.position.y += 0.45 * e2;
-      bersaglio.lerp(M.p, 0.5 * e2);
+      if (!M.soloSguardo) {
+        const via = this._v || (this._v = new THREE.Vector3());
+        via.subVectors(c.position, this.guarda).normalize();
+        c.position.addScaledVector(via, 1.1 * e2 * M.f);
+        c.position.y += 0.45 * e2 * M.f;
+      }
+      bersaglio.lerp(M.p, 0.5 * e2 * M.f);
       if (k >= 1) this.mom = null;
     }
     c.lookAt(bersaglio);

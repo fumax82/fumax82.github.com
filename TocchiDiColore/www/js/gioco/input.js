@@ -3,17 +3,19 @@
  *  --------------------------------------------------------------------------
  *  TELEFONO:
  *    frecce ◀ ▶ in basso a sinistra   camminare (tenendo premuto a lungo si corre)
- *    pulsante Toc!                     batte il bastone ("toc toc")
- *    tocco breve sullo schermo         anche questo batte il bastone
+ *    tocco breve sullo schermo         batte il bastone (o la bacchetta) PROPRIO
+ *                                      DOVE si è toccato: il mondo si rivela da lì
  *    pulsante azione                   Parla / Entra / Tocca... (compare quando serve)
  *    tasto Indietro di Android         pausa
  *  PC (per provare il gioco):
- *    A/D o frecce ← → camminare, Shift correre, Spazio o clic bastone,
+ *    A/D o frecce ← → camminare, Shift correre, clic = bastone nel punto
+ *    cliccato, Spazio = bastone davanti ai piedi,
  *    E (o freccia ↑) azione, Esc pausa
  *
  *  Gli altri moduli chiedono "da che parte si vuole andare?" (direzione:
  *  -1 sinistra, 0 fermi, +1 destra) oppure ascoltano eventi:
- *  Input.su('tocco', funzione).
+ *  Input.su('tocco', funzione). L'evento 'tocco' porta con sé il punto
+ *  dello schermo { x, y } (in pixel) quando arriva dal dito o dal mouse.
  * ========================================================================== */
 
 export const Input = {
@@ -74,7 +76,7 @@ Input.inizializza = function (tela) {
   freccia('btnSinistra', 'sinistraPremuta');
   freccia('btnDestra', 'destraPremuta');
 
-  // --- Tocco breve (o clic) sulla scena = "toc toc" ------------------------
+  // --- Tocco breve (o clic) sulla scena = "toc toc" in quel punto ----------
   tela.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     const d = this.dito;
@@ -85,7 +87,7 @@ Input.inizializza = function (tela) {
     if (e.pointerId !== d.id) return;
     const breve = performance.now() - d.t < 320;
     const fermo = Math.hypot(e.clientX - d.x, e.clientY - d.y) < 16;
-    if (breve && fermo) this.emetti('tocco');
+    if (breve && fermo) this.emetti('tocco', { x: e.clientX, y: e.clientY });
     d.id = null;
   });
 

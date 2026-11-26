@@ -175,10 +175,10 @@ const CAPITOLO_1 = {
     g.ui.mostraToc(true, false);
     g.ricordo('bastone', 'Il bastoncino');
     g.controllo(true);
-    g.obiettivo('Batti il bastone per «vedere» intorno a te');
+    g.obiettivo('Tocca lo schermo vicino a Lia per «vedere»');
     g.pensa(Input.eTouch
-      ? 'Tocca il pulsante «Toc!» oppure lo schermo.'
-      : 'Premi SPAZIO o clicca per battere il bastone.', 6, true);
+      ? 'Tocca lo schermo vicino a Lia: il bastone batte proprio lì, sul muro o per terra.'
+      : 'Clicca vicino a Lia (sul muro o per terra) per battere il bastone lì. Anche SPAZIO funziona.', 6, true);
     for (let k = 0; k < 3; k++) {
       await g.evento('tocco');
       if (k === 0) g.pensa('Toc toc... il suono rimbalza e il mondo si disegna!', 4, true);
@@ -304,6 +304,9 @@ const CAPITOLO_1 = {
     const richiamo = g.ogni(4, () => g.onda(46.4, 0, 'magia', { raggio: 4, forza: 0.5 }));
     g.interazione('passaggio', true);
     g.obiettivo('Torna alla staccionata incantata');
+    g.pensa(Input.eTouch
+      ? 'Ora la magia vola lontano: tocca qualunque punto del mondo e lo vedrai comparire! ✦'
+      : 'Ora la magia vola lontano: clicca qualunque punto del mondo e lo vedrai comparire! ✦', 5, true);
     g.pensa('Il buco nella staccionata brilla... ora ci posso passare!', 4, true);
     await g.evento('interagisci:passaggio');
     brillio.attivo = false;

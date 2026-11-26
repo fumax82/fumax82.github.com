@@ -40,7 +40,7 @@ export const UNIFORMI = {
   uOmbreNuvole: { value: 0 },    // ombre delle nuvole che scorrono (0 = nessuna)
   uOmbraBalena: { value: new THREE.Vector4(0, 0, 1, 0) },  // ombra della balena: (x, z, raggio, forza)
   uPioggia: { value: 0 },        // quanto piove (0..1): bagnato, pozzanghere, cerchi delle gocce
-  uRetino: { value: 1 },         // retino manga nel mondo non ancora scoperto (0 = spento)
+  uRetino: { value: 0 },         // retino manga nel mondo non ancora scoperto (0 = spento: più pulito, stile cartone)
   uFuoco: { value: 5 },          // distanza messa a fuoco (quella di Lia dalla camera)
   uSfocatura: { value: 1.6 },    // quanto si sfocano i piani fuori fuoco (profondità di campo)
 };
@@ -240,8 +240,9 @@ const GLSL_COMUNE = /* glsl */ `
   vec3 conOmbre(vec3 col, vec3 p) {
     float o = 0.0;
     if (uOmbreNuvole > 0.001) {
-      float n = rumoreMorbido(p.xz * 0.03 + vec2(uTempo * 0.012, uTempo * 0.005));
-      o += smoothstep(0.55, 0.78, n) * uOmbreNuvole;
+      // (una sola lettura del rumore: le nuvole sono grandi e morbide, basta e costa poco)
+      float n = texture2D(uRumore, p.xz * 0.021 + vec2(uTempo * 0.009, uTempo * 0.004)).r;
+      o += smoothstep(0.52, 0.74, n) * uOmbreNuvole;
     }
     if (uOmbraBalena.w > 0.001) {
       vec2 d = (p.xz - uOmbraBalena.xy) / vec2(uOmbraBalena.z * 2.4, uOmbraBalena.z);
@@ -356,12 +357,14 @@ const FRAG_STRATO = /* glsl */ `
       vec3 schizzo = mix(uCarta, uInk, bordo * uSchizzo * uSchizzoStrato * (0.3 + 0.7 * matita));
       // RETINO MANGA: dove il dipinto è scuro, puntini d'inchiostro come nelle pagine dei fumetti
       // (il mondo non ancora scoperto è una pagina manga in bianco e nero)
-      float scuro = 1.0 - lum(t.rgb);
-      vec2 qq = mat2(0.7071, -0.7071, 0.7071, 0.7071) * qr(vMondo) * 14.0;
-      float rr = sqrt(clamp(scuro * 1.2 - 0.22, 0.0, 1.0)) * 0.42;
-      float punto = 1.0 - smoothstep(rr - 0.08, rr + 0.08, length(fract(qq) - 0.5));
-      float vicino = 1.0 - smoothstep(9.0, 22.0, dist);
-      schizzo = mix(schizzo, uInk, punto * 0.24 * uRetino * uSchizzoStrato * (0.35 + 0.65 * matita) * vicino);
+      if (uRetino > 0.001) {
+        float scuro = 1.0 - lum(t.rgb);
+        vec2 qq = mat2(0.7071, -0.7071, 0.7071, 0.7071) * qr(vMondo) * 14.0;
+        float rr = sqrt(clamp(scuro * 1.2 - 0.22, 0.0, 1.0)) * 0.42;
+        float punto = 1.0 - smoothstep(rr - 0.08, rr + 0.08, length(fract(qq) - 0.5));
+        float vicino = 1.0 - smoothstep(9.0, 22.0, dist);
+        schizzo = mix(schizzo, uInk, punto * 0.24 * uRetino * uSchizzoStrato * (0.35 + 0.65 * matita) * vicino);
+      }
       // il colore arriva come acquerello bagnato: sul bordo il pigmento si accumula
       vec3 colore = t.rgb * uLuceScena;
       colore = mix(colore, colore * vec3(0.78, 0.72, 0.84), bagnato * 0.5);
@@ -554,7 +557,7 @@ export function materialeSprite(texture, opz) {
       uOpacita: { value: 1 },
       uColoreCielo: UNIFORMI.uColoreCielo,
       // spessore del contorno manga (in "texel" dell'atlante; 0 = niente contorno)
-      uContorno: { value: o.contorno !== undefined ? o.contorno : (o.cielo ? 0 : 1.7) },
+      uContorno: { value: o.contorno !== undefined ? o.contorno : (o.cielo ? 0 : 1.1) },
     },
     vertexShader: VERT_SPRITE,
     fragmentShader: FRAG_SPRITE,

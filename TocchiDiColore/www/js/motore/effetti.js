@@ -380,7 +380,8 @@ export class Effetti {
       const ang = u * giri * Math.PI * 2 + t * 2.5 + f;
       const r = raggio * (1 - u * 0.5);
       return out.set(x + Math.cos(ang) * r, y + u * altezza, z + Math.sin(ang) * r * 0.8);
-    }, { colore, larghezza: o.larghezza || 0.12, durata: o.durata || 2.4, crescita: 0.45, scorri: 1.5, additivo: true, segmenti: 60 });
+    }, { colore, larghezza: (o.larghezza || 0.12) * 0.75, durata: o.durata || 2.4, crescita: 0.45, scorri: 1.5, segmenti: 60 });
+    // (colori "dipinti", non luce sommata: sulla carta chiara la luce sommata diventa tutta bianca)
     this.vivi.push({ aggiorna: (dt, cam) => n.aggiorna(dt, cam), rimuovi: () => n.rimuovi() });
   }
 

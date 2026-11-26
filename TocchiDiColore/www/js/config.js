@@ -13,10 +13,14 @@ export const CONFIG = {
   grafica: {
     // Qualità: 'auto' sceglie da sola in base alla velocità del dispositivo
     qualita: 'auto',
+    // pixelRatio = risoluzione con cui si disegna il mondo (rispetto ai pixel "CSS");
+    // uscita     = risoluzione dell'immagine finale sullo schermo (più alta: linee pulite);
+    // campioni   = antialiasing (bordi lisci, senza "scalini" di pixel)
     preimpostazioni: {
-      alta:  { pixelRatio: 1.6, scala: 1.0, campioni: 4 },
-      media: { pixelRatio: 1.25, scala: 1.0, campioni: 2 },
-      bassa: { pixelRatio: 1.0, scala: 0.8, campioni: 0 },
+      alta:  { pixelRatio: 2.0, uscita: 2.0, scala: 1.0, campioni: 4 },
+      media: { pixelRatio: 1.6, uscita: 2.0, scala: 1.0, campioni: 4 },
+      bassa: { pixelRatio: 1.25, uscita: 1.6, scala: 1.0, campioni: 4 },
+      minima: { pixelRatio: 1.0, uscita: 1.25, scala: 1.0, campioni: 2 },   // solo per telefoni molto lenti
     },
     schizzo: 0.75,           // quanto si vedono i tratti a matita delle cose non percepite (0..1)
     effettiAcquerello: true, // filtro acquerello a tutto schermo
@@ -56,6 +60,12 @@ export const CONFIG = {
     urto:      { velocita: 4.0, raggio: 3.2, forza: 0.8, colore: '#9fd08a', livello: 1.0 },
   },
   ricaricaBastone: 0.4,
+  // Il dito sullo schermo: fin dove arriva il colpo (metri, misurati a terra)
+  bacchetta: {
+    portata: 2.4,          // il bastoncino: solo vicino a Lia
+    portataMagica: 24,     // la bacchetta magica: quasi ovunque si veda
+    distanzaCometa: 1.6,   // oltre questa distanza la magia vola come una cometa
+  },
 
   /* ---------------------------------------------------------------------
    * PERCEZIONE (il mondo bianco che si colora)

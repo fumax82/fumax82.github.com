@@ -93,24 +93,24 @@ button.freccia.premuto { transform: scale(0.92); background: rgba(255, 236, 170,
 body:not(.touch) #frecce { opacity: 0.55; }
 body:not(.touch) button.freccia { width: 58px; height: 58px; padding: 13px; }
 
-#btnToc {
-  position: absolute; right: max(24px, env(safe-area-inset-right)); bottom: max(26px, env(safe-area-inset-bottom));
-  width: 92px; height: 92px; font-size: 22px; pointer-events: auto; touch-action: none;
-  background: radial-gradient(circle at 40% 35%, #fff8e0, #f2d99a); border: 3px solid var(--inchiostro);
-  border-radius: 50% 47% 52% 49%; box-shadow: 3px 4px 0 rgba(107, 75, 55, 0.25);
-}
-#btnToc.magico { background: radial-gradient(circle at 40% 35%, #fff6c8, #c9b6ea); animation: brilla 2.2s infinite; }
-@keyframes brilla { 50% { box-shadow: 0 0 18px 4px rgba(255, 224, 138, 0.85); } }
-#btnToc:active { transform: scale(0.92); }
 #btnAzione {
-  position: absolute; right: max(132px, calc(env(safe-area-inset-right) + 120px)); bottom: max(40px, env(safe-area-inset-bottom));
+  position: absolute; right: max(26px, env(safe-area-inset-right)); bottom: max(34px, env(safe-area-inset-bottom));
   min-width: 110px; height: 56px; padding: 0 18px; font-size: 19px; pointer-events: auto; touch-action: none;
   background: #fffaf0; border: 3px solid var(--inchiostro); border-radius: 22px 16px 24px 18px;
   box-shadow: 3px 4px 0 rgba(107, 75, 55, 0.25); animation: invito 1.4s infinite;
 }
 @keyframes invito { 50% { transform: translateY(-4px); } }
 body:not(.touch) #btnAzione::after { content: '  (E)'; font-size: 13px; opacity: 0.6; }
-body:not(.touch) #btnToc { width: 70px; height: 70px; font-size: 17px; }
+
+/* il segno del dito: dove si tocca lo schermo, il bastone (o la magia) arriva lì */
+body.bacchetta #schermo { cursor: crosshair; }
+.segnoTocco {
+  position: fixed; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%;
+  pointer-events: none; z-index: 30; border: 3px solid rgba(255, 214, 120, 0.95);
+  box-shadow: 0 0 12px 3px rgba(255, 220, 140, 0.55); animation: segnoTocco 0.65s ease-out forwards;
+}
+.segnoTocco.magico { border-color: rgba(255, 246, 200, 0.98); box-shadow: 0 0 16px 5px rgba(201, 182, 234, 0.75), inset 0 0 8px rgba(255, 240, 168, 0.8); }
+@keyframes segnoTocco { from { transform: scale(0.4); opacity: 1; } to { transform: scale(3.4); opacity: 0; } }
 
 /* ---------------------------- pensieri ----------------------------------- */
 #messaggio {

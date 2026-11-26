@@ -59,6 +59,22 @@ function ingombro(d) {
   }
 }
 
+/**
+ * Alcuni strati dicono di che cosa sono fatti già dal nome
+ * (una staccionata è di legno, una ringhiera di ferro...).
+ */
+const NOMI_MATERIALI = [
+  ['staccionata', 'legno'], ['steccato', 'legno'], ['bancone', 'legno'], ['casotto', 'legno'], ['palo', 'legno'],
+  ['ringhiera', 'metallo'], ['lampione', 'metallo'], ['lampada', 'metallo'],
+  ['albero', 'foglie'], ['giardino', 'foglie'], ['erba', 'foglie'], ['fiori', 'foglie'], ['vasi', 'ceramica'],
+  ['vetrina', 'vetro'], ['bucato', 'foglie'], ['strada', 'pietra'], ['selciato', 'pietra'], ['cordolo', 'pietra'],
+];
+function materialeDalNome(nome, u) {
+  if (u.acqua) return 'acqua';
+  for (const [parola, mat] of NOMI_MATERIALI) if (nome.startsWith(parola) || nome.includes(parola)) return mat;
+  return null;    // deciso dal tratto di percorso più vicino (def.materiali)
+}
+
 export class Scena {
   constructor(def, gioco) {
     this.def = def;
@@ -71,6 +87,7 @@ export class Scena {
     this.interazioni = [];
     this.ostacoli = (def.ostacoli || []).map((o) => ({ ...o, scoperto: false }));
     this.daSmontare = [];
+    this.cliccabili = [];       // gli strati che il dito può "toccare"
     // area della percezione: il percorso con un ampio margine intorno
     const P = this.percorso.punti;
     const xs = P.map((p) => p.x), zs = P.map((p) => p.z);
@@ -105,6 +122,9 @@ export class Scena {
       mesh.position.copy(c);
       mesh.renderOrder = (d.normale === 'su' || d.normale === 'giu') ? -20 + (d.ordine || 0) : (d.ordine || 0);
       mesh.name = d.nome || '';
+      // per il "tocco sullo schermo": il dito colpisce gli strati (vedi colpisci)
+      mesh.userData = { tela: d.tela, muro: !(d.normale === 'su' || d.normale === 'giu'), acqua: !!d.acqua, lontano };
+      if (d.normale !== 'giu') this.cliccabili.push(mesh);
       this.gruppo.add(mesh);
       // gli strati della strada che, sotto la pioggia, possono diventare un fiume
       if ((def.fiume || []).some((n) => mesh.name.startsWith(n))) (this.stratiFiume = this.stratiFiume || []).push(mesh);
@@ -291,6 +311,36 @@ export class Scena {
       if (m.terra) r.terra = m.terra;
     }
     return r;
+  }
+
+  /**
+   * IL DITO SULLO SCHERMO: quale strato dipinto c'è sotto il raggio che parte
+   * dalla telecamera? Si scartano le parti trasparenti del disegno (il cielo
+   * dietro un tetto, lo spazio tra le sbarre di una ringhiera...), leggendo il
+   * pixel della tela nel punto colpito.
+   * Restituisce { punto, muro (true = parete, false = pavimento), materiale,
+   * acqua, lontano } oppure null.
+   */
+  colpisci(raggio) {
+    const colpi = raggio.intersectObjects(this.cliccabili, false);
+    for (const c of colpi) {
+      const u = c.object.userData;
+      if (!c.uv || !this._pienoIn(u.tela, c.uv)) continue;
+      return { punto: c.point.clone(), muro: u.muro, acqua: u.acqua, lontano: u.lontano,
+        materiale: materialeDalNome(c.object.name, u) };
+    }
+    return null;
+  }
+
+  /** Il disegno è "pieno" (non trasparente) nel punto uv della tela? */
+  _pienoIn(tela, uv) {
+    if (!tela || !tela.getContext) return true;
+    try {
+      if (!tela._ctx) tela._ctx = tela.getContext('2d');
+      const px = Math.min(tela.width - 1, Math.max(0, Math.floor(uv.x * tela.width)));
+      const py = Math.min(tela.height - 1, Math.max(0, Math.floor((1 - uv.y) * tela.height)));
+      return tela._ctx.getImageData(px, py, 1, 1).data[3] > 60;
+    } catch (e) { return true; }
   }
 
   /** Che cosa c'è sotto i piedi in s? ('pietra', 'legno', 'erba') */

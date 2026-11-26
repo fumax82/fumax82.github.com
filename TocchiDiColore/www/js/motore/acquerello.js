@@ -39,6 +39,7 @@ const FRAG = /* glsl */ `
   uniform vec3 uColoreFocus;
   uniform float uVelocita;        // linee di velocità (quando Lia corre): 0..1
   uniform float uVersoVelocita;   // +1 corre verso destra, -1 verso sinistra
+  uniform float uNitidezza;       // quanto ripassare i contorni quando l'immagine viene ingrandita
   varying vec2 vUv;
 
   float lum(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
@@ -48,7 +49,7 @@ const FRAG = /* glsl */ `
     // tremolio "a passo uno": il disegno si muove appena, come fatto a mano
     float scatto = floor(uTempo * 6.0);
     vec2 n = texture2D(tRumore, uv * 2.3 + vec2(scatto * 0.137, scatto * 0.071)).rg - 0.5;
-    vec2 uvT = uv + n * 0.0011 * uIntensita;
+    vec2 uvT = uv + n * 0.0006 * uIntensita;
 
     // il colpo di bacchetta increspa l'immagine come un sasso nell'acqua
     float luceOnda = 0.0;
@@ -64,14 +65,20 @@ const FRAG = /* glsl */ `
 
     vec3 col = texture2D(tScena, uvT).rgb;
 
+    // i quattro vicini (a destra, a sinistra, sopra, sotto)
+    vec2 px = 1.2 / uRis;
+    vec3 c1 = texture2D(tScena, uvT + vec2(px.x, 0.0)).rgb;
+    vec3 c2 = texture2D(tScena, uvT - vec2(px.x, 0.0)).rgb;
+    vec3 c3 = texture2D(tScena, uvT + vec2(0.0, px.y)).rgb;
+    vec3 c4 = texture2D(tScena, uvT - vec2(0.0, px.y)).rgb;
+    // NITIDEZZA: l'immagine del mondo è più piccola dello schermo; ingrandendola
+    // i contorni si impastano. Una "maschera di contrasto" li ripassa, come
+    // l'inchiostro pulito dei cartoni animati (niente pixel sfocati).
+    vec3 media = (c1 + c2 + c3 + c4) * 0.25;
+    col = clamp(col + (col - media) * uNitidezza, 0.0, 1.0);
     // bordi di pigmento (differenze di luminosità tra pixel vicini)
-    vec2 px = 1.4 / uRis;
-    float l1 = lum(texture2D(tScena, uvT + vec2(px.x, 0.0)).rgb);
-    float l2 = lum(texture2D(tScena, uvT - vec2(px.x, 0.0)).rgb);
-    float l3 = lum(texture2D(tScena, uvT + vec2(0.0, px.y)).rgb);
-    float l4 = lum(texture2D(tScena, uvT - vec2(0.0, px.y)).rgb);
-    float bordo = smoothstep(0.035, 0.22, length(vec2(l1 - l2, l3 - l4)));
-    col = mix(col, col * vec3(0.80, 0.74, 0.80), bordo * 0.5 * uIntensita);
+    float bordo = smoothstep(0.035, 0.22, length(vec2(lum(c1) - lum(c2), lum(c3) - lum(c4))));
+    col = mix(col, col * vec3(0.80, 0.74, 0.80), bordo * 0.42 * uIntensita);
 
     // sbavature e bagliore (usiamo versioni sfocate dell'immagine: i "mipmap")
     // (quattro campioni sfalsati: un solo mipmap molto piccolo farebbe "quadretti")
@@ -157,6 +164,7 @@ export class Acquerello {
         uVelocita: { value: 0 },
         uVersoVelocita: { value: 1 },
         uColoreOnda: { value: new THREE.Color('#ffe7a0') },
+        uNitidezza: { value: 0.3 },
       },
       vertexShader: VERT,
       fragmentShader: FRAG,
@@ -174,10 +182,16 @@ export class Acquerello {
     this.cameraPiatta = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   }
 
-  /** Imposta qualità: campioni = antialiasing (0, 2, 4), scala = risoluzione relativa. */
-  imposta(larghezza, altezza, pixelRatio, scala, campioni) {
+  /**
+   * Imposta qualità: campioni = antialiasing (0, 2, 4), scala = risoluzione
+   * relativa, uscita = risoluzione dello schermo (per sapere quanto si ingrandisce).
+   */
+  imposta(larghezza, altezza, pixelRatio, scala, campioni, uscita) {
     const l = Math.max(1, Math.round(larghezza * pixelRatio * scala));
     const a = Math.max(1, Math.round(altezza * pixelRatio * scala));
+    // più si ingrandisce, più si ripassano i contorni (ma senza esagerare: aloni)
+    const ingrandimento = (uscita || pixelRatio) / (pixelRatio * scala);
+    this.materiale.uniforms.uNitidezza.value = Math.min(0.6, 0.22 + (ingrandimento - 1) * 0.5);
     if (this.bersaglio && this.bersaglio.width === l && this.bersaglio.height === a && this.campioni === campioni) return;
     if (this.bersaglio) this.bersaglio.dispose();
     this.campioni = campioni;

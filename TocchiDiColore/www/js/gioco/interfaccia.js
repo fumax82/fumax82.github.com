@@ -39,7 +39,6 @@ Interfaccia.inizializza = function (azioni) {
   const premi = (id, evento) => {
     $(id).addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); Input.emetti(evento); });
   };
-  premi('btnToc', 'tocco');
   premi('btnAzione', 'azione');
   premi('btnPausa', 'pausa');
   // il dialogo avanza toccando ovunque
@@ -242,9 +241,26 @@ Interfaccia.azione = function (etichetta) {
   else b.classList.add('nascosto');
 };
 
+/**
+ * Il bastone (o la bacchetta) si usa toccando lo schermo dove si vuole
+ * "vedere": qui ricordiamo solo se si può usare e se è magico (cambia il
+ * segno che compare sotto il dito e il puntatore del mouse).
+ */
 Interfaccia.mostraToc = function (si, magico) {
-  $('btnToc').classList.toggle('nascosto', !si);
-  $('btnToc').classList.toggle('magico', !!magico);
+  this.tocco = si ? (magico ? 'magico' : 'bastone') : null;
+  document.body.classList.toggle('bacchetta', !!si);
+  document.body.classList.toggle('magica', !!si && !!magico);
+};
+
+/** Un cerchietto che si allarga sotto il dito: "ho sentito il tuo tocco". */
+Interfaccia.segnoTocco = function (x, y) {
+  if (!this.tocco) return;
+  const d = document.createElement('div');
+  d.className = 'segnoTocco ' + this.tocco;
+  d.style.left = x + 'px';
+  d.style.top = y + 'px';
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 700);
 };
 
 /* ------------------------------------------------------------------------ */

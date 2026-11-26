@@ -187,21 +187,75 @@ class Gioco {
   }
 
   _collegaComandi() {
-    Input.su('tocco', () => {
+    Input.su('tocco', (dove) => {
       if (Interfaccia.dialogoAperto) { Interfaccia.avanzaDialogo(); return; }
-      if (this.fase === 'gioco' && !this.inPausa) this.lia.tocca();
+      if (this.fase !== 'gioco' || this.inPausa) return;
+      if (dove) {                                      // dito o mouse: nel punto toccato
+        if (this.lia.puoToccare && this.lia.controllo) Interfaccia.segnoTocco(dove.x, dove.y);
+        this._toccoSchermo(dove.x, dove.y);
+      }
+      else this.lia.tocca();                          // tastiera: davanti ai piedi
     });
     Input.su('azione', () => {
       if (Interfaccia.dialogoAperto) { Interfaccia.avanzaDialogo(); return; }
-      const it = this.interazioneAttuale;
-      if (it && !this.occupato && this.fase === 'gioco' && !this.inPausa) {
-        this.occupato = true;
-        Interfaccia.azione(null);
-        this._interagisci(it).catch((e) => console.error(e)).finally(() => { this.occupato = false; this.interazioneAttuale = null; });
-      }
+      this._azione();
     });
     Input.su('pausa', () => { if (this.fase === 'gioco' || this.fase === 'volo') this.pausa(!this.inPausa); });
     Input.su('perdiFuoco', () => { if ((this.fase === 'gioco' || this.fase === 'volo') && !this.inPausa) this.pausa(true); });
+  }
+
+  /** Esegue l'azione proposta (Parla, Entra...), se ce n'è una. */
+  _azione() {
+    const it = this.interazioneAttuale;
+    if (it && !this.occupato && this.fase === 'gioco' && !this.inPausa) {
+      this.occupato = true;
+      Interfaccia.azione(null);
+      this._interagisci(it).catch((e) => console.error(e)).finally(() => { this.occupato = false; this.interazioneAttuale = null; });
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * IL DITO SULLO SCHERMO (cx, cy in pixel): dove cade nel mondo?
+   * Un raggio parte dalla telecamera e attraversa il punto toccato; il primo
+   * strato dipinto (non trasparente) che incontra è il punto in cui Lia batte
+   * il bastone o fa arrivare la magia della bacchetta.
+   */
+  _toccoSchermo(cx, cy) {
+    const S = this.corrente;
+    if (!S) return;
+    const cam = this.regia.camera;
+    const r = this.renderer.domElement.getBoundingClientRect();
+    const ndc = this._ndc || (this._ndc = new THREE.Vector2());
+    ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
+    // toccando una persona con cui si può parlare, si parla
+    const it = this.interazioneAttuale;
+    if (it && it.attore) {
+      const a = it.attore;
+      const v = new THREE.Vector3(a.x, a.y + (a.sagoma ? a.sagoma.altezza * 0.5 : 0.6), a.z).project(cam);
+      const dx = (v.x - ndc.x) * r.width / 2, dy = (v.y - ndc.y) * r.height / 2;
+      if (Math.hypot(dx, dy) < Math.max(60, r.height * 0.09) && this._azione()) return;
+    }
+    const raggio = this._raggio || (this._raggio = new THREE.Raycaster());
+    raggio.setFromCamera(ndc, cam);
+    raggio.far = 60;
+    let colpo = S.colpisci(raggio);
+    if (!colpo || colpo.lontano) {
+      // niente di vicino sotto il dito (il cielo, un fondale lontano):
+      // si prende il punto del pavimento, oppure quello alla stessa
+      // distanza di Lia lungo il raggio
+      const L = this.lia, o = raggio.ray.origin, d = raggio.ray.direction;
+      let t = d.y < -0.02 ? (L.y - o.y) / d.y : Infinity;
+      const avanti = cam.getWorldDirection(this._avanti || (this._avanti = new THREE.Vector3()));
+      const tLia = ((L.x - o.x) * avanti.x + (L.y + 0.5 - o.y) * avanti.y + (L.z - o.z) * avanti.z) / (d.dot(avanti) || 1);
+      if (!(t > 0) || t > tLia * 3) t = tLia;
+      if (!colpo || colpo.punto.distanceTo(o) > t) {
+        const p = o.clone().addScaledVector(d, t);
+        colpo = { punto: p, muro: p.y > S.quota(p.x, p.z) + 0.4, materiale: null };
+      }
+    }
+    this.lia.toccaPunto(colpo.punto, colpo);
   }
 
   pausa(si) {
@@ -222,10 +276,15 @@ class Gioco {
   ridimensiona() {
     const L = window.innerWidth, A = window.innerHeight;
     const p = CONFIG.grafica.preimpostazioni[this.qualita];
-    const dpr = Math.min(window.devicePixelRatio || 1, p.pixelRatio);
-    this.renderer.setPixelRatio(dpr);
+    const schermo = window.devicePixelRatio || 1;
+    // il mondo si disegna a una risoluzione (dpr) e l'immagine finale, più
+    // nitida, a quella dello schermo (uscita): il filtro acquerello ingrandisce
+    // con cura e ripassa i contorni (vedi motore/acquerello.js)
+    const dpr = Math.min(schermo, p.pixelRatio);
+    const uscita = Math.max(dpr, Math.min(schermo, p.uscita || p.pixelRatio));
+    this.renderer.setPixelRatio(uscita);
     this.renderer.setSize(L, A);
-    this.acquerello.imposta(L, A, dpr, p.scala, p.campioni);
+    this.acquerello.imposta(L, A, dpr, p.scala, p.campioni, uscita);
     this.regia.ridimensiona(L, A);
     if (this.volo) this.volo.ridimensiona(L, A);
     this.particelle.ridimensiona(A * dpr * p.scala);
@@ -234,13 +293,26 @@ class Gioco {
 
   /** Se il dispositivo fatica, abbassa la qualità da solo. */
   _qualitaAutomatica(dt) {
-    if (CONFIG.grafica.qualita !== 'auto' || this.fase === 'menu') return;
-    this.mediaLavoro = this.mediaLavoro * 0.97 + dt * 1000 * 0.03;
-    if (this.mediaLavoro > 30) this.tempoLento += dt; else this.tempoLento = 0;
-    if (this.tempoLento > 3 && this.qualita !== 'bassa') {
-      this.qualita = this.qualita === 'alta' ? 'media' : 'bassa';
-      this.tempoLento = 0;
-      this.mediaLavoro = 16;
+    if (CONFIG.grafica.qualita !== 'auto' || this.fase === 'menu' || this.inPausa) return;
+    // mentre si dipinge una scena nuova i fotogrammi sono lenti per forza: non contano
+    if (this.caricaScena) { this.dopoCarica = 2.5; return; }
+    if (this.dopoCarica > 0) { this.dopoCarica -= dt; return; }
+    const LIVELLI = ['minima', 'bassa', 'media', 'alta'];
+    const k = LIVELLI.indexOf(this.qualita);
+    // media "scivolante" del tempo di ogni fotogramma (millisecondi)
+    this.mediaLavoro = this.mediaLavoro * 0.97 + Math.min(dt, 0.1) * 1000 * 0.03;
+    // troppo lento (meno di ~30 fotogrammi al secondo) per 3 secondi: si scende
+    this.tempoLento = this.mediaLavoro > 33 ? this.tempoLento + dt : 0;
+    // molto fluido (quasi 60 al secondo) per 12 secondi: si prova a risalire
+    // (ma mai sopra un livello che si è già dimostrato troppo pesante)
+    this.tempoVeloce = this.mediaLavoro < 18.5 ? (this.tempoVeloce || 0) + dt : 0;
+    let nuovo = k;
+    if (this.tempoLento > 3 && k > 0) { nuovo = k - 1; this.tettoQualita = k - 1; }
+    else if (this.tempoVeloce > 12 && k < (this.tettoQualita !== undefined ? this.tettoQualita : 3)) nuovo = k + 1;
+    if (nuovo !== k) {
+      this.qualita = LIVELLI[nuovo];
+      this.tempoLento = 0; this.tempoVeloce = 0;
+      this.mediaLavoro = 20;
       this.ridimensiona();
       console.info('Qualità automatica:', this.qualita);
     }
@@ -387,10 +459,16 @@ class Gioco {
   /* ====================================================================== */
   ciclo(t) {
     requestAnimationFrame((tt) => this.ciclo(tt));
-    let dt = (t - this.ultimo) / 1000;
+    let grezzo = (t - this.ultimo) / 1000;
     this.ultimo = t;
-    if (!(dt > 0)) dt = 0.016;
-    if (dt > 0.05) dt = 0.05;
+    if (!(grezzo > 0)) grezzo = 0.016;
+    if (grezzo > 0.05) grezzo = 0.05;
+    // FLUIDITÀ: i telefoni consegnano i fotogrammi a intervalli un po'
+    // irregolari (16, 21, 12 ms...). Se usassimo il tempo "grezzo" il
+    // movimento farebbe piccoli scatti; lo smussiamo un poco (la media resta
+    // la stessa, quindi il gioco non rallenta né accelera).
+    this.dtLiscio = this.dtLiscio ? this.dtLiscio + (grezzo - this.dtLiscio) * 0.3 : grezzo;
+    let dt = Math.abs(grezzo - this.dtLiscio) > 0.025 ? grezzo : this.dtLiscio;
     dt *= this.scalaTempo || 1;   // solo per i test: accelera il tempo di gioco
     if (this.fase === 'caricamento' || this.fase === 'menu') return;
 
@@ -407,7 +485,7 @@ class Gioco {
     Musica.aggiorna();
     this._disegna(dt);
     Interfaccia.aggiorna(dt);
-    this._qualitaAutomatica(dt);
+    this._qualitaAutomatica(grezzo);
   }
 
   /**
