@@ -50,8 +50,8 @@ export default {
     ] },
     // 2. il ponte visto dall'acqua: dietro di lui il canale si perde lontano
     { da: 10.5, a: 23.5, tipo: 'fisso', taglio: true, seguiAltezza: 1, chiavi: [
-      { s: 10.5, pos: [16.2, 0.55, 7.6], guarda: [0, 0.75, 0], fov: 42 },
-      { s: 23.5, pos: [18.0, 0.75, 7.3], guarda: [0, 0.75, 0], fov: 40 },
+      { s: 10.5, pos: [16.2, 0.55, 7.6], guarda: [0, 0.65, 0], fov: 28 },
+      { s: 23.5, pos: [18.0, 0.75, 7.3], guarda: [0, 0.65, 0], fov: 27 },
     ] },
     // 3. la via della libreria: la camera gira piano da tre quarti a di fianco
     { da: 23.5, a: 36.5, tipo: 'segui', taglio: true, chiavi: [
