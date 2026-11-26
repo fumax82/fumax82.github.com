@@ -130,6 +130,27 @@ class Gioco {
       this.pensa(o.testo || 'Ahi! C\'era qualcosa qui davanti!', 2.5, true);
     });
 
+    // La prima volta che il bastone tocca un materiale, Lia dice che cosa immagina
+    const IMMAGINA = {
+      vetro: 'Tin! È vetro... una vetrina piena di luce!',
+      legno: 'Tok tok... legno. Una porta, calda come il pane.',
+      mattoni: 'Mattoni ruvidi, uno sopra l\'altro.',
+      intonaco: 'Un muro liscio, tiepido di sole.',
+      metallo: 'Dong! Ferro che canta... un cancello!',
+      foglie: 'Frrr... foglie! Un giardino dietro il muro.',
+      ceramica: 'Piastrelle lisce e fresche, tutte in fila.',
+      libri: 'Libri! Profumano di carta e di storie.',
+      acqua: 'Plip! Acqua che si muove.',
+      pietra: 'Toc... pietra. Il marciapiede è fatto di lastre grandi.',
+    };
+    this.materialiSentiti = new Set();
+    this.regista.su('tocco', (d) => {
+      if (!d || !d.materiale || this.materialiSentiti.has(d.materiale) || !this.lia.magica && !this.lia.puoToccare) return;
+      if (this.corrente && this.corrente.percezione.rivelaTutto > 0.5) return;
+      this.materialiSentiti.add(d.materiale);
+      if (IMMAGINA[d.materiale]) this.pensa(IMMAGINA[d.materiale], 3);
+    });
+
     Interfaccia.caricamento(1, 'Pronto!');
     Interfaccia.nascondiCaricamento();
     Interfaccia.mostraMenu(!!this.leggiSalvataggio());
