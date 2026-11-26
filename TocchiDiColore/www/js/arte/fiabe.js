@@ -15,11 +15,14 @@
  *    gufo             — un gufo bibliotecario con gli occhiali e il golfino
  *    orso_mongolfiera — un orsetto che saluta da una mongolfiera a righe
  *
- *  Lo stile è lo stesso di Lia e Biscotto (personaggi.js):
- *    - una linea bruno scuro sottile e regolare (circa 2 px);
- *    - campiture piatte con UN solo tono d'ombra per colore;
+ *  Lo stile è quello "anime" delle comparse (gli attrezzi sono in comparse.js):
+ *    - linea bruno scuro: la sagoma esterna è spessa il doppio delle linee
+ *      interne, i tratti aperti si assottigliano in punta;
+ *    - campiture piatte con UN solo tono d'ombra per colore (bordo netto,
+ *      più freddo, la luce arriva da in alto a sinistra);
+ *    - riflessi a zig-zag su pelo e cappelli, luccichii sulle cose lucide;
  *    - niente grana dentro i personaggi;
- *    - occhi ovali bianchi con un puntino scuro, bocche piccole.
+ *    - occhi ovali bianchi con un puntino scuro (e due riflessi), bocche piccole.
  *
  *  Coordinate: ogni fotogramma si disegna con l'origine (0, 0) a terra, al
  *  centro della cella; la y cresce verso il basso (sopra il suolo y < 0).
@@ -30,11 +33,15 @@
 import {
   casuale, tra, scurisci, conAlfa, percorso, Forme, tinta, linea, creaAtlante, respira,
 } from './pennello.js';
+import {
+  MANGA, tonoOmbra, tonoLuce, pennino, ombraPortata, riflesso, luccichio, strisciaLuce, rossore, sagomaManga, aParte,
+  senzaSagoma,
+} from './comparse.js';
 
 /* ------------------------------------------------------------------------ */
 /*  COLORI COMUNI E UN PO' DI MATEMATICA                                    */
 /* ------------------------------------------------------------------------ */
-const INK = '#5a3f30';            // la linea dei personaggi
+const INK = MANGA.dentro;         // la linea interna dei personaggi (la sagoma è più scura e spessa)
 const INK2 = '#a3846c';           // linee di dettaglio (pieghe, piume, squame)
 const BIANCO = '#fffdf8';
 const PUPILLA = '#2e211c';
@@ -45,6 +52,8 @@ const TAU = Math.PI * 2;
 
 /** Spessore della linea dell'atlante che stiamo dipingendo (cambia per ognuno). */
 let LW = 1.9;
+/** Vero per i personaggi più affettuosi: sulle guance anche i trattini dei manga. */
+let TRATTINI = false;
 
 /** Il secondo tono (ombra "cel") di ogni colore. Se manca, lo calcoliamo. */
 const TONI = {};
@@ -89,30 +98,33 @@ function ruotato(ctx, cx, cy, ang, disegna) {
 /**
  * Il "mattone" dei personaggi: una o più forme fuse in un'unica sagoma.
  *  1) un tratto doppio di inchiostro (il colore poi ne copre la metà interna:
- *     resta una linea regolare tutta attorno, anche se le forme si sovrappongono);
+ *     resta una linea tutta attorno, anche se le forme si sovrappongono); una
+ *     seconda passata spostata in basso a destra la ingrossa dal lato in ombra;
  *  2) la tinta piatta;
- *  3) l'ombra "cel": coloriamo tutto col tono scuro e poi ridipingiamo il
- *     colore pieno con la sagoma spostata verso la luce (in alto a destra):
- *     resta scura solo una falce in basso a sinistra.
+ *  3) l'ombra "cel": coloriamo tutto col tono d'ombra (più scuro e più freddo)
+ *     e poi ridipingiamo il colore pieno con la sagoma spostata verso la luce
+ *     (in alto a sinistra): resta in ombra solo una falce netta in basso a destra.
  * ombra = quanto è larga la falce (0 = niente ombra), w = spessore linea.
  */
-function pezzo(ctx, forme, colore, ombra = 1, w = LW, coloreOmbra) {
+function pezzo(ctx, forme, colore, ombra = 1, w = LW) {
   const p = unione(forme);
   ctx.save();
   ctx.strokeStyle = INK;
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
+  ctx.lineWidth = w * 1.7;
+  ctx.stroke(p);
+  ctx.translate(w * 0.3, w * 0.36);
   ctx.lineWidth = w * 2;
-  ctx.translate(-0.3, 0.35);
   ctx.stroke(p);
   ctx.restore();
   tinta(ctx, p, colore);
   if (ombra) {
     ctx.save();
     ctx.clip(p);
-    ctx.fillStyle = coloreOmbra || tono(colore);
+    ctx.fillStyle = tonoOmbra(colore);
     ctx.fill(p);
-    ctx.translate(7 * ombra, -4 * ombra);
+    ctx.translate(-6.5 * ombra, -4.5 * ombra);
     ctx.fillStyle = colore;
     ctx.fill(p);
     ctx.restore();
@@ -120,26 +132,56 @@ function pezzo(ctx, forme, colore, ombra = 1, w = LW, coloreOmbra) {
   return p;
 }
 
-/** "Tubo" col contorno: braccia, steli, cinghie, bastoni, corde. */
+/**
+ * L'ombra cel di "forma" (come in pezzo) ma dipinta solo sopra "dentro", nel
+ * colore di "dentro": per pance, nastri e toppe che seguono la forma grande.
+ */
+function ombraDentro(ctx, forma, dentro, colore, ombra = 1) {
+  const p = percorso(forma);
+  const fuori = new Path2D();
+  fuori.rect(-4000, -4000, 8000, 8000);
+  fuori.addPath(p, new DOMMatrix([1, 0, 0, 1, -6.5 * ombra, -4.5 * ombra]));
+  ctx.save();
+  ctx.clip(p);
+  ctx.clip(percorso(dentro));
+  ctx.fillStyle = tonoOmbra(colore);
+  ctx.fill(fuori, 'evenodd');
+  ctx.restore();
+}
+
+/**
+ * "Tubo" col contorno: braccia, steli, cinghie, bastoni, corde. Se è abbastanza
+ * largo prende anche l'ombra cel: una fascia netta sul lato in basso a destra.
+ */
 function tubo(ctx, punti, larg, colore, w = LW, dritto = false) {
   const p = dritto ? spezzata(punti) : Forme.curva(punti);
   ctx.save();
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   ctx.strokeStyle = INK;
-  ctx.lineWidth = larg + 2 * w;
-  ctx.translate(-0.3, 0.35);
+  ctx.lineWidth = larg + 1.7 * w;
   ctx.stroke(p);
-  ctx.translate(0.3, -0.35);
+  ctx.translate(w * 0.3, w * 0.36);
+  ctx.lineWidth = larg + 2 * w;
+  ctx.stroke(p);
+  ctx.translate(-w * 0.3, -w * 0.36);
+  if (larg >= 6) {
+    ctx.strokeStyle = tonoOmbra(colore);
+    ctx.lineWidth = larg;
+    ctx.stroke(p);
+    ctx.translate(-larg * 0.15, -larg * 0.15);
+    ctx.lineWidth = larg * 0.7;
+  } else {
+    ctx.lineWidth = larg;
+  }
   ctx.strokeStyle = colore;
-  ctx.lineWidth = larg;
   ctx.stroke(p);
   ctx.restore();
 }
 
-/** Tratto di dettaglio (pieghe, bocche, sopracciglia). */
+/** Tratto di dettaglio (pieghe, bocche, sopracciglia): col pennino, si assottiglia in punta. */
 function tratto(ctx, punti, w = LW * 0.85, colore = INK, alfa = 1) {
-  linea(ctx, Forme.curva(punti), { spessore: w, colore, alfa });
+  pennino(ctx, punti, w * 1.25, colore, alfa);
 }
 
 /** Un'ellisse "petalo" che parte da "radice" e va lunga "lung" nella direzione "ang". */
@@ -153,17 +195,29 @@ function lobo(radice, ang, lung, larg) {
  * stato: 'aperti' | 'chiusi' (dorme ‿) | 'felici' (∩) | 'strizzati' (> o <, dir = ±1)
  */
 function occhio(ctx, x, y, rx, ry, g = [0, 0], stato = 'aperti', dir = 1) {
-  const w = LW * 0.95;
-  if (stato === 'chiusi') return tratto(ctx, [[x - rx, y], [x, y + ry * 0.5], [x + rx, y]], w);
-  if (stato === 'felici') return tratto(ctx, [[x - rx, y + ry * 0.3], [x, y - ry * 0.4], [x + rx, y + ry * 0.3]], w);
+  const w = LW * 1.1;
+  if (stato === 'chiusi') return tratto(ctx, [[x - rx, y], [x, y + ry * 0.5], [x + rx, y]], w, MANGA.fuori);
+  if (stato === 'felici') return tratto(ctx, [[x - rx, y + ry * 0.3], [x, y - ry * 0.4], [x + rx, y + ry * 0.3]], w, MANGA.fuori);
   if (stato === 'strizzati') {
-    return linea(ctx, spezzata([[x - dir * rx, y - ry * 0.5], [x + dir * rx * 0.7, y], [x - dir * rx, y + ry * 0.5]]), { spessore: w, colore: INK });
+    pennino(ctx, [[x - dir * rx, y - ry * 0.5], [x + dir * rx * 0.7, y]], w * 1.2, MANGA.fuori, 1, 0.3);
+    return pennino(ctx, [[x + dir * rx * 0.7, y], [x - dir * rx, y + ry * 0.5]], w * 1.2, MANGA.fuori, 1, 0.3);
   }
   const p = Forme.ellisse(x, y, rx, ry);
   tinta(ctx, p, BIANCO);
+  ctx.save();                                     // l'ombra della palpebra sul bianco dell'occhio
+  ctx.clip(p);
+  tinta(ctx, Forme.ellisse(x + rx * 0.1, y - ry * 1.02, rx * 1.25, ry * 0.5), tonoOmbra(BIANCO));
+  ctx.restore();
   const r = Math.max(1.4, rx * 0.32);
-  tinta(ctx, Forme.ellisse(x + g[0] * (rx - r - 1.2), y + g[1] * (ry - r * 1.15 - 1.2), r, r * 1.15), PUPILLA);
-  linea(ctx, p, { spessore: LW * 0.75, colore: INK });
+  const px = x + g[0] * (rx - r - 1.2), py = y + g[1] * (ry - r * 1.15 - 1.2);
+  tinta(ctx, Forme.ellisse(px, py, r, r * 1.15), PUPILLA);
+  // due riflessi: uno grande in alto a sinistra, uno piccolo in basso a destra
+  tinta(ctx, Forme.cerchio(px - r * 0.36, py - r * 0.42, Math.max(0.7, r * 0.42)), '#ffffff');
+  tinta(ctx, Forme.cerchio(px + r * 0.42, py + r * 0.5, Math.max(0.4, r * 0.2)), '#ffffff', 0.95);
+  linea(ctx, p, { spessore: LW * 0.6, colore: INK });
+  // la palpebra di sopra, più spessa e affusolata
+  const palpebra = [-Math.PI + 0.3, -2.25, -Math.PI / 2, -0.9, -0.3].map((a) => [x + Math.cos(a) * rx * 1.02, y + Math.sin(a) * ry * 1.04]);
+  pennino(ctx, palpebra, Math.min(LW * 1.6, rx * 0.5), MANGA.fuori, 1, 0.15);
 }
 
 /** Bocca aperta a "D" (labbro di sopra quasi dritto, sotto tondo) con la lingua. */
@@ -179,7 +233,8 @@ function boccaAperta(ctx, x, y, l, h) {
   ctx.clip(p);
   tinta(ctx, Forme.ellisse(x, y + h, l * 0.3, h * 0.45), LINGUA);
   ctx.restore();
-  linea(ctx, p, { spessore: LW * 0.8, colore: INK });
+  linea(ctx, p, { spessore: LW * 0.7, colore: INK });
+  pennino(ctx, [[x - l / 2, y], [x, y + h * 0.15], [x + l / 2, y]], LW * 1.3, MANGA.fuori, 1, 0.3);   // labbro di sopra
 }
 
 /** Bocca a "o" (canto, sbadiglio, stupore). */
@@ -198,8 +253,9 @@ function sorriso(ctx, x, y, l, curva = 0.3) {
   tratto(ctx, [[x - l / 2, y], [x, y + l * curva], [x + l / 2, y]]);
 }
 
+/** Rossore sfumato sulla guancia (con i trattini dei manga per i personaggi affettuosi). */
 function guancia(ctx, x, y, r, alfa = 0.45) {
-  tinta(ctx, Forme.ellisse(x, y, r, r * 0.6), ROSA_GUANCE, alfa);
+  rossore(ctx, x, y, r, ROSA_GUANCE, alfa, TRATTINI);
 }
 
 /** Disegna ingrandito di "s" lasciando uguale lo spessore delle linee. */
@@ -223,8 +279,12 @@ function manina(ctx, x, y, r, ang, colore) {
   pezzo(ctx, forme, colore, 0, LW * 0.85);
 }
 
-/** Una nota musicale (♪, o ♫ se doppia), per chi suona e canta. */
+/** Una nota musicale (♪, o ♫ se doppia), per chi suona e canta (fuori dalla sagoma spessa). */
 function nota(ctx, x, y, s, doppia, colore = INK) {
+  aParte(ctx, () => notaQui(ctx, x, y, s, doppia, colore));
+}
+
+function notaQui(ctx, x, y, s, doppia, colore) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(-0.12);
@@ -280,7 +340,9 @@ function violino(ctx, x, y, ang) {
 }
 
 function violinoPiccolo(ctx) {
-  pezzo(ctx, [Forme.ellisse(-9, 0, 13, 13.5), Forme.ellisse(10, 0, 10, 11), Forme.ellisse(1, 0, 8, 8.5)], RANA.legno, 0.5);
+  const cassa = pezzo(ctx, [Forme.ellisse(-9, 0, 13, 13.5), Forme.ellisse(10, 0, 10, 11), Forme.ellisse(1, 0, 8, 8.5)], RANA.legno, 0.5);
+  riflesso(ctx, cassa, -9, 0, 10.5, 11, -2.9, -1.5, 0.3, tonoLuce(RANA.legno, 0.55), 3);           // legno verniciato, lucido
+  luccichio(ctx, 9, -5.5, 2.2, 0.9);
   for (const s of [-1, 1]) tratto(ctx, [[-6, s * 6], [-1, s * 4.8], [4, s * 6.2]], LW * 0.6, RANA.scuro);  // le "effe"
   pezzo(ctx, Forme.poligono([[-21, -2.6], [-9, -3.6], [-9, 3.6], [-21, 2.6]]), RANA.scuro, 0, LW * 0.5);  // cordiera
   pezzo(ctx, Forme.rettangolo(-1, -3, 40, 6, 2.5), RANA.scuro, 0, LW * 0.5);                             // manico
@@ -314,17 +376,25 @@ function papillon(ctx, x, y, colore) {
 /** Cappellino di paglia (paglietta) col nastro rosso. */
 function paglietta(ctx, x, y, ang, larg) {
   ruotato(ctx, x, y, ang, () => {
-    pezzo(ctx, Forme.ellisse(x, y, larg, larg * 0.24), RANA.paglia, 0.4);
-    pezzo(ctx, Forme.rettangolo(x - larg * 0.6, y - larg * 0.68, larg * 1.2, larg * 0.68, larg * 0.16), RANA.paglia, 0.5);
-    pezzo(ctx, Forme.rettangolo(x - larg * 0.6, y - larg * 0.3, larg * 1.2, larg * 0.24, 1), RANA.papillon, 0, LW * 0.7);
+    ombraPortata(ctx, Forme.ellisse(x + 2, y + larg * 0.2, larg * 0.95, larg * 0.24));          // la tesa fa ombra sulla testa
+    const tesa = pezzo(ctx, Forme.ellisse(x, y, larg, larg * 0.24), RANA.paglia, 0.4);
+    riflesso(ctx, tesa, x - 1, y, larg * 0.86, larg * 0.18, -3.0, -2.1, 0.4, tonoLuce(RANA.paglia, 0.55), 2);
+    const cupola = pezzo(ctx, Forme.rettangolo(x - larg * 0.6, y - larg * 0.68, larg * 1.2, larg * 0.68, larg * 0.16), RANA.paglia, 0.5);
+    strisciaLuce(ctx, cupola, x - larg * 0.48, y - larg * 0.62, larg * 0.16, larg * 0.3, 0, tonoLuce(RANA.paglia, 0.6), 1);
+    const nastro = Forme.rettangolo(x - larg * 0.6, y - larg * 0.3, larg * 1.2, larg * 0.24, 1);
+    pezzo(ctx, nastro, RANA.papillon, 0, LW * 0.7);
+    ombraDentro(ctx, cupola, nastro, RANA.papillon, 0.5);
   });
 }
 
 function testaRana(ctx, T) {
   ruotato(ctx, 0, -108, T.inclina, () => {
-    pezzo(ctx, Forme.ellisse(0, -139, 50, 33), RANA.pelle, 1);
+    ombraPortata(ctx, Forme.ellisse(6, -104, 34, 9));                                           // ombra sotto il mento
+    const testa = pezzo(ctx, Forme.ellisse(0, -139, 50, 33), RANA.pelle, 1);
+    riflesso(ctx, testa, -3, -136, 44, 28, -2.8, -1.0, 0.2, tonoLuce(RANA.pelle, 0.45), 6);
     for (const s of [-1, 1]) {
-      pezzo(ctx, Forme.cerchio(s * 26, -164, 17), RANA.pelle, 0.5);
+      const bolla = pezzo(ctx, Forme.cerchio(s * 26, -164, 17), RANA.pelle, 0.5);
+      riflesso(ctx, bolla, s * 26, -164, 14.5, 14.5, -2.7, -1.5, 0.22, tonoLuce(RANA.pelle, 0.5), 3);
       occhio(ctx, s * 26, -165, 10, 11.5, T.sguardo, T.occhi);
     }
     paglietta(ctx, -16, -183, -0.22, 19);
@@ -368,7 +438,7 @@ function disegnaRana(ctx, nome) {
     papillon(ctx, -6, -106, RANA.papillon);
     const N = piu(B, polare(av, 41));
     braccioRana(ctx, [27, -92], [52, -70], piu(N, [2, 4]), -2.3);
-    archetto(ctx, H, ab, 100);
+    senzaSagoma(ctx, (c) => archetto(c, H, ab, 100));
     braccioRana(ctx, [-27, -92], lerp2([-44, -80], [-62, -96], (u - 40) / 35), H, ab + 1.2);
     const NOTE = [[[64, -150], [82, -192]], [[70, -164], [76, -210]], [[74, -178], [66, -222]], [[68, -192], [84, -166]]];
     nota(ctx, NOTE[k][0][0], NOTE[k][0][1], 9, false);
@@ -377,7 +447,7 @@ function disegnaRana(ctx, nome) {
     // a riposo: il violino penzola nella mano sinistra, l'archetto nella destra
     const parla = azione === 'parla';
     violino(ctx, 50, -40, -Math.PI / 2 + 0.12);
-    archetto(ctx, [-50, -66], -Math.PI / 2 - 0.25, 92);
+    senzaSagoma(ctx, (c) => archetto(c, [-50, -66], -Math.PI / 2 - 0.25, 92));
     testaRana(ctx, { inclina: parla ? (k ? 0.03 : -0.04) : 0, sguardo: [0, 0.15], occhi: 'aperti', bocca: parla && k === 0 ? 'aperta' : 'sorriso' });
     papillon(ctx, 0, -106, RANA.papillon);
     braccioRana(ctx, [27, -92], [46, -84], [54, -70], -2.6);
@@ -413,10 +483,15 @@ function disegnaPesce(ctx, nome) {
   pinna(ctx, [-8, -36], [-2.25, -1.85], [22, 18], 11, 0.08 * Math.sin(w), PESCE.pinne);                   // pinna sul dorso
   pinna(ctx, [-4, 36], [2.2, 1.85], [17, 13], 9, -0.08 * Math.sin(w), PESCE.pinne);                       // pinnetta sotto
   const corpo = pezzo(ctx, Forme.ellisse(0, 0, 50, 40), PESCE.corpo, 1.2);
+  const pancia = Forme.ellisse(6, 31, 44, 17);
   ctx.save();
   ctx.clip(corpo);
-  pezzo(ctx, Forme.ellisse(6, 31, 44, 17), PESCE.pancia, 0, LW * 0.7);
+  pezzo(ctx, pancia, PESCE.pancia, 0, LW * 0.7);
   ctx.restore();
+  ombraDentro(ctx, corpo, pancia, PESCE.pancia, 1.2);
+  // squame lucide: la fascia di luce in alto e un luccichio
+  riflesso(ctx, corpo, -2, 2, 43, 34, -2.8, -1.3, 0.2, tonoLuce(PESCE.corpo, 0.55), 5);
+  luccichio(ctx, -27, -21, 3.4, 0.9);
   for (const [x, y] of [[-24, -16], [-36, -2], [-24, 12], [-12, -2]]) {     // qualche squama
     tratto(ctx, [[x + 3, y - 5], [x - 1.5, y], [x + 3, y + 5]], LW * 0.6, INK2);
   }
@@ -425,10 +500,12 @@ function disegnaPesce(ctx, nome) {
   guancia(ctx, 31, 9, 6.5);
   tratto(ctx, [[41, 9], [45.5, 12], [49, 8.5]], LW * 0.8);                     // sorrisino
   pinna(ctx, [0, -6], [-2.0, -2.42, -2.84], [52, 57, 45], 22, ali, PESCE.pinne);   // ala vicina
-  for (const [x, y, r] of [[60, -4 - 7 * k, 4.2], [70, -14 - 5 * ((k + 2) % 4), 2.8]]) {   // bollicine
-    linea(ctx, Forme.cerchio(x, y, r), { spessore: LW * 0.6, colore: INK2 });
-    tinta(ctx, Forme.cerchio(x - r * 0.35, y - r * 0.35, r * 0.3), '#ffffff', 0.9);
-  }
+  aParte(ctx, () => {                                                         // bollicine (leggere, senza sagoma)
+    for (const [x, y, r] of [[60, -4 - 7 * k, 4.2], [70, -14 - 5 * ((k + 2) % 4), 2.8]]) {
+      linea(ctx, Forme.cerchio(x, y, r), { spessore: LW * 0.6, colore: INK2 });
+      tinta(ctx, Forme.cerchio(x - r * 0.35, y - r * 0.35, r * 0.3), '#ffffff', 0.9);
+    }
+  });
 }
 
 /* ------------------------------------------------------------------------ */
@@ -467,10 +544,14 @@ function testaPecora(ctx, x, y, ang, occhi, filoDErba) {
   ctx.rotate(ang);
   pezzo(ctx, Forme.ellisse(-2, -12, 11, 5, -0.9), tono(PECORA.muso), 0, LW * 0.85);           // orecchio lontano
   if (filoDErba) {
-    pezzo(ctx, Forme.poligono([[20, 14], [24, 12], [44, 24]]), '#8cc46c', 0, LW * 0.7);
-    pezzo(ctx, Forme.poligono([[19, 15], [23, 15], [36, 34]]), '#76ad58', 0, LW * 0.7);
+    senzaSagoma(ctx, (c) => {
+      pezzo(c, Forme.poligono([[20, 14], [24, 12], [44, 24]]), '#8cc46c', 0, LW * 0.7);
+      pezzo(c, Forme.poligono([[19, 15], [23, 15], [36, 34]]), '#76ad58', 0, LW * 0.7);
+    });
   }
-  pezzo(ctx, [Forme.ellisse(0, 0, 21, 17), Forme.ellisse(15, 5, 14, 12.5, 0.3)], PECORA.muso, 0.6);
+  const muso = pezzo(ctx, [Forme.ellisse(0, 0, 21, 17), Forme.ellisse(15, 5, 14, 12.5, 0.3)], PECORA.muso, 0.6);
+  riflesso(ctx, muso, 3, 2, 19, 15, -2.6, -0.9, 0.24, tonoLuce(PECORA.muso, 0.35), 4);
+  ombraPortata(ctx, Forme.ellisse(-1, -7, 12, 5));                                               // il ciuffo fa ombra sulla fronte
   pezzo(ctx, nuvola(-4, -15, 10, 4, 5, 31, 6, 8), PECORA.lana, 0.4, LW * 0.85);                // ciuffo di nuvola
   pezzo(ctx, Forme.ellisse(-15, -2, 13, 6, 0.55), PECORA.muso, 0, LW * 0.85);                   // orecchio vicino
   tinta(ctx, Forme.ellisse(-15, -1.5, 8, 2.8, 0.55), PECORA.orecchio);
@@ -485,7 +566,7 @@ function disegnaPecora(ctx, nome) {
   const [, azione, n] = nome.split('_');
   const k = Number(n), cammina = azione === 'cammina', th = (TAU * k) / 4;
   const bob = cammina ? 1.5 * Math.cos(2 * th) : 0;
-  if (!cammina) erbetta(ctx, 104, 0, k ? 4 : 5, k ? 10 : 17, 3);
+  if (!cammina) senzaSagoma(ctx, (c) => erbetta(c, 104, 0, k ? 4 : 5, k ? 10 : 17, 3));   // fili d'erba sottili
   // zampe: [anca x, fase] — lontane prima (più scure), poi le vicine
   const ZAMPE = [[-60, 0], [26, 0.5], [-44, 0.5], [42, 0]];
   ZAMPE.forEach(([ax, fase], i) => {
@@ -544,6 +625,10 @@ function acqua(ctx, w) {
   for (let x = -L; x <= L; x += 4) bordo.push([x, alto(x)]);
   const p = spezzata([[-L, LW + 1], ...bordo, [L, LW + 1]]);   // fino al bordo della cella
   tinta(ctx, p, TOPO.acqua, 0.95);
+  ctx.save();                                                   // l'ombra della barca sull'acqua
+  ctx.clip(p);
+  tinta(ctx, Forme.ellisse(10, -2, 80, 5), tonoOmbra(TOPO.acqua), 0.9);
+  ctx.restore();
   linea(ctx, spezzata(bordo), { spessore: LW, colore: TOPO.ondaScura });
   for (const [x, y, l] of [[-50, -4, 16], [30, -3.5, 20], [-10, -6, 10]]) {          // riflessi
     tratto(ctx, [[x - l / 2, y], [x + l / 2, y]], LW * 0.7, '#e6f3fb');
@@ -570,26 +655,36 @@ function topolino(ctx, k) {
   }
   // maglietta alla marinara (bianca a righe blu)
   const busto = pezzo(ctx, Forme.ellisse(36, -84, 19, 23), TOPO.carta, 0.6);
+  const righe = new Path2D();
+  for (const y of [-90, -80, -70]) righe.addPath(Forme.rettangolo(10, y, 60, 4.5));
   ctx.save();
   ctx.clip(busto);
-  for (const y of [-90, -80, -70]) tinta(ctx, Forme.rettangolo(10, y, 60, 4.5), TOPO.blu, 0.85);
+  tinta(ctx, righe, TOPO.blu, 0.85);
   ctx.restore();
+  ombraDentro(ctx, busto, righe, TOPO.blu, 0.6);
   pezzo(ctx, Forme.poligono([[22, -104], [44, -104], [36, -92]], true), TOPO.rosso, 0, LW * 0.8);   // fazzoletto
   // la testa (di profilo, il muso a punta verso destra)
+  ombraPortata(ctx, Forme.ellisse(46, -104, 19, 6));                                                 // ombra sotto il muso
   pezzo(ctx, Forme.cerchio(30, -147, 12), tono(TOPO.pelo), 0, LW * 0.85);                          // orecchio lontano
-  pezzo(ctx, [Forme.ellisse(40, -124, 21, 18.5), Forme.ellisse(58, -118, 16, 10.5, 0.25)], TOPO.pelo, 0.8);
+  const testa = pezzo(ctx, [Forme.ellisse(40, -124, 21, 18.5), Forme.ellisse(58, -118, 16, 10.5, 0.25)], TOPO.pelo, 0.8);
+  riflesso(ctx, testa, 41, -123, 18, 16, -2.6, -0.8, 0.24, tonoLuce(TOPO.pelo, 0.5), 5);
   pezzo(ctx, Forme.cerchio(20, -140, 14), TOPO.pelo, 0.4, LW * 0.9);                               // orecchio vicino
   tinta(ctx, Forme.cerchio(19, -139.5, 8.5), TOPO.dentro);
-  // berretto da marinaio col pompon
+  // berretto da marinaio col pompon (fa ombra sulla testa)
   ruotato(ctx, 42, -142, 0.12, () => {
-    pezzo(ctx, Forme.rettangolo(28, -146, 28, 7, 2), TOPO.blu, 0, LW * 0.85);
-    pezzo(ctx, Forme.ellisse(42, -147, 18, 5.5), TOPO.carta, 0.4, LW * 0.85);
-    pezzo(ctx, Forme.cerchio(42, -154, 4.2), TOPO.rosso, 0, LW * 0.8);
+    ombraPortata(ctx, Forme.ellisse(44, -139, 17, 5));
+    pezzo(ctx, Forme.rettangolo(28, -146, 28, 7, 2), TOPO.blu, 0.3, LW * 0.85);
+    const cima = pezzo(ctx, Forme.ellisse(42, -147, 18, 5.5), TOPO.carta, 0.4, LW * 0.85);
+    riflesso(ctx, cima, 41, -147, 15, 4, -3.0, -2.0, 0.4, '#ffffff', 2);
+    pezzo(ctx, Forme.cerchio(42, -154, 4.2), TOPO.rosso, 0.3, LW * 0.8);
+    tinta(ctx, Forme.cerchio(40.6, -155.4, 1.2), '#ffffff', 0.9);
   });
   occhio(ctx, 50, -127, 5.5, 7, [0.5, -0.1], saluta ? 'felici' : 'aperti');
   guancia(ctx, 53, -114, 5);
   pezzo(ctx, Forme.cerchio(73, -114.5, 4), TOPO.naso, 0, LW * 0.8);
-  for (const [dx, dy] of [[17, -7], [19, 0], [17, 7]]) tratto(ctx, [[66, -113], [66 + dx, -113 + dy]], LW * 0.5, INK2);   // baffi
+  aParte(ctx, () => {                                                                     // baffi sottili
+    for (const [dx, dy] of [[17, -7], [19, 0], [17, 7]]) tratto(ctx, [[66, -113], [66 + dx, -113 + dy]], LW * 0.5, INK2);
+  });
   if (saluta) boccaAperta(ctx, 62, -108, 8, 5);
   else tratto(ctx, [[59, -107.5], [63, -105.5], [67, -108]], LW * 0.75);
 }
@@ -600,7 +695,7 @@ function disegnaTopoBarca(ctx, nome) {
   ctx.translate(0, -1.5 + 1.5 * Math.cos(w));                // la barca va su e giù...
   ruotato(ctx, 0, -30, 0.035 * Math.sin(w), () => {          // ...e dondola
     // la vela triangolare della barchetta, con la bandierina in cima
-    tubo(ctx, [[-4, -170], [-4, -198]], 2.2, '#c99a62', LW * 0.6, true);
+    senzaSagoma(ctx, (c) => tubo(c, [[-4, -170], [-4, -198]], 2.2, '#c99a62', LW * 0.6, true));   // l'asta
     const sv = 3 * Math.sin(w + 1);
     pezzo(ctx, Forme.poligono([[-4, -198], [-30, -192 + sv], [-4, -184]], true), TOPO.rosso, 0, LW * 0.8);
     const vela = pezzo(ctx, Forme.poligono([[-58, -68], [52, -68], [-4, -172]]), TOPO.carta, 1.4);
@@ -619,7 +714,7 @@ function disegnaTopoBarca(ctx, nome) {
     manina(ctx, 60, -71, 5.5, -1.3, TOPO.pelo);
   });
   ctx.restore();
-  acqua(ctx, w);
+  aParte(ctx, () => acqua(ctx, w));   // l'acqua passa davanti al fondo della barca (senza sagoma)
 }
 
 /* ------------------------------------------------------------------------ */
@@ -636,20 +731,22 @@ Object.assign(TONI, { [LAMP.verde]: '#62907a', [LAMP.verdeScuro]: '#4c7660', [LA
 
 /** La lettera Z disegnata a mano (per chi dorme). */
 function zeta(ctx, x, y, s) {
-  linea(ctx, spezzata([[x, y], [x + s, y], [x, y + s], [x + s, y + s]]), { spessore: LW * 0.9, colore: INK });
+  aParte(ctx, () => linea(ctx, spezzata([[x, y], [x + s, y], [x, y + s], [x + s, y + s]]), { spessore: LW * 0.9, colore: INK }));
 }
 
 function disegnaLampione(ctx, nome) {
   const acceso = !['dorme', 'sbadiglia'].includes(nome);
   const parla = nome.startsWith('parla');
   const yL = -420;                                          // centro della lanterna
-  if (nome !== 'dorme') {                                   // l'alone di luce (dietro a tutto)
-    const g = ctx.createRadialGradient(0, yL, 8, 0, yL, 80);
-    g.addColorStop(0, conAlfa('#ffe7a0', acceso ? 0.6 : 0.22));
-    g.addColorStop(0.55, conAlfa('#ffe7a0', acceso ? 0.22 : 0.08));
-    g.addColorStop(1, conAlfa('#ffe7a0', 0));
-    ctx.fillStyle = g;
-    ctx.fillRect(-80, yL - 90, 160, 180);
+  if (nome !== 'dorme') {                                   // l'alone di luce (dietro a tutto, senza sagoma)
+    aParte(ctx, () => {
+      const g = ctx.createRadialGradient(0, yL, 8, 0, yL, 80);
+      g.addColorStop(0, conAlfa('#ffe7a0', acceso ? 0.6 : 0.22));
+      g.addColorStop(0.55, conAlfa('#ffe7a0', acceso ? 0.22 : 0.08));
+      g.addColorStop(1, conAlfa('#ffe7a0', 0));
+      ctx.fillStyle = g;
+      ctx.fillRect(-80, yL - 90, 160, 180);
+    }, true);
   }
   // il piedistallo a gradini
   pezzo(ctx, Forme.rettangolo(-32, -14, 64, 14, 4), LAMP.verdeScuro, 0.8);
@@ -674,7 +771,11 @@ function disegnaLampione(ctx, nome) {
     riempi.addColorStop(0.55, '#ffeaa6');
     riempi.addColorStop(1, LAMP.luce);
   }
-  pezzo(ctx, vetro, riempi, nome === 'dorme' ? 0.8 : 0);
+  const lastra = pezzo(ctx, vetro, riempi, nome === 'dorme' ? 0.8 : 0);
+  // i lampi di luce sul vetro (due strisce in diagonale, a sinistra)
+  const lampo = nome === 'dorme' ? 0.8 : 0.6;
+  strisciaLuce(ctx, lastra, -38, -456, 7, 66, 9, '#ffffff', lampo);
+  strisciaLuce(ctx, lastra, -26, -456, 2.4, 50, 7, '#ffffff', lampo * 0.9);
   for (const s of [-1, 1]) tubo(ctx, [[s * 30, -380], [s * 42, -460]], 4.5, LAMP.verdeScuro, LW * 0.8, true);   // montanti
   // la faccia sul vetro
   const fy = -426;
@@ -696,7 +797,8 @@ function disegnaLampione(ctx, nome) {
   // il tettuccio a piramide col pomello
   pezzo(ctx, Forme.rettangolo(-47, -468, 94, 10, 3), LAMP.verdeScuro, 0, LW * 0.9);
   pezzo(ctx, Forme.poligono([[-52, -466], [52, -466], [13, -494], [-13, -494]]), LAMP.verde, 1);
-  pezzo(ctx, Forme.cerchio(0, -499, 6), LAMP.verdeScuro, 0, LW * 0.9);
+  pezzo(ctx, Forme.cerchio(0, -499, 6), LAMP.verdeScuro, 0.3, LW * 0.9);
+  tinta(ctx, Forme.cerchio(-2, -501, 1.6), '#ffffff', 0.85);
   tubo(ctx, [[0, -504], [0, -507]], 2.5, LAMP.verdeScuro, LW * 0.7, true);
   if (nome === 'dorme') {
     zeta(ctx, 44, -476, 7);
@@ -720,13 +822,16 @@ const LUMACA = {
 Object.assign(TONI, { [LUMACA.pelle]: '#e3ca97', [LUMACA.guscio]: '#de8a74', [LUMACA.berretto]: '#4a78b9', [LUMACA.borsa]: '#a6713f' });
 
 function guscio(ctx, x, y, r) {
-  pezzo(ctx, Forme.ellisse(x, y, r, r * 0.96), LUMACA.guscio, 1.6);
+  const g = pezzo(ctx, Forme.ellisse(x, y, r, r * 0.96), LUMACA.guscio, 1.6);
   const punti = [];
   for (let i = 0; i <= 44; i++) {                       // la spirale, da fuori verso il centro
     const t = i / 44, a = -2.2 + t * TAU * 2.05, rr = r * (0.8 - 0.7 * t);
     punti.push([x + 3 + Math.cos(a) * rr, y + 2 + Math.sin(a) * rr]);
   }
   tubo(ctx, punti, r * 0.14, LUMACA.spirale, LW * 0.75);
+  // il guscio è lucido: una fascia di luce in alto a sinistra e un luccichio
+  riflesso(ctx, g, x, y, r * 0.9, r * 0.86, -2.85, -1.75, 0.16, tonoLuce(LUMACA.guscio, 0.62), 4);
+  luccichio(ctx, x - r * 0.52, y - r * 0.5, r * 0.085, 0.95);
 }
 
 /** Un'antenna con l'occhio in cima. */
@@ -750,8 +855,10 @@ function borsaPosta(ctx, x, y, l, a) {
 /** Il berrettino da postino (di lato la visiera guarda a destra). */
 function berrettoPosta(ctx, x, y, ang, fronte) {
   ruotato(ctx, x, y, ang, () => {
-    pezzo(ctx, Forme.poligono([[x - 13, y], [x + 13, y], [x + 15, y - 13], [x - 14, y - 13]]), LUMACA.berretto, 0.4, LW * 0.9);
+    ombraPortata(ctx, Forme.ellisse(x + 3, y + 3.5, 16, 4.5));                     // ombra sulla fronte
+    const b = pezzo(ctx, Forme.poligono([[x - 13, y], [x + 13, y], [x + 15, y - 13], [x - 14, y - 13]]), LUMACA.berretto, 0.4, LW * 0.9);
     tinta(ctx, Forme.rettangolo(x - 13, y - 5, 26, 3), '#8db4e6');
+    strisciaLuce(ctx, b, x - 11, y - 12, 3, 6, -0.5, tonoLuce(LUMACA.berretto, 0.5), 1);
     pezzo(ctx, Forme.cerchio(fronte ? x : x + 7, y - 7, 2.6), LUMACA.stemma, 0, LW * 0.6);
     if (fronte) pezzo(ctx, Forme.ellisse(x, y + 1, 15, 3.5), LUMACA.visiera, 0, LW * 0.8);
     else pezzo(ctx, Forme.ellisse(x + 17, y + 0.5, 9, 2.6, 0.1), LUMACA.visiera, 0, LW * 0.8);
@@ -764,7 +871,8 @@ function lumacaLato(ctx, k) {
   const ondeggia = 2 * Math.cos((TAU * k) / 4);
   antenna(ctx, [hx - 6, -84], [hx - 14 + ondeggia, -114], tono(LUMACA.pelle), 7.5, [0.6, 0], 'aperti');
   const piede = Forme.poligono([[cx, -1], [cx + 26, -13 * alto], [gx, -26 * alto], [hx - 12, -28], [hx + 22, -12], [hx + 22, -1]], true);
-  pezzo(ctx, [piede, Forme.ellisse(hx - 4, -42, 15, 28, 0.25), Forme.cerchio(hx + 3, -68, 22)], LUMACA.pelle, 0.8);
+  const corpo = pezzo(ctx, [piede, Forme.ellisse(hx - 4, -42, 15, 28, 0.25), Forme.cerchio(hx + 3, -68, 22)], LUMACA.pelle, 0.8);
+  riflesso(ctx, corpo, hx + 3, -68, 19, 19, -2.6, -1.1, 0.22, tonoLuce(LUMACA.pelle, 0.55), 4);
   for (let i = 0; i < 4; i++) {                              // le onde del piede che striscia
     const x = cx + 30 + i * 30 + 6 * e;
     tratto(ctx, [[x - 7, -4], [x, -7], [x + 7, -4]], LW * 0.55, INK2);
@@ -783,7 +891,8 @@ function lumacaFronte(ctx, aperta) {
   guscio(ctx, -30, -70, 48);
   antenna(ctx, [-2, -96], [-16, -126], LUMACA.pelle, 8.5, [0, 0.2], 'aperti');
   antenna(ctx, [18, -96], [32, -126], LUMACA.pelle, 8.5, [0, 0.2], 'aperti');
-  pezzo(ctx, [Forme.ellisse(8, -10, 46, 10), Forme.ellisse(8, -42, 21, 32), Forme.cerchio(8, -76, 26)], LUMACA.pelle, 0.8);
+  const corpo = pezzo(ctx, [Forme.ellisse(8, -10, 46, 10), Forme.ellisse(8, -42, 21, 32), Forme.cerchio(8, -76, 26)], LUMACA.pelle, 0.8);
+  riflesso(ctx, corpo, 7, -76, 22, 22, -2.7, -0.9, 0.2, tonoLuce(LUMACA.pelle, 0.55), 5);
   tubo(ctx, [[-8, -52], [8, -44], [28, -34]], 2.4, tono(LUMACA.borsa), LW * 0.7);
   borsaPosta(ctx, 22, -36, 26, 20);
   berrettoPosta(ctx, 8, -98, 0, true);
@@ -837,7 +946,8 @@ function testaFiore(ctx, x, y, F, apertura, ang) {
     else if (F.forma === 'lungo') forme.push(Forme.ellisse(...polare(a, r * 1.05), r * 0.66, r * 0.25, a));
     else forme.push(Forme.ellisse(...polare(a, r * 0.92), r * 0.66, r * 0.6, a));
   }
-  pezzo(ctx, forme, F.colore, 0.8, LW, F.ombra);
+  const corolla = pezzo(ctx, forme, F.colore, 0.8, LW);
+  riflesso(ctx, corolla, 0, 0, r * 1.25, r * 1.25, -2.7, -1.2, 0.16, tonoLuce(F.colore, 0.5), 5);
   pezzo(ctx, Forme.cerchio(0, 0, r * 0.7), FIORI.viso, 0.4, LW * 0.9);
   const canta = apertura > 0;
   for (const s of [-1, 1]) occhio(ctx, s * r * 0.27, -r * 0.14, r * 0.13, r * 0.16, [0, 0], canta ? F.occhi : 'aperti');
@@ -863,15 +973,19 @@ function disegnaFiori(ctx, nome) {
     if (i === 1) fogliolina(ctx, f[0] - 1, f[1] - 18, -2.7, 18);
   });
   // il vaso di coccio
-  pezzo(ctx, Forme.poligono([[-40, -56], [40, -56], [30, 0], [-30, 0]]), FIORI.vaso, 1.4);
-  pezzo(ctx, Forme.rettangolo(-47, -70, 94, 16, 5), FIORI.bordo, 0.8);
+  const vaso = pezzo(ctx, Forme.poligono([[-40, -56], [40, -56], [30, 0], [-30, 0]]), FIORI.vaso, 1.4);
+  const orlo = pezzo(ctx, Forme.rettangolo(-47, -70, 94, 16, 5), FIORI.bordo, 0.8);
+  strisciaLuce(ctx, orlo, -42, -67, 14, 3, 0, tonoLuce(FIORI.bordo, 0.5), 1);
   tinta(ctx, Forme.ellisse(0, -66, 38, 2.6), FIORI.terra);
-  const vaso = Forme.poligono([[-40, -56], [40, -56], [30, 0], [-30, 0]]);
+  const fascia = new Path2D();                                                // una fascia dipinta
+  fascia.addPath(Forme.rettangolo(-50, -38, 100, 6));
+  for (const x of [-20, 0, 20]) fascia.addPath(Forme.cerchio(x, -22, 2.6));
   ctx.save();
   ctx.clip(vaso);
-  tinta(ctx, Forme.rettangolo(-50, -38, 100, 6), '#e9a77f');                 // una fascia dipinta
-  for (const x of [-20, 0, 20]) tinta(ctx, Forme.cerchio(x, -22, 2.6), '#e9a77f');
+  tinta(ctx, fascia, '#e9a77f');
   ctx.restore();
+  ombraDentro(ctx, vaso, fascia, '#e9a77f', 1.4);
+  strisciaLuce(ctx, vaso, -33, -52, 5, 44, 4, tonoLuce(FIORI.vaso, 0.45), 0.95);   // coccio smaltato, lucido
   teste.forEach(({ F, ang, pos }, i) => testaFiore(ctx, pos[0], pos[1], F, CORO[k][i], ang * 1.6));
   // le note del coro
   const NOTE = [[[-82, -190], [76, -176]], [[-58, -196], [72, -190]], [[-80, -174], [64, -184]], [[-64, -190], [78, -196]]];
@@ -903,7 +1017,8 @@ function manoPiume(ctx, polso, ang) {
 function libro(ctx, x, y, ang) {
   ruotato(ctx, x, y, ang, () => {
     pezzo(ctx, Forme.rettangolo(x - 27, y - 22, 56, 44, 3), GUFO.pagine, 0, LW * 0.85);
-    pezzo(ctx, Forme.rettangolo(x - 30, y - 22, 56, 44, 4), GUFO.libro, 0.8);
+    const copertina = pezzo(ctx, Forme.rettangolo(x - 30, y - 22, 56, 44, 4), GUFO.libro, 0.8);
+    strisciaLuce(ctx, copertina, x - 18, y + 20, 4, -40, 12, tonoLuce(GUFO.libro, 0.5), 0.9);   // copertina lucida
     pezzo(ctx, Forme.rettangolo(x - 30, y - 22, 9, 44, 3), tono(GUFO.libro), 0, LW * 0.8);        // il dorso
     pezzo(ctx, Forme.rettangolo(x - 14, y - 14, 30, 12, 2), GUFO.pagine, 0, LW * 0.7);            // l'etichetta
     tratto(ctx, [[x - 9, y - 8], [x + 11, y - 8]], LW * 0.6, INK2);
@@ -930,7 +1045,10 @@ function disegnaGufo(ctx, nome) {
   }
   ctx.restore();
   linea(ctx, corpo, { spessore: LW, colore: INK });
-  for (const y of [-88, -70, -52]) pezzo(ctx, Forme.cerchio(8, y, 3), GUFO.bottone, 0, LW * 0.7);
+  for (const y of [-88, -70, -52]) {
+    pezzo(ctx, Forme.cerchio(8, y, 3), GUFO.bottone, 0.25, LW * 0.7);
+    tinta(ctx, Forme.cerchio(6.9, y - 1.1, 1), '#ffffff');
+  }
   // il libro e le ali con le maniche
   const maniche = (spalla, gomito, polso) => tubo(ctx, [spalla, gomito, polso], 17, GUFO.golf);
   libro(ctx, parla ? 10 : 0, -82, parla ? 0.12 : -0.05);
@@ -947,12 +1065,15 @@ function disegnaGufo(ctx, nome) {
   for (const s of [-1, 1]) {                                        // i ciuffi di piume
     pezzo(ctx, [[0.25, 34], [0.6, 30], [0.95, 22]].map(([d, l]) => lobo([s * 34, -200], -Math.PI / 2 + s * d, l, 12)), GUFO.piume, 0.4);
   }
-  pezzo(ctx, Forme.ellisse(0, -172, 58, 48), GUFO.piume, 1.2);
+  ombraPortata(ctx, Forme.ellisse(6, -126, 46, 11));                       // ombra della testa sul petto
+  const testa = pezzo(ctx, Forme.ellisse(0, -172, 58, 48), GUFO.piume, 1.2);
+  riflesso(ctx, testa, -3, -170, 52, 42, -2.8, -0.9, 0.15, tonoLuce(GUFO.piume, 0.42), 7);
   pezzo(ctx, [Forme.cerchio(-21, -174, 25), Forme.cerchio(21, -174, 25), Forme.poligono([[-34, -164], [34, -164], [0, -138]], true)], GUFO.viso, 0.5, LW * 0.85);
   for (const s of [-1, 1]) {
     occhio(ctx, s * 21, -176, 11, 13, [0, 0.15], chiusi ? 'chiusi' : 'aperti');
     linea(ctx, Forme.cerchio(s * 21, -176, 17), { spessore: 2.4, colore: GUFO.occhiali });
-    tratto(ctx, [[s * 10, -183], [s * 14, -188]], 1.4, '#ffffff', 0.8);                       // riflesso sul vetro
+    tratto(ctx, [[s * 9, -182], [s * 14, -189]], 1.6, '#ffffff', 0.9);                       // riflessi sul vetro
+    tratto(ctx, [[s * 10, -175], [s * 17, -185]], 0.9, '#ffffff', 0.8);
     tratto(ctx, [[s * 8, -200], [s * 22, -204], [s * 36, -199]], LW * 0.75, INK2);            // sopracciglio
     guancia(ctx, s * 30, -156, 6);
   }
@@ -1033,34 +1154,40 @@ function mongolfiera(ctx) {
   const larghezze = ys.map(mezzaLarghezza);
   ctx.save();                                                    // il contorno
   ctx.strokeStyle = INK;
-  ctx.lineWidth = LW * 2;
   ctx.lineJoin = 'round';
-  ctx.translate(-0.3, 0.35);
+  ctx.lineWidth = LW * 1.7;
+  ctx.stroke(sagoma);
+  ctx.translate(LW * 0.3, LW * 0.36);
+  ctx.lineWidth = LW * 2;
   ctx.stroke(sagoma);
   ctx.restore();
-  // prima tutto in ombra (spicchi + velo lilla), poi gli spicchi in luce
-  // dentro la sagoma spostata verso l'alto a destra: resta in ombra una falce
+  // prima tutto in ombra (spicchi + velo lilla-blu), poi gli spicchi in luce
+  // dentro la sagoma spostata verso l'alto a sinistra: resta in ombra una falce netta
   ctx.save();
   ctx.clip(sagoma);
   spicchi(ctx, ys, larghezze);
-  tinta(ctx, sagoma, 'rgb(96, 64, 110)', 0.15);
+  tinta(ctx, sagoma, 'rgb(64, 46, 128)', 0.2);
   const luce = new Path2D();
-  luce.addPath(sagoma, new DOMMatrix([1, 0, 0, 1, 15, -9]));
+  luce.addPath(sagoma, new DOMMatrix([1, 0, 0, 1, -15, -9]));
   ctx.clip(luce);
   spicchi(ctx, ys, larghezze);
   ctx.restore();
-  tinta(ctx, Forme.ellisse(62, cy - 78, 22, 12, -0.7), '#ffffff', 0.35);       // un riflesso di luce
+  // il pallone è lucido: una fascia di luce a bordo netto e un luccichio
+  riflesso(ctx, sagoma, -4, cy + 4, r * 0.86, r * 0.84, -2.75, -1.95, 0.14, 'rgba(255, 255, 255, 0.6)', 4);
+  luccichio(ctx, -78, cy - 66, 9, 0.85);
   // la gonnellina in fondo al pallone
   pezzo(ctx, Forme.poligono([[-36, bocca], [36, bocca], [28, bocca + 18], [-28, bocca + 18]]), MONGO.acqua, 0.5);
 }
 
 function orsetto(ctx, k) {
   pezzo(ctx, Forme.ellisse(0, -64, 25, 20), MONGO.orso, 0.8);
+  ombraPortata(ctx, Forme.ellisse(4, -78, 21, 7));                     // ombra sotto il muso
   for (const s of [-1, 1]) {
-    pezzo(ctx, Forme.cerchio(s * 18, -123, 9), MONGO.orso, 0, LW * 0.9);
+    pezzo(ctx, Forme.cerchio(s * 18, -123, 9), MONGO.orso, s > 0 ? 0.3 : 0, LW * 0.9);
     tinta(ctx, Forme.cerchio(s * 18, -122, 4.5), MONGO.muso);
   }
-  pezzo(ctx, Forme.cerchio(0, -102, 25), MONGO.orso, 0.9);
+  const testa = pezzo(ctx, Forme.cerchio(0, -102, 25), MONGO.orso, 0.9);
+  riflesso(ctx, testa, -1, -101, 21, 21, -2.75, -0.85, 0.22, tonoLuce(MONGO.orso, 0.4), 6);
   pezzo(ctx, Forme.ellisse(0, -93, 11.5, 8.5), MONGO.muso, 0, LW * 0.8);
   pezzo(ctx, Forme.ellisse(0, -97, 4.5, 3.2), MONGO.naso, 0, LW * 0.6);
   tratto(ctx, [[-4.5, -90.5], [0, -88], [4.5, -90.5]], LW * 0.75);
@@ -1100,7 +1227,8 @@ function disegnaOrsoMongolfiera(ctx, nome) {
       tratto(ctx, [[x, y0 + 3], [x, y0 + 12]], LW * 0.55, '#9a6c3a');
     }
   }
-  pezzo(ctx, Forme.rettangolo(-51, -70, 102, 12, 5), MONGO.bordo, 0.5);
+  const orlo = pezzo(ctx, Forme.rettangolo(-51, -70, 102, 12, 5), MONGO.bordo, 0.5);
+  strisciaLuce(ctx, orlo, -47, -68, 30, 2.6, 0, tonoLuce(MONGO.bordo, 0.45), 1);
   // le zampe: una sul bordo, l'altra saluta
   manina(ctx, -22, -70, 7, -1.4, MONGO.orso);
   const mano = k ? [50, -128] : [42, -134];
@@ -1115,15 +1243,22 @@ function disegnaOrsoMongolfiera(ctx, nome) {
 
 const serie = (prefisso, n) => Array.from({ length: n }, (_, k) => prefisso + k);
 
+/** Gli abitanti più affettuosi: rossore coi trattini sulle guance. */
+const AFFETTUOSI = ['rana', 'chiocciola', 'fiori_cantanti', 'gufo'];
+
 /**
  * Costruisce un atlante. Ogni cella ha l'origine a terra, al centro in basso
- * (oppure al centro della cella, se "centro" è vero). "spessore" è la linea.
+ * (oppure al centro della cella, se "centro" è vero). "spessore" è la linea
+ * interna; sagomaManga ripassa la sagoma esterna, spessa il doppio.
  */
-function atlante(nomi, l, a, altezzaMondo, spessore, disegna, centro = false) {
+function atlante(chi, nomi, l, a, altezzaMondo, spessore, disegna, centro = false) {
   const { tela, fotogrammi } = creaAtlante(nomi, { l, a }, (ctx, nome) => {
     LW = spessore;
-    ctx.translate(l / 2, centro ? a / 2 : a - spessore);
-    disegna(ctx, nome);
+    TRATTINI = AFFETTUOSI.includes(chi);
+    sagomaManga(ctx, l, a, (c) => {
+      c.translate(l / 2, centro ? a / 2 : a - spessore);
+      disegna(c, nome);
+    }, { fuori: spessore * 0.82, dentro: spessore, apertura: 2.7 });
   });
   return { tela, fotogrammi, cella: { l, a }, altezzaMondo };
 }
@@ -1147,7 +1282,7 @@ export async function creaFiabe() {
   ];
   const risultato = {};
   for (const [nome, nomi, l, a, h, spessore, disegna, centro] of elenco) {
-    risultato[nome] = atlante(nomi, l, a, h, spessore, disegna, centro);
+    risultato[nome] = atlante(nome, nomi, l, a, h, spessore, disegna, centro);
     await respira();   // lascia respirare la pagina tra un atlante e l'altro
   }
   return risultato;

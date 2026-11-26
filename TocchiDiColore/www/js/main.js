@@ -259,6 +259,9 @@ class Gioco {
     if (!def) throw new Error('Scena sconosciuta: ' + id);
     if (this.corrente && !o.subito) await this.bianco(1, 0.55);
     this.caricaScena = true;
+    // niente linee manga rimaste dalla scena di prima
+    this.focus = null;
+    this.acquerello.uniformi.uFocus.value.z = 0;
     if (this.corrente) this._esci();
     // teniamo in memoria solo i dipinti di questa scena e di quelle vicine
     const vicine = { piazza: ['forno'], forno: ['piazza'], canale: ['libreria', 'terrazza'], libreria: ['canale'], terrazza: ['canale'] };

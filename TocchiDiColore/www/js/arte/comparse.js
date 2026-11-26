@@ -63,7 +63,7 @@ export function tonoOmbra(colore) {
   let o = memoOmbre.get(colore);
   if (o === undefined) {
     const { r, g, b } = hexARgb(colore);
-    o = rgbAHex(r * 0.81 + 5, g * 0.8 + 4, b * 0.85 + 22);
+    o = rgbAHex(r * 0.82 + 4, g * 0.81 + 2, b * 0.86 + 17);
     memoOmbre.set(colore, o);
   }
   return o;
@@ -212,7 +212,10 @@ const DIREZIONI = Array.from({ length: 8 }, (_, k) => [Math.cos((k * Math.PI) / 
 const TELE = [];
 function telaDiLavoro(k, l, a) {
   let t = TELE[k];
-  if (!t || t.width !== l || t.height !== a) t = TELE[k] = nuovaTela(l, a);
+  if (!t || t.width !== l || t.height !== a) {
+    t = TELE[k] = nuovaTela(l, a);
+    if (k === 0) t.getContext('2d', { willReadFrequently: true });   // la tela del disegno si rilegge (riquadro)
+  }
   const c = t.getContext('2d');
   c.setTransform(1, 0, 0, 1, 0, 0);
   c.globalCompositeOperation = 'source-over';
@@ -220,18 +223,64 @@ function telaDiLavoro(k, l, a) {
   c.clearRect(0, 0, l, a);
   return t;
 }
+
+/** Il rettangolo [x, y, l, a] che contiene tutto il disegno della tela, più un margine m. */
+function riquadro(t, m) {
+  const l = t.width, a = t.height;
+  const d = new Uint32Array(t.getContext('2d').getImageData(0, 0, l, a).data.buffer);
+  let x0 = l, x1 = -1, y0 = -1, y1 = -1;
+  for (let y = 0; y < a; y++) {
+    const r = y * l;
+    let x = 0;
+    while (x < l && d[r + x] === 0) x++;
+    if (x === l) continue;
+    if (y0 < 0) y0 = y;
+    y1 = y;
+    if (x < x0) x0 = x;
+    let z = l - 1;
+    while (z > x1 && d[r + z] === 0) z--;
+    if (z > x1) x1 = z;
+  }
+  if (x1 < 0) return null;
+  x0 = Math.max(0, x0 - m); y0 = Math.max(0, y0 - m);
+  return [x0, y0, Math.min(l, x1 + m + 1) - x0, Math.min(a, y1 + m + 1) - y0];
+}
+
+let RQ = [0, 0, 1, 1];   // il riquadro del fotogramma in lavorazione: le copie si fanno solo lì
+function copia(c, src, dx, dy) {
+  const [x, y, l, a] = RQ;
+  c.drawImage(src, x, y, l, a, x + dx, y + dy, l, a);
+}
+/**
+ * Gli spostamenti (interi: le copie a pixel interi sono nitide e molto più
+ * veloci di quelle a mezzo pixel) attorno a un cerchio di raggio r.
+ */
+const memoPunti = new Map();
+function punti(r) {
+  let p = memoPunti.get(r);
+  if (!p) {
+    const m = new Map();
+    for (const [x, y] of DIREZIONI) {
+      const q = [Math.round(x * r), Math.round(y * r)];
+      if (q[0] || q[1]) m.set(q.join(), q);
+    }
+    p = [...m.values()];
+    memoPunti.set(r, p);
+  }
+  return p;
+}
 /** Allarga (r > 0) la sagoma di "src" dentro "dst". */
 function allarga(dst, src, r) {
   const c = dst.getContext('2d');
-  c.drawImage(src, 0, 0);
-  for (const [x, y] of DIREZIONI) c.drawImage(src, x * r, y * r);
+  copia(c, src, 0, 0);
+  for (const [x, y] of punti(r)) copia(c, src, x, y);
 }
 /** Restringe la sagoma di "src" dentro "dst" (intersezione delle copie spostate). */
 function restringi(dst, src, r) {
   const c = dst.getContext('2d');
-  c.drawImage(src, 0, 0);
+  copia(c, src, 0, 0);
   c.globalCompositeOperation = 'destination-in';
-  for (const [x, y] of DIREZIONI) c.drawImage(src, x * r, y * r);
+  for (const [x, y] of punti(r)) copia(c, src, x, y);
   c.globalCompositeOperation = 'source-over';
 }
 
@@ -244,6 +293,52 @@ let RINVII = null;
 export function aParte(ctx, disegna, sotto = false) {
   if (!RINVII) { disegna(); return; }
   RINVII.push({ m: ctx.getTransform(), disegna, sotto });
+}
+
+let ESCLUSI = null;
+/**
+ * Oggetti sottili che si dipingono al loro posto ma senza la sagoma spessa
+ * (un archetto, un'asta): attorno a loro la linea esterna si interrompe,
+ * come quando nei manga una cosa passa davanti a un'altra.
+ */
+export function senzaSagoma(ctx, disegna) {
+  disegna(ctx);
+  if (!ESCLUSI) return;
+  const e = ESCLUSI.c;
+  e.save();
+  e.setTransform(ctx.getTransform());
+  disegna(e);
+  e.restore();
+  ESCLUSI.usata = true;
+}
+
+/** Calcola l'anello della sagoma esterna di T (nel riquadro rq) e lo dipinge sopra T. */
+function anello(T, E, esclusi, rq, fuori, dentro, apertura) {
+  const l = T.width, a = T.height, c = T.getContext('2d');
+  RQ = rq;
+  const A = telaDiLavoro(1, l, a), B = telaDiLavoro(2, l, a), C = telaDiLavoro(3, l, a);
+  const ca = A.getContext('2d');
+  for (let k = 0; k < 2; k++) copia(ca, T, 0, 0);          // l'alfa leggero diventa pieno
+  restringi(B, A, apertura);                               // "apertura": spariscono i fili sottili...
+  allarga(C, B, apertura);                                 // ...e resta la sagoma piena
+  telaDiLavoro(1, l, a);
+  allarga(A, C, fuori);
+  telaDiLavoro(2, l, a);
+  restringi(B, C, dentro);
+  ca.globalCompositeOperation = 'destination-out';          // anello = allargata - ristretta
+  copia(ca, B, 0, 0);
+  if (esclusi) {                                           // niente sagoma attorno agli oggetti esclusi
+    telaDiLavoro(2, l, a);
+    allarga(B, E, fuori + 1);
+    copia(ca, B, 0, 0);
+  }
+  ca.globalCompositeOperation = 'source-in';
+  ca.fillStyle = MANGA.fuori;
+  ca.fillRect(0, 0, l, a);
+  ca.globalCompositeOperation = 'source-over';
+  copia(telaDiLavoro(2, l, a).getContext('2d'), A, 0, 0);
+  copia(ca, B, 0, 0);                                       // bordo più netto (niente alone sfocato)
+  c.drawImage(A, 0, 0);
 }
 
 /**
@@ -259,30 +354,19 @@ export function sagomaManga(ctxCella, l, a, disegna, opz = {}) {
   const fuori = opz.fuori || 1.8, dentro = opz.dentro || 1.8, apertura = opz.apertura || 1.5;
   const T = telaDiLavoro(0, l, a), c = T.getContext('2d');
   const rinvii = [];
+  const E = telaDiLavoro(4, l, a), esclusi = { c: E.getContext('2d'), usata: false };
   RINVII = rinvii;
+  ESCLUSI = esclusi;
   try {
     c.save();
     disegna(c);
     c.restore();
   } finally {
     RINVII = null;
+    ESCLUSI = null;
   }
-  const A = telaDiLavoro(1, l, a), B = telaDiLavoro(2, l, a), C = telaDiLavoro(3, l, a);
-  const ca = A.getContext('2d');
-  for (let k = 0; k < 2; k++) ca.drawImage(T, 0, 0);       // l'alfa leggero diventa pieno
-  restringi(B, A, apertura);                               // "apertura": spariscono i fili sottili...
-  allarga(C, B, apertura);                                 // ...e resta la sagoma piena
-  telaDiLavoro(1, l, a);
-  allarga(A, C, fuori);
-  telaDiLavoro(2, l, a);
-  restringi(B, C, dentro);
-  ca.globalCompositeOperation = 'destination-out';          // anello = allargata - ristretta
-  ca.drawImage(B, 0, 0);
-  ca.globalCompositeOperation = 'source-in';
-  ca.fillStyle = MANGA.fuori;
-  ca.fillRect(0, 0, l, a);
-  ca.globalCompositeOperation = 'source-over';
-  c.drawImage(A, 0, 0);
+  const rq = riquadro(T, Math.ceil(fuori + apertura + 4));
+  if (rq) anello(T, E, esclusi.usata, rq, fuori, dentro, apertura);
   for (const r of rinvii) {
     c.save();
     if (r.sotto) c.globalCompositeOperation = 'destination-over';
@@ -377,18 +461,6 @@ function ombraCel(ctx, p, colore, d, dentro) {
   if (dentro) ctx.clip(percorso(dentro));   // l'ombra di "p", ma solo sopra a "dentro" (nastri, fasce)
   ctx.fillStyle = tonoOmbra(colore);
   ctx.fill(fuori, 'evenodd');   // "evenodd": colora solo fuori dalla copia spostata
-  ctx.restore();
-}
-
-/** Linea che segue il bordo di una forma ma solo FUORI da essa (ripassa un contorno). */
-function bordoFuori(ctx, forma, w) {
-  const p = percorso(forma);
-  const fuori = new Path2D();
-  fuori.rect(-4000, -4000, 8000, 8000);
-  fuori.addPath(p);
-  ctx.save();
-  ctx.clip(fuori, 'evenodd');
-  linea(ctx, p, { spessore: w * 2, colore: MANGA.dentro });
   ctx.restore();
 }
 
@@ -515,7 +587,7 @@ function occhiali(ctx, x1, x2, y, r, colore) {
  */
 function chioma(ctx, forma, colore, d, x, y, r, opz = {}) {
   const p = percorso(forma);
-  ombraPortata(ctx, p, r * 0.06, r * 0.14);
+  ombraPortata(ctx, p, r * 0.07, r * 0.17);
   pezzo(ctx, p, colore, d);
   const k = opz.raggio || 0.86;
   riflesso(ctx, p, x + (opz.dx || 0), y + (opz.dy === undefined ? -r * 0.12 : opz.dy), r * k, r * k * (opz.schiaccia || 1),
@@ -867,7 +939,7 @@ const SIGNORA = {
 /** Cappello di paglia a tesa larga, con nastro e fiore. */
 function cappelloPaglia(ctx, x, y, r) {
   const C = SIGNORA, by = y - r * 0.8;
-  ombraPortata(ctx, Forme.ellisse(x + r * 0.12, by + r * 0.3, r * 1.3, r * 0.34, -0.05));   // la tesa fa ombra sul viso
+  ombraPortata(ctx, Forme.ellisse(x + r * 0.12, by + r * 0.26, r * 1.25, r * 0.27, -0.05), 0, 0, 0.8);   // la tesa fa ombra sul viso
   const tesa = pezzo(ctx, Forme.ellisse(x, by, r * 1.95, r * 0.42, -0.05), C.paglia, 4);
   riflesso(ctx, tesa, x - r * 0.1, by + r * 0.02, r * 1.72, r * 0.34, -2.95, -2.05, 0.3, tonoLuce(C.paglia, 0.55), 3);
   linea(ctx, Forme.ellisse(x, by, r * 1.6, r * 0.3, -0.05), { spessore: 1.4, colore: STILE.inchiostroChiaro, alfa: 0.7 });
@@ -1662,7 +1734,7 @@ function atlante(nomi, l, a, altezzaMondo, disegna) {
     sagomaManga(ctx, l, a, (c) => {
       c.translate(l / 2, a);        // origine tra i piedi
       disegna(c, leggiPosa(nome));
-    }, { fuori: LW * 0.95, dentro: LW * 1.05 });
+    }, { fuori: LW * 0.95, dentro: LW * 1.05, apertura: 2 });
   });
   return { tela, fotogrammi, cella: { l, a }, altezzaMondo };
 }

@@ -90,6 +90,7 @@ TocchiDiColore/
 │       │   ├── personaggi.js  Lia, Biscotto, il gattino, il ladro
 │       │   ├── comparse.js    fornaia, passanti, abitanti-animali
 │       │   ├── fiabe.js       rana, lampione vivo, pesci volanti, pecore-nuvola...
+│       │   ├── pioggia.js     auto-pesce, autobus-pesce, balena con le pinne, ombrelli
 │       │   ├── texture.js     facciate e pavimenti usati dai pittori delle scene
 │       │   ├── oggetti.js     alberi, lampioni, pane, auto...
 │       │   ├── cielo.js       nuvole, balena, panorami, particelle
@@ -102,6 +103,7 @@ TocchiDiColore/
 │       │   ├── sagoma.js      personaggi come "sagome di carta"
 │       │   ├── acquerello.js  filtro acquerello a tutto schermo
 │       │   ├── particelle.js  scintille, petali, note, profumi, fumo...
+│       │   ├── effetti.js     onomatopee, archi sonori, nastri di profumo, simboli manga
 │       │   └── volo.js        il volo sulla balena sopra la città
 │       └── gioco/           🎮 le regole
 │           ├── percorso.js    la strada (anche curva, in salita) su cui cammina Lia
@@ -109,6 +111,7 @@ TocchiDiColore/
 │           ├── percezione.js  il mondo bianco che si colora con le onde
 │           ├── magia.js       lo spettacolo della rivelazione, i colori dei materiali
 │           ├── meraviglie.js  le meraviglie nascoste e i personaggi che si svegliano
+│           ├── meteo.js       la pioggia, la strada-fiume, la balena e la sua ombra
 │           ├── attori.js      Biscotto, abitanti, auto, piccioni
 │           ├── audio.js       effetti sonori (generati) e suono "3D"
 │           ├── musica.js      colonna sonora (composta dal codice)
@@ -155,6 +158,20 @@ muro in `vicinoAlMuro`.
 **Personaggi delle fiabe** (`arte/fiabe.js`): il lampione che si sveglia, la chiocciola postina,
 la rana violinista, il topolino sulla barchetta di carta, i pesci volanti, le pecore-nuvola,
 l'orsetto in mongolfiera, il gufo bibliotecario e i fiori che cantano.
+
+**Suoni e profumi dipinti** (`motore/effetti.js`): ogni suono ha la sua scritta da fumetto
+("BAU!", "TOK!", "TIN!", "SPLASH!") e gli archi sonori; i profumi sono nastri colorati che
+volteggiano fino al naso di Lia; chi corre lascia una scia di vento.
+
+**La pioggia immaginata** (`gioco/meteo.js`, disegni in `arte/pioggia.js`): nel capitolo 1 comincia a
+piovere; Lia sente le auto nelle pozzanghere e immagina la strada come un fiume con le auto-pesce,
+gli animali che aspettano l'autobus-pesce sotto gli ombrelli e una balena con tante pinne che nuota
+nel cielo stendendo la sua ombra sulla via.
+
+**Stile manga/anime**: contorno d'inchiostro e luce di bordo su tutti i personaggi; il mondo non
+ancora scoperto è una pagina manga in bianco e nero con il retino; linee di concentrazione nei
+momenti forti e linee di velocità quando Lia corre; simboli sopra la testa ("!", gocce, note,
+stelline); ombre lilla e ombre delle nuvole che passano; il sole con il bagliore a raggi.
 
 **Meraviglie nascoste ✦**: in ogni scena (`meraviglie` nei file di `dati/scene/`) ci sono cose che
 prendono vita quando un'onda le raggiunge — farfalle, uccellini in volo, palloncini, pagine che

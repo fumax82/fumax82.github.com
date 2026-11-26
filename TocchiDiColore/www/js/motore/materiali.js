@@ -357,11 +357,11 @@ const FRAG_STRATO = /* glsl */ `
       // RETINO MANGA: dove il dipinto è scuro, puntini d'inchiostro come nelle pagine dei fumetti
       // (il mondo non ancora scoperto è una pagina manga in bianco e nero)
       float scuro = 1.0 - lum(t.rgb);
-      vec2 qq = mat2(0.7071, -0.7071, 0.7071, 0.7071) * qr(vMondo) * 11.0;
-      float rr = sqrt(clamp(scuro * 1.3 - 0.18, 0.0, 1.0)) * 0.5;
+      vec2 qq = mat2(0.7071, -0.7071, 0.7071, 0.7071) * qr(vMondo) * 14.0;
+      float rr = sqrt(clamp(scuro * 1.2 - 0.22, 0.0, 1.0)) * 0.42;
       float punto = 1.0 - smoothstep(rr - 0.08, rr + 0.08, length(fract(qq) - 0.5));
       float vicino = 1.0 - smoothstep(9.0, 22.0, dist);
-      schizzo = mix(schizzo, uInk, punto * 0.38 * uRetino * uSchizzoStrato * (0.35 + 0.65 * matita) * vicino);
+      schizzo = mix(schizzo, uInk, punto * 0.24 * uRetino * uSchizzoStrato * (0.35 + 0.65 * matita) * vicino);
       // il colore arriva come acquerello bagnato: sul bordo il pigmento si accumula
       vec3 colore = t.rgb * uLuceScena;
       colore = mix(colore, colore * vec3(0.78, 0.72, 0.84), bagnato * 0.5);
