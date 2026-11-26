@@ -113,7 +113,7 @@ TocchiDiColore/
 │           ├── meraviglie.js  le meraviglie nascoste e i personaggi che si svegliano
 │           ├── meteo.js       la pioggia, la strada-fiume, la balena e la sua ombra
 │           ├── attori.js      Gogo, abitanti, auto, piccioni
-│           ├── audio.js       effetti sonori (generati) e suono "3D"
+│           ├── audio.js       strumenti, effetti sonori e ambienti (generati) e suono "3D"
 │           ├── musica.js      colonna sonora (composta dal codice)
 │           ├── input.js       touch, tastiera, tasto Indietro
 │           ├── interfaccia.js dialoghi, obiettivi, menu
@@ -182,6 +182,13 @@ ancora scoperto è un disegno a matita su carta bianca (il retino manga si riacc
 `motore/materiali.js`); linee di concentrazione nei
 momenti forti e linee di velocità quando Lia corre; simboli sopra la testa ("!", gocce, note,
 stelline); ombre lilla e ombre delle nuvole che passano; il sole con il bagliore a raggi.
+
+**Musica e suoni** (`gioco/audio.js`, `gioco/musica.js`): all'avvio il gioco "registra" da solo
+i suoi strumenti (pianoforte, celesta, carillon, arpa, archi, flauto, clarinetto, violino, coro) e
+le sette musiche sono brani veri con melodia, accordi e basso, che sfumano l'uno nell'altro. Il
+bastone sui materiali usa la "sintesi modale" (il vetro tintinna a lungo, il legno fa un tok
+breve e caldo, il metallo risuona); Gogo abbaia, il gattino miagola e Lia chiama «Go-go!» con voci
+sintetiche; c'è un riverbero comune che mette tutto nello stesso spazio.
 
 **L'ultima mano di acquerello** (`arte/finitura.js`): tutti i fondali e gli oggetti di scena,
 appena dipinti dal codice, ricevono una "finitura" come gli acquerelli veri del film: il pigmento
