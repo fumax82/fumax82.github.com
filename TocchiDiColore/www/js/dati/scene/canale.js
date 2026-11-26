@@ -35,6 +35,7 @@ export default {
     { da: 32, a: 36.4, muro: 'intonaco', terra: 'pietra' },
     { da: 36.4, a: 45, terra: 'pietra' },
   ],
+  vento: 9,   // ogni quanti secondi passa una folata di vento disegnata
   arrivi: {
     vicolo: { s: 0.8, verso: 1 },
     dalla_libreria: { s: 29.5, verso: 1 },

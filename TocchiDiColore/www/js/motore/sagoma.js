@@ -39,7 +39,8 @@ export class Sagoma {
     this.ombra = null;
     if (o.ombra) {
       this.ombra = new THREE.Mesh(geometriaOmbra, materialeOmbra(o.forzaOmbra));
-      this.ombra.scale.set(o.ombra * 2, 1, o.ombra * 1.4);
+      // ombra allungata verso destra-dietro, come al sole del pomeriggio (non realistica: lilla)
+      this.ombra.scale.set(o.ombra * 2.7, 1, o.ombra * 1.25);
       this.ombra.renderOrder = 1;
     }
     this.fotogramma = null;
@@ -89,7 +90,7 @@ export class Sagoma {
   /** Posiziona la sagoma nel mondo: x destra, y alto (i piedi), z verso lo spettatore. */
   posiziona(x, y, z) {
     this.mesh.position.set(x, y, z);
-    if (this.ombra) this.ombra.position.set(x, this._quotaOmbra === undefined ? y + 0.012 : this._quotaOmbra, z);
+    if (this.ombra) this.ombra.position.set(x + this.larghezza * 0.22, this._quotaOmbra === undefined ? y + 0.012 : this._quotaOmbra, z - 0.08);
   }
 
   /** Quota del terreno sotto l'oggetto (per l'ombra degli oggetti sospesi). */

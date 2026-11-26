@@ -27,6 +27,8 @@ export default {
     { da: 38, a: 44, muro: 'mattoni' },
     { da: 44, a: 47, muro: 'legno' },
   ],
+  // sotto la pioggia, gli strati della strada possono diventare un fiume (vedi gioco/meteo.js)
+  fiume: ['strada'],
   arrivi: {
     inizio: { s: 2.2, verso: 1 },
     staccionata: { s: 45.7, verso: 1 },
@@ -96,6 +98,21 @@ export default {
     // personaggi delle fiabe: compaiono solo quando Lia li "scopre" nel mondo bianco
     { id: 'lampione_vivo', tipo: 'lampione', arte: 'lampione_vivo', nome: 'Il Lampione', x: 33.6, z: 0.95, y: 0.08, visibile: false,
       chiacchiere: ['Di notte faccio luce alle lucciole, di giorno ai pensieri.', 'Il tuo cane? Ha la coda più veloce del vento!'] },
+    // --- la pioggia immaginata (capitolo 1): auto-pesce, fermata degli animali, balena con le pinne
+    { id: 'pesce1', tipo: 'animato', arte: 'auto_pesce_gialla', pesce: true, prefisso: 'lato_', fps: 7, x: 4, y: 0.02, z: 3.0,
+      velocita: 3.2, dondola: 0.05, ricomincia: true, visibile: false, giro: [[-14, 0.02, 3.0], [62, 0.02, 3.0]] },
+    { id: 'pesce2', tipo: 'animato', arte: 'auto_pesce_rossa', pesce: true, prefisso: 'lato_', fps: 6, x: 40, y: 0.02, z: 5.6,
+      velocita: 2.6, dondola: 0.05, ricomincia: true, visibile: false, giro: [[62, 0.02, 5.6], [-14, 0.02, 5.6]] },
+    { id: 'pesce3', tipo: 'animato', arte: 'auto_pesce_azzurra', pesce: true, prefisso: 'lato_', fps: 8, x: 22, y: 0.02, z: 3.3,
+      velocita: 3.7, dondola: 0.06, ricomincia: true, visibile: false, giro: [[-14, 0.02, 3.3], [62, 0.02, 3.3]] },
+    { id: 'bus', tipo: 'animato', arte: 'autobus_pesce', pesce: true, prefisso: 'lato_', fps: 5, x: 62, y: 0.02, z: 6.2,
+      velocita: 3.2, dondola: 0.04, visibile: false, giro: [[62, 0.02, 6.2]] },
+    { id: 'attesa_lepre', tipo: 'persona', arte: 'lepre', nome: 'La signora Lepre', x: 25.3, z: 8.5, y: 0.08, visibile: false, parla: false, ombra: 0.25 },
+    { id: 'attesa_uccello', tipo: 'persona', arte: 'uccello', nome: 'Il signor Pennuto', x: 26.2, z: 8.75, y: 0.08, visibile: false, parla: false, ombra: 0.25 },
+    { id: 'attesa_cavallo', tipo: 'persona', arte: 'cavallo', nome: 'Il Cavallo', x: 27.7, z: 8.6, y: 0.08, visibile: false, parla: false, ombra: 0.25 },
+    { id: 'attesa_nonna', tipo: 'persona', arte: 'nonna', nome: 'Nonna Pecora', x: 28.6, z: 8.45, y: 0.08, visibile: false, parla: false, ombra: 0.25 },
+    { id: 'balena_pinne', tipo: 'animato', arte: 'balena_pinne', x: -60, y: 19, z: 4, fps: 5, ancora: 0.5, velocita: 6,
+      visibile: false, giro: [[90, 23, 2]] },
     { id: 'chiocciola', tipo: 'persona', arte: 'chiocciola', nome: 'La chiocciola postina', x: 25, z: -1.6, y: 0.08, visibile: false,
       ronda: [[22.5, -1.6], [27.5, -1.6]], velocita: 0.12, lunghezzaPasso: 0.3,
       chiacchiere: ['Posta! Posta! Vado pianissimo... ma arrivo sempre.', 'Un cane giallo? È passato così veloce che mi ha fatto girare il guscio!'] },
@@ -105,6 +122,7 @@ export default {
     { id: 'lampione2', arte: 'lampione', x: 33.6, z: 0.95, y: 0.08, scala: 1.25 },
     { arte: 'panchina', x: 20.5, z: -1.55, y: 0.08, scala: 1.2 },
     { arte: 'bicicletta', x: 31.0, z: -1.6, y: 0.08, scala: 1.2 },
+    { id: 'fermata', arte: 'fermata', x: 26.9, z: 8.9, y: 0.08, nascosto: true },
   ],
 
   /* --- Cose da fare ------------------------------------------------------- */

@@ -49,6 +49,10 @@ Galleria.carica = async function (progresso, anisotropia) {
       const m = await importa('./fiabe.js');
       if (m && m.creaFiabe) this._aggiungiAtlanti(await m.creaFiabe());
     }],
+    ['Disegno la pioggia e le auto-pesce...', async () => {
+      const m = await importa('./pioggia.js');
+      if (m && m.creaPioggia) this._aggiungiAtlanti(await m.creaPioggia());
+    }],
     ['Disegno gli oggetti...', async () => {
       const m = await importa('./oggetti.js');
       if (m && m.creaOggetti) this._aggiungiAtlanti(await m.creaOggetti());

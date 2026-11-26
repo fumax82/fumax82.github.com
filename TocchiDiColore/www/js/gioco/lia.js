@@ -162,6 +162,12 @@ export class Lia {
     if (Math.floor(this.passo * 2) !== prima) {
       Audio.passo(this.scena.superficie(this.s), Math.floor(this.passo * 2) % 2);
       if (this.puoToccare) this.gioco.onda(this.x, this.z, 'passo');
+      // la streghetta lascia dietro di sé fiorellini che sbocciano e svaniscono
+      if (this.magica) {
+        this.gioco.particelle.emetti(this.x, this.y + 0.03, this.z + 0.05, 2, {
+          forma: 13, colori: ['#f7a8c8', '#fff3a8', '#c9b6ea', '#a8d8ff'], velocita: 0.08, su: 0.12, gravita: 0, vita: 1.6, dim: 0.09, rotazione: 0.3,
+        });
+      }
     }
   }
 
@@ -191,6 +197,13 @@ export class Lia {
       materiale = mat.terra;
     }
     Audio.tocco(materiale, ox, oz);
+    // il suono si vede: una scritta da fumetto del colore del materiale
+    const TESTI = { pietra: 'TOC', mattoni: 'TUC', legno: 'TOK!', intonaco: 'TUP', vetro: 'TIN!', metallo: 'DONG!',
+      foglie: 'FRUSH', ceramica: 'TINK', libri: 'FLAP', acqua: 'PLIP' };
+    const colori = { pietra: '#f6c95a', mattoni: '#f08a6a', legno: '#d9984f', intonaco: '#f4b98a', vetro: '#7fc6f0',
+      metallo: '#9fb4e0', foglie: '#7fbf6a', ceramica: '#8fb4ea', libri: '#d9b98a', acqua: '#7fc6f0' };
+    this.gioco.effetti.onomatopea(TESTI[materiale] || 'TOC', ox, oy + 0.55, oz, colori[materiale] || '#f6c95a', 0.62);
+    if (this.magica) this.gioco.effetti.spirale(ox, oy, oz, colori[materiale] || '#ffd36b', { raggio: 0.35, altezza: 1.3, giri: 2, larghezza: 0.07, durata: 1.4 });
     // l'onda (e lo spettacolo di particelle) prendono il colore del materiale: vedi gioco/magia.js
     this.gioco.onda(ox, oz, 'bastone', { materiale, y: oy });
     this.gioco.magia.colpo(materiale, ox, oy, oz);

@@ -106,6 +106,8 @@ export class Scena {
       mesh.renderOrder = (d.normale === 'su' || d.normale === 'giu') ? -20 + (d.ordine || 0) : (d.ordine || 0);
       mesh.name = d.nome || '';
       this.gruppo.add(mesh);
+      // gli strati della strada che, sotto la pioggia, possono diventare un fiume
+      if ((def.fiume || []).some((n) => mesh.name.startsWith(n))) (this.stratiFiume = this.stratiFiume || []).push(mesh);
       this.daSmontare.push(tex, geo, mat);
     }
     // --- 2. il cielo e i panorami ----------------------------------------
@@ -233,6 +235,7 @@ export class Scena {
     const y = o.y !== undefined ? o.y : this.quota(o.x, o.z);
     s.posiziona(o.x, y, o.z);
     s.aggiungiA(this.gruppo);
+    if (o.nascosto) s.visibile = false;
     if (o.animazione) {
       // alterna i fotogrammi (fuoco del forno, foglie, libro che vola...)
       const nomi = s.atlante.nomi;

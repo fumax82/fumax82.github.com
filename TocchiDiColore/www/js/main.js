@@ -31,6 +31,8 @@ import { Input } from './gioco/input.js';
 import { Interfaccia } from './gioco/interfaccia.js';
 import { Regista } from './gioco/regista.js';
 import { Magia } from './gioco/magia.js';
+import { Meteo } from './gioco/meteo.js';
+import { Effetti } from './motore/effetti.js';
 import { Meraviglie } from './gioco/meraviglie.js';
 import via from './dati/scene/via.js';
 import piazza from './dati/scene/piazza.js';
@@ -99,6 +101,8 @@ class Gioco {
     this.luci = new Particelle({ additivo: true });  // scintille, stelle, lucciole (di luce)
     this.scena.add(this.luci.punti);
     this.magia = new Magia(this);
+    this.effetti = new Effetti(this.scena);   // onomatopee, archi sonori, nastri di profumo, luce
+    this.meteo = new Meteo(this);              // pioggia, fiume, balena con le pinne
     this.regista = new Regista();
     this.lia = new Lia(this);
     this.lia.aggiungiA(this.scena);
@@ -266,6 +270,8 @@ class Gioco {
     const atm = def.atmosfera || {};
     UNIFORMI.uFoschia.value.set(...(atm.foschia || [18, 100]));
     UNIFORMI.uLuceScena.value.set(atm.luce || '#ffffff');
+    // all'aperto passano le ombre delle nuvole (negli interni no)
+    UNIFORMI.uOmbreNuvole.value = atm.tuttoVisibile ? 0 : (atm.ombreNuvole !== undefined ? atm.ombreNuvole : 0.2);
     if (atm.sole) UNIFORMI.uSole.value.set(...atm.sole).normalize();
     this.scena.background = new THREE.Color(CARTA);
     // gli interni (forno, libreria) sono caldi e accoglienti: tutti a colori
@@ -282,6 +288,14 @@ class Gioco {
       if (e.id) S['effetto_' + e.id] = em;
     }
     this.suoniLuogo = (def.suoni || []).map((s) => Audio.continuo(s.tipo, s.x, s.y, s.volume));
+    // il vento si vede: ogni tanto una folata disegnata attraversa l'inquadratura
+    if (def.vento) {
+      const r = this.ogni(def.vento, () => {
+        if (this.corrente !== S) { r.ferma(); return; }
+        const L = this.lia, d = Math.random() < 0.5 ? 1 : -1;
+        this.effetti.profumo([L.x - 6 * d, L.y + 2.2 + Math.random(), L.z - 1.2], [L.x + 6 * d, L.y + 1.6 + Math.random(), L.z - 0.4], '#e6f1ff', Math.random() * 6);
+      });
+    }
     if (def.musica && !o.senzaMusica) Musica.suona(def.musica);
     this.caricaScena = false;
     this.regista.emetti('entrato:' + id);
@@ -301,6 +315,8 @@ class Gioco {
     for (const a of S.attori) if (a.emettitore) a.emettitore.attivo = false;
     this.particelle.emettitori = this.particelle.emettitori.filter((e) => !e.delLuogo);
     this.luci.emettitori = this.luci.emettitori.filter((e) => !e.delLuogo);
+    this.effetti.svuota();
+    this.meteo.reset();
     if (this.meraviglie) this.meraviglie.smonta();
     S.smonta();
     this.corrente = null;
@@ -334,7 +350,7 @@ class Gioco {
   async _interagisci(it) {
     if (it.tipo === 'porta') {
       if (it.bloccata && !this.porteAperte[it.id]) { Interfaccia.messaggio(it.bloccata, 3.5, true); return; }
-      if (it.campanello) Audio.campanello();
+      if (it.campanello) this.campanello(this.lia.x, this.lia.y + 1.9, this.lia.z - 0.5);
       await this.vai(it.verso, it.arrivo);
     } else if (it.tipo === 'persona') {
       const a = it.attore;
@@ -419,6 +435,7 @@ class Gioco {
     S.percezione.aggiorna(dt, { x: this.lia.x, z: this.lia.z });
     this.magia.aggiorna(dt);
     this.meraviglie.aggiorna(dt);
+    this.meteo.aggiorna(dt, this.regia.camera);
     UNIFORMI.uNumOnde.value = S.percezione.scriviOnde(UNIFORMI.uOnde.value, UNIFORMI.uOndeColori.value);
     UNIFORMI.uRivelaTutto.value = S.percezione.rivelaTutto;
     this.regia.aggiorna(dt, this.lia);
@@ -456,6 +473,7 @@ class Gioco {
       g.aggiorna(this.lia.mano(cam), [b.x + e[0] * 0.15 * verso, b.y + 0.4, b.z + e[2] * 0.15 * verso]);
     }
     S.aggiorna(dt, this.tempo, cam);
+    this.effetti.aggiorna(this.inPausa ? 0 : dt, cam);
     this.acquerello.disegna(this.scena, cam);
   }
 
@@ -589,7 +607,37 @@ class Gioco {
     if (!this.corrente) return null;
     const onda = this.corrente.percezione.creaOnda(x, z, { ...CONFIG.onde[tipo], tipo, ...(extra || {}) });
     this.magia.nuovaOnda(onda, tipo);   // particelle, increspatura, nota (vedi gioco/magia.js)
+    // il profumo si vede: nastri colorati che volteggiano dalla sorgente fino a Lia
+    if (tipo === 'profumo') {
+      const L = this.lia, q = this.corrente.quota(x, z) + 1.3;
+      const naso = [L.x, L.y + 0.85, L.z];
+      this.effetti.profumo([x, q, z], naso, '#f7a8c8', 0);
+      this.effetti.profumo([x, q - 0.2, z], naso, '#f6d38a', 2.5);
+    }
     return onda;
+  }
+
+  /**
+   * Un suono reso visibile, come nei fumetti: la scritta ("BAU!"), gli archi
+   * sonori che si allargano e qualche nota. tipo: 'abbaio' | 'miagolio' |
+   * 'campanello' | 'clacson' | 'balena'
+   */
+  suonoVisibile(tipo, x, y, z) {
+    const S = {
+      abbaio: ['BAU!', '#f0a070', '#ffd2b0'], miagolio: ['MIAO~', '#f7a8c8', '#ffe0ef'],
+      campanello: ['DRIN!', '#ffd36b', '#fff3c0'], clacson: ['PIII!', '#9fc4f0', '#dff3ff'],
+      balena: ['UUUUH...', '#a8c8f0', '#e6f0ff'],
+    }[tipo];
+    if (!S) return;
+    this.effetti.onomatopea(S[0], x, y + 0.35, z, S[1], tipo === 'balena' ? 2.6 : 0.85);
+    this.effetti.archi(x, y, z, S[2], tipo === 'balena' ? 3 : 2);
+  }
+
+  /** Il campanello della porta di un negozio: si sente e si vede. */
+  campanello(x, y, z) {
+    Audio.campanello();
+    this.suonoVisibile('campanello', x, y, z);
+    this.luci.emetti(x, y, z, 10, { forma: [FORME.scintilla, FORME.nota], colori: ['#fff0a0', '#ffd36b'], velocita: 0.8, su: 0.5, gravita: 0.4, vita: 1.2, dim: 0.12 });
   }
 
   scintille(x, y, z, quante, opz) {

@@ -121,6 +121,8 @@ export class Attore {
     if (this.alArrivo) { const f = this.alArrivo; this.alArrivo = null; f(); }
     this.percorso = punti.map((p) => p.slice());
     this.vel = velocita || this.velocita;
+    // chi corre forte lascia dietro di sé una scia di vento colorato (il movimento si vede)
+    if (this.vel > 2.4 && this.gioco.effetti && this.visibile) this.gioco.effetti.scia(this, this.def.coloreScia || '#fff1c8', 2.5);
     return new Promise((ok) => { this.alArrivo = ok; });
   }
 
@@ -181,6 +183,12 @@ export class Attore {
         this.z += (dz / d) * passo;
         this.passo += passo / this.lunghezzaPasso;
         this.inMovimento = true;
+        // di corsa: sbuffi di polvere ai piedi
+        if (this.vel > 2.4 && Math.random() < dt * 9) {
+          this.gioco.particelle.emetti(this.x - this.dir.x * 0.2, this.y + 0.05, this.z, 1, {
+            forma: 14, colori: ['#f3ead8', '#ffffff', '#efe2cc'], velocita: 0.25, su: 0.3, gravita: -0.05, vita: 0.9, dim: 0.22,
+          });
+        }
       }
     }
     this.y = this._quota(scena) + (this.galleggia ? Math.sin(this.tAnim * 1.7) * this.galleggia : 0);
@@ -265,6 +273,7 @@ export class Animale extends Attore {
   /** Abbaia (o miagola): suono, onda di percezione, posa con la bocca aperta. */
   faVerso() {
     const g = this.gioco;
+    this.gioco.suonoVisibile(this.verso === 'abbaio' ? 'abbaio' : 'miagolio', this.x, this.y + this.sagoma.altezza * 0.75, this.z);
     if (this.verso === 'abbaio') {
       Audio.abbaio(this.x, this.z);
       if (!this.inMovimento) this.posa('abbaia', 0.5);
@@ -359,7 +368,7 @@ export class Veicolo extends Attore {
     this.vel += (meta - this.vel) * Math.min(1, dt * 3);
     if (ostacolo) {
       this.timerClacson -= dt;
-      if (this.timerClacson <= 0) { Audio.clacson(this.x, this.z); this.timerClacson = 2.5; }
+      if (this.timerClacson <= 0) { Audio.clacson(this.x, this.z); this.gioco.suonoVisibile('clacson', this.x, this.y + 1.2, this.z); this.timerClacson = 2.5; }
     }
     this.t += (this.vel * dt) / this.lungo;
     if (this.t >= 1) {

@@ -111,6 +111,12 @@ export class Magia {
       g.acquerello.uniformi.uColoreOnda.value.copy(onda.colore);
       g.regia.pulsa(tipo === 'magia' ? 0.9 : 0.55);
       if (tipo === 'bastone' && g.lia.magica) Audio.nota(g.lia.colpi, 0.32);
+      // la grande magia: colonna di luce e spirali che salgono
+      if (tipo === 'magia') {
+        const q = g.corrente ? g.corrente.quota(onda.x, onda.z) : 0;
+        g.effetti.colonnaLuce(onda.x, q, onda.z, '#fff0a0', 9);
+        ['#ffd36b', '#f7b6d8', '#a8d8ff'].forEach((c, k) => g.effetti.spirale(onda.x, q, onda.z, c, { raggio: 1.0 + k * 0.25, altezza: 3.2, giri: 2.5, fase: k * 2.1, durata: 2.2, larghezza: 0.1 }));
+      }
     }
   }
 

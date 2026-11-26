@@ -55,6 +55,11 @@ export class Meraviglie {
     g.pensa('✦ ' + m.testo, 3.5, true);
     g.ui.meraviglie(g.meraviglieTrovate.size, g.totaleMeraviglie);
     const y = m.y !== undefined ? m.y : this.scena.quota(m.x, m.z) + 0.5;
+    // un momento di scoperta: la camera si allarga e guarda la meraviglia, luce e spirali
+    g.regia.momento([m.x, y, m.z], 3.0);
+    g.effetti.colonnaLuce(m.x, y - 0.5, m.z, '#fff3b8', 6);
+    g.effetti.spirale(m.x, y - 0.4, m.z, '#ffd36b', { raggio: 0.6, altezza: 2, durata: 2 });
+    g.effetti.spirale(m.x, y - 0.4, m.z, '#f7b6d8', { raggio: 0.8, altezza: 2.2, fase: 3, durata: 2.2 });
     // un lampo di stelline nel punto della meraviglia
     g.luci.emetti(m.x, y, m.z, 24, {
       forma: [FORME.stella, FORME.scintilla], colori: ['#fff0a0', '#ffd36b', '#ffffff', '#f7b6d8'],

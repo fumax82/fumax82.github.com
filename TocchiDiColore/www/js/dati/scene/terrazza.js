@@ -15,6 +15,7 @@ export default {
     { da: -2, a: 1.6, muro: 'intonaco', terra: 'ceramica' },
     { da: 1.6, a: 20, muro: 'metallo', terra: 'ceramica' },
   ],
+  vento: 4.5,   // ogni quanti secondi passa una folata di vento disegnata
   arrivi: { scala: { s: 1.0, verso: 1 } },
   atmosfera: { foschia: [26, 140], bordoBianco: 0.85 },
   cielo: {

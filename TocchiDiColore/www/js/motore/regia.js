@@ -69,7 +69,22 @@ export class Regia {
   scuoti(forza) { this.scossa = Math.max(this.scossa, forza); }
 
   /** Un piccolo "respiro" dell'inquadratura (stringe e torna), per i colpi di bacchetta. */
-  pulsa(forza) { this.pulsazione = Math.max(this.pulsazione || 0, forza); }
+  pulsa(forza) {
+    this.pulsazione = Math.max(this.pulsazione || 0, forza);
+    // e un'inclinazione leggera, come una camera che "sobbalza" di meraviglia
+    this.rollioColpo = (Math.random() < 0.5 ? -1 : 1) * forza * 0.035;
+  }
+
+  /**
+   * Un MOMENTO DI SCOPERTA: per qualche secondo la camera si allarga, si alza
+   * e gira lo sguardo verso il punto [x, y, z], poi torna da Lia.
+   */
+  momento(punto, durata) {
+    this.mom = { p: new THREE.Vector3(...punto), t: 0, d: durata || 2.8 };
+  }
+
+  /** Nel mondo immaginato l'inquadratura ondeggia appena, come in sogno (0 = ferma). */
+  sogno(forza) { this.forzaSogno = forza; }
 
   /**
    * La storia prende la regia: pos e guarda sono punti del mondo.
@@ -197,7 +212,27 @@ export class Regia {
       c.position.x += (Math.random() - 0.5) * f;
       c.position.y += (Math.random() - 0.5) * f;
     }
-    c.lookAt(this.guarda);
+    // il momento di scoperta: la camera si allarga e guarda la meraviglia
+    const bersaglio = this._t || (this._t = new THREE.Vector3());
+    bersaglio.copy(this.guarda);
+    if (this.mom) {
+      const M = this.mom;
+      M.t += dt;
+      const k = Math.min(1, M.t / M.d);
+      const e = Math.sin(Math.PI * k);
+      const e2 = e * e * (3 - 2 * e);
+      const via = this._v || (this._v = new THREE.Vector3());
+      via.subVectors(c.position, this.guarda).normalize();
+      c.position.addScaledVector(via, 1.1 * e2);
+      c.position.y += 0.45 * e2;
+      bersaglio.lerp(M.p, 0.5 * e2);
+      if (k >= 1) this.mom = null;
+    }
+    c.lookAt(bersaglio);
+    // inclinazione: un sobbalzo ai colpi magici + un ondeggiare lento da sogno
+    this.rollioColpo = (this.rollioColpo || 0) * Math.exp(-dt * 3);
+    const roll = this.rollioColpo + Math.sin(this.tempo * 0.31) * 0.012 * (this.forzaSogno || 0);
+    if (Math.abs(roll) > 0.0005) c.rotateZ(roll);
     let fovVero = this.fov;
     if (this.pulsazione > 0) {
       // stringe in fretta e torna piano (curva "a campana" sul tempo che resta)

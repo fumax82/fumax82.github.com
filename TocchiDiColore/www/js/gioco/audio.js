@@ -471,6 +471,26 @@ Audio.coro = function (x, y) {
   }));
 };
 
+/** Un'auto (o un'auto-pesce) che passa in una pozzanghera: SPLASH! */
+Audio.splash = function (x, y) {
+  if (!this.ctx) return;
+  const out = this._uscita(x, y, 0.7, 0.5);
+  const t = this._ora();
+  const r = this._noise();
+  const f = this._filtro('bandpass', 1400, 0.6);
+  f.frequency.exponentialRampToValueAtTime(600, t + 0.5);
+  const e = this._inv(t, 0.4, 0.02, 0.55);
+  r.connect(f); f.connect(e); e.connect(out); r.start(t, Math.random()); r.stop(t + 0.6);
+  // e qualche "blub" di bolla, perché è un'auto-pesce
+  for (let k = 0; k < 3; k++) {
+    const t0 = t + 0.15 + k * 0.09;
+    const o = this._osc('sine', 300 + Math.random() * 200);
+    o.frequency.exponentialRampToValueAtTime(900 + Math.random() * 400, t0 + 0.07);
+    const e2 = this._inv(t0, 0.1, 0.004, 0.08);
+    o.connect(e2); e2.connect(out); o.start(t0); o.stop(t0 + 0.1);
+  }
+};
+
 /** Il lampione che sbadiglia e si accende. */
 Audio.sbadiglio = function (x, y) {
   if (!this.ctx) return;
@@ -623,6 +643,19 @@ Audio.continuo = function (tipo, x, y, volume) {
       setTimeout(scoppi, 60 + Math.random() * 260);
     };
     setTimeout(scoppi, 100);
+  } else if (tipo === 'pioggia') {
+    // fruscio largo + tante piccole gocce che picchiettano
+    filtro = this._filtro('bandpass', 3200, 0.35);
+    const gocce = () => {
+      if (!h.attivo) return;
+      const t = ctx.currentTime;
+      const o = this._osc('sine', 1800 + Math.random() * 2600);
+      o.frequency.exponentialRampToValueAtTime(700 + Math.random() * 500, t + 0.03);
+      const e = this._inv(t, 0.05 + Math.random() * 0.12, 0.001, 0.035);
+      o.connect(e); e.connect(g); o.start(t); o.stop(t + 0.05);
+      setTimeout(gocce, 25 + Math.random() * 90);
+    };
+    setTimeout(gocce, 80);
   } else if (tipo === 'vento') {
     filtro = this._filtro('lowpass', 500, 0.8);
     const lfo = this._osc('sine', 0.15); const p = ctx.createGain(); p.gain.value = 350;

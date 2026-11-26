@@ -202,16 +202,32 @@ const CAPITOLO_1 = {
     await g.attendi(1.2);
     Audio.trasformazione();
     g.onda(L.x, L.z, 'magia');
+    // la camera gira intorno a Lia salendo, mentre la magia la avvolge
+    g.inquadra([p[0] - 1.9, p[1] + 1.7, p[2] + 2.1], [p[0], p[1] + 0.8, p[2]], 2.6, 48);
+    g.regia.pulsa(1);
     const giro = g.ogni(0.08, () => g.scintille(L.x, L.y + 0.1 + Math.random() * 1.0, L.z, 6, { velocita: 2, su: 1.4, sparpaglia: 0.3 }));
-    await g.attendi(0.9);
+    const spirali = g.ogni(0.45, () => {
+      const c = ['#ffd36b', '#f7b6d8', '#a8d8ff', '#c9b6ea'][Math.floor(Math.random() * 4)];
+      g.effetti.spirale(L.x, L.y, L.z, c, { raggio: 0.55 + Math.random() * 0.3, altezza: 1.8, giri: 3, fase: Math.random() * 6, durata: 1.6, larghezza: 0.09 });
+    });
+    // una pioggia di petali e stelle che scende dal cielo
+    const petali = g.ogni(0.1, () => g.particelle.emetti(L.x + (Math.random() - 0.5) * 3, L.y + 3.2, L.z + (Math.random() - 0.5) * 1.5, 2, {
+      forma: [FORME.petalo, FORME.fiore], colori: ['#f7a8c8', '#ffd1e8', '#fff3a8', '#c9b6ea'], velocita: 0.3, su: -0.4, gravita: 0.25, vita: 3, dim: 0.14, vortice: 0.8,
+    }));
+    await g.attendi(1.6);
     await g.bianco(0.92, 0.35);
     streghetta(g);
     g.musica('magia');
     g.cieloColore(0.6, 2);
+    g.effetti.colonnaLuce(L.x, L.y, L.z, '#fff3b8', 10);
     await g.bianco(0, 1.2);
     giro.ferma();
+    spirali.ferma();
     L.posa('saluta', 3);
     g.scintille(L.x, L.y + 1, L.z, 50, { forma: [FORME.stella, FORME.cuore, FORME.scintilla], velocita: 2.5 });
+    g.inquadra([p[0] + 0.3, p[1] + 0.95, p[2] + 2.3], [p[0], p[1] + 0.7, p[2]], 1.8, 40);
+    await g.attendi(2);
+    petali.ferma();
     await g.dialogo('lia', [
       'Una bacchetta con la stella... e un vestito da streghetta!',
       'Con questa posso immaginare tutto quello che sento.',
@@ -220,7 +236,65 @@ const CAPITOLO_1 = {
     L.posa(null, 0);
     L.limiti = null;
     g.libera();
+
+    // --- la pioggia: Lia la sente, e la immagina --------------------------
+    await g.attendi(0.8);
+    g.ui.svuotaMessaggi();
+    g.meteo.pioggia(0.55);
+    g.regia.sogno(1);
+    g.pensa('Plic... plic... piove!', 3, true);
+    await g.attendi(2.4);
+    Audio.splash(L.x + 4, 3);
+    g.pensa('Le auto passano nelle pozzanghere: splash! ...sembrano pesci in un fiume!', 4.5, true);
+    // controcampo: la camera guarda attraverso la strada, verso la fermata
+    g.inquadra([L.x - 0.6, 1.15, L.z + 0.5], [26.9, 1.5, 8.5], 2.2, 46);
+    ['auto1', 'auto2', 'auto3'].forEach((id) => { const a = g.attore(id); if (a) a.visibile = false; });
+    g.meteo.diventaFiume(1);
+    ['pesce1', 'pesce2', 'pesce3'].forEach((id) => { g.attore(id).visibile = true; });
+    g.onda(L.x + 3, 4.2, 'suono', { raggio: 16, colore: '#a8d8ff', livello: 1 });
+    await g.attendi(2.8);
+    // la fermata degli animali, sotto gli ombrelli
+    g.corrente.oggetto('fermata').visibile = true;
+    const attesa = ['attesa_lepre', 'attesa_uccello', 'attesa_cavallo', 'attesa_nonna'].map((id) => g.attore(id));
+    attesa.forEach((a) => { a.visibile = true; });
+    g.meteo.ombrelliPer(attesa);
+    g.onda(26.9, 8.5, 'magia', { raggio: 7, forza: 0.6 });
+    g.pensa('E alla fermata... gli animali aspettano l\'autobus, sotto gli ombrelli!', 4.5, true);
+    await g.attendi(3.2);
+    // arriva l'autobus-pesce
+    const bus = g.attore('bus');
+    bus.visibile = true;
+    bus.teletrasporta(62, 6.2);
+    bus.def.giro = [[27.2, 0.02, 6.2]];
+    await g.quando(() => Math.abs(bus.x - 27.2) < 0.3);
+    Audio.clacson(bus.x, bus.z);
+    g.suonoVisibile('clacson', bus.x, 2.4, bus.z);
+    await g.attendi(1.0);
+    for (const a of attesa) {
+      await g.attendi(0.45);
+      a.visibile = false;
+      g.scintille(a.x, 1.0, a.z, 14, { colori: ['#a8d8ff', '#ffffff', '#fff0a0'] });
+    }
+    await g.attendi(0.6);
+    bus.def.giro = [[-20, 0.02, 6.2]];
+    // in cielo... la balena con tante pinne
+    const balena = g.attore('balena_pinne');
+    balena.visibile = true;
+    balena.teletrasporta(L.x - 48, 4);
+    balena.y = 19;
+    balena.def.giro = [[L.x + 70, 23, 2]];
+    g.inquadra([L.x - 1.4, 0.75, L.z + 0.5], [L.x + 3, 9.5, 5], 2.8, 56);
+    Audio.balena();
+    g.pensa('E in cielo... una balena con mille pinne che nuota nell\'aria!', 5, true);
+    await g.quando(() => balena.x > L.x - 6);
+    Audio.balena();
+    g.suonoVisibile('balena', balena.x, balena.y, balena.z);
+    await g.attendi(4.5);
+    g.libera();
+    g.meteo.pioggia(0.3);
     g.controllo(true);
+    g.quando(() => balena.x > L.x + 60).then(() => { balena.visibile = false; });
+    g.quando(() => bus.x < -15).then(() => { bus.visibile = false; });
     // la staccionata incantata
     const brillio = g.emettitore(46.5, 0.32, 0, 10, { forma: [FORME.stella, FORME.scintilla], colori: ['#fff0a0', '#ffd36b', '#ffffff'], su: 0.7, velocita: 0.5, vita: 1.4, dim: 0.13 });
     const richiamo = g.ogni(4, () => g.onda(46.4, 0, 'magia', { raggio: 4, forza: 0.5 }));
@@ -259,7 +333,7 @@ const CAPITOLO_2 = {
     const f = g.attore('fornaia');
     f.visibile = true;
     f.teletrasporta(7.6, -1.85);
-    Audio.campanello();
+    g.campanello(7.6, 2.3, -1.9);
     f.vaiA(L.x + 1.0, -1.55, 0.8);
     // campo e controcampo davanti alla vetrina
     g.inquadra([L.x - 0.9, 1.25, L.z + 3.3], [L.x + 0.5, 1.05, L.z - 0.1], 1.2, 40);
@@ -491,6 +565,7 @@ const CAPITOLO_5 = {
       balena.mostra('f' + (Math.floor(g.tempo * 0.8) % 2), true);
     });
     Audio.balena();
+    g.suonoVisibile('balena', L.x + 8, 9, -14);
     await g.dialogo('lia', ['Balena del cielo! Mi porti a cercare Biscotto?']);
     await g.quando(() => t >= 1);
     Audio.balena();

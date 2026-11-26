@@ -36,6 +36,9 @@ export const UNIFORMI = {
   uLuceScena: { value: new THREE.Color(1, 1, 1) },  // tinta generale (es. luce calda del tramonto)
   uColoreMagia: { value: new THREE.Color('#ffd77a') },  // colore della luce sul fronte (quello dell'ultima onda)
   uMagia: { value: 0.6 },        // quanto è "magica" la rivelazione (1 = Lia streghetta)
+  uOmbreNuvole: { value: 0 },    // ombre delle nuvole che scorrono (0 = nessuna)
+  uOmbraBalena: { value: new THREE.Vector4(0, 0, 1, 0) },  // ombra della balena: (x, z, raggio, forza)
+  uPioggia: { value: 0 },        // quanto piove (0..1): bagnato, pozzanghere, cerchi delle gocce
   uFuoco: { value: 5 },          // distanza messa a fuoco (quella di Lia dalla camera)
   uSfocatura: { value: 1.6 },    // quanto si sfocano i piani fuori fuoco (profondità di campo)
 };
@@ -145,6 +148,9 @@ const GLSL_COMUNE = /* glsl */ `
 
   uniform vec3 uColoreMagia;
   uniform float uMagia;
+  uniform float uOmbreNuvole;
+  uniform vec4 uOmbraBalena;
+  uniform float uPioggia;
 
   /*
    * LA RIVELAZIONE, in tre tempi (come nel film, il mondo "si disegna"):
@@ -223,6 +229,46 @@ const GLSL_COMUNE = /* glsl */ `
     return col;
   }
 
+  /*
+   * OMBRE D'ATMOSFERA (non realistiche: colorate e morbide, come in un acquerello)
+   *   - le nuvole che passano lasciano macchie d'ombra lilla che scorrono
+   *   - la balena del cielo, passando, stende sopra la strada un'ombra enorme
+   */
+  vec3 conOmbre(vec3 col, vec3 p) {
+    float o = 0.0;
+    if (uOmbreNuvole > 0.001) {
+      float n = rumoreMorbido(p.xz * 0.03 + vec2(uTempo * 0.012, uTempo * 0.005));
+      o += smoothstep(0.55, 0.78, n) * uOmbreNuvole;
+    }
+    if (uOmbraBalena.w > 0.001) {
+      vec2 d = (p.xz - uOmbraBalena.xy) / vec2(uOmbraBalena.z * 2.4, uOmbraBalena.z);
+      o += (1.0 - smoothstep(0.5, 1.0, length(d))) * uOmbraBalena.w;
+    }
+    return mix(col, col * vec3(0.72, 0.73, 0.92), clamp(o, 0.0, 0.65));
+  }
+
+  /*
+   * LA PIOGGIA: tutto un po' più scuro e lucido; sui pavimenti pozzanghere
+   * azzurre e i cerchi delle gocce che cadono.
+   */
+  vec3 conPioggia(vec3 col, vec3 p, float pavimento) {
+    if (uPioggia < 0.01) return col;
+    col *= 1.0 - 0.1 * uPioggia;
+    if (pavimento > 0.5) {
+      vec2 q = p.xz * 2.2;
+      vec2 cella = floor(q);
+      vec2 f = fract(q) - 0.5;
+      float h = fract(sin(dot(cella, vec2(12.9898, 78.233))) * 43758.5453);
+      float fase = fract(uTempo * (0.6 + h * 0.8) + h * 7.0);
+      vec2 centro = (vec2(h, fract(h * 7.3)) - 0.5) * 0.5;
+      float anello = (1.0 - smoothstep(0.0, 0.05, abs(length(f - centro) - fase * 0.45))) * (1.0 - fase);
+      float pozza = smoothstep(0.55, 0.7, rumoreMorbido(p.xz * 0.35));
+      col = mix(col, col * vec3(0.86, 0.92, 1.06) + 0.05, pozza * uPioggia * 0.65);
+      col += vec3(0.85, 0.92, 1.0) * anello * uPioggia * (0.22 + pozza * 0.5);
+    }
+    return col;
+  }
+
   // anelli delle onde: un anello di luce, un'eco più debole dentro e scintille lungo il bordo
   vec3 conOnde(vec3 col, vec3 p) {
     for (int i = 0; i < ${MAX_ONDE}; i++) {
@@ -273,6 +319,8 @@ const FRAG_STRATO = /* glsl */ `
   uniform float uLontano;
   uniform float uColoreCielo;
   uniform float uSchizzoStrato;
+  uniform float uPavimento;
+  uniform float uFiume;
   varying vec2 vUv;
   varying vec3 vMondo;
   void main() {
@@ -310,6 +358,17 @@ const FRAG_STRATO = /* glsl */ `
       c = velatura(c, bagnato * 0.55 * uMagia);
     }
     c = conBrillio(c, vMondo, freschezza(vMondo) * (1.0 - uLontano));
+    // la strada che diventa un fiume (immaginato da Lia sentendo le auto nelle pozzanghere)
+    if (uFiume > 0.01) {
+      float onde = rumoreMorbido(vec2(vMondo.x * 0.22 - uTempo * 0.3, vMondo.z * 0.8));
+      float creste = texture2D(uRumore, vec2(vMondo.x * 0.5 - uTempo * 0.45, vMondo.z * 1.3)).g;
+      vec3 acqua = mix(vec3(0.55, 0.77, 0.92), vec3(0.78, 0.91, 0.98), onde);
+      acqua += vec3(1.0) * smoothstep(0.74, 0.92, creste) * 0.4;
+      acqua = mix(acqua, acqua * c * 1.6, 0.12);
+      c = mix(c, acqua, uFiume * 0.88);
+    }
+    c = conPioggia(c, vMondo, uPavimento);
+    c = conOmbre(c, vMondo);
     if (uAcqua > 0.5) {
       float s = texture2D(uRumore, vMondo.xz * 0.5 + vec2(uTempo * 0.04, -uTempo * 0.03)).b;
       c += vec3(1.0, 0.98, 0.92) * smoothstep(0.74, 0.9, s) * 0.35 * v;
@@ -342,6 +401,8 @@ export function materialeStrato(texture, opz) {
       uColoreCielo: UNIFORMI.uColoreCielo,
       // sui pavimenti (tanti sassi e mattonelle) la matita è più leggera
       uSchizzoStrato: { value: o.pavimento ? 0.4 : 1 },
+      uPavimento: { value: o.pavimento ? 1 : 0 },
+      uFiume: { value: 0 },    // 1 = questo strato diventa un fiume (vedi gioco/meteo.js)
     },
     vertexShader: VERT_STRATO,
     fragmentShader: FRAG_STRATO,
@@ -428,6 +489,7 @@ const FRAG_SPRITE = /* glsl */ `
       c = velatura(c, R.z * 0.45 * uMagia * (1.0 - uLuce));
     }
     c = conBrillio(c, pb, freschezza(pb) * 0.7);
+    c = conOmbre(c, pb);
     c = conOnde(c, pb);
     gl_FragColor = vec4(c, a);
   }
@@ -487,9 +549,13 @@ const FRAG_OMBRA = /* glsl */ `
   varying vec2 vUv;
   varying vec3 vMondo;
   void main() {
-    float r = length(vUv - 0.5) * 2.0;
-    float a = (1.0 - smoothstep(0.2, 1.0, r)) * uForza;
-    gl_FragColor = vec4(0.40, 0.30, 0.48, a * (0.3 + 0.7 * percezione(vMondo)));
+    // un'ombra lilla, allungata e morbida come una pennellata d'acquerello
+    vec2 q = (vUv - 0.5) * 2.0;
+    float bordo = texture2D(uRumore, vMondo.xz * 1.7).r - 0.5;
+    float r = length(q) + bordo * 0.25;
+    float a = (1.0 - smoothstep(0.25, 1.0, r)) * uForza;
+    vec3 colore = mix(vec3(0.42, 0.34, 0.62), vec3(0.32, 0.38, 0.64), vUv.x);
+    gl_FragColor = vec4(colore, a * (0.35 + 0.65 * percezione(vMondo)));
   }
 `;
 export function materialeOmbra(forza) {
