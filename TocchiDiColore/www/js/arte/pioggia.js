@@ -207,15 +207,15 @@ function guancia(ctx, x, y, r, alfa = 0.5) {
  * La palpebra è una falce sottile che segue la curva dell'occhio: così lo
  * sguardo resta sereno (una palpebra dritta lo farebbe sembrare annoiato).
  */
-function faroOcchio(ctx, x, y, r, colorePalpebra, palpebra = 0.24) {
+function faroOcchio(ctx, x, y, r, colorePalpebra, palpebra = 0.19) {
   pezzo(ctx, Forme.cerchio(x, y, r), CREMA, 0.3, LW);
   const ox = x + r * 0.04, oy = y + r * 0.02;
-  const rx = r * 0.68, ry = r * 0.76;
+  const rx = r * 0.74, ry = r * 0.8;
   const occ = Forme.ellisse(ox, oy, rx, ry);
   tinta(ctx, occ, BIANCO);
   const pr = Math.max(1.6, rx * 0.4);
-  tinta(ctx, Forme.ellisse(ox + rx * 0.36, oy + ry * 0.2, pr, pr * 1.15), PUPILLA);
-  tinta(ctx, Forme.cerchio(ox + rx * 0.22, oy + ry * 0.04, pr * 0.34), '#ffffff');
+  tinta(ctx, Forme.ellisse(ox + rx * 0.26, oy + ry * 0.2, pr, pr * 1.15), PUPILLA);
+  tinta(ctx, Forme.cerchio(ox + rx * 0.14, oy + ry * 0.04, pr * 0.36), '#ffffff');
   // la palpebra = l'occhio meno lo stesso ovale spostato in giù
   const giu = 2 * ry * palpebra;
   const pal = new Path2D();
@@ -443,8 +443,8 @@ function disegnaAutoPesce(colori) {
       tubo(ctx, [[112, -40], [146, -44], [168, -62]], 9, CREMA);
       tratto(ctx, [[146, -72], [154, -66], [163, -71]], LW * 0.85);
       // le ruote-pinna remano a turno
-      ruotaPinna(ctx, -64, -62, 31, 2.7 + 0.42 * Math.sin(w + Math.PI), colori);
-      ruotaPinna(ctx, 88, -62, 31, 2.7 + 0.42 * Math.sin(w), colori);
+      ruotaPinna(ctx, -64, -62, 32, 3.0 + 0.45 * Math.sin(w + Math.PI), colori);
+      ruotaPinna(ctx, 88, -62, 32, 3.0 + 0.45 * Math.sin(w), colori);
     }));
     ctx.restore();
     // il fiume davanti: schiuma, spruzzi e bollicine
@@ -533,8 +533,8 @@ function disegnaAutobusPesce(ctx, nome) {
     tratto(ctx, [[357, -150], [342, -132], [314, -122], [288, -128], [274, -144]], LW * 1.05);   // il sorrisone
     tratto(ctx, [[281, -150], [272, -145], [275, -136]], LW * 0.85);
     // le ruote-pinna
-    ruotaPinna(ctx, -170, -92, 40, 2.7 + 0.4 * Math.sin(w + Math.PI), { pinne: BUS.pinne });
-    ruotaPinna(ctx, 196, -92, 40, 2.7 + 0.4 * Math.sin(w), { pinne: BUS.pinne });
+    ruotaPinna(ctx, -170, -92, 42, 3.0 + 0.42 * Math.sin(w + Math.PI), { pinne: BUS.pinne });
+    ruotaPinna(ctx, 196, -92, 42, 3.0 + 0.42 * Math.sin(w), { pinne: BUS.pinne });
   }));
   ctx.restore();
   const alto = fiume(ctx, 384, 60, w);
@@ -562,35 +562,45 @@ Object.assign(TONI, { [BALENA.dorso]: '#84afdc', [BALENA.pinna]: '#8fb8e3', [BAL
 
 /** La sagoma della balena per la fase w: contorno, bordo alto e basso. */
 function formaBalena(w) {
-  const X0 = -400, X1 = 446, H = 118;
-  const spina = (x) => {
-    const s = (x - X0) / (X1 - X0);
-    return -42 + 8 * Math.sin((TAU * (x - X1)) / 820 + w) * (1 - 0.7 * s);
-  };
+  const X0 = -380, X1 = 452, H = 128;
+  // la "spina dorsale" ondeggia appena (più verso la coda che verso la testa)
+  const spina = (x) => -50 + 8 * Math.sin((TAU * (x - X1)) / 820 + w) * (1 - (0.7 * (x - X0)) / (X1 - X0));
   // spessore (0..1) lungo il corpo: sottile alla coda, massimo verso la testa,
-  // poi il muso tondo (un quarto di ellisse, campionato per angolo)
+  // poi la testa grande e tonda (un quarto di "super-ellisse", quasi squadrata)
   const campioni = [];
-  for (let s = 0; s < 0.6; s += 0.025) campioni.push([X0 + s * (X1 - X0), 0.1 + 0.9 * Math.pow(Math.sin((Math.PI / 2) * (s / 0.6)), 1.35)]);
-  for (let i = 0; i <= 14; i++) {
-    const th = (i / 14) * (Math.PI / 2);
-    campioni.push([X0 + (0.6 + 0.4 * Math.sin(th)) * (X1 - X0), Math.cos(th)]);
+  for (let s = 0; s < 0.64; s += 0.025) campioni.push([X0 + s * (X1 - X0), 0.1 + 0.9 * Math.pow(Math.sin((Math.PI / 2) * (s / 0.64)), 1.05)]);
+  for (let i = 0; i <= 16; i++) {
+    const th = (i / 16) * (Math.PI / 2);
+    campioni.push([X0 + (0.64 + 0.36 * Math.pow(Math.sin(th), 0.7)) * (X1 - X0), Math.pow(Math.cos(th), 0.7)]);
   }
-  const su = campioni.map(([x, e]) => [x, spina(x) - H * 0.86 * e]);
-  const giu = campioni.map(([x, e]) => [x, spina(x) + H * 1.08 * e]);
+  const su = campioni.map(([x, e]) => [x, spina(x) - H * 0.8 * e]);
+  const giu = campioni.map(([x, e]) => [x, spina(x) + H * 1.12 * e]);
   const contorno = [...su, ...giu.slice(0, -1).reverse()];
-  /** Un punto "dentro" il corpo: alla x di un campione, a frazione f dall'alto. */
-  const punto = (i, f) => [su[i][0], lerp(su[i][1], giu[i][1], f)];
-  return { contorno, su, giu, punto, spina, n: campioni.length };
+  /** Un punto "dentro" il corpo: alla coordinata x, a frazione f dal dorso (0) alla pancia (1). */
+  const punto = (x, f) => {
+    let i = 0;
+    while (i < su.length - 2 && su[i + 1][0] < x) i++;
+    const t = Math.max(0, Math.min(1, (x - su[i][0]) / (su[i + 1][0] - su[i][0] || 1)));
+    return [x, lerp(lerp(su[i][1], su[i + 1][1], t), lerp(giu[i][1], giu[i + 1][1], t), f)];
+  };
+  return { contorno, su, giu, punto, spina, X0, X1 };
 }
 
-/** Una pinna lunga a remo (stretta alla radice, tonda in fondo). */
-function pinnaRemo(ctx, radice, ang, L, W, colore) {
+/**
+ * Una pinna lunga a remo (stretta alla radice, tonda in fondo), un po'
+ * curva all'indietro come una piuma. "piega" = quanto si curva la punta.
+ */
+function pinnaRemo(ctx, radice, ang, L, W, colore, piega = 0.3) {
   const locale = [[-W * 0.12, 0], [0, -W * 0.22], [L * 0.35, -W * 0.44], [L * 0.76, -W * 0.5], [L * 0.97, -W * 0.3],
     [L, 0], [L * 0.97, W * 0.3], [L * 0.76, W * 0.5], [L * 0.35, W * 0.44], [0, W * 0.22]];
   const c = Math.cos(ang), s = Math.sin(ang);
-  const punti = locale.map(([x, y]) => [radice[0] + x * c - y * s, radice[1] + x * s + y * c]);
-  pezzo(ctx, liscia(punti), colore, 0.6, LW);
-  tratto(ctx, [piu(radice, polare(ang, W * 0.3)), piu(radice, polare(ang + 0.02, L * 0.8))], LW * 0.6, tono(colore));
+  // la curva: più ci si allontana dalla radice, più la pinna piega all'indietro
+  const mondo = ([x, y]) => {
+    const yy = y + piega * W * Math.pow(Math.max(0, x) / L, 2);
+    return [radice[0] + x * c - yy * s, radice[1] + x * s + yy * c];
+  };
+  pezzo(ctx, liscia(locale.map(mondo)), colore, 0.6, LW);
+  tratto(ctx, [mondo([W * 0.3, 0]), mondo([L * 0.45, 0]), mondo([L * 0.8, 0])], LW * 0.6, tono(colore));
 }
 
 /** Nuvoletta soffice (tanti cerchi uniti), color panna con l'ombra lilla. */
@@ -604,52 +614,53 @@ function nuvoletta(ctx, x, y, s, seme) {
 function disegnaBalena(ctx, nome) {
   const k = Number(nome.slice(1)), w = (TAU * k) / 6;
   const B = formaBalena(w);
-  // nove pinne vicine e nove lontane (queste sono più scure e sfasate)
+  // nove pinne lungo il fianco: ognuna batte un po' dopo quella davanti,
+  // così l'onda corre dalla testa alla coda (come i remi di una galea)
   const PINNE = 9;
   const pinne = [];
   for (let i = 0; i < PINNE; i++) {
-    const idx = Math.round(lerp(B.n * 0.77, B.n * 0.2, i / (PINNE - 1)));
-    const fase = w * 1 - i * 0.8;
+    const x = lerp(272, -236, i / (PINNE - 1));
+    const fase = w - i * 0.7;
     pinne.push({
-      radice: B.punto(idx, 0.5),
-      ang: 1.78 + 0.42 * Math.sin(fase),
-      L: (190 - i * 7.5) * (0.92 + 0.08 * Math.cos(fase)),
-      W: 46 - i * 1.4,
+      radice: B.punto(x, 0.58),
+      ang: 1.95 + 0.36 * Math.sin(fase),
+      L: (168 - i * 5) * (0.93 + 0.07 * Math.cos(fase)),
+      W: 48 - i * 1.2,
     });
   }
-  for (const p of pinne) pinnaRemo(ctx, piu(p.radice, [14, -8]), p.ang - 0.25, p.L * 0.92, p.W * 0.9, BALENA.lontana);
-  // la coda: due lobi che oscillano con l'onda del corpo
-  const coda = [-396, B.spina(-396)];
-  pinna(ctx, coda, [Math.PI - 0.42, Math.PI + 0.42], [96, 96], 42, 0.1 * Math.sin(w + 1.5), BALENA.dorso, 0.6);
+  // due nuvolette soffici tra le pinne (respirano con il battito)
+  nuvoletta(ctx, -150, 176, 1.45 + 0.04 * Math.sin(w), 3);
+  nuvoletta(ctx, 196, 196, 1.2 + 0.04 * Math.cos(w), 4);
+  // le pinne dell'altro fianco (più scure) spuntano da dietro la pancia
+  for (const p of pinne) pinnaRemo(ctx, piu(p.radice, [18, -12]), p.ang - 0.3, p.L * 0.9, p.W * 0.88, BALENA.lontana);
   // il corpo: bianco con l'ombra lilla, poi la fascia azzurra del dorso
   const corpo = pezzo(ctx, liscia(B.contorno), BALENA.pancia, 2.6, LW * 1.25, BALENA.lilla);
   ctx.save();
   ctx.clip(corpo);
-  const confine = B.su.map((q, i) => B.punto(i, 0.33));
+  const confine = B.su.map((q, i) => [q[0], lerp(q[1], B.giu[i][1], 0.3)]);
   pezzo(ctx, liscia([[-520, -300], ...confine, [560, confine[confine.length - 1][1]], [560, -300]]), BALENA.dorso, 1, LW);
-  // i solchi lunghi della pancia
-  for (const f of [0.6, 0.7, 0.8, 0.9]) {
-    const da = Math.round(B.n * (0.24 + (f - 0.6) * 0.5)), a = B.n - 3;
+  // i solchi lunghi della pancia (come nel film), dal mento verso la coda
+  for (const [f, da] of [[0.66, -170], [0.76, -110], [0.86, -40]]) {
     const punti = [];
-    for (let i = da; i < a; i++) punti.push(B.punto(i, f));
+    for (let x = da; x <= 436; x += 24) punti.push(B.punto(x, f));
     tratto(ctx, punti, LW * 0.7, BALENA.solchi);
   }
   ctx.restore();
-  // la faccia: bocca lunga che sorride, occhietto, guancia
+  // la coda (dopo il corpo, così copre l'attaccatura): due lobi che oscillano
+  pinna(ctx, [B.X0 + 8, B.spina(B.X0)], [Math.PI - 0.45, Math.PI, Math.PI + 0.45], [100, 24, 100], 46, 0.1 * Math.sin(w + 1.5), BALENA.dorso, 0.6);
+  // la faccia: la bocca lunga che sorride, l'occhietto, la guancia
   const bocca = [];
-  for (let i = B.n - 2; i >= B.n - 11; i--) bocca.push(B.punto(i, 0.5 - (B.n - 2 - i) * 0.008));
+  for (let x = B.X1 - 2; x >= 296; x -= 16) bocca.push(B.punto(x, 0.56 - (B.X1 - x) * 0.0003));
   const fine = bocca[bocca.length - 1];
-  bocca.push(piu(fine, [-12, -8]));
+  bocca.push(piu(fine, [-10, -9]));
   tratto(ctx, bocca, LW);
-  const oc = B.punto(B.n - 10, 0.36);
-  occhio(ctx, oc[0] + 18, oc[1] - 2, 8, 9.5, [0.5, 0.1]);
-  tratto(ctx, [[oc[0] + 8, oc[1] + 11], [oc[0] + 18, oc[1] + 14], [oc[0] + 28, oc[1] + 11]], LW * 0.75);   // l'occhio che sorride
-  guancia(ctx, oc[0] + 10, oc[1] + 26, 11, 0.45);
+  const [ex, ey] = B.punto(340, 0.41);
+  occhio(ctx, ex, ey, 10, 12, [0.45, 0.15]);
+  tratto(ctx, [[ex - 9, ey - 17], [ex + 1, ey - 20], [ex + 11, ey - 16]], LW * 0.8);   // il sopracciglio gentile
+  tratto(ctx, [[ex - 11, ey + 15], [ex, ey + 18.5], [ex + 11, ey + 15]], LW * 0.7);   // l'occhio che sorride
+  guancia(ctx, ex - 6, ey + 32, 13, 0.45);
   // le pinne vicine: dalla coda verso la testa (quelle davanti coprono le altre)
   for (let i = PINNE - 1; i >= 0; i--) pinnaRemo(ctx, pinne[i].radice, pinne[i].ang, pinne[i].L, pinne[i].W, BALENA.pinna);
-  // qualche nuvoletta che resta indietro
-  nuvoletta(ctx, -150 - 10 * k, 214, 0.9, 3);
-  nuvoletta(ctx, 330 - 10 * k, 196, 0.7, 4);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -741,8 +752,9 @@ function disegnaFermata(ctx) {
   }
   pezzo(ctx, festoni, FERMATA.frangia, 0.4, LW * 0.9);
   pezzo(ctx, tetto, FERMATA.tetto, 0.7, LW * 1.15);
-  gocciaAcqua(ctx, -120, -206, 4.5);
-  gocciaAcqua(ctx, 30, -196, 4);
+  gocciaAcqua(ctx, -120, -237, 4.5);
+  gocciaAcqua(ctx, -121, -204, 3.6);
+  gocciaAcqua(ctx, 30, -232, 4);
   // il palo con l'orario e il cartello tondo
   tubo(ctx, [[124, -12], [124, -300]], 8, FERMATA.palo, LW, true);
   pezzo(ctx, Forme.ellisse(124, -12, 16, 5), FERMATA.palo, 0.3);
@@ -837,9 +849,9 @@ function disegnaOmbrello(ctx, nome) {
 function disegnaSchizzi(ctx, k) {
   const base = [0, -18];
   const GETTI = [
-    { lung: [30, 44, 54, 58, 54, 44, 30], apre: 0.26, piega: 0, larg: 15 },
-    { lung: [62, 90, 110, 120, 110, 90, 62], apre: 0.3, piega: 0, larg: 17 },
-    { lung: [56, 66, 62, 46, 62, 66, 56], apre: 0.42, piega: 0.5, larg: 13 },
+    { lung: [24, 36, 44, 48, 44, 36, 24], apre: 0.22, piega: 0, larg: 16, gocce: 4, salto: 74 },
+    { lung: [62, 90, 110, 120, 110, 90, 62], apre: 0.3, piega: 0, larg: 17, gocce: 9, salto: 132 },
+    { lung: [40, 52, 48, 34, 48, 52, 40], apre: 0.46, piega: 0.3, larg: 13, gocce: 7, salto: 84 },
   ];
   if (k < 3) {
     const G = GETTI[k];
@@ -860,9 +872,9 @@ function disegnaSchizzi(ctx, k) {
     });
     // le goccioline volanti
     const rng = casuale(90 + k);
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < G.gocce; i++) {
       const lato = tra(rng, -1, 1);
-      const a = -Math.PI / 2 + lato * (G.apre * 3.4), r = [60, 128, 84][k] * tra(rng, 0.7, 1.15);
+      const a = -Math.PI / 2 + lato * (G.apre * 3.4), r = G.salto * tra(rng, 0.8, 1.15);
       let [x, y] = piu(base, polare(a, r));
       if (k === 2) { x *= 1.35; y += 34; }
       const g = k === 2 ? goccia(x, y, tra(rng, 3, 4.5), 0) : Forme.cerchio(x, y, tra(rng, 2.8, 4.6));

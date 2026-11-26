@@ -40,6 +40,7 @@ import {
 /*  COLORI, SPESSORI E UN PO' DI MATEMATICA                                 */
 /* ------------------------------------------------------------------------ */
 const INK = '#5c3f2e';                     // la linea dei personaggi
+const INK_SAGOMA = '#3e2a20';              // il contorno esterno, più scuro e più grosso
 const INK2 = '#a3846c';                    // linee di dettaglio (pieghe, ciocche)
 const LW = 1.9;                            // spessore della linea ≈ altezza / 160
 const GRADI = 180 / Math.PI;
@@ -50,7 +51,7 @@ const C = {
   capelli: '#eebd80', bianco: '#fffdf8',
   azzurro: '#66c1c6', salmone: '#f4aa9f', salmoneScuro: '#d98a7e',
   viola: '#6d5d87', vestitoStrega: '#74658f', oro: '#efc95a', legno: '#8a5a3a', stella: '#f6e08a',
-  pupilla: '#2e211c', bocca: '#ee8a70', boccaDentro: '#a4493f', lingua: '#ef9188',
+  pupilla: '#2b1d16', cappello: '#f9f7f2', bocca: '#ee8a70', boccaDentro: '#a4493f', lingua: '#ef9188',
   cane: '#f6e7bd', orecchie: '#d79b5c', naso: '#33251f', collare: '#7fb6d8', muso: '#fbf0d4',
   gatto: '#f7ecd5', rosa: '#f2aaa6',
   giacca: '#9c6b45', giaccaScura: '#86593a', berretto: '#8a5c3c', pantaloni: '#aba4d9',
@@ -59,11 +60,13 @@ const C = {
 
 /** Il secondo tono (ombra "cel") di ogni colore: piatto, un po' più scuro. */
 const TONI = {
-  [C.pelle]: '#efdcc8', [C.pelleLontana]: '#e6d2bd', [C.capelli]: '#dba166', [C.bianco]: '#e3e6ef',
-  [C.azzurro]: '#4fa6b0', [C.salmone]: '#e08f84', [C.viola]: '#57496f', [C.vestitoStrega]: '#5c4e77',
-  [C.cane]: '#e9d29d', [C.orecchie]: '#bd7f45', [C.gatto]: '#e8d9ba', [C.legno]: '#6f4529',
-  [C.giacca]: '#83573a', [C.pantaloni]: '#948dc6', [C.pantaloniScuri]: '#827abb', [C.berretto]: '#74492c',
-  [C.pelleLadro]: '#e8c8aa', [C.stella]: '#ecc86a',
+  [C.pelle]: '#f2c9b8', [C.pelleLontana]: '#e6bfae', [C.capelli]: '#d99868', [C.bianco]: '#cfd3ea',
+  [C.cappello]: '#cfd3ea', [C.azzurro]: '#3f9aa8', [C.salmone]: '#de8a82', [C.salmoneScuro]: '#c4716a',
+  [C.viola]: '#4f4168', [C.vestitoStrega]: '#524470', [C.oro]: '#cf9f3a', [C.stella]: '#e9c25a',
+  [C.cane]: '#e2c891', [C.orecchie]: '#b8784a', [C.muso]: '#ead7a8', [C.collare]: '#5f97bd',
+  [C.gatto]: '#e2d1b2', [C.legno]: '#6a4128',
+  [C.giacca]: '#7a4f35', [C.giaccaScura]: '#704a31', [C.pantaloni]: '#8a83c4', [C.pantaloniScuri]: '#7a72b6',
+  [C.berretto]: '#6c4429', [C.pelleLadro]: '#e6bca3', [C.capelliLadro]: '#5f3f2a',
 };
 const tono = (colore) => TONI[colore] || scurisci(colore, 0.14);
 
@@ -130,36 +133,48 @@ function contorno(ctx, pp, w) {
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
   ctx.lineWidth = px(w * 2);
-  ctx.translate(px(-0.3), px(0.35));
+  ctx.translate(px(0.3), px(0.35));
   for (const p of pp) ctx.stroke(p);
   ctx.restore();
 }
 
 /**
- * Tono d'ombra "cel": colora la falce del pezzo che resta scoperta quando
- * la sua sagoma viene spostata verso la luce (che arriva da destra, in alto).
+ * Tono d'ombra "cel" netto: la luce arriva da in alto a sinistra, quindi
+ * l'ombra è la falce del pezzo che resta scoperta quando la sua sagoma
+ * viene spostata verso la luce. Si stende il tono su tutto il pezzo e poi
+ * si ridipinge il colore base sulla sagoma spostata (bordi netti).
  */
-function ombraCel(ctx, p, k, colore) {
-  const fuori = new Path2D();
-  fuori.rect(-5000, -5000, 10000, 10000);
-  fuori.addPath(p, new DOMMatrix([1, 0, 0, 1, px(7 * k), px(-4 * k)]));
-  ctx.save();
-  ctx.clip(fuori, 'evenodd');          // pari/dispari = "fuori dalla sagoma spostata"
+function ombraCel(ctx, p, k, colore, base) {
+  const spostata = new Path2D();
+  spostata.addPath(p, new DOMMatrix([1, 0, 0, 1, px(-7 * k), px(-4 * k)]));
   ombreggia(ctx, p, p, colore);
-  ctx.restore();
+  if (base) ombreggia(ctx, p, spostata, base);
+  else {                                           // senza colore base: solo la falce
+    const fuori = new Path2D();
+    fuori.rect(-5000, -5000, 10000, 10000);
+    fuori.addPath(spostata);
+    ctx.save();
+    ctx.clip(fuori, 'evenodd');
+    ombreggia(ctx, p, p, colore);
+    ctx.restore();
+  }
 }
 
 /**
  * Il "mattone" dei personaggi: una o più forme fuse in un'unica sagoma,
- * con contorno, tinta piatta e (se ombra > 0) il secondo tono.
+ * con contorno, tinta piatta e (se ombra > 0) il secondo tono netto.
  */
+
 function pezzo(ctx, forme, colore, ombra = 1, w = LW) {
   const pp = (Array.isArray(forme) ? forme : [forme]).map(percorso);
   contorno(ctx, pp, w);
   for (const p of pp) tinta(ctx, p, colore);
-  if (ombra) ombraCel(ctx, pp[0], ombra, tono(colore));
+  const tutta = pp.length > 1 ? unione(pp) : pp[0];
+  if (ombra) ombraCel(ctx, tutta, ombra, tono(colore), colore);
   return pp[0];
 }
+
+/** Il corpo a "fagiolo": dorso continuo, groppa tonda, pancia che rientra, petto tondo e profondo. */
 
 /** "Tubo" col contorno: braccia, gambe, code sottili, cinghie, bastoni. */
 function tubo(ctx, punti, larg, colore, w = LW, dritto = false) {
@@ -169,9 +184,9 @@ function tubo(ctx, punti, larg, colore, w = LW, dritto = false) {
   ctx.lineJoin = 'round';
   ctx.strokeStyle = INK;
   ctx.lineWidth = larg + px(2 * w);
-  ctx.translate(px(-0.3), px(0.35));
+  ctx.translate(px(0.3), px(0.35));
   ctx.stroke(p);
-  ctx.translate(px(0.3), px(-0.35));
+  ctx.translate(px(-0.3), px(-0.35));
   ctx.strokeStyle = colore;
   ctx.lineWidth = larg;
   ctx.stroke(p);
@@ -197,40 +212,88 @@ function arto(ctx, a, g, c, w0, w1, w2, colore, ombra = 0.7) {
   pezzo(ctx, p, colore, ombra);
 }
 
-/** Tratto di dettaglio (pieghe, ciocche, bocche). */
+/**
+ * Tratto "a pennino" (stile manga): più pieno al centro, assottigliato alle
+ * due estremità. Si disegna come una forma piena che segue la curva.
+ */
 function tratto(ctx, punti, w = 1.7, colore = INK, alfa = 1) {
-  linea(ctx, Forme.curva(punti), { spessore: px(w), colore, alfa });
+  // campiona la curva (come Forme.curva: i punti fanno da "calamite")
+  const pts = [];
+  if (punti.length === 2) {
+    for (let i = 0; i <= 6; i++) pts.push(lerp2(punti[0], punti[1], i / 6));
+  } else {
+    let a = punti[0];
+    for (let k = 1; k < punti.length - 1; k++) {
+      const c = punti[k];
+      const b = k === punti.length - 2 ? punti[k + 1] : lerp2(punti[k], punti[k + 1], 0.5);
+      for (let i = k === 1 ? 0 : 1; i <= 5; i++) {
+        const t = i / 5, u = 1 - t;
+        pts.push([u * u * a[0] + 2 * u * t * c[0] + t * t * b[0], u * u * a[1] + 2 * u * t * c[1] + t * t * b[1]]);
+      }
+      a = b;
+    }
+  }
+  const n = pts.length, lung = [0];
+  for (let i = 1; i < n; i++) lung.push(lung[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  const tot = lung[n - 1] || 1, sx = [], dx = [];
+  for (let i = 0; i < n; i++) {
+    const p0 = pts[Math.max(0, i - 1)], p1 = pts[Math.min(n - 1, i + 1)];
+    const tx = p1[0] - p0[0], ty = p1[1] - p0[1], tl = Math.hypot(tx, ty) || 1;
+    const meta = px(w) * 0.5 * (0.22 + 0.78 * Math.pow(Math.sin(Math.PI * lung[i] / tot), 0.55));
+    sx.push([pts[i][0] - (ty / tl) * meta, pts[i][1] + (tx / tl) * meta]);
+    dx.push([pts[i][0] + (ty / tl) * meta, pts[i][1] - (tx / tl) * meta]);
+  }
+  const p = new Path2D();
+  p.moveTo(...sx[0]);
+  for (let i = 1; i < n; i++) p.lineTo(...sx[i]);
+  for (let i = n - 1; i >= 0; i--) p.lineTo(...dx[i]);
+  p.closePath();
+  ctx.save();
+  ctx.globalAlpha = alfa;
+  ctx.fillStyle = colore;
+  ctx.fill(p);
+  ctx.restore();
 }
 
 /**
- * Occhio come nel cartone: ovale alto (circa 1,5 volte più alto che largo),
- * linea sottile, puntino scuro piccolo spostato verso dove guarda: con
- * |gx| = 1 il puntino tocca il bordo dell'occhio (lo sguardo di profilo).
- * stato: 'aperti', 'chiusi' (sbatte), 'felici' (ad arco), 'socchiusi'
- * (ascolta), 'strizzati' (> <). dir = verso della punta per gli strizzati.
+ * Occhio come nel cartone, rifinito "anime": ovale bianco alto, puntino
+ * scuro piccolo spostato verso dove guarda (con |gx| = 1 tocca il bordo),
+ * due riflessi bianchi nel puntino e la palpebra superiore più marcata.
+ * stato: 'aperti', 'chiusi', 'felici', 'socchiusi', 'strizzati'.
  */
+
 function occhio(ctx, x, y, rx, ry, g, stato = 'aperti', dir = 1) {
-  if (stato === 'chiusi') return tratto(ctx, [[x - rx * 0.95, y + ry * 0.1], [x, y + ry * 0.4], [x + rx * 0.95, y + ry * 0.1]], 1.9);
-  if (stato === 'felici') return tratto(ctx, [[x - rx * 0.95, y + ry * 0.3], [x, y - ry * 0.35], [x + rx * 0.95, y + ry * 0.3]], 1.9);
+  if (stato === 'chiusi') return tratto(ctx, [[x - rx * 0.95, y + ry * 0.1], [x, y + ry * 0.4], [x + rx * 0.95, y + ry * 0.1]], 2.1);
+  if (stato === 'felici') return tratto(ctx, [[x - rx * 0.95, y + ry * 0.3], [x, y - ry * 0.35], [x + rx * 0.95, y + ry * 0.3]], 2.1);
   if (stato === 'strizzati') {
-    return tratto(ctx, [[x - dir * rx * 0.85, y - ry * 0.5], [x + dir * rx * 0.7, y], [x - dir * rx * 0.85, y + ry * 0.5]], 1.9);
+    return tratto(ctx, [[x - dir * rx * 0.85, y - ry * 0.5], [x + dir * rx * 0.7, y], [x - dir * rx * 0.85, y + ry * 0.5]], 2.1);
   }
   const p = Forme.ellisse(x, y, rx, ry);
   tinta(ctx, p, C.bianco);
-  const r = Math.max(1.3, rx * 0.27);
+  const r = Math.max(1.4, rx * 0.3);
   const gx = Math.max(-1, Math.min(1, g[0]));
   let gy = Math.max(-1, Math.min(1, g[1]));
   if (stato === 'socchiusi') gy = Math.max(gy, 0.5);
+  const cx = x + gx * (rx - r - (Math.abs(g[0]) >= 1 ? 0 : 1.2)), cy = y + gy * (ry - r * 1.12 - 1.8);
   ctx.save();
   ctx.clip(p);                                     // il puntino può toccare il bordo
-  tinta(ctx, Forme.ellisse(x + gx * (rx - r - (Math.abs(g[0]) >= 1 ? 0 : 1.2)), y + gy * (ry - r * 1.1 - 1.8), r, r * 1.1), C.pupilla);
+  tinta(ctx, Forme.ellisse(cx, cy, r, r * 1.12), C.pupilla);
+  tinta(ctx, Forme.cerchio(cx - r * 0.32, cy - r * 0.4, Math.max(0.55, r * 0.36)), '#ffffff');   // riflessi
+  tinta(ctx, Forme.cerchio(cx + r * 0.4, cy + r * 0.42, Math.max(0.35, r * 0.17)), '#ffffff');
   if (stato === 'socchiusi') {                     // palpebra calata a metà
     tinta(ctx, Forme.rettangolo(x - rx - 2, y - ry - 2, rx * 2 + 4, ry * 1.0 + 2), C.pelle);
   }
   ctx.restore();
-  if (stato === 'socchiusi') tratto(ctx, [[x - rx, y + ry * 0.02], [x, y - ry * 0.08], [x + rx, y + ry * 0.02]], 1.8);
-  linea(ctx, p, { spessore: px(1.35) });
+  linea(ctx, p, { spessore: px(1.25) });
+  if (stato === 'socchiusi') tratto(ctx, [[x - rx, y + ry * 0.02], [x, y - ry * 0.1], [x + rx, y + ry * 0.02]], 2.4);
+  else {                                           // palpebra superiore più marcata
+    const arco = [];
+    for (let i = 0; i <= 6; i++) { const a = Math.PI * (1.1 + (0.8 * i) / 6); arco.push([x + rx * 1.02 * Math.cos(a), y + ry * 1.02 * Math.sin(a)]); }
+    tratto(ctx, arco, Math.max(1.8, rx * 0.24));
+  }
 }
+
+/** Guance "manga": un ovale rosa sfumato e tre trattini obliqui. */
 
 /** Un velo di rosa sulle guance, morbido e sfumato. */
 
@@ -503,7 +566,7 @@ function posaLato(A, posa, t) {
 
   if (posa === 'ascolta') {                       // appoggiata alla parete: mani e orecchio contro il muro
     const k = Math.round(t * 2) % 2;
-    P.x = -14;
+    P.x = A.strega ? -19 : -14;
     P.incl = 0.08 + 0.02 * k;
     P.frontale = true;                            // gira la testa verso di noi, l'orecchio sul muro
     P.testa = 0.24 + 0.03 * k;
@@ -873,14 +936,15 @@ function visoFronte() {
 /** Testa di fronte (o la nuca, se retro). */
 
 function corpoCane(L) {
-  const b = new Path2D();
+  const b = new Path2D();                                         // (in senso orario)
   b.moveTo(30 * L, -27);                                          // garrese
-  b.bezierCurveTo(6 * L, -31, -30 * L, -30, -50 * L, -25);        // dorso dritto e continuo
-  b.bezierCurveTo(-68 * L, -20, -74 * L, 10, -58 * L, 23);        // groppa bella tonda
-  b.bezierCurveTo(-48 * L, 30, -32 * L, 27, -24 * L, 19);         // sotto la coscia
-  b.bezierCurveTo(-12 * L, 13, 4 * L, 15, 14 * L, 23);            // la pancia rientra
-  b.bezierCurveTo(24 * L, 37, 52 * L, 40, 60 * L, 18);            // petto tondo e profondo
-  b.bezierCurveTo(66 * L, 2, 62 * L, -14, 50 * L, -20);           // petto davanti
+  b.lineTo(50 * L, -20);
+  b.bezierCurveTo(62 * L, -14, 66 * L, 2, 60 * L, 18);            // petto davanti
+  b.bezierCurveTo(52 * L, 40, 24 * L, 37, 14 * L, 23);            // petto tondo e profondo
+  b.bezierCurveTo(4 * L, 15, -12 * L, 13, -24 * L, 19);           // la pancia rientra
+  b.bezierCurveTo(-32 * L, 27, -48 * L, 30, -58 * L, 23);         // sotto la coscia
+  b.bezierCurveTo(-74 * L, 10, -68 * L, -20, -50 * L, -25);       // groppa bella tonda
+  b.bezierCurveTo(-30 * L, -30, 6 * L, -31, 30 * L, -27);         // dorso dritto e continuo
   b.closePath();
   return b;
 }
@@ -906,14 +970,22 @@ function colloCane(L, tb) {
 /** Biscotto di lato (guarda a destra). */
 
 function guancia(ctx, x, y, r) {
-  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-  g.addColorStop(0, 'rgba(246, 184, 168, 0.6)');
-  g.addColorStop(1, 'rgba(246, 184, 168, 0)');
   ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(1, 0.68);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+  g.addColorStop(0, 'rgba(246, 184, 168, 0.75)');
+  g.addColorStop(0.7, 'rgba(246, 184, 168, 0.45)');
+  g.addColorStop(1, 'rgba(246, 184, 168, 0)');
   ctx.fillStyle = g;
-  ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  ctx.fillRect(-r, -r, r * 2, r * 2);
   ctx.restore();
+  for (let k = -1; k <= 1; k++) {
+    tratto(ctx, [[x + k * r * 0.4 - r * 0.16, y + r * 0.2], [x + k * r * 0.4 + r * 0.16, y - r * 0.2]], 1.15, '#df7d72', 0.9);
+  }
 }
+
+/** Riflesso "anime" sui capelli: una fascia chiara dai bordi a dentini, dentro la forma. */
 
 /**
  * Testa di profilo: davanti il viso tondo (guancia piena, nasino appena
@@ -922,19 +994,12 @@ function guancia(ctx, x, y, r) {
  * davanti all'orecchio una ciocca sottile. La tesa sporge davanti al viso.
  */
 
-/**
- * Contorno esterno più pieno (come la linea di contorno dei cel del film):
- * una copia color inchiostro della figura viene stesa DIETRO alla figura,
- * spostata di poco in otto direzioni. Solo la sagoma esterna si ingrossa
- * (≈1,3 volte), le linee interne restano sottili. "appoggio" è una tela
- * di lavoro grande come la figura.
- */
-function contornoEsterno(tela, appoggio, spessore = 0.65) {
+function contornoEsterno(tela, appoggio, spessore = 1.25) {
   const c = appoggio.getContext('2d');
   c.globalCompositeOperation = 'copy';
   c.drawImage(tela, 0, 0);
   c.globalCompositeOperation = 'source-in';
-  c.fillStyle = INK;
+  c.fillStyle = INK_SAGOMA;
   c.fillRect(0, 0, appoggio.width, appoggio.height);
   c.globalCompositeOperation = 'source-over';
   const x = tela.getContext('2d');
@@ -946,6 +1011,9 @@ function contornoEsterno(tela, appoggio, spessore = 0.65) {
   }
   x.restore();
 }
+
+/** Ciuffetti di pelo "anime": piccole punte che spuntano dal bordo (vanno disegnate prima del corpo). */
+// prima di: caneLato
 
 /**
  * Costruisce un atlante: ogni cella ha l'origine a terra, al centro in basso.
@@ -961,6 +1029,69 @@ function contornoEsterno(tela, appoggio, spessore = 0.65) {
  * alias: { nomeFotogramma: nomeDelDisegnoDaRiusare }.
  */
 
+function riflesso(ctx, forma, x0, x1, y, alto) {
+  const p = new Path2D(), passo = 7;
+  p.moveTo(x0, y - alto / 2);
+  for (let x = x0; x < x1; x += passo) { p.lineTo(x + passo * 0.5, y - alto / 2 - 2.5); p.lineTo(x + passo, y - alto / 2); }
+  let k = 0;
+  for (let x = x1; x > x0; x -= passo) { p.lineTo(x - passo * 0.5, y + alto / 2 + (k++ % 2 ? 6 : 2.5)); p.lineTo(x - passo, y + alto / 2); }
+  p.closePath();
+  ctx.save();
+  ctx.clip(percorso(forma));
+  tinta(ctx, p, '#fff1c8', 0.92);
+  ctx.restore();
+}
+
+/** L'ombra netta che la tesa proietta su viso e capelli (segue il cappello). */
+
+function ombraTesa(ctx, P, coppie, banda) {
+  const m = new DOMMatrix().translate(0, -62).rotate(P.cappello * GRADI).translate(0, 62);
+  const b = new Path2D();
+  b.addPath(banda, m);
+  for (const [forma, colore] of coppie) {
+    ctx.save();
+    ctx.clip(percorso(forma));
+    ctx.fillStyle = colore;
+    ctx.fill(b);
+    ctx.restore();
+  }
+}
+
+/** La fascia d'ombra sotto la tesa, per ogni cappello e vista. */
+
+function bandaTesa(A, vista) {
+  const b = new Path2D();
+  if (A.strega) {
+    b.rect(-300, -300, 600, 300 - 84);
+    if (vista === 'lato') b.ellipse(6, -76, 94, 10, 0, 0, TAU);
+    else b.ellipse(0, -76, 104, 13, 0, 0, TAU);
+  } else if (vista === 'lato') {
+    b.moveTo(-160, -260); b.lineTo(160, -260); b.lineTo(160, -59); b.lineTo(88, -59);
+    b.quadraticCurveTo(0, -83, -86, -51); b.lineTo(-160, -51); b.closePath();
+  } else {
+    b.moveTo(-160, -260); b.lineTo(160, -260); b.lineTo(160, -49); b.lineTo(82, -49);
+    b.quadraticCurveTo(0, -93, -82, -49); b.lineTo(-160, -49); b.closePath();
+  }
+  return b;
+}
+
+/**
+ * Testa di profilo: davanti il viso tondo (guancia piena, nasino appena
+ * accennato, occhio ovale al bordo, boccuccia) occupa circa metà della
+ * testa; dietro l'orecchio il caschetto tagliato dritto con le punte,
+ * davanti all'orecchio una ciocca sottile. La tesa sporge davanti al viso.
+ * Rifinitura anime: ombra netta della tesa, riflesso sui capelli.
+ */
+
+function ciuffi(ctx, lista, colore) {
+  for (const [x, y, a, l] of lista) {
+    const d = [Math.cos(a), Math.sin(a)], n = [-d[1], d[0]];
+    pezzo(ctx, Forme.poligono([[x - n[0] * 4.5, y - n[1] * 4.5], [x + d[0] * l, y + d[1] * l], [x + n[0] * 4.5, y + n[1] * 4.5]]), colore, 0, 1.5);
+  }
+}
+
+/** Biscotto di lato (guarda a destra). */
+
 function sistemaCappello(ctx, P) {
   ctx.translate(0, -62);
   ctx.rotate(P.cappello);
@@ -973,8 +1104,8 @@ function testaLato(ctx, A, P) {
   const [hx, hy] = P.capelli;
   ctx.save();
   if (A.strega) sottoLaTesa(ctx, P);
-  pezzo(ctx, [Forme.cerchio(-6, -62, 54), Forme.ellisse(24, -34, 46, 37), Forme.ellisse(71, -44, 4.6, 4.3)], C.pelle, 0);
-  guancia(ctx, 40, -26, 12);
+  const testa = [Forme.cerchio(-6, -62, 54), Forme.ellisse(24, -34, 46, 37), Forme.ellisse(71, -44, 4.6, 4.3)];
+  pezzo(ctx, testa, C.pelle, 0.7);
   // caschetto dietro l'orecchio
   const dietro = new Path2D();
   dietro.moveTo(-4, -98);
@@ -991,9 +1122,11 @@ function testaLato(ctx, A, P) {
   dietro.quadraticCurveTo(-34, -110, -4, -98);
   dietro.closePath();
   pezzo(ctx, dietro, C.capelli, 1.4);
-  tratto(ctx, [[-44, -86], [-50, -46], [-52 + hx * 0.6, -18 + hy]], 1.1, INK2);
+  riflesso(ctx, dietro, -80, 0, -70, 6);
+  tratto(ctx, [[-44, -86], [-50, -46], [-52 + hx * 0.6, -18 + hy]], 1.3, tono(C.capelli));
+  tratto(ctx, [[-30, -60], [-34, -36], [-36 + hx * 0.6, -14 + hy]], 1.1, tono(C.capelli));
   // l'orecchio
-  pezzo(ctx, Forme.ellisse(-16, -46, 7, 10), C.pelle, 0, 1.6);
+  pezzo(ctx, Forme.ellisse(-16, -46, 7, 10), C.pelle, 0.5, 1.6);
   tratto(ctx, [[-13, -51], [-18, -46], [-13, -41]], 1.2, INK2);
   // la ciocca sottile davanti all'orecchio
   const ciocca = new Path2D();
@@ -1007,6 +1140,10 @@ function testaLato(ctx, A, P) {
   ciocca.quadraticCurveTo(-11, -52, -8, -92);
   ciocca.closePath();
   pezzo(ctx, ciocca, C.capelli, 0.8);
+  riflesso(ctx, ciocca, -14, 10, -70, 6);
+  // l'ombra netta della tesa su viso e capelli
+  ombraTesa(ctx, P, [[unione(testa), tono(C.pelle)], [dietro, tono(C.capelli)], [ciocca, tono(C.capelli)]], bandaTesa(A, 'lato'));
+  guancia(ctx, 40, -26, 12);
   // l'occhio ovale al bordo del viso, e la bocca
   occhio(ctx, 54, -56, 9.5, 14, P.sguardo, P.occhi, 1);
   boccaLato(ctx, P.bocca);
@@ -1016,6 +1153,8 @@ function testaLato(ctx, A, P) {
   if (A.strega) cappelloStregaLato(ctx); else clocheLato(ctx);
   ctx.restore();
 }
+
+/** Testa di fronte (o la nuca, se retro). */
 
 /** La bocca di profilo: piccola, in basso sul viso. 'O' = stupita. */
 
@@ -1092,19 +1231,27 @@ function testaFronte(ctx, A, P, retro) {
   const [hx, hy] = P.capelli;
   ctx.save();
   if (A.strega) sottoLaTesa(ctx, P);
-  pezzo(ctx, caschettoFronte(hx, hy, retro), C.capelli, 1.4);
+  const capelli = caschettoFronte(hx, hy, retro);
+  pezzo(ctx, capelli, C.capelli, 1.4);
+  riflesso(ctx, capelli, -100, 100, retro ? -72 : -60, 7);
   if (retro) {
-    for (const s of [-1, 1]) tratto(ctx, [[s * 26, -90], [s * 32, -50], [s * 36 + hx, -18 + hy]], 1.1, INK2);
-  } else {
-    for (const s of [-1, 1]) tratto(ctx, [[s * 74, -54], [s * 82 + hx * 0.6, -16 + hy]], 1.1, INK2);
-    pezzo(ctx, visoFronte(), C.pelle, 0);
-    for (const s of [-1, 1]) guancia(ctx, s * 42, -28, 12);
-    // frangetta dritta: solo una striscia sotto la tesa
-    if (!A.strega) {
-      const fr = Forme.poligono([[-48, -104], [48, -104], [48, -74], [-48, -74]]);
-      pezzo(ctx, fr, C.capelli, 0, 1.6);
-      for (const x of [-30, -15, 0, 15, 30]) tratto(ctx, [[x, -74], [x, -79]], 1.1, INK2);
+    for (const s of [-1, 1]) {
+      tratto(ctx, [[s * 26, -90], [s * 32, -50], [s * 36 + hx, -18 + hy]], 1.3, tono(C.capelli));
+      tratto(ctx, [[s * 54, -84], [s * 62, -50], [s * 68 + hx, -20 + hy]], 1.1, tono(C.capelli));
     }
+    ombraTesa(ctx, P, [[capelli, tono(C.capelli)]], bandaTesa(A, 'fronte'));
+  } else {
+    for (const s of [-1, 1]) tratto(ctx, [[s * 74, -54], [s * 82 + hx * 0.6, -16 + hy]], 1.2, tono(C.capelli));
+    const viso = visoFronte();
+    pezzo(ctx, viso, C.pelle, 0.6);
+    // frangetta dritta: solo una striscia sotto la tesa
+    const fr = Forme.poligono([[-48, -104], [48, -104], [48, -74], [-48, -74]]);
+    if (!A.strega) {
+      pezzo(ctx, fr, C.capelli, 0, 1.6);
+      for (const x of [-30, -15, 0, 15, 30]) tratto(ctx, [[x, -74], [x, -80]], 1.1, tono(C.capelli));
+    }
+    ombraTesa(ctx, P, [[viso, tono(C.pelle)], [capelli, tono(C.capelli)], [fr, tono(C.capelli)]], bandaTesa(A, 'fronte'));
+    for (const s of [-1, 1]) guancia(ctx, s * 42, -28, 12);
     // occhi ovali alti, a metà del viso; nessun naso di fronte
     occhio(ctx, -23, -54, 10.5, 16, P.sguardo, P.occhi, 1);
     occhio(ctx, 23, -54, 10.5, 16, P.sguardo, P.occhi, -1);
@@ -1116,6 +1263,8 @@ function testaFronte(ctx, A, P, retro) {
   if (A.strega) cappelloStregaFronte(ctx, retro); else clocheFronte(ctx);
   ctx.restore();
 }
+
+/** Cappellino a campana di lato: cupola alta, fascia larga, tesa che scende davanti e dietro. */
 
 /** La bocca di fronte: piccola e bassa (a circa 3/4 del viso). 'O' = stupita. */
 
@@ -1161,7 +1310,7 @@ function clocheLato(ctx) {
   cupola.bezierCurveTo(32, -160, 66, -140, 58, -94);
   cupola.quadraticCurveTo(0, -80, -64, -90);
   cupola.closePath();
-  pezzo(ctx, cupola, C.bianco, 1.5);
+  pezzo(ctx, cupola, C.cappello, 1.7);
   ctx.save();
   ctx.clip(cupola);
   const fascia = new Path2D();
@@ -1171,9 +1320,10 @@ function clocheLato(ctx) {
   fascia.quadraticCurveTo(0, -100, -90, -112);
   fascia.closePath();
   tinta(ctx, fascia, C.salmone);
-  ombraCel(ctx, fascia, 1.5, tono(C.salmone));
-  linea(ctx, (q) => { q.moveTo(-90, -112); q.quadraticCurveTo(0, -100, 90, -122); }, { spessore: px(1.6), colore: INK });
+  ombraCel(ctx, fascia, 1.7, tono(C.salmone), C.salmone);
+  linea(ctx, (q) => { q.moveTo(-90, -112); q.quadraticCurveTo(0, -100, 90, -122); }, { spessore: px(1.5), colore: INK });
   ctx.restore();
+  tratto(ctx, [[-58, -106], [-48, -138], [-22, -154]], 4, '#ffffff');      // luce sulla cupola
   const tesa = new Path2D();
   tesa.moveTo(-64, -90);
   tesa.lineTo(-86, -60);
@@ -1181,8 +1331,11 @@ function clocheLato(ctx) {
   tesa.lineTo(58, -94);
   tesa.quadraticCurveTo(0, -80, -64, -90);
   tesa.closePath();
-  pezzo(ctx, tesa, C.bianco, 0.8);
+  pezzo(ctx, tesa, C.cappello, 0.9);
+  tratto(ctx, [[-76, -66], [-52, -78], [-28, -84]], 3, '#ffffff');        // luce sulla tesa
 }
+
+/** Cappellino a campana di fronte: la tesa scende ai lati intorno al viso. */
 
 /** Cappellino a campana di fronte: la tesa scende ai lati intorno al viso. */
 
@@ -1195,7 +1348,7 @@ function clocheFronte(ctx) {
   cupola.bezierCurveTo(40, -160, 74, -140, 66, -92);
   cupola.quadraticCurveTo(0, -106, -66, -92);
   cupola.closePath();
-  pezzo(ctx, cupola, C.bianco, 1.5);
+  pezzo(ctx, cupola, C.cappello, 1.7);
   ctx.save();
   ctx.clip(cupola);
   const fascia = new Path2D();
@@ -1205,9 +1358,10 @@ function clocheFronte(ctx) {
   fascia.quadraticCurveTo(0, -134, -90, -112);
   fascia.closePath();
   tinta(ctx, fascia, C.salmone);
-  ombraCel(ctx, fascia, 1.5, tono(C.salmone));
-  linea(ctx, (q) => { q.moveTo(-90, -112); q.quadraticCurveTo(0, -134, 90, -112); }, { spessore: px(1.6), colore: INK });
+  ombraCel(ctx, fascia, 1.7, tono(C.salmone), C.salmone);
+  linea(ctx, (q) => { q.moveTo(-90, -112); q.quadraticCurveTo(0, -134, 90, -112); }, { spessore: px(1.5), colore: INK });
   ctx.restore();
+  tratto(ctx, [[-58, -112], [-48, -140], [-20, -154]], 4, '#ffffff');      // luce sulla cupola
   const tesa = new Path2D();
   tesa.moveTo(-66, -92);
   tesa.lineTo(-82, -58);
@@ -1215,13 +1369,17 @@ function clocheFronte(ctx) {
   tesa.lineTo(66, -92);
   tesa.quadraticCurveTo(0, -106, -66, -92);
   tesa.closePath();
-  pezzo(ctx, tesa, C.bianco, 0.8);
+  pezzo(ctx, tesa, C.cappello, 0.9);
+  tratto(ctx, [[-72, -66], [-52, -82], [-28, -90]], 3, '#ffffff');        // luce sulla tesa
 }
 
 /** Cappello da strega di lato: tesa larghissima, cono con la punta piegata indietro. */
 
+/** Cappello da strega di lato: tesa larghissima, cono con la punta piegata indietro. */
+
 function cappelloStregaLato(ctx) {
-  pezzo(ctx, Forme.ellisse(6, -84, 94, 10, -0.02), C.viola, 0.7);
+  pezzo(ctx, Forme.ellisse(6, -84, 94, 10, -0.02), C.viola, 0.8);
+  tratto(ctx, [[-70, -88], [-40, -92], [-10, -93]], 2.5, '#9384ae');
   const cono = new Path2D();
   cono.moveTo(-46, -86);
   cono.quadraticCurveTo(-33, -124, -36, -146);
@@ -1230,7 +1388,8 @@ function cappelloStregaLato(ctx) {
   cono.quadraticCurveTo(16, -128, 50, -88);
   cono.quadraticCurveTo(0, -78, -46, -86);
   cono.closePath();
-  pezzo(ctx, cono, C.viola, 1.4);
+  pezzo(ctx, cono, C.viola, 1.6);
+  tratto(ctx, [[-36, -96], [-28, -122], [-30, -142]], 3, '#9384ae');      // luce sul cono
   tratto(ctx, [[-36, -146], [-26, -152], [-17, -159]], 1.3, INK2);
 }
 
@@ -1238,8 +1397,11 @@ function cappelloStregaLato(ctx) {
 
 /** Cappello da strega di fronte (o da dietro, con la punta piegata dall'altra parte). */
 
+/** Cappello da strega di fronte (o da dietro, con la punta piegata dall'altra parte). */
+
 function cappelloStregaFronte(ctx, retro) {
-  pezzo(ctx, Forme.ellisse(0, -84, 104, retro ? 18 : 13), C.viola, 0.7);
+  pezzo(ctx, Forme.ellisse(0, -84, 104, retro ? 18 : 13), C.viola, 0.8);
+  tratto(ctx, [[-90, -86], [-60, -94], [-30, -96]], 2.5, '#9384ae');
   ctx.save();
   if (retro) ctx.scale(-1, 1);
   const cono = new Path2D();
@@ -1250,10 +1412,18 @@ function cappelloStregaFronte(ctx, retro) {
   cono.quadraticCurveTo(36, -120, 46, -88);
   cono.quadraticCurveTo(0, -80, -46, -88);
   cono.closePath();
-  pezzo(ctx, cono, C.viola, retro ? 0 : 1.4);
+  pezzo(ctx, cono, C.viola, retro ? 0 : 1.6);
+  if (!retro) tratto(ctx, [[-36, -98], [-30, -124], [-16, -146]], 3, '#9384ae');
   tratto(ctx, [[-14, -150], [4, -155], [24, -150]], 1.3, INK2);
   ctx.restore();
 }
+
+/**
+ * Contorno esterno più pieno e più scuro (come la linea di contorno dei cel
+ * anime): una copia color inchiostro scuro della figura viene stesa DIETRO
+ * alla figura, spostata di poco in otto direzioni. Solo la sagoma esterna
+ * si ingrossa (≈2 volte le linee interne). "appoggio" = tela di lavoro.
+ */
 
 /** Effetti di contorno: colpetto del bastone, scintille, botta in testa. */
 
@@ -1647,18 +1817,19 @@ function caneLato(ctx, P) {
     const col = k[1] === 'l' ? tono(C.cane) : C.cane;
     zampaCane(ctx, nelMondo(...ANCHE_CANE[k]), P.piedi[k], k[0] === 'p', col);
   }
-  // corpo + collo in un'unica sagoma
+  // corpo + collo in un'unica sagoma, coi ciuffetti di pelo sul petto
   ctx.save();
   ctx.transform(T.a, T.b, T.c, T.d, T.e, T.f);
   const tb = [P.testa[0] * L, P.testa[1]];
+  ciuffi(ctx, [[60 * L, 8, 0.15, 10], [58 * L, 20, 0.55, 10], [50 * L, 31, 0.95, 9], [38 * L, 36, 1.3, 8]], C.cane);
   const corpo = corpoCane(L);
-  pezzo(ctx, [corpo, colloCane(L, tb)], C.cane, 1);
+  pezzo(ctx, [corpo, colloCane(L, tb)], C.cane, 1.2);
   ctx.save();
   ctx.clip(corpo);                                 // la macchia caramello sul dorso e sui fianchi
-  pezzo(ctx, Forme.ellisse(-24 * L, -21, 21, 10, -0.06), C.orecchie, 0.5, 1.6);
+  pezzo(ctx, Forme.ellisse(-24 * L, -21, 21, 10, -0.06), C.orecchie, 0.6, 1.6);
   ctx.restore();
-  tratto(ctx, [[-20 * L, 18], [-32 * L, -2], [-48 * L, 2]], 1.3, INK2);   // la coscia
-  for (let k = 0; k < 4; k++) tratto(ctx, [[46 * L + k * 2.5, 6 + k * 6], [52 * L + k * 2.5, 12 + k * 6]], 1.1, INK2);  // pelo del petto
+  tratto(ctx, [[-20 * L, 18], [-32 * L, -2], [-48 * L, 2]], 1.4, tono(C.cane));   // la coscia
+  for (let k = 0; k < 3; k++) tratto(ctx, [[44 * L + k * 3, 10 + k * 7], [50 * L + k * 3, 15 + k * 7]], 1.2, INK2);  // pelo del petto
   const base = [40 * L, -16], dx = tb[0] - base[0], dy = tb[1] - base[1], d = Math.hypot(dx, dy);
   const cc = [base[0] + dx * 0.6, base[1] + dy * 0.6], n = [-dy / d, dx / d];
   tubo(ctx, [[cc[0] + n[0] * 17, cc[1] + n[1] * 17], [cc[0] + (dx / d) * 3, cc[1] + (dy / d) * 3], [cc[0] - n[0] * 17, cc[1] - n[1] * 17]], 5.5, C.collare, 1.7);
@@ -1749,7 +1920,8 @@ function caneFronte(ctx, posa, t, extra) {
     pezzo(ctx, Forme.ellisse(s * 40, -6.5, 13, 6.5), tono(C.cane), 0, 1.7);
     for (const dd of [-4, 4]) tratto(ctx, [[s * 40 + dd, -9], [s * 40 + dd, -2]], 1.1);
   }
-  pezzo(ctx, Forme.ellisse(0, -64, 30, 40), C.cane, 1);
+  ciuffi(ctx, [[-11, -27, 1.85, 9], [0, -25, 1.57, 10], [11, -27, 1.3, 9]], C.cane);   // ciuffetti sul petto
+  pezzo(ctx, Forme.ellisse(0, -64, 30, 40), C.cane, 1.2);
   for (let k = 0; k < 5; k++) tratto(ctx, [[(k - 2) * 7, -52 + Math.abs(k - 2) * 3], [(k - 2) * 8, -44 + Math.abs(k - 2) * 3]], 1.1, INK2);
   for (const s of [-1, 1]) {                         // zampe davanti affusolate
     arto(ctx, [s * 12, -62], [s * 13, -36], [s * 14, -10], 18, 13.5, 12, C.cane, 0.5);
