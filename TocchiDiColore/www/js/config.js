@@ -26,8 +26,8 @@ export const CONFIG = {
    * GIOCATRICE (Lia)
    * ------------------------------------------------------------------- */
   giocatore: {
-    velocita: 1.25,          // camminata (metri al secondo)
-    velocitaCorsa: 2.6,      // corsa
+    velocita: 0.95,          // camminata (metri al secondo): passetti da bambina
+    velocitaCorsa: 2.2,      // corsa
     accelerazione: 5,        // quanto in fretta prende velocità
     frenata: 7,              // quanto in fretta si ferma
     tempoPerCorrere: 1.6,    // tenendo premuto per questi secondi, Lia comincia a correre

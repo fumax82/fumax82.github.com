@@ -45,8 +45,8 @@ export default {
   inquadrature: [
     // 1. di fianco lungo la riva (lampioni e fronde in primo piano scorrono davanti)
     { da: 0, a: 10.5, tipo: 'segui', taglio: true, chiavi: [
-      { s: 0, pos: [0.4, 1.55, 6.4], guarda: [0.6, 0.9, 0], fov: 34 },
-      { s: 10.5, pos: [-0.6, 1.8, 6.8], guarda: [0.8, 0.95, 0], fov: 34 },
+      { s: 0, pos: [0.4, 1.5, 6.4], guarda: [0.5, 0.75, 0], fov: 26 },
+      { s: 10.5, pos: [-0.6, 1.7, 6.8], guarda: [0.7, 0.8, 0], fov: 27 },
     ] },
     // 2. il ponte visto dall'acqua: dietro di lui il canale si perde lontano
     { da: 10.5, a: 23.5, tipo: 'fisso', taglio: true, seguiAltezza: 1, chiavi: [
@@ -55,8 +55,8 @@ export default {
     ] },
     // 3. la via della libreria: la camera gira piano da tre quarti a di fianco
     { da: 23.5, a: 36.5, tipo: 'segui', taglio: true, chiavi: [
-      { s: 23.5, pos: [-3.2, 1.6, 6.2], guarda: [1.6, 1.0, -0.6], fov: 35 },
-      { s: 36.5, pos: [1.8, 1.6, 6.4], guarda: [0.4, 0.95, 0], fov: 35 },
+      { s: 23.5, pos: [-3.2, 1.55, 6.2], guarda: [1.2, 0.8, -0.6], fov: 28 },
+      { s: 36.5, pos: [1.8, 1.55, 6.4], guarda: [0.3, 0.8, 0], fov: 28 },
     ] },
     // 4. la scala vista dal basso
     { da: 36.5, a: 42, tipo: 'segui', taglio: true, seguiAltezza: 1, chiavi: [

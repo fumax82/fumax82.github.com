@@ -135,7 +135,7 @@ TocchiDiColore/
 
 ### Piccole modifiche da provare
 - **Cambiare un dialogo**: apri `www/js/dati/storia.js` e modifica le frasi tra apici.
-- **Lia più veloce**: in `www/js/config.js` cambia `velocita: 1.25` (metri al secondo).
+- **Lia più veloce**: in `www/js/config.js` cambia `velocita: 0.95` (metri al secondo).
 - **Cambiare un'inquadratura**: in `www/js/dati/scene/via.js`, sotto `inquadrature`, cambia i
   numeri di `pos` (dove sta la telecamera rispetto a Lia: destra, alto, verso di noi) e `guarda`
   (dove guarda). Con `taglio: true` il passaggio è uno stacco netto, senza è una carrellata.

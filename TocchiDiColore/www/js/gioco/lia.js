@@ -157,7 +157,7 @@ export class Lia {
     this.inMovimento = fatta > 0.0005;
 
     // --- passi (e un'onda leggera a ogni passo, quando può "sentire") ------
-    const lungPasso = this.corre ? 1.5 : 0.95;     // metri per un ciclo completo
+    const lungPasso = this.corre ? 1.0 : 0.5;      // metri per un ciclo completo (passi corti da bambina)
     const prima = Math.floor(this.passo * 2);
     this.passo += fatta / lungPasso;
     if (Math.floor(this.passo * 2) !== prima) {
