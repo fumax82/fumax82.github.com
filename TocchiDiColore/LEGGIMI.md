@@ -199,6 +199,14 @@ appena dipinti dal codice, ricevono una "finitura" come gli acquerelli veri del 
 si accumula sui bordi delle macchie, il colore si spande appena, le velature sono irregolari e la
 grana della carta trattiene il colore. Si regola con `finitura` in `config.js` (0 = spenta).
 
+**Anteprima del nuovo motore 3D ad acquerello** (`www/nuovo/`, pulsante «Anteprima: mondo 3D»
+nel menu): una prova di come potrebbe diventare il gioco con un mondo 3D vero invece dei fondali
+piatti. Le case, la strada, gli alberi, Lia e Gogo sono fatti di forme 3D create dal codice e
+dipinti in tempo reale come un acquerello (velature, linee a inchiostro, bordi bagnati, grana della
+carta). Il mondo comincia a matita su carta bianca e si colora da dove si tocca. La telecamera può
+girare intorno, salire, scendere. Per ora c'è una sola via; il gioco vero usa ancora il motore a
+fondali dipinti.
+
 **Disegni fatti a mano** (`arte/dipinti_a_mano.js`): qualunque fondale, personaggio o oggetto può
 essere sostituito da un'immagine dipinta a mano, per arrivare alla qualità di un cartone vero.
 1. Apri il gioco nel browser del computer, entra in una scena e nella console (F12) scrivi

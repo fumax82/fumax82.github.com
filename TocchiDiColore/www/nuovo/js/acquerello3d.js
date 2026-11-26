@@ -145,7 +145,7 @@ export class Rivelazione {
     this.onde = [];
     this.bagnato = false;
     this.cambiato = false;
-    this.RAMPA = 5;          // metri: dietro la cresta il colore "sale" anche sui muri alti
+    this.RAMPA = 6;          // metri: dietro la cresta il colore "sale" anche sui muri alti
     this.dipinti = 0;        // quanti pixel sono dipinti (per sapere quanto manca)
   }
   /** Una nuova onda di colore che parte da (x, z). */
@@ -202,7 +202,7 @@ export class Rivelazione {
         const dentro = o.r - d;
         if (dentro <= 0) continue;
         // le onde piccole (i colpetti del bastone) colorano solo in basso
-        const v = Math.min(255, Math.round(Math.min(1, dentro / R) * 255 * Math.pow(Math.min(1, o.R / 7), 0.7)));
+        const v = Math.min(255, Math.round(Math.min(1, dentro / R) * 255 * Math.pow(Math.min(1, o.R / 7), 1.2)));
         const p = (j * nx + i) * 4;
         if (v > dati[p]) { if (dati[p] < 128 && v >= 128) this.dipinti++; dati[p] = v; }
         if (dentro < 1.6 && o.r <= o.R + 0.5) {     // la cresta bagnata
@@ -384,20 +384,47 @@ const FRAG_PIGMENTO = /* glsl */ `
     float luce = dot(n, uSole) * 0.5 + 0.5;           // luce "avvolgente" (mai nero)
     luce = luce * 0.82 + n.y * 0.12 + 0.06;           // un po' di luce dal cielo
     #ifndef PERSONAGGIO
-      if (tipo != 3) luce *= mix(0.8, 1.0, smoothstep(0.0, 1.2, vPos.y));   // piede dei muri
+      if (tipo != 3 && tipo != 9) luce *= mix(0.8, 1.0, smoothstep(0.0, 1.2, vPos.y));   // piede dei muri
     #endif
-    float s1 = smoothstep(0.40, 0.50, luce + (w - 0.5) * 0.25);   // ombra → mezzo tono
-    float s2 = smoothstep(0.76, 0.85, luce + (w - 0.5) * 0.20);   // mezzo tono → luce
+    #ifdef PERSONAGGIO
+      // i personaggi: ombre più piccole e calde (la pelle non deve sembrare livida)
+      float s1 = smoothstep(0.30, 0.40, luce + (w - 0.5) * 0.15);
+      float s2 = smoothstep(0.70, 0.80, luce + (w - 0.5) * 0.12);
+    #else
+      float s1 = smoothstep(0.40, 0.50, luce + (w - 0.5) * 0.25);   // ombra → mezzo tono
+      float s2 = smoothstep(0.76, 0.85, luce + (w - 0.5) * 0.20);   // mezzo tono → luce
+    #endif
 
     // --- 3. i colori del pigmento ---
-    vec3 base = vCol * (0.93 + w * 0.14);
+    vec3 base = vCol * (0.94 + w * 0.12);
     base += (r1.gba - 0.5) * 0.05;                                 // la tinta "respira"
-    vec3 ombra = base * mix(vec3(0.70, 0.70, 0.88), vec3(0.82, 0.73, 0.82), wf);  // velatura fredda
+    if (tipo >= 7 && tipo <= 9) {
+      // MATTONI (7), PIETRE squadrate (8), LASTRE del marciapiede (9):
+      // il disegno delle fughe è dipinto qui, con un tratto un po' storto
+      vec2 dim = tipo == 7 ? vec2(0.25, 0.085) : (tipo == 8 ? vec2(0.44, 0.30) : vec2(1.05, 0.74));
+      vec2 bb = uvM / dim;
+      if (tipo != 9) bb.x += mod(floor(bb.y), 2.0) * 0.5;
+      else bb.x += mod(floor(bb.y), 2.0) * 0.37;
+      vec2 id = floor(bb), f = fract(bb);
+      float h = fract(sin(dot(id, vec2(12.9898, 78.233))) * 43758.5453);
+      base *= 0.9 + h * 0.17;
+      float dist = min(min(f.x, 1.0 - f.x) * dim.x, min(f.y, 1.0 - f.y) * dim.y);
+      float spess = tipo == 9 ? 0.016 : 0.009;
+      float malta = 1.0 - smoothstep(spess * 0.6, spess * 1.5, dist + (r2.r - 0.5) * spess);
+      base = mix(base, base * vec3(0.62, 0.54, 0.52), malta * 0.75);
+    }
+    #ifdef PERSONAGGIO
+      vec3 ombra = base * mix(vec3(0.86, 0.78, 0.84), vec3(0.90, 0.80, 0.80), wf);   // velatura calda
+    #else
+      vec3 ombra = base * mix(vec3(0.70, 0.70, 0.88), vec3(0.82, 0.73, 0.82), wf);  // velatura fredda
+    #endif
     vec3 chiaro = mix(base, vec3(1.0, 0.985, 0.94), 0.2);         // più acqua, meno pigmento
     vec3 col = mix(ombra, base, s1);
     col = mix(col, chiaro, s2);
     if (tipo == 1) {        // VETRO: il cielo riflesso e una striscia di luce
-      float rifl = smoothstep(0.5, 0.56, fract((vPos.x * 0.55 + vPos.y * 0.8) * 0.7 + w * 0.5));
+      // due strisce di luce diagonali (il "luccichio" dei vetri nei cartoni)
+      float diag = fract((vPos.x * 0.6 + vPos.y * 0.75) * 0.9 + w * 0.12);
+      float rifl = smoothstep(0.02, 0.05, diag) * (1.0 - smoothstep(0.13, 0.16, diag)) + smoothstep(0.22, 0.24, diag) * (1.0 - smoothstep(0.26, 0.28, diag));
       vec3 cielo = mix(vec3(0.52, 0.66, 0.80), vec3(0.80, 0.89, 0.95), smoothstep(-0.2, 0.9, w + nv.y * 0.3));
       col = mix(cielo * (0.82 + 0.18 * s1), vec3(0.97, 0.98, 1.0), rifl * 0.65);
     }
@@ -417,7 +444,7 @@ const FRAG_PIGMENTO = /* glsl */ `
       } else {
         vec4 m = texture(tRivela, (vPos.xz - uArea.xy) * uArea.zw);
         // il colore sale sui muri un po' dopo la cresta (più in alto = più tardi)
-        float soglia = 0.035 + max(vPos.y, 0.0) * 0.024 + (w - 0.5) * 0.16 + (wf - 0.5) * 0.06;
+        float soglia = 0.035 + max(vPos.y, 0.0) * 0.042 + (w - 0.5) * 0.16 + (wf - 0.5) * 0.06;
         float dentro = m.r - soglia;
         riv = smoothstep(0.0, 0.04, dentro);
         fronte = m.g * smoothstep(-0.01, 0.02, dentro) * (1.0 - smoothstep(0.03, 0.22, dentro));
@@ -426,7 +453,7 @@ const FRAG_PIGMENTO = /* glsl */ `
         float orlo = smoothstep(0.0, 0.012, dentro) * (1.0 - smoothstep(0.015, 0.06, dentro));
         col *= 1.0 - 0.16 * orlo;
         // appena steso, il colore bagnato è più intenso
-        col = mix(col, col * col * 1.1, m.g * 0.45);
+        col = mix(col, col * col * 1.1, m.g * 0.3);
       }
     #endif
 
@@ -434,10 +461,12 @@ const FRAG_PIGMENTO = /* glsl */ `
     float dist = length(vPos - cameraPosition);
     float neb = smoothstep(16.0, 150.0, dist) * 0.78;
     if (tipo == 5) neb = max(neb, 0.3);
+    if (tipo == 4) neb *= 0.25;                     // le nuvole restano ben visibili
     col = mix(col, uNebbia, neb);
 
     col = mix(uCarta, col, riv);
-    col += fronte * mix(tintaFronte, vec3(1.0, 0.95, 0.8), 0.4) * 0.5;   // la cresta bagnata che luccica
+    // la cresta bagnata: un orlo colorato (ogni tocco ha la sua tinta) che luccica
+    col = mix(col, tintaFronte * 1.08, fronte * 0.38) + fronte * vec3(0.16, 0.14, 0.1);
 
     #ifdef PERSONAGGIO
       oColore = vec4(col, 1.0);
@@ -642,8 +671,8 @@ const FRAG_BOLLA = /* glsl */ `
     vec3 n = normalize(vN), v = normalize(vV);
     float f = 1.0 - abs(dot(n, v));
     vec3 iri = tinta(f * 1.4 + n.y * 0.35 + uTempo * 0.12 + vFase);
-    vec3 col = mix(vec3(1.0), iri, 0.85);
-    float a = 0.06 + pow(f, 2.2) * 0.55;
+    vec3 col = mix(vec3(1.0), iri, 0.6);
+    float a = 0.04 + pow(f, 2.5) * 0.45;
     vec3 L = normalize(vec3(-0.4, 0.85, 0.5));
     float sp = pow(max(dot(reflect(-v, n), L), 0.0), 36.0);
     col = mix(col, vec3(1.0), sp);
@@ -796,6 +825,7 @@ const FRAG_FINALE = /* glsl */ `
   uniform sampler2D tColore;     // il colore della scena
   uniform sampler2D tDati;       // normali + profondità
   uniform sampler2D tSfocato;    // la scena sfocata (piccola)
+  uniform sampler2D tMezzo;      // la scena appena sfocata (per i bordi bagnati)
   uniform sampler2D tLuce;       // i bagliori (piccoli e sfocati)
   uniform sampler2D tRumore;
   uniform sampler2D tCarta;
@@ -844,11 +874,11 @@ const FRAG_FINALE = /* glsl */ `
     // il disegno "respira" 6 volte al secondo, come i cartoni fatti a mano
     float scatto = floor(uTempo * 6.0);
     vec2 salto = fract(vec2(sin(scatto * 12.9898), sin(scatto * 78.233)) * 43758.5453);
-    vec4 nz = texture2D(tRumore, uv * vec2(asp, 1.0) * 0.85 + salto * 0.07);
+    vec4 nz = texture2D(tRumore, uv * vec2(asp, 1.0) * 0.5 + salto * 0.07);
     vec4 nz2 = texture2D(tRumore, uv * vec2(asp, 1.0) * 3.1 - salto * 0.05);
 
     // 1. SBAVATURE: il colore preso un po' "storto" (come carta bagnata)
-    vec2 sposta = (nz.rg - 0.5) * px * 3.2;
+    vec2 sposta = (nz.rg - 0.5) * px * 2.6;
     vec4 c = texture2D(tColore, uv + sposta);
     vec3 sf = texture2D(tSfocato, uv + sposta * 2.0).rgb;
     float riv = clamp(c.a / 0.8, 0.0, 1.0);
@@ -875,12 +905,13 @@ const FRAG_FINALE = /* glsl */ `
     linea *= 1.0 - coc * 0.65;
 
     // 4. BORDI BAGNATI: il pigmento si accumula dove la macchia finisce
-    float acc = clamp((lum(sf) - lum(c.rgb)) * 3.2, 0.0, 1.0) + clamp(length(sf - c.rgb) * 1.2 - 0.05, 0.0, 0.5);
-    col = col - (col - col * col) * min(acc, 1.0) * 1.1;
+    vec3 sm = texture2D(tMezzo, uv + sposta).rgb;
+    float acc = clamp((lum(sm) - lum(c.rgb)) * 4.0, 0.0, 1.0) + clamp(length(sm - c.rgb) * 1.5 - 0.06, 0.0, 0.4);
+    col = col - (col - col * col) * min(acc, 1.0) * 0.9;
 
     // 5. LE LINEE: inchiostro dove è dipinto, matita dove è ancora carta
     vec3 tratto = mix(uMatita, uInchiostro, riv);
-    float forza = mix(0.42, 0.86, riv);
+    float forza = mix(0.55, 0.86, riv);
     float carboncino = max(linea, matita * 0.55 * (1.0 - riv));
     col = mix(col, tratto, clamp(carboncino * forza, 0.0, 1.0));
 
@@ -888,7 +919,7 @@ const FRAG_FINALE = /* glsl */ `
     vec2 uvCarta = gl_FragCoord.xy / (512.0 * uScalaCarta);
     vec4 carta = texture2D(tCarta, uvCarta);
     float pig = clamp(1.0 - lum(col) / lum(uCarta), 0.0, 1.0);
-    col *= 1.0 + (carta.g - 0.55) * pig * 0.55;          // granulazione
+    col *= 1.0 + (carta.g - 0.55) * pig * 0.4;           // granulazione
     col *= 0.965 + carta.r * 0.055;                       // rilievo della carta
     col *= 1.0 - carta.b * 0.035;                         // fibre
 
@@ -898,10 +929,11 @@ const FRAG_FINALE = /* glsl */ `
     vec3 gc = g.rgb / max(g.a, 1e-3);
     col = col * mix(vec3(1.0), gc, ga * 0.55) + gc * ga * 0.3;
 
-    // 8. I BORDI DELLO SCHERMO svaniscono nella carta (bordo irregolare)
-    vec2 q = (uv - 0.5) * vec2(asp * 0.55, 1.0);
-    float rv = length(q) * 2.0 + (nz.r - 0.5) * 0.22 + (nz2.b - 0.5) * 0.06;
-    col = mix(col, uCarta, smoothstep(0.86, 1.12, rv));
+    // 8. I BORDI DELLO SCHERMO svaniscono nella carta (bordo irregolare, come un foglio dipinto)
+    vec2 q = abs(uv - 0.5) * 2.0;
+    q.x = q.x * 1.0;
+    float rv = pow(pow(q.x, 5.0) + pow(q.y * 1.02, 5.0), 0.2) + (nz.r - 0.5) * 0.16 + (nz2.b - 0.5) * 0.05;
+    col = mix(col, uCarta, smoothstep(0.9, 1.06, rv));
 
     col = mix(col, uCarta, uBianco);
     gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
@@ -930,7 +962,7 @@ export class Acquerello {
     });
     this.matFinale = new THREE.ShaderMaterial({
       uniforms: {
-        tColore: { value: null }, tDati: { value: null }, tSfocato: { value: null }, tLuce: { value: null },
+        tColore: { value: null }, tDati: { value: null }, tSfocato: { value: null }, tMezzo: { value: null }, tLuce: { value: null },
         tRumore: U.tRumore, tCarta: U.tCarta,
         uRis: { value: new THREE.Vector2(1, 1) }, uSchermo: { value: new THREE.Vector2(1, 1) },
         uTempo: U.uTempo, uFuoco: { value: 5 }, uApertura: { value: 0.6 }, uFar: U.uFar,
@@ -1025,6 +1057,7 @@ export class Acquerello {
     u.tColore.value = tex0;
     u.tDati.value = this.rtScena.textures[1];
     u.tSfocato.value = this.rtB.texture;
+    u.tMezzo.value = this.rtMezzo.texture;
     u.tLuce.value = this.rtLuceA.texture;
     this._passo(this.matFinale, null);
   }

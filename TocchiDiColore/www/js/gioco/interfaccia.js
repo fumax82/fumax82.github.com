@@ -25,6 +25,8 @@ Interfaccia.inizializza = function (azioni) {
   $('btnContinua').onclick = () => { Audio.clic(); azioni.continua(); };
   $('btnOpzioni').onclick = () => { Audio.clic(); this.mostraOpzioni(true); };
   $('btnCrediti').onclick = () => { Audio.clic(); $('crediti').classList.remove('nascosto'); };
+  // l'anteprima del nuovo motore 3D ad acquerello (una pagina a parte)
+  $('btnNuovoMotore').onclick = () => { window.location.href = 'nuovo/index.html'; };
   $('btnChiudiCrediti').onclick = () => $('crediti').classList.add('nascosto');
   $('btnChiudiOpzioni').onclick = () => { Audio.clic(); this.mostraOpzioni(false); };
   $('btnRiprendi').onclick = () => { Audio.clic(); azioni.pausa(false); };

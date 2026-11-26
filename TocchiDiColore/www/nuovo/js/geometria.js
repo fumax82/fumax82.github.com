@@ -26,6 +26,9 @@ export const TIPI = {
   nuvola: 4,      // in cielo: si colora insieme al cielo
   lontano: 5,     // colline e città lontane: si colorano col cielo, velate dalla foschia
   luce: 6,        // vetri dei lampioni: chiari e caldi
+  mattoni: 7,     // muro di mattoni (le fughe sono dipinte dallo shader)
+  pietre: 8,      // zoccolo di pietre squadrate
+  lastre: 9,      // lastre del marciapiede
 };
 
 const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _s = new THREE.Vector3(), _p = new THREE.Vector3();
@@ -80,15 +83,18 @@ export function scatolaTonda(w, h, d, r, seg = 2) {
 
 /** Un "batuffolo": una sfera bitorzoluta (foglie, nuvole, cespugli). */
 export function batuffolo(r, dettaglio = 1, bozzi = 0.18, seme = 0) {
-  const g = new THREE.IcosahedronGeometry(r, dettaglio);
-  const pos = g.attributes.position;
+  // una sfera "a spicchi" con i vertici condivisi: liscia anche con pochi punti
+  const seg = [[9, 6], [14, 10], [18, 13]][Math.min(2, dettaglio)];
+  const g = new THREE.SphereGeometry(r, seg[0], seg[1]);
+  const pos = g.attributes.position, nor = g.attributes.normal;
   for (let i = 0; i < pos.count; i++) {
     _v.fromBufferAttribute(pos, i);
     const k = 1 + (rumore3(_v.x / r * 1.3 + seme, _v.y / r * 1.3, _v.z / r * 1.3) - 0.5) * 2 * bozzi;
+    _w.copy(_v).normalize();
+    nor.setXYZ(i, _w.x, _w.y, _w.z);          // normale "da sfera": la luce scivola morbida (niente sfaccettature)
     _v.multiplyScalar(k);
     pos.setXYZ(i, _v.x, _v.y, _v.z);
   }
-  g.computeVertexNormals();
   return g;
 }
 

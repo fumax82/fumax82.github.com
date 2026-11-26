@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<!--
+  TOCCHI DI COLORE — PROTOTIPO DEL NUOVO MOTORE (3D dipinto ad acquerello)
+  Un mondo 3D vero (case, strada, alberi, Lia e Gogo fatti di forme semplici)
+  dipinto in tempo reale come un acquerello: velature, linee a inchiostro,
+  bordi bagnati, grana della carta. Tocca lo schermo: l'acquerello si allarga
+  da dove tocchi, sbocciano fiori, volano farfalle e uccellini.
+  Tutto è generato dal codice (cartella js/): nessuna immagine, nessun modello.
+
+  Per provarlo:  cd www  →  python3 -m http.server 8000  →  http://localhost:8000/nuovo/
+  Opzioni:  ?q=minima|bassa|media|alta  &fisso=1  &debug=1
+-->
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#fbf6ea">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Tocchi di Colore — nuovo motore (prototipo)</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #fbf6ea; }
+    body { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+    #tela { display: block; position: fixed; inset: 0; width: 100vw; height: 100vh; touch-action: none; }
+    #misure { position: fixed; left: 8px; top: 6px; font: 11px/1.2 monospace; color: #7a6656; display: none; pointer-events: none; }
+    /* un piccolo pulsante per tornare al gioco (per i grandi) */
+    #indietro {
+      position: fixed; right: max(14px, env(safe-area-inset-right)); top: max(10px, env(safe-area-inset-top));
+      width: 46px; height: 46px; display: flex; align-items: center; justify-content: center;
+      background: rgba(251, 246, 234, 0.88); border: 2px solid #6b4b37; border-radius: 50%;
+      color: #6b4b37; font: 26px/1 serif; text-decoration: none; z-index: 5;
+    }
+  </style>
+  <!-- dove trovare Three.js quando il codice scrive: import * as THREE from 'three' -->
+  <script type="importmap">
+    { "imports": { "three": "../lib/three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <canvas id="tela"></canvas>
+  <div id="misure"></div>
+  <a id="indietro" href="../index.html" aria-label="Torna al gioco">‹</a>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
